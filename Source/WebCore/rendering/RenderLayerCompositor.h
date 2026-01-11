@@ -32,6 +32,7 @@
 #include <pal/HysteresisActivity.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/HashMap.h>
+#include <wtf/InlineWeakPtr.h>
 #include <wtf/OptionSet.h>
 #include <wtf/Platform.h>
 #include <wtf/TZoneMalloc.h>
@@ -148,8 +149,8 @@ private:
 
     ChromeClient& m_chromeClient;
 
-    SingleThreadWeakHashSet<RenderLayer> m_scrollingLayers;
-    SingleThreadWeakHashSet<RenderLayer> m_viewportConstrainedLayers;
+    InlineWeakKeyHashSet<RenderLayer> m_scrollingLayers;
+    InlineWeakKeyHashSet<RenderLayer> m_viewportConstrainedLayers;
 
     const bool m_coordinateViewportConstrainedLayers;
 };
@@ -258,7 +259,7 @@ public:
     // Notify us that a layer has been removed
     void layerWillBeRemoved(RenderLayer& parent, RenderLayer& child);
 
-    void layerStyleChanged(StyleDifference, RenderLayer&, const RenderStyle* oldStyle);
+    void layerStyleChanged(Style::Difference, RenderLayer&, const RenderStyle* oldStyle);
     void layerGainedCompositedScrollableOverflow(RenderLayer&);
 
     void establishesTopLayerWillChangeForLayer(RenderLayer&);
@@ -694,8 +695,8 @@ private:
     Color m_viewBackgroundColor;
     Color m_rootExtendedBackgroundColor;
 
-    HashMap<ScrollingNodeID, SingleThreadWeakPtr<RenderLayer>> m_scrollingNodeToLayerMap;
-    SingleThreadWeakHashSet<RenderLayer> m_layersWithUnresolvedRelations;
+    HashMap<ScrollingNodeID, InlineWeakPtr<RenderLayer>> m_scrollingNodeToLayerMap;
+    InlineWeakKeyHashSet<RenderLayer> m_layersWithUnresolvedRelations;
 #if PLATFORM(IOS_FAMILY)
     std::unique_ptr<LegacyWebKitScrollingLayerCoordinator> m_legacyScrollingLayerCoordinator;
 #endif

@@ -55,7 +55,7 @@ struct DDFloat4x4 {
     {
     }
     DDFloat4x4(simd_float4x4&& s)
-        : v(WTFMove(s))
+        : v(WTF::move(s))
     {
     }
 
@@ -94,7 +94,7 @@ struct DDFloat3x3 {
     {
     }
     DDFloat3x3(simd_float3x3&& s)
-        : v(WTFMove(s))
+        : v(WTF::move(s))
     {
     }
 

@@ -124,13 +124,11 @@ static bool canOptimizeSingleAttributeExactMatch(const CSSSelector& selector)
 
 SelectorDataList::SelectorDataList(const CSSSelectorList& selectorList)
 {
-    unsigned selectorCount = std::ranges::distance(selectorList);
+    m_selectors = FixedVector<SelectorData>::map(selectorList, [](auto& selector) {
+        return SelectorData { &selector };
+    });
 
-    m_selectors.reserveInitialCapacity(selectorCount);
-    for (auto& selector : selectorList)
-        m_selectors.append({ &selector });
-
-    if (selectorCount == 1) {
+    if (m_selectors.size() == 1) {
         const CSSSelector& selector = *m_selectors.first().selector;
         if (selector.isFirstInComplexSelector()) {
             switch (selector.match()) {
@@ -222,7 +220,7 @@ Ref<NodeList> SelectorDataList::queryAll(ContainerNode& rootNode) const
 {
     Vector<Ref<Element>> result;
     execute(rootNode, result);
-    return StaticElementList::create(WTFMove(result));
+    return StaticElementList::create(WTF::move(result));
 }
 
 Element* SelectorDataList::queryFirst(ContainerNode& rootNode) const
@@ -700,7 +698,7 @@ ALWAYS_INLINE void SelectorDataList::execute(ContainerNode& rootNode, OutputType
 }
 
 SelectorQuery::SelectorQuery(CSSSelectorList&& selectorList)
-    : m_selectorList(WTFMove(selectorList))
+    : m_selectorList(WTF::move(selectorList))
     , m_selectors(m_selectorList)
 {
 }
@@ -730,9 +728,9 @@ SelectorQuery* SelectorQueryCache::add(const String& selectors, const Document& 
             return nullptr;
 
         if (selectorList->hasExplicitNestingParent())
-            selectorList = CSSSelectorParser::resolveNestingParent(WTFMove(*selectorList), nullptr);
+            selectorList = CSSSelectorParser::resolveNestingParent(WTF::move(*selectorList), nullptr);
 
-        return makeUnique<SelectorQuery>(WTFMove(*selectorList));
+        return makeUnique<SelectorQuery>(WTF::move(*selectorList));
     }).iterator->value.get();
 }
 

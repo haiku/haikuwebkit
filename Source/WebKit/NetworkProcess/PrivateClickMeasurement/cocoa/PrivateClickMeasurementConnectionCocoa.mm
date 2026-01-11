@@ -64,7 +64,7 @@ XPCObjectPtr<xpc_object_t> Connection::dictionaryFromMessage(MessageType message
 {
     // FIXME: This is a false positive. <rdar://164843889>
     SUPPRESS_RETAINPTR_CTOR_ADOPT auto dictionary = adoptXPCObject(xpc_dictionary_create(nullptr, nullptr, 0));
-    addVersionAndEncodedMessageToDictionary(WTFMove(message), dictionary.get());
+    addVersionAndEncodedMessageToDictionary(WTF::move(message), dictionary.get());
     xpc_dictionary_set_uint64(dictionary.get(), protocolMessageTypeKey, static_cast<uint64_t>(messageType));
     return dictionary;
 }

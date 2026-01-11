@@ -1602,7 +1602,7 @@ class CppStyleTest(CppStyleTestBase):
             'void f()\n'
             '{\n'
             '    if (auto createdHandle = SandboxExtension::createHandle(URL.fileSystemPath(), SandboxExtension::Type::ReadWrite))\n'
-            '        handle = WTFMove(*createdHandle);\n'
+            '        handle = WTF::move(*createdHandle);\n'
             '    else\n'
             '        ASSERT_NOT_REACHED();\n\n'
             '    m_dataStore->networkProcess().send(Messages::NetworkProcess::PublishDownloadProgress(m_downloadID, URL, handle), 0);]\n'
@@ -1615,7 +1615,7 @@ class CppStyleTest(CppStyleTestBase):
             'void f()\n'
             '{\n'
             '    if (auto createdHandle = SandboxExtension::createHandle(URL.fileSystemPath(), SandboxExtension::Type::ReadWrite))\n'
-            '        handle = WTFMove(*createdHandle);\n'
+            '        handle = WTF::move(*createdHandle);\n'
             '    else\n'
             '        RELEASE_ASSERT_NOT_REACHED();\n\n'
             '    m_dataStore->networkProcess().send(Messages::NetworkProcess::PublishDownloadProgress(m_downloadID, URL, handle), 0);]\n'
@@ -4935,8 +4935,8 @@ class WebKitStyleTest(CppStyleTestBase):
             'Decoder::Decoder(std::span<const uint8_t> buffer, BufferDeallocator&& bufferDeallocator, Vector<Attachment>&& attachments)\n'
             '    : m_buffer { buffer }\n'
             '    , m_bufferPosition { m_buffer.begin() }\n'
-            '    , m_bufferDeallocator { WTFMove(bufferDeallocator) }\n'
-            '    , m_attachments { WTFMove(attachments) }\n'
+            '    , m_bufferDeallocator { WTF::move(bufferDeallocator) }\n'
+            '    , m_attachments { WTF::move(attachments) }\n'
             '{ }',
             '',
             'Decoder.cpp')
@@ -6071,19 +6071,25 @@ class WebKitStyleTest(CppStyleTestBase):
 
     def test_wtf_move(self):
         self.assert_lint(
-             'A a = WTFMove(b);',
-             '',
-             'foo.cpp')
+            'A a = WTF::move(b);',
+            '',
+            'foo.cpp')
 
         self.assert_lint(
-            'A a = std::move(b);',
-            "Use 'WTFMove()' instead of 'std::move()'."
+            'A a = WTFMove(b);',
+            "Use 'WTF::move()' instead of 'WTFMove()'."
             "  [runtime/wtf_move] [4]",
             'foo.cpp')
 
         self.assert_lint(
             'A a = std::move(b);',
-            "Use 'WTFMove()' instead of 'std::move()'."
+            "Use 'WTF::move()' instead of 'std::move()'."
+            "  [runtime/wtf_move] [4]",
+            'foo.cpp')
+
+        self.assert_lint(
+            'A a = std::move(b);',
+            "Use 'WTF::move()' instead of 'std::move()'."
             "  [runtime/wtf_move] [4]",
             'foo.mm')
 

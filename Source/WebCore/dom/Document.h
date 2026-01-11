@@ -325,6 +325,7 @@ template<typename> class ExceptionOr;
 
 enum class CollectionType : uint8_t;
 enum CSSPropertyID : uint16_t;
+enum class DidUpdateAnyContentRelevancy : bool;
 
 enum class CompositeOperator : uint8_t;
 enum class ContentRelevancy : uint8_t;
@@ -377,6 +378,7 @@ struct RandomCachingKey;
 }
 
 namespace Style {
+class ComputedStyle;
 class CustomPropertyRegistry;
 class Resolver;
 class Scope;
@@ -451,13 +453,13 @@ class Document
     , public Supplementable<Document>
     , public Logger::Observer
     , public ReportingClient {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED_EXPORT(Document, WEBCORE_EXPORT);
+    WTF_MAKE_TZONE_ALLOCATED_EXPORT(Document, WEBCORE_EXPORT);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(Document);
 public:
     USING_CAN_MAKE_WEAKPTR(EventTarget);
     USING_CAN_MAKE_CHECKEDPTR(ScriptExecutionContext);
 
-    void setDidBeginCheckedPtrDeletion()
+    void setDidBeginCheckedPtrDeletion() final
     {
         ContainerNode::setDidBeginCheckedPtrDeletion();
         ScriptExecutionContext::setDidBeginCheckedPtrDeletion();
@@ -745,11 +747,14 @@ public:
 
     WEBCORE_EXPORT bool useElevatedUserInterfaceLevel() const;
     WEBCORE_EXPORT bool useDarkAppearance(const RenderStyle*) const;
+    WEBCORE_EXPORT bool useDarkAppearance(const Style::ComputedStyle*) const;
 #if ENABLE(DARK_MODE_CSS)
-    OptionSet<ColorScheme> resolvedColorScheme(const RenderStyle*) const;
+    OptionSet<ColorScheme> resolvedColorScheme(const Style::ComputedStyle*) const;
 #endif
 
     OptionSet<StyleColorOptions> styleColorOptions(const RenderStyle*) const;
+    OptionSet<StyleColorOptions> styleColorOptions(const Style::ComputedStyle*) const;
+
     CompositeOperator compositeOperatorForBackgroundColor(const Color&, const RenderElement&) const;
 
     WEBCORE_EXPORT Ref<Range> createRange();
@@ -932,8 +937,7 @@ public:
     ScriptableDocumentParser* scriptableDocumentParser() const;
     HTMLDocumentParser* htmlDocumentParser() const;
 
-    bool printing() const { return m_printing; }
-    void setPrinting(bool p) { m_printing = p; }
+    WEBCORE_EXPORT bool printing() const;
 
     bool paginatedForScreen() const { return m_paginatedForScreen; }
     void setPaginatedForScreen(bool p) { m_paginatedForScreen = p; }
@@ -970,9 +974,9 @@ public:
     void setTextColor(const Color& color) { m_textColor = color; }
     const Color& textColor() const { return m_textColor; }
 
-    Color linkColor(const RenderStyle&) const;
-    Color visitedLinkColor(const RenderStyle&) const;
-    Color activeLinkColor(const RenderStyle&) const;
+    Color linkColor(const Style::ComputedStyle&) const;
+    Color visitedLinkColor(const Style::ComputedStyle&) const;
+    Color activeLinkColor(const Style::ComputedStyle&) const;
     void setLinkColor(const Color& c) { m_linkColor = c; }
     void setVisitedLinkColor(const Color& c) { m_visitedLinkColor = c; }
     void setActiveLinkColor(const Color& c) { m_activeLinkColor = c; }
@@ -1076,7 +1080,7 @@ public:
 
     Document& contextDocument() const;
     Ref<Document> protectedContextDocument() const { return contextDocument(); }
-    void setContextDocument(Ref<Document>&& document) { m_contextDocument = WTFMove(document); }
+    void setContextDocument(Ref<Document>&& document) { m_contextDocument = WTF::move(document); }
     
     OptionSet<ParserContentPolicy> parserContentPolicy() const { return m_parserContentPolicy; }
     void setParserContentPolicy(OptionSet<ParserContentPolicy> policy) { m_parserContentPolicy = policy; }
@@ -1562,7 +1566,7 @@ public:
     WEBCORE_EXPORT unsigned styleRecalcCount() const;
 
 #if ENABLE(TOUCH_EVENTS)
-    bool hasTouchEventHandlers() const { return !m_touchEventTargets.isEmptyIgnoringNullReferences(); }
+    bool hasTouchEventHandlers() const;
     bool touchEventTargetsContain(Node& node) const { return m_touchEventTargets.contains(node); }
 #else
     bool hasTouchEventHandlers() const { return false; }
@@ -1865,8 +1869,8 @@ public:
     void runPostRenderingUpdateAnimationTasks();
     WEBCORE_EXPORT DocumentTimeline& timeline();
     DocumentTimeline* existingTimeline() const { return m_timeline.get(); }
-    Vector<RefPtr<WebAnimation>> getAnimations();
-    Vector<RefPtr<WebAnimation>> matchingAnimations(NOESCAPE const Function<bool(Element&)>&);
+    Vector<Ref<WebAnimation>> getAnimations();
+    Vector<Ref<WebAnimation>> matchingAnimations(NOESCAPE const Function<bool(Element&)>&);
     AnimationTimelinesController* timelinesController() const { return m_timelinesController.get(); }
     WEBCORE_EXPORT AnimationTimelinesController& ensureTimelinesController();
     WEBCORE_EXPORT CheckedRef<AnimationTimelinesController> ensureCheckedTimelinesController();
@@ -1963,6 +1967,7 @@ public:
 
     HighlightRegistry* textExtractionHighlightRegistryIfExists() const { return m_textExtractionHighlightRegistry.get(); }
     HighlightRegistry& textExtractionHighlightRegistry();
+    Ref<HighlightRegistry> protectedTextExtractionHighlightRegistry();
         
 #if ENABLE(APP_HIGHLIGHTS)
     HighlightRegistry* appHighlightRegistryIfExists() { return m_appHighlightRegistry.get(); }
@@ -2044,7 +2049,8 @@ public:
     virtual void didChangeViewSize() { }
     bool isNavigationBlockedByThirdPartyIFrameRedirectBlocking(Frame& targetFrame, const URL& destinationURL);
 
-    void updateRelevancyOfContentVisibilityElements();
+    enum UpdateLayoutIfContentVisibilityChanged : bool { No, Yes };
+    DidUpdateAnyContentRelevancy updateRelevancyOfContentVisibilityElements(UpdateLayoutIfContentVisibilityChanged = UpdateLayoutIfContentVisibilityChanged::Yes);
     void scheduleContentRelevancyUpdate(ContentRelevancy);
     void updateContentRelevancyForScrollIfNeeded(const Element& scrollAnchor);
 
@@ -2514,12 +2520,12 @@ private:
 #if ENABLE(TEXT_AUTOSIZING)
     std::unique_ptr<TextAutoSizing> m_textAutoSizing;
 #endif
-        
-    RefPtr<HighlightRegistry> m_highlightRegistry;
-    RefPtr<HighlightRegistry> m_fragmentHighlightRegistry;
-    RefPtr<HighlightRegistry> m_textExtractionHighlightRegistry;
+
+    const RefPtr<HighlightRegistry> m_highlightRegistry;
+    const RefPtr<HighlightRegistry> m_fragmentHighlightRegistry;
+    const RefPtr<HighlightRegistry> m_textExtractionHighlightRegistry;
 #if ENABLE(APP_HIGHLIGHTS)
-    RefPtr<HighlightRegistry> m_appHighlightRegistry;
+    const RefPtr<HighlightRegistry> m_appHighlightRegistry;
     std::unique_ptr<AppHighlightStorage> m_appHighlightStorage;
 #endif
 

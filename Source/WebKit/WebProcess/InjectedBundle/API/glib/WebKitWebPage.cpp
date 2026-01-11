@@ -814,7 +814,7 @@ WebKitWebPage* webkitWebPageCreate(WebPage* webPage)
 void webkitWebPageDidReceiveUserMessage(WebKitWebPage* webPage, UserMessage&& message, CompletionHandler<void(UserMessage&&)>&& completionHandler)
 {
     // Sink the floating ref.
-    GRefPtr<WebKitUserMessage> userMessage = webkitUserMessageCreate(WTFMove(message), WTFMove(completionHandler));
+    GRefPtr<WebKitUserMessage> userMessage = webkitUserMessageCreate(WTF::move(message), WTF::move(completionHandler));
     gboolean returnValue;
     g_signal_emit(webPage, signals[USER_MESSAGE_RECEIVED], 0, userMessage.get(), &returnValue);
 }
@@ -943,20 +943,20 @@ void webkit_web_page_send_message_to_view(WebKitWebPage* webPage, WebKitUserMess
     }
 
     GRefPtr<GTask> task = adoptGRef(g_task_new(webPage, cancellable, callback, userData));
-    CompletionHandler<void(UserMessage&&)> completionHandler = [task = WTFMove(task)](UserMessage&& replyMessage) {
+    CompletionHandler<void(UserMessage&&)> completionHandler = [task = WTF::move(task)](UserMessage&& replyMessage) {
         switch (replyMessage.type) {
         case UserMessage::Type::Null:
             g_task_return_new_error(task.get(), G_IO_ERROR, G_IO_ERROR_CANCELLED, _("Operation was cancelled"));
             break;
         case UserMessage::Type::Message:
-            g_task_return_pointer(task.get(), g_object_ref_sink(webkitUserMessageCreate(WTFMove(replyMessage))), static_cast<GDestroyNotify>(g_object_unref));
+            g_task_return_pointer(task.get(), g_object_ref_sink(webkitUserMessageCreate(WTF::move(replyMessage))), static_cast<GDestroyNotify>(g_object_unref));
             break;
         case UserMessage::Type::Error:
             g_task_return_new_error(task.get(), WEBKIT_USER_MESSAGE_ERROR, replyMessage.errorCode, _("Message %s was not handled"), replyMessage.name.data());
             break;
         }
     };
-    webPage->priv->webPage->sendWithAsyncReply(Messages::WebPageProxy::SendMessageToWebViewWithReply(webkitUserMessageGetMessage(message)), WTFMove(completionHandler));
+    webPage->priv->webPage->sendWithAsyncReply(Messages::WebPageProxy::SendMessageToWebViewWithReply(webkitUserMessageGetMessage(message)), WTF::move(completionHandler));
 }
 
 /**

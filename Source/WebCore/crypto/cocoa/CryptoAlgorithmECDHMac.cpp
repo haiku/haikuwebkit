@@ -38,7 +38,7 @@ static std::optional<Vector<uint8_t>> platformDeriveBitsCryptoKit(const CryptoKe
     auto rv = baseKey.platformKey()->deriveBits(publicKey.platformKey());
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return std::nullopt;
-    return std::make_optional(WTFMove(rv.result));
+    return std::make_optional(WTF::move(rv.result));
 #else
     UNUSED_PARAM(baseKey);
     UNUSED_PARAM(publicKey);

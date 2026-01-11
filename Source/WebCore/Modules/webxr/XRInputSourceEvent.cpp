@@ -35,7 +35,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(XRInputSourceEvent);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(XRInputSourceEvent);
 
 Ref<XRInputSourceEvent> XRInputSourceEvent::create(const AtomString& type, const Init& initializer, IsTrusted isTrusted)
 {

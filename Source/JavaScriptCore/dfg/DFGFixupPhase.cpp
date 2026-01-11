@@ -4368,7 +4368,7 @@ private:
         emitPrimordialCheckFor(globalObject->regExpProtoUnicodeGetter(), vm().propertyNames->unicode.impl());
         // Check that searchRegExp.unicodeSets is the primordial RegExp.prototype.unicodeSets
         emitPrimordialCheckFor(globalObject->regExpProtoUnicodeSetsGetter(), vm().propertyNames->unicodeSets.impl());
-        // Check that searchRegExp[Symbol.match] is the primordial RegExp.prototype[Symbol.replace]
+        // Check that searchRegExp[Symbol.replace] is the primordial RegExp.prototype[Symbol.replace]
         emitPrimordialCheckFor(globalObject->regExpProtoSymbolReplaceFunction(), vm().propertyNames->replaceSymbol.impl());
     }
 

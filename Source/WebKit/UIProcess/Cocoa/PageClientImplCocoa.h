@@ -52,6 +52,7 @@ struct TextAnimationData;
 enum class TextAnimationType : uint8_t;
 
 class PageClientImplCocoa : public PageClient {
+    WTF_MAKE_TZONE_ALLOCATED(PageClientImplCocoa);
 public:
     PageClientImplCocoa(WKWebView *);
     virtual ~PageClientImplCocoa();

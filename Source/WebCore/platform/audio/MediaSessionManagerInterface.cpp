@@ -216,7 +216,7 @@ bool MediaSessionManagerInterface::hasActiveNowPlayingSessionInGroup(std::option
 
 void MediaSessionManagerInterface::enqueueTaskOnMainThread(Function<void()>&& task)
 {
-    callOnMainThread(CancellableTask(m_taskGroup, [task = WTFMove(task)] () mutable {
+    callOnMainThread(CancellableTask(m_taskGroup, [task = WTF::move(task)] () mutable {
         task();
     }));
 }
@@ -587,11 +587,11 @@ void MediaSessionManagerInterface::processDidReceiveRemoteControlCommand(Platfor
             continue;
 
         if (session->isNowPlayingEligible()) {
-            activeSession = WTFMove(session);
+            activeSession = WTF::move(session);
             break;
         }
         if (!activeSession)
-            activeSession = WTFMove(session);
+            activeSession = WTF::move(session);
     }
 
     if (activeSession)

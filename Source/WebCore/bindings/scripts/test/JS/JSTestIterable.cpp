@@ -136,7 +136,7 @@ void JSTestIterablePrototype::finishCreation(VM& vm)
 const ClassInfo JSTestIterable::s_info = { "TestIterable"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSTestIterable) };
 
 JSTestIterable::JSTestIterable(Structure* structure, JSDOMGlobalObject& globalObject, Ref<TestIterable>&& impl)
-    : JSDOMWrapper<TestIterable>(structure, globalObject, WTFMove(impl))
+    : JSDOMWrapper<TestIterable>(structure, globalObject, WTF::move(impl))
 {
 }
 
@@ -206,13 +206,13 @@ public:
 
     static TestIterableIterator* create(JSC::VM& vm, JSC::Structure* structure, JSTestIterable& iteratedObject, IterationKind kind, InternalIterator&& iterator)
     {
-        auto* instance = new (NotNull, JSC::allocateCell<TestIterableIterator>(vm)) TestIterableIterator(structure, iteratedObject, kind, WTFMove(iterator));
+        auto* instance = new (NotNull, JSC::allocateCell<TestIterableIterator>(vm)) TestIterableIterator(structure, iteratedObject, kind, WTF::move(iterator));
         instance->finishCreation(vm);
         return instance;
     }
 private:
     TestIterableIterator(JSC::Structure* structure, JSTestIterable& iteratedObject, IterationKind kind, InternalIterator&& iterator)
-        : Base(structure, iteratedObject, kind, WTFMove(iterator))
+        : Base(structure, iteratedObject, kind, WTF::move(iterator))
     {
     }
 };
@@ -345,7 +345,7 @@ JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlo
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestIterable>(impl.ptr());
 #endif
-    return createWrapper<TestIterable>(globalObject, WTFMove(impl));
+    return createWrapper<TestIterable>(globalObject, WTF::move(impl));
 }
 
 JSC::JSValue toJS(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, TestIterable& impl)

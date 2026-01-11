@@ -317,12 +317,12 @@ static RetainPtr<ViewType> makeLabel(NSAttributedString *attributedString)
         completionHandler(WebKit::ContinueUnsafeLoad::Yes);
         return nil;
     }
-    _completionHandler = [weakSelf = WeakObjCPtr<_WKWarningView>(self), completionHandler = WTFMove(completionHandler)] (Variant<WebKit::ContinueUnsafeLoad, URL>&& result) mutable {
+    _completionHandler = [weakSelf = WeakObjCPtr<_WKWarningView>(self), completionHandler = WTF::move(completionHandler)] (Variant<WebKit::ContinueUnsafeLoad, URL>&& result) mutable {
 #if PLATFORM(WATCHOS)
         if (auto strongSelf = weakSelf.get())
             [strongSelf.get()->_previousFirstResponder becomeFirstResponder];
 #endif
-        completionHandler(WTFMove(result));
+        completionHandler(WTF::move(result));
     };
     _warning = &warning;
 #if PLATFORM(MAC)
@@ -547,7 +547,7 @@ static RetainPtr<ViewType> makeLabel(NSAttributedString *attributedString)
 
 - (void)dealloc
 {
-    ensureOnMainRunLoop([completionHandler = WTFMove(_completionHandler), warning = WTFMove(_warning)] () mutable {
+    ensureOnMainRunLoop([completionHandler = WTF::move(_completionHandler), warning = WTF::move(_warning)] () mutable {
         if (completionHandler)
             completionHandler(WebKit::ContinueUnsafeLoad::No);
     });

@@ -41,8 +41,8 @@ namespace WebCore {
 
 StyleCrossfadeImage::StyleCrossfadeImage(RefPtr<StyleImage>&& from, RefPtr<StyleImage>&& to, double percentage, bool isPrefixed)
     : StyleGeneratedImage { Type::CrossfadeImage, StyleCrossfadeImage::isFixedSize }
-    , m_from { WTFMove(from) }
-    , m_to { WTFMove(to) }
+    , m_from { WTF::move(from) }
+    , m_to { WTF::move(to) }
     , m_percentage { percentage }
     , m_isPrefixed { isPrefixed }
     , m_inputImagesAreReady { false }
@@ -88,7 +88,7 @@ Ref<CSSValue> StyleCrossfadeImage::computedStyleValue(const RenderStyle& style) 
 {
     auto fromComputedValue = m_from ? m_from->computedStyleValue(style) : upcast<CSSValue>(CSSPrimitiveValue::create(CSSValueNone));
     auto toComputedValue = m_to ? m_to->computedStyleValue(style) : upcast<CSSValue>(CSSPrimitiveValue::create(CSSValueNone));
-    return CSSCrossfadeValue::create(WTFMove(fromComputedValue), WTFMove(toComputedValue), CSSPrimitiveValue::create(m_percentage), m_isPrefixed);
+    return CSSCrossfadeValue::create(WTF::move(fromComputedValue), WTF::move(toComputedValue), CSSPrimitiveValue::create(m_percentage), m_isPrefixed);
 }
 
 bool StyleCrossfadeImage::isPending() const

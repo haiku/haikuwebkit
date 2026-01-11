@@ -110,6 +110,7 @@ public:
     LayoutRect boundingBoxRect() const final;
 
     RenderObject* renderer() const final { return m_renderer.get(); }
+    CheckedPtr<RenderObject> checkedRenderer() const { return renderer(); }
     Document* document() const final;
 
     URL url() const final;

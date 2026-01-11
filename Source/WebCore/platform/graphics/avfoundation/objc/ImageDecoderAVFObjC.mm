@@ -243,13 +243,13 @@ class ImageDecoderAVFObjCSample : public MediaSampleAVFObjC {
 public:
     static Ref<ImageDecoderAVFObjCSample> create(RetainPtr<CMSampleBufferRef>&& sampleBuffer)
     {
-        return adoptRef(*new ImageDecoderAVFObjCSample(WTFMove(sampleBuffer)));
+        return adoptRef(*new ImageDecoderAVFObjCSample(WTF::move(sampleBuffer)));
     }
 
     CGImageRef image() const { return m_image.get(); }
     void setImage(RetainPtr<CGImageRef>&& image)
     {
-        m_image = WTFMove(image);
+        m_image = WTF::move(image);
         if (!m_image) {
             m_hasAlpha = false;
             return;
@@ -276,7 +276,7 @@ public:
 
 private:
     ImageDecoderAVFObjCSample(RetainPtr<CMSampleBufferRef>&& sample)
-        : MediaSampleAVFObjC(WTFMove(sample))
+        : MediaSampleAVFObjC(WTF::move(sample))
     {
     }
 
@@ -344,7 +344,7 @@ RefPtr<ImageDecoderAVFObjC> ImageDecoderAVFObjC::create(const FragmentedSharedBu
     if (!canLoad_VideoToolbox_VTCreateCGImageFromCVPixelBuffer())
         return nullptr;
 
-    return adoptRef(*new ImageDecoderAVFObjC(data, mimeType, alphaOption, gammaAndColorProfileOption, WTFMove(resourceOwner)));
+    return adoptRef(*new ImageDecoderAVFObjC(data, mimeType, alphaOption, gammaAndColorProfileOption, WTF::move(resourceOwner)));
 }
 
 ImageDecoderAVFObjC::ImageDecoderAVFObjC(const FragmentedSharedBuffer& data, const String& mimeType, AlphaOption, GammaAndColorProfileOption, ProcessIdentity resourceOwner)
@@ -354,14 +354,14 @@ ImageDecoderAVFObjC::ImageDecoderAVFObjC(const FragmentedSharedBuffer& data, con
     , m_asset(adoptNS([PAL::allocAVURLAssetInstance() initWithURL:customSchemeURLSingleton() options:imageDecoderAssetOptionsSingleton()]))
     , m_loader(adoptNS([[WebCoreSharedBufferResourceLoaderDelegate alloc] initWithParent:this]))
     , m_decompressionSession(WebCoreDecompressionSession::createRGB())
-    , m_resourceOwner(WTFMove(resourceOwner))
+    , m_resourceOwner(WTF::move(resourceOwner))
 {
     m_decompressionSession->setResourceOwner(m_resourceOwner);
     [m_loader updateData:data.makeContiguous()->createNSData().get() complete:NO];
 
     [retainPtr(m_asset.get().resourceLoader) setDelegate:m_loader.get() queue:globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
     [m_asset loadValuesAsynchronouslyForKeys:@[@"tracks"] completionHandler:[protectedThis = Ref { *this }] () mutable {
-        callOnMainThread([protectedThis = WTFMove(protectedThis)] {
+        callOnMainThread([protectedThis = WTF::move(protectedThis)] {
             protectedThis->setTrack(protectedThis->protectedFirstEnabledTrack().get());
         });
     }];
@@ -423,7 +423,7 @@ void ImageDecoderAVFObjC::readSamples()
         // and do not carry media data.
         if (!(PAL::CMSampleBufferGetNumSamples(sampleBuffer.get())))
             continue;
-        m_sampleData.addSample(ImageDecoderAVFObjCSample::create(WTFMove(sampleBuffer)).get());
+        m_sampleData.addSample(ImageDecoderAVFObjCSample::create(WTF::move(sampleBuffer)).get());
     }
 
     if (m_encodedDataStatusChangedCallback)
@@ -444,7 +444,7 @@ void ImageDecoderAVFObjC::readTrackMetadata()
         || !m_imageRotationSession->transform()
         || m_imageRotationSession->transform().value() != finalTransform
         || m_imageRotationSession->size() != size)
-        m_imageRotationSession = makeUnique<ImageRotationSessionVT>(WTFMove(finalTransform), size, ImageRotationSessionVT::IsCGImageCompatible::Yes);
+        m_imageRotationSession = makeUnique<ImageRotationSessionVT>(WTF::move(finalTransform), size, ImageRotationSessionVT::IsCGImageCompatible::Yes);
 
     m_size = expandedIntSize(m_imageRotationSession->rotatedSize());
 }
@@ -509,7 +509,7 @@ void ImageDecoderAVFObjC::setTrack(AVAssetTrack *track)
     m_imageRotationSession = nullptr;
 
     [track loadValuesAsynchronouslyForKeys:@[@"naturalSize", @"preferredTransform"] completionHandler:[protectedThis = Ref { *this }] () mutable {
-        callOnMainThread([protectedThis = WTFMove(protectedThis)] {
+        callOnMainThread([protectedThis = WTF::move(protectedThis)] {
             protectedThis->readTrackMetadata();
             protectedThis->readSamples();
         });
@@ -518,7 +518,7 @@ void ImageDecoderAVFObjC::setTrack(AVAssetTrack *track)
 
 void ImageDecoderAVFObjC::setEncodedDataStatusChangeCallback(WTF::Function<void(EncodedDataStatus)>&& callback)
 {
-    m_encodedDataStatusChangedCallback = WTFMove(callback);
+    m_encodedDataStatusChangedCallback = WTF::move(callback);
 }
 
 EncodedDataStatus ImageDecoderAVFObjC::encodedDataStatus() const
@@ -617,11 +617,9 @@ PlatformImagePtr ImageDecoderAVFObjC::createFrameImageAtIndex(size_t index, Subs
 
     if (decodeTime < Ref { m_cursor->second }->decodeTime()) {
         // Rewind cursor to the last sync sample to begin decoding
-        m_cursor = m_sampleData.decodeOrder().findSampleWithDecodeKey({decodeTime, sampleData->presentationTime()});
-        do {
-            if (Ref { m_cursor->second }->isSync())
-                break;
-        } while (--m_cursor != m_sampleData.decodeOrder().begin());
+        m_cursor = m_sampleData.decodeOrder().findSyncSamplePriorToDecodeKey({ decodeTime, sampleData->presentationTime() });
+        if (m_cursor == m_sampleData.decodeOrder().end())
+            return nullptr;
     }
 
     while (true) {

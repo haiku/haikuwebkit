@@ -46,29 +46,29 @@ constexpr double highlightFadeAnimationFrameRate = 30;
 
 Ref<DataDetectorHighlight> DataDetectorHighlight::createForSelection(DataDetectorHighlightClient& client, RetainPtr<DDHighlightRef>&& ddHighlight, SimpleRange&& range)
 {
-    return adoptRef(*new DataDetectorHighlight(client, DataDetectorHighlight::Type::Selection, WTFMove(ddHighlight), { WTFMove(range) }));
+    return adoptRef(*new DataDetectorHighlight(client, DataDetectorHighlight::Type::Selection, WTF::move(ddHighlight), { WTF::move(range) }));
 }
 
 Ref<DataDetectorHighlight> DataDetectorHighlight::createForTelephoneNumber(DataDetectorHighlightClient& client, RetainPtr<DDHighlightRef>&& ddHighlight, SimpleRange&& range)
 {
-    return adoptRef(*new DataDetectorHighlight(client, DataDetectorHighlight::Type::TelephoneNumber, WTFMove(ddHighlight), { WTFMove(range) }));
+    return adoptRef(*new DataDetectorHighlight(client, DataDetectorHighlight::Type::TelephoneNumber, WTF::move(ddHighlight), { WTF::move(range) }));
 }
 
 Ref<DataDetectorHighlight> DataDetectorHighlight::createForImageOverlay(DataDetectorHighlightClient& client, RetainPtr<DDHighlightRef>&& ddHighlight, SimpleRange&& range)
 {
-    return adoptRef(*new DataDetectorHighlight(client, DataDetectorHighlight::Type::ImageOverlay, WTFMove(ddHighlight), { WTFMove(range) }));
+    return adoptRef(*new DataDetectorHighlight(client, DataDetectorHighlight::Type::ImageOverlay, WTF::move(ddHighlight), { WTF::move(range) }));
 }
 
 #if ENABLE(UNIFIED_PDF_DATA_DETECTION)
 Ref<DataDetectorHighlight> DataDetectorHighlight::createForPDFSelection(DataDetectorHighlightClient& client, RetainPtr<DDHighlightRef>&& ddHighlight)
 {
-    return adoptRef(*new DataDetectorHighlight(client, DataDetectorHighlight::Type::PDFSelection, WTFMove(ddHighlight), { }));
+    return adoptRef(*new DataDetectorHighlight(client, DataDetectorHighlight::Type::PDFSelection, WTF::move(ddHighlight), { }));
 }
 #endif
 
 DataDetectorHighlight::DataDetectorHighlight(DataDetectorHighlightClient& client, Type type, RetainPtr<DDHighlightRef>&& ddHighlight, std::optional<SimpleRange>&& range)
     : m_client(client)
-    , m_range(WTFMove(range))
+    , m_range(WTF::move(range))
     , m_graphicsLayer(client.createGraphicsLayer(*this).releaseNonNull())
     , m_type(type)
     , m_fadeAnimationTimer(*this, &DataDetectorHighlight::fadeAnimationTimerFired)
@@ -144,7 +144,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     CGContextDrawLayerInRect(cgContext.get(), highlightBoundingRect, highlightLayer.get());
 
-    graphicsContext.drawConsumingImageBuffer(WTFMove(imageBuffer), highlightBoundingRect);
+    graphicsContext.drawConsumingImageBuffer(WTF::move(imageBuffer), highlightBoundingRect);
 }
 
 float DataDetectorHighlight::deviceScaleFactor() const

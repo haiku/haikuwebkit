@@ -54,6 +54,7 @@ static void applyUASheetBehaviorsToContext(CSSParserContext& context)
     context.propertySettings.supportHDRDisplayEnabled = true;
     context.propertySettings.viewTransitionsEnabled = true;
     context.propertySettings.cssFieldSizingEnabled = true;
+    context.cssMathDepthEnabled = true;
     context.propertySettings.cssMathDepthEnabled = true;
 #if HAVE(CORE_MATERIAL)
     context.propertySettings.useSystemAppearance = true;
@@ -78,46 +79,53 @@ CSSParserContext::CSSParserContext(const Document& document)
 }
 
 CSSParserContext::CSSParserContext(const Document& document, const URL& sheetBaseURL, ASCIILiteral charset)
-    : baseURL { sheetBaseURL.isNull() ? document.baseURL() : sheetBaseURL }
-    , charset { charset }
-    , mode { document.inQuirksMode() ? HTMLQuirksMode : HTMLStandardMode }
-    , isHTMLDocument { document.isHTMLDocument() }
-    , hasDocumentSecurityOrigin { sheetBaseURL.isNull() || document.protectedSecurityOrigin()->canRequest(baseURL, OriginAccessPatternsForWebProcess::singleton()) }
-    , useSystemAppearance { document.settings().useSystemAppearance() }
-    , counterStyleAtRuleImageSymbolsEnabled { document.settings().cssCounterStyleAtRuleImageSymbolsEnabled() }
-    , springTimingFunctionEnabled { document.settings().springTimingFunctionEnabled() }
+    : CSSParserContext(document.settings())
+{
+    baseURL = sheetBaseURL.isNull() ? document.baseURL() : sheetBaseURL;
+    this->charset = charset;
+    mode = document.inQuirksMode() ? HTMLQuirksMode : HTMLStandardMode;
+    isHTMLDocument = document.isHTMLDocument();
+    hasDocumentSecurityOrigin = sheetBaseURL.isNull() || document.protectedSecurityOrigin()->canRequest(baseURL, OriginAccessPatternsForWebProcess::singleton());
+    webkitMediaTextTrackDisplayQuirkEnabled = document.quirks().needsWebKitMediaTextTrackDisplayQuirk();
+}
+
+CSSParserContext::CSSParserContext(const Settings& settings)
+    : mode { HTMLStandardMode }
+    , useSystemAppearance { settings.useSystemAppearance() }
+    , counterStyleAtRuleImageSymbolsEnabled { settings.cssCounterStyleAtRuleImageSymbolsEnabled() }
+    , springTimingFunctionEnabled { settings.springTimingFunctionEnabled() }
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
-    , cssTransformStyleSeparatedEnabled { document.settings().cssTransformStyleSeparatedEnabled() }
+    , cssTransformStyleSeparatedEnabled { settings.cssTransformStyleSeparatedEnabled() }
 #endif
-    , gridLanesEnabled { document.settings().gridLanesEnabled() }
-    , cssAppearanceBaseEnabled { document.settings().cssAppearanceBaseEnabled() }
-    , cssPaintingAPIEnabled { document.settings().cssPaintingAPIEnabled() }
-    , cssShapeFunctionEnabled { document.settings().cssShapeFunctionEnabled() }
-    , cssTextDecorationLineErrorValues { document.settings().cssTextDecorationLineErrorValues() }
-    , cssBackgroundClipBorderAreaEnabled  { document.settings().cssBackgroundClipBorderAreaEnabled() }
-    , cssWordBreakAutoPhraseEnabled { document.settings().cssWordBreakAutoPhraseEnabled() }
-    , popoverAttributeEnabled { document.settings().popoverAttributeEnabled() }
-    , sidewaysWritingModesEnabled { document.settings().sidewaysWritingModesEnabled() }
-    , cssTextWrapPrettyEnabled { document.settings().cssTextWrapPrettyEnabled() }
-    , thumbAndTrackPseudoElementsEnabled { document.settings().thumbAndTrackPseudoElementsEnabled() }
+    , gridLanesEnabled { settings.gridLanesEnabled() }
+    , cssAppearanceBaseEnabled { settings.cssAppearanceBaseEnabled() }
+    , cssPaintingAPIEnabled { settings.cssPaintingAPIEnabled() }
+    , cssShapeFunctionEnabled { settings.cssShapeFunctionEnabled() }
+    , cssTextDecorationLineErrorValues { settings.cssTextDecorationLineErrorValues() }
+    , cssBackgroundClipBorderAreaEnabled { settings.cssBackgroundClipBorderAreaEnabled() }
+    , cssWordBreakAutoPhraseEnabled { settings.cssWordBreakAutoPhraseEnabled() }
+    , popoverAttributeEnabled { settings.popoverAttributeEnabled() }
+    , sidewaysWritingModesEnabled { settings.sidewaysWritingModesEnabled() }
+    , cssTextWrapPrettyEnabled { settings.cssTextWrapPrettyEnabled() }
+    , thumbAndTrackPseudoElementsEnabled { settings.thumbAndTrackPseudoElementsEnabled() }
 #if ENABLE(SERVICE_CONTROLS)
-    , imageControlsEnabled { document.settings().imageControlsEnabled() }
+    , imageControlsEnabled { settings.imageControlsEnabled() }
 #endif
-    , colorLayersEnabled { document.settings().cssColorLayersEnabled() }
-    , contrastColorEnabled { document.settings().cssContrastColorEnabled() }
-    , targetTextPseudoElementEnabled { document.settings().targetTextPseudoElementEnabled() }
-    , cssProgressFunctionEnabled { document.settings().cssProgressFunctionEnabled() }
-    , cssRandomFunctionEnabled { document.settings().cssRandomFunctionEnabled() }
-    , cssTreeCountingFunctionsEnabled { document.settings().cssTreeCountingFunctionsEnabled() }
-    , cssURLModifiersEnabled { document.settings().cssURLModifiersEnabled() }
-    , cssURLIntegrityModifierEnabled { document.settings().cssURLIntegrityModifierEnabled() }
-    , cssAxisRelativePositionKeywordsEnabled { document.settings().cssAxisRelativePositionKeywordsEnabled() }
-    , cssDynamicRangeLimitMixEnabled { document.settings().cssDynamicRangeLimitMixEnabled() }
-    , cssConstrainedDynamicRangeLimitEnabled { document.settings().cssConstrainedDynamicRangeLimitEnabled() }
-    , cssTextTransformMathAutoEnabled { document.settings().cssTextTransformMathAutoEnabled() }
-    , cssInternalAutoBaseParsingEnabled { document.settings().cssInternalAutoBaseParsingEnabled() }
-    , webkitMediaTextTrackDisplayQuirkEnabled { document.quirks().needsWebKitMediaTextTrackDisplayQuirk() }
-    , propertySettings { CSSPropertySettings { document.settings() } }
+    , colorLayersEnabled { settings.cssColorLayersEnabled() }
+    , contrastColorEnabled { settings.cssContrastColorEnabled() }
+    , targetTextPseudoElementEnabled { settings.targetTextPseudoElementEnabled() }
+    , cssProgressFunctionEnabled { settings.cssProgressFunctionEnabled() }
+    , cssRandomFunctionEnabled { settings.cssRandomFunctionEnabled() }
+    , cssTreeCountingFunctionsEnabled { settings.cssTreeCountingFunctionsEnabled() }
+    , cssURLModifiersEnabled { settings.cssURLModifiersEnabled() }
+    , cssURLIntegrityModifierEnabled { settings.cssURLIntegrityModifierEnabled() }
+    , cssAxisRelativePositionKeywordsEnabled { settings.cssAxisRelativePositionKeywordsEnabled() }
+    , cssDynamicRangeLimitMixEnabled { settings.cssDynamicRangeLimitMixEnabled() }
+    , cssConstrainedDynamicRangeLimitEnabled { settings.cssConstrainedDynamicRangeLimitEnabled() }
+    , cssTextTransformMathAutoEnabled { settings.cssTextTransformMathAutoEnabled() }
+    , cssInternalAutoBaseParsingEnabled { settings.cssInternalAutoBaseParsingEnabled() }
+    , cssMathDepthEnabled { settings.cssMathDepthEnabled() }
+    , propertySettings { CSSPropertySettings { settings } }
 {
 }
 
@@ -157,8 +165,11 @@ void add(Hasher& hasher, const CSSParserContext& context)
         | context.cssConstrainedDynamicRangeLimitEnabled    << 27
         | context.cssTextDecorationLineErrorValues          << 28
         | context.cssTextTransformMathAutoEnabled           << 29
-        | context.cssInternalAutoBaseParsingEnabled         << 30;
+        | context.cssInternalAutoBaseParsingEnabled         << 30
+        | context.cssTextTransformMathAutoEnabled           << 31;
     add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits);
+    uint32_t bits2 =  context.cssMathDepthEnabled           << 0;
+    add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits, bits2);
 }
 
 void CSSParserContext::setUASheetMode()

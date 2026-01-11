@@ -94,14 +94,14 @@ void NetworkStorageSession::deleteCookie(const Cookie& cookie, CompletionHandler
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies) || m_isInMemoryCookieStore);
 
-    auto work = [completionHandler = WTFMove(completionHandler), cookieStorage = RetainPtr { nsCookieStorage() }, cookie = cookie.createNSHTTPCookie()] () mutable {
+    auto work = [completionHandler = WTF::move(completionHandler), cookieStorage = RetainPtr { nsCookieStorage() }, cookie = cookie.createNSHTTPCookie()] () mutable {
         [cookieStorage deleteCookie:cookie.get()];
-        ensureOnMainThread(WTFMove(completionHandler));
+        ensureOnMainThread(WTF::move(completionHandler));
     };
 
     if (m_isInMemoryCookieStore)
         return work();
-    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTF::move(work)).get());
 }
 
 static Vector<Cookie> nsCookiesToCookieVector(NSArray<NSHTTPCookie *> *nsCookies, NOESCAPE const Function<bool(NSHTTPCookie *)>& filter = { })
@@ -162,7 +162,7 @@ void NetworkStorageSession::setAllCookiesToSameSiteStrict(const RegistrableDomai
         }
     }
 
-    auto aggregator = CallbackAggregator::create([completionHandler = WTFMove(completionHandler), newCookiesToAdd = WTFMove(newCookiesToAdd), cookieStorage = RetainPtr { nsCookieStorage() }] () mutable {
+    auto aggregator = CallbackAggregator::create([completionHandler = WTF::move(completionHandler), newCookiesToAdd = WTF::move(newCookiesToAdd), cookieStorage = RetainPtr { nsCookieStorage() }] () mutable {
         BEGIN_BLOCK_OBJC_EXCEPTIONS
         for (NSHTTPCookie *newCookie in newCookiesToAdd.get())
             [cookieStorage setCookie:newCookie];
@@ -260,18 +260,18 @@ void NetworkStorageSession::deleteHTTPCookie(CFHTTPCookieStorageRef cookieStorag
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies) || m_isInMemoryCookieStore);
     
-    auto work = [completionHandler = WTFMove(completionHandler), cookieStorage = RetainPtr { cookieStorage }, cookie = RetainPtr { cookie }, isInMemoryCookieStore = m_isInMemoryCookieStore] () mutable {
+    auto work = [completionHandler = WTF::move(completionHandler), cookieStorage = RetainPtr { cookieStorage }, cookie = RetainPtr { cookie }, isInMemoryCookieStore = m_isInMemoryCookieStore] () mutable {
         if (!cookieStorage) {
             RELEASE_ASSERT(!isInMemoryCookieStore);
             [[NSHTTPCookieStorage sharedHTTPCookieStorage] deleteCookie:cookie.get()];
         } else
             CFHTTPCookieStorageDeleteCookie(cookieStorage.get(), [cookie _GetInternalCFHTTPCookie]);
-        ensureOnMainThread(WTFMove(completionHandler));
+        ensureOnMainThread(WTF::move(completionHandler));
     };
 
     if (m_isInMemoryCookieStore)
         return work();
-    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTF::move(work)).get());
 }
 
 static RetainPtr<NSDictionary> policyProperties(const SameSiteInfo& sameSiteInfo, NSURL *url, NSString *partition, ThirdPartyCookieBlockingDecision thirdPartyCookieBlockingDecision)
@@ -312,7 +312,7 @@ static RetainPtr<NSArray> cookiesForURLFromStorage(NSHTTPCookieStorage *storage,
     // array of cookies the partition was nil, or if we should return both partitioned and unpartitioned
     // cookies
     if (!partition || thirdPartyCookieBlockingDecision == ThirdPartyCookieBlockingDecision::None)
-        return WTFMove(*cookiesPtr);
+        return WTF::move(*cookiesPtr);
 
     // Filter all cookies that aren't in the specified partition.
     RetainPtr<NSMutableArray<NSHTTPCookie *>> partitionedCookies = adoptNS([[NSMutableArray alloc] initWithCapacity:[cookiesPtr->get() count]]);
@@ -321,7 +321,7 @@ static RetainPtr<NSArray> cookiesForURLFromStorage(NSHTTPCookieStorage *storage,
             continue;
         [partitionedCookies.get() addObject:nsCookie];
     }
-    return WTFMove(partitionedCookies);
+    return WTF::move(partitionedCookies);
 }
 
 void NetworkStorageSession::setHTTPCookiesForURL(CFHTTPCookieStorageRef cookieStorage, NSArray *cookies, NSURL *url, NSURL *mainDocumentURL, NSString *partition, const SameSiteInfo& sameSiteInfo, ThirdPartyCookieBlockingDecision thirdPartyCookieBlockingDecision) const
@@ -467,7 +467,7 @@ std::pair<String, bool> NetworkStorageSession::cookiesForDOM(const URL& firstPar
 
 std::optional<Vector<Cookie>> NetworkStorageSession::cookiesForDOMAsVector(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, IncludeSecureCookies includeSecureCookies, ApplyTrackingPrevention applyTrackingPrevention, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking, IsKnownCrossSiteTracker isKnownCrossSiteTracker, CookieStoreGetOptions&& options) const
 {
-    return cookiesForSessionAsVector(firstParty, sameSiteInfo, url, frameID, pageID, CookiesFor::DOM, includeSecureCookies, applyTrackingPrevention, shouldRelaxThirdPartyCookieBlocking, isKnownCrossSiteTracker, WTFMove(options));
+    return cookiesForSessionAsVector(firstParty, sameSiteInfo, url, frameID, pageID, CookiesFor::DOM, includeSecureCookies, applyTrackingPrevention, shouldRelaxThirdPartyCookieBlocking, isKnownCrossSiteTracker, WTF::move(options));
 }
 
 std::pair<String, bool> NetworkStorageSession::cookieRequestHeaderFieldValue(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, IncludeSecureCookies includeSecureCookies, ApplyTrackingPrevention applyTrackingPrevention, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking, IsKnownCrossSiteTracker isKnownCrossSiteTracker) const
@@ -619,7 +619,7 @@ void NetworkStorageSession::deleteCookie(const URL& firstParty, const URL& url, 
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
 
-    auto aggregator = CallbackAggregator::create(WTFMove(completionHandler));
+    auto aggregator = CallbackAggregator::create(WTF::move(completionHandler));
     
     BEGIN_BLOCK_OBJC_EXCEPTIONS
 
@@ -658,19 +658,19 @@ void NetworkStorageSession::deleteAllCookies(CompletionHandler<void()>&& complet
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
 
-    auto work = [completionHandler = WTFMove(completionHandler), cookieStorage = RetainPtr { cookieStorage() }] () mutable {
+    auto work = [completionHandler = WTF::move(completionHandler), cookieStorage = RetainPtr { cookieStorage() }] () mutable {
         if (!cookieStorage) {
             RetainPtr cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
             for (NSHTTPCookie *cookie in [cookieStorage cookies])
                 [cookieStorage deleteCookie:cookie];
         } else
             CFHTTPCookieStorageDeleteAllCookies(cookieStorage.get());
-        ensureOnMainThread(WTFMove(completionHandler));
+        ensureOnMainThread(WTF::move(completionHandler));
     };
     
     if (m_isInMemoryCookieStore)
         return work();
-    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTF::move(work)).get());
 }
 
 void NetworkStorageSession::deleteCookiesMatching(NOESCAPE const Function<bool(NSHTTPCookie *)>& matches, CompletionHandler<void()>&& completionHandler)
@@ -681,9 +681,9 @@ void NetworkStorageSession::deleteCookiesMatching(NOESCAPE const Function<bool(N
 
     RetainPtr<CFHTTPCookieStorageRef> cookieStorage = this->cookieStorage();
     auto nsCookieStorage = adoptNS([[NSHTTPCookieStorage alloc] _initWithCFHTTPCookieStorage:cookieStorage.get()]);
-    auto aggregator = CallbackAggregator::create([completionHandler = WTFMove(completionHandler), nsCookieStorage = WTFMove(nsCookieStorage)] () mutable {
-        [nsCookieStorage _saveCookies:makeBlockPtr([completionHandler = WTFMove(completionHandler)] () mutable {
-            ensureOnMainThread(WTFMove(completionHandler));
+    auto aggregator = CallbackAggregator::create([completionHandler = WTF::move(completionHandler), nsCookieStorage = WTF::move(nsCookieStorage)] () mutable {
+        [nsCookieStorage _saveCookies:makeBlockPtr([completionHandler = WTF::move(completionHandler)] () mutable {
+            ensureOnMainThread(WTF::move(completionHandler));
         }).get()];
     });
 
@@ -713,7 +713,7 @@ void NetworkStorageSession::deleteCookies(const ClientOrigin& origin, Completion
             return equalIgnoringNullity(cachePartition, String(cookie._storagePartition));
         });
         return partitionMatched && domain == String(cookie.domain);
-    }, WTFMove(completionHandler));
+    }, WTF::move(completionHandler));
 }
 
 void NetworkStorageSession::deleteCookiesForHostnames(const Vector<String>& hostnames, IncludeHttpOnlyCookies includeHttpOnlyCookies, ScriptWrittenCookiesOnly scriptWrittenCookiesOnly, CompletionHandler<void()>&& completionHandler)
@@ -733,7 +733,7 @@ void NetworkStorageSession::deleteCookiesForHostnames(const Vector<String>& host
         UNUSED_PARAM(scriptWrittenCookiesOnly);
 #endif
         return hostnamesSet.contains(String(cookie.domain));
-    }, WTFMove(completionHandler));
+    }, WTF::move(completionHandler));
 }
 
 void NetworkStorageSession::deleteAllCookiesModifiedSince(WallTime timePoint, CompletionHandler<void()>&& completionHandler)
@@ -745,16 +745,16 @@ void NetworkStorageSession::deleteAllCookiesModifiedSince(WallTime timePoint, Co
         return completionHandler();
 
     NSTimeInterval timeInterval = timePoint.secondsSinceEpoch().seconds();
-    auto work = [completionHandler = WTFMove(completionHandler), storage = RetainPtr { nsCookieStorage() }, date = RetainPtr { [NSDate dateWithTimeIntervalSince1970:timeInterval] }] () mutable {
+    auto work = [completionHandler = WTF::move(completionHandler), storage = RetainPtr { nsCookieStorage() }, date = RetainPtr { [NSDate dateWithTimeIntervalSince1970:timeInterval] }] () mutable {
         [storage removeCookiesSinceDate:date.get()];
-        [storage _saveCookies:makeBlockPtr([completionHandler = WTFMove(completionHandler)] () mutable {
-            ensureOnMainThread(WTFMove(completionHandler));
+        [storage _saveCookies:makeBlockPtr([completionHandler = WTF::move(completionHandler)] () mutable {
+            ensureOnMainThread(WTF::move(completionHandler));
         }).get()];
     };
 
     if (m_isInMemoryCookieStore)
         return work();
-    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTFMove(work)).get());
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr(WTF::move(work)).get());
 }
 
 Vector<Cookie> NetworkStorageSession::domCookiesForHost(const URL& firstParty)

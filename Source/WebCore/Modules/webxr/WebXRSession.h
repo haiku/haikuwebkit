@@ -64,7 +64,7 @@ struct XRTransientInputHitTestOptionsInit;
 #endif
 
 class WebXRSession final : public RefCounted<WebXRSession>, public EventTarget, public ActiveDOMObject, public PlatformXR::TrackingAndRenderingClient, VisibilityChangeClient {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebXRSession);
+    WTF_MAKE_TZONE_ALLOCATED(WebXRSession);
 public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
@@ -199,5 +199,7 @@ private:
 WebCoreOpaqueRoot root(WebXRSession*);
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_EVENTTARGET(WebXRSession)
 
 #endif // ENABLE(WEBXR)

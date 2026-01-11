@@ -99,7 +99,7 @@ DragImageRef createDragImageFromImage(Image* image, ImageOrientation orientation
     buffer->context().scale({ adjustedImageScale, -adjustedImageScale });
     buffer->context().drawImage(*image, FloatPoint { }, { orientation });
 
-    RefPtr nativeImage = ImageBuffer::sinkIntoNativeImage(WTFMove(buffer));
+    RefPtr nativeImage = ImageBuffer::sinkIntoNativeImage(WTF::move(buffer));
     if (!nativeImage)
         return nil;
 

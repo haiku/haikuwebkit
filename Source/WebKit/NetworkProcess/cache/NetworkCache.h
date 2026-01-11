@@ -176,7 +176,7 @@ public:
         Markable<UseDecision> useDecision;
 
         RetrieveInfo isolatedCopy() && { return {
-            crossThreadCopy(WTFMove(url)),
+            crossThreadCopy(WTF::move(url)),
             startTime,
             completionTime,
             priority,

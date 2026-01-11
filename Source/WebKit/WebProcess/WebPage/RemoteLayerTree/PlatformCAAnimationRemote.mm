@@ -236,7 +236,7 @@ void PlatformCAAnimationRemote::setFillMode(FillModeType value)
 void PlatformCAAnimationRemote::setTimingFunction(const TimingFunction* value, bool)
 {
     RefPtr<TimingFunction> timingFunction = value->clone();
-    m_properties.timingFunction = WTFMove(timingFunction);
+    m_properties.timingFunction = WTF::move(timingFunction);
 }
 
 void PlatformCAAnimationRemote::copyTimingFunctionFrom(const PlatformCAAnimation& value)
@@ -508,7 +508,7 @@ static RetainPtr<CAAnimation> createAnimation(CALayer *layer, RemoteLayerTreeHos
         if (properties.timingFunctions.size())
             [basicAnimation setTimingFunction:toCAMediaTimingFunction(properties.timingFunctions[0].get(), properties.reverseTimingFunctions).get()];
 
-        caAnimation = WTFMove(basicAnimation);
+        caAnimation = WTF::move(basicAnimation);
         break;
     }
     case PlatformCAAnimation::AnimationType::Group: {
@@ -550,7 +550,7 @@ static RetainPtr<CAAnimation> createAnimation(CALayer *layer, RemoteLayerTreeHos
             }).get()];
         }
 
-        caAnimation = WTFMove(keyframeAnimation);
+        caAnimation = WTF::move(keyframeAnimation);
         break;
     }
     case PlatformCAAnimation::AnimationType::Spring: {
@@ -571,7 +571,7 @@ static RetainPtr<CAAnimation> createAnimation(CALayer *layer, RemoteLayerTreeHos
                 [springAnimation setInitialVelocity:function->initialVelocity()];
             }
         }
-        caAnimation = WTFMove(springAnimation);
+        caAnimation = WTF::move(springAnimation);
         break;
     }
     }

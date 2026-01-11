@@ -191,6 +191,8 @@ namespace WebCore {
     macro(DecompressionStreamTransform) \
     macro(DelayNode) \
     macro(DeprecationReportBody) \
+    macro(DeviceMotionEvent) \
+    macro(DeviceOrientationEvent) \
     macro(DigitalCredential) \
     macro(DocumentTimeline) \
     macro(DynamicsCompressorNode) \
@@ -349,6 +351,7 @@ namespace WebCore {
     macro(OfflineAudioContext) \
     macro(OffscreenCanvas) \
     macro(OffscreenCanvasRenderingContext2D) \
+    macro(Origin) \
     macro(OscillatorNode) \
     macro(PaintRenderingContext2D) \
     macro(PannerNode) \
@@ -670,6 +673,8 @@ namespace WebCore {
     macro(onbeforematch) \
     macro(oncommand) \
     macro(oncookiechange) \
+    macro(ondevicemotion) \
+    macro(ondeviceorientation) \
     macro(onnotificationclick) \
     macro(onnotificationclose) \
     macro(onpush) \

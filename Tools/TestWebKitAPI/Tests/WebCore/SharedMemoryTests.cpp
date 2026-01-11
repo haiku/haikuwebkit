@@ -109,7 +109,7 @@ public:
     }
     VMAllocSpan(VMAllocSpan&& other)
     {
-        *this = WTFMove(other);
+        *this = WTF::move(other);
     }
     VMAllocSpan& operator=(VMAllocSpan&& other)
     {
@@ -155,13 +155,13 @@ std::span<uint8_t> SharedMemoryFromMemoryTest::allocate()
     if (memorySource() == MemorySource::Malloc) {
         if (auto source = std::unique_ptr<uint8_t[]> { new (std::nothrow) uint8_t[size] }) {
             data = { source.get(), size };
-            m_source = WTFMove(source);
+            m_source = WTF::move(source);
         }
     }
     if (memorySource() == MemorySource::SharedMemory) {
         if (auto shm = SharedMemory::allocate(size)) {
             data = shm->mutableSpan();
-            m_source = WTFMove(shm);
+            m_source = WTF::move(shm);
         }
     }
 #if PLATFORM(COCOA)
@@ -214,7 +214,7 @@ TEST_P(SharedMemoryFromMemoryTest, CreateHandleFromMemory)
     ASSERT_FALSE(handle.has_value());
 #endif
     ASSERT_TRUE(handle.has_value());
-    auto shm2 = SharedMemory::map(WTFMove(*handle), protection());
+    auto shm2 = SharedMemory::map(WTF::move(*handle), protection());
     ASSERT_NOT_NULL(shm2);
     auto data2 = shm2->mutableSpan();
     expectTestPattern(data2, 1);
@@ -256,7 +256,7 @@ TEST_P(SharedMemoryFromMemoryTest, CreateHandleVMCopyFromMemory)
     ASSERT_FALSE(handle.has_value());
 #endif
     ASSERT_TRUE(handle.has_value());
-    auto shm2 = SharedMemory::map(WTFMove(*handle), protection());
+    auto shm2 = SharedMemory::map(WTF::move(*handle), protection());
     ASSERT_NOT_NULL(shm2);
     auto data2 = shm2->mutableSpan();
     expectTestPattern(data2, 1);
@@ -287,7 +287,7 @@ TEST_P(SharedMemoryFromMemoryTest, CreateHandleCopyFromMemory)
 
     auto handle = SharedMemory::Handle::createCopy(data, protection());
     ASSERT_TRUE(handle.has_value());
-    auto shm2 = SharedMemory::map(WTFMove(*handle), protection());
+    auto shm2 = SharedMemory::map(WTF::move(*handle), protection());
     ASSERT_NOT_NULL(shm2);
     auto data2 = shm2->mutableSpan();
     expectTestPattern(data2, 1);

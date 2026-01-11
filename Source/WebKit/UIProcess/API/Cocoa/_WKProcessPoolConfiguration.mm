@@ -166,7 +166,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         paths.append(String::fromUTF8(url.fileSystemRepresentation));
     }
 
-    protectedProcessPoolConfiguration(self)->setAdditionalReadAccessAllowedPaths(WTFMove(paths));
+    protectedProcessPoolConfiguration(self)->setAdditionalReadAccessAllowedPaths(WTF::move(paths));
 }
 
 #if PLATFORM(IOS_FAMILY) && !PLATFORM(IOS_FAMILY_SIMULATOR)
@@ -411,7 +411,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     sizes.reserveCapacity(thresholds.count);
     for (NSNumber *threshold in thresholds)
         sizes.append(static_cast<uint64_t>(threshold.unsignedLongLongValue));
-    protectedProcessPoolConfiguration(self)->setMemoryFootprintNotificationThresholds(WTFMove(sizes));
+    protectedProcessPoolConfiguration(self)->setMemoryFootprintNotificationThresholds(WTF::move(sizes));
 }
 
 - (BOOL)suspendsWebProcessesAggressivelyOnMemoryPressure

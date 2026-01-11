@@ -312,7 +312,7 @@ void LinkLoader::preconnectIfNeeded(const LinkLoadParameters& params, Document& 
         auto results = userContentProvider->processContentRuleListsForLoad(*page, params.href, ContentExtensions::ResourceType::Ping, *documentLoader);
         if (results.shouldBlock())
             return;
-        ContentExtensions::applyResultsToRequest(WTFMove(results), page.get(), request);
+        ContentExtensions::applyResultsToRequest(WTF::move(results), page.get(), request);
     }
 #endif
 
@@ -321,7 +321,7 @@ void LinkLoader::preconnectIfNeeded(const LinkLoadParameters& params, Document& 
     if (equalLettersIgnoringASCIICase(params.crossOrigin, "anonymous"_s) && !document.protectedSecurityOrigin()->isSameOriginDomain(SecurityOrigin::create(params.href)))
         storageCredentialsPolicy = StoredCredentialsPolicy::DoNotUse;
     ASSERT(document.frame()->loader().networkingContext());
-    platformStrategies()->loaderStrategy()->preconnectTo(document.protectedFrame()->loader(), WTFMove(request), storageCredentialsPolicy, LoaderStrategy::ShouldPreconnectAsFirstParty::No, [weakDocument = WeakPtr { document }, href = params.href](ResourceError error) {
+    platformStrategies()->loaderStrategy()->preconnectTo(document.protectedFrame()->loader(), WTF::move(request), storageCredentialsPolicy, LoaderStrategy::ShouldPreconnectAsFirstParty::No, [weakDocument = WeakPtr { document }, href = params.href](ResourceError error) {
         RefPtr document = weakDocument.get();
         if (!document)
             return;
@@ -358,7 +358,7 @@ RefPtr<LinkPreloadResourceClient> LinkLoader::preloadIfNeeded(const LinkLoadPara
 
     URL url;
     if (type == CachedResource::Type::ImageResource && !params.imageSrcSet.isEmpty()) {
-        auto sourceSize = SizesAttributeParser(params.imageSizes, document).length();
+        auto sourceSize = SizesAttributeParser(params.imageSizes, document).effectiveSize();
         auto candidate = bestFitSourceForImageAttributes(document.deviceScaleFactor(), AtomString { params.href.string() }, params.imageSrcSet, sourceSize);
         url = document.completeURL(URL({ }, candidate.string.toString()).string());
     } else
@@ -388,20 +388,20 @@ RefPtr<LinkPreloadResourceClient> LinkLoader::preloadIfNeeded(const LinkLoadPara
         if (params.relAttribute.isLinkModulePreload) {
             options.mode = FetchOptions::Mode::Cors;
             options.credentials = equalLettersIgnoringASCIICase(params.crossOrigin, "use-credentials"_s) ? FetchOptions::Credentials::Include : FetchOptions::Credentials::SameOrigin;
-            CachedResourceRequest cachedRequest { ResourceRequest { WTFMove(url) }, WTFMove(options) };
+            CachedResourceRequest cachedRequest { ResourceRequest { WTF::move(url) }, WTF::move(options) };
             Ref securityOrigin = document.securityOrigin();
             cachedRequest.setOrigin(securityOrigin.get());
             updateRequestForAccessControl(cachedRequest.resourceRequest(), securityOrigin.get(), options.storedCredentialsPolicy);
             return cachedRequest;
         }
-        return createPotentialAccessControlRequest(WTFMove(url), WTFMove(options), document, params.crossOrigin);
+        return createPotentialAccessControlRequest(WTF::move(url), WTF::move(options), document, params.crossOrigin);
     }();
     linkRequest.setPriority(DefaultResourceLoadPriority::forResourceType(type.value()));
     linkRequest.setInitiatorType("link"_s);
     linkRequest.setIgnoreForRequestCount(true);
     linkRequest.setIsLinkPreload();
 
-    auto cachedLinkResource = document.protectedCachedResourceLoader()->preload(type.value(), WTFMove(linkRequest)).value_or(nullptr);
+    auto cachedLinkResource = document.protectedCachedResourceLoader()->preload(type.value(), WTF::move(linkRequest)).value_or(nullptr);
 
     if (cachedLinkResource && cachedLinkResource->type() != *type)
         return nullptr;
@@ -468,7 +468,7 @@ void LinkLoader::loadLink(const LinkLoadParameters& params, Document& document)
         if (RefPtr client = m_preloadResourceClient)
             client->clear();
         if (resourceClient)
-            m_preloadResourceClient = WTFMove(resourceClient);
+            m_preloadResourceClient = WTF::move(resourceClient);
     }
 }
 

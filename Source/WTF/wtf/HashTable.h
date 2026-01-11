@@ -31,6 +31,7 @@
 #include <utility>
 #include <wtf/AlignedStorage.h>
 #include <wtf/Assertions.h>
+#include <wtf/CheckedArithmetic.h>
 #include <wtf/DebugHeap.h>
 #include <wtf/FastMalloc.h>
 #include <wtf/HashTraits.h>
@@ -143,7 +144,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
 
         void skipEmptyBuckets()
         {
-            while (m_position != m_endPosition && HashTableType::isEmptyOrDeletedBucket(*m_position))
+            while (m_position != m_endPosition && HashTableType::isEmptyOrDeletedOrWeakNullBucket(*m_position))
                 ++m_position;
         }
 
@@ -484,7 +485,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
         }
 
         template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> AddResult add(const ValueType& value) LIFETIME_BOUND { return add<IdentityTranslatorType, shouldValidateKey>(Extractor::extract(value), [&]() ALWAYS_INLINE_LAMBDA { return value; }); }
-        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> AddResult add(ValueType&& value) LIFETIME_BOUND { return add<IdentityTranslatorType, shouldValidateKey>(Extractor::extract(value), [&]() ALWAYS_INLINE_LAMBDA { return WTFMove(value); }); }
+        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> AddResult add(ValueType&& value) LIFETIME_BOUND { return add<IdentityTranslatorType, shouldValidateKey>(Extractor::extract(value), [&]() ALWAYS_INLINE_LAMBDA { return WTF::move(value); }); }
 
         // A special version of add() that finds the object by hashing and comparing
         // with some other type, to avoid the cost of type conversion if the object is already
@@ -508,13 +509,19 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
         bool removeIf(NOESCAPE const Invocable<bool(ValueType&)> auto&);
         void clear();
 
+        // Useful when the key type is WeakPtr
+        size_t computeSize() const requires (KeyTraits::hasIsWeakNullValueFunction);
+        bool isEmptyIgnoringNullReferences() const requires (KeyTraits::hasIsWeakNullValueFunction);
+        void removeWeakNullEntries() const requires (KeyTraits::hasIsWeakNullValueFunction);
+
         template<size_t inlineCapacity>
         Vector<TakeType, inlineCapacity> takeIf(NOESCAPE const Invocable<bool(const ValueType&)> auto&);
 
         static bool isEmptyBucket(const ValueType& value) { return isHashTraitsEmptyValue<KeyTraits>(Extractor::extract(value)); }
-        static bool isReleasedWeakBucket(const ValueType& value) { return isHashTraitsReleasedWeakValue<KeyTraits>(Extractor::extract(value)); }
+        static bool isWeakNullBucket(const ValueType& value) { return isHashTraitsWeakNullValue<KeyTraits>(Extractor::extract(value)); }
         static bool isDeletedBucket(const ValueType& value) { return KeyTraits::isDeletedValue(Extractor::extract(value)); }
         static bool isEmptyOrDeletedBucket(const ValueType& value) { return isEmptyBucket(value) || isDeletedBucket(value); }
+        static bool isEmptyOrDeletedOrWeakNullBucket(const ValueType& value) { return isEmptyBucket(value) || isDeletedBucket(value) || isWeakNullBucket(value); }
 
         bool isValidKey(const ValueType& value) { return !isEmptyOrDeletedBucket(value); }
 
@@ -563,6 +570,9 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
         void removeAndInvalidate(ValueType*);
         void remove(ValueType*);
 
+        void deleteWeakNullEntries();
+        void deleteReleasedWeakBuckets();
+
         static constexpr unsigned computeBestTableSize(unsigned keyCount);
         bool shouldExpand() const { return HashTableSizePolicy::shouldExpand(keyCount() + deletedCount(), tableSize()); }
         bool mustRehashInPlace() const { return keyCount() * minLoad < tableSize() * 2; }
@@ -570,10 +580,8 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
         ValueType* expand(ValueType* entry = nullptr);
         void shrink() { rehash(tableSize() / 2, nullptr); }
         void shrinkToBestSize();
-    
-        void deleteReleasedWeakBuckets();
 
-        ValueType* rehash(unsigned newTableSize, ValueType* entry);
+        ValueType* rehash(Checked<unsigned> newTableSize, ValueType* entry);
         ValueType* reinsert(ValueType&&);
 
         static void initializeBucket(ValueType& bucket);
@@ -988,7 +996,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
 
         Value* newEntry = lookupForReinsert(Extractor::extract(entry));
         newEntry->~Value();
-        new (NotNull, newEntry) ValueType(WTFMove(entry));
+        new (NotNull, newEntry) ValueType(WTF::move(entry));
 
         return newEntry;
     }
@@ -1101,6 +1109,58 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     }
 
     template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
+    inline size_t HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::computeSize() const requires (KeyTraits::hasIsWeakNullValueFunction)
+    {
+        removeWeakNullEntries();
+        return size();
+    }
+
+    template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
+    inline bool HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::isEmptyIgnoringNullReferences() const requires (KeyTraits::hasIsWeakNullValueFunction)
+    {
+        // FIXME: We should probably return isEmpty() || !computeSize() here to avoid pathological weak null iteration in an empty table.
+        return isEmpty() || begin() == end(); // Iterators skip weak null
+    }
+
+    template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
+    inline void HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::removeWeakNullEntries() const requires (KeyTraits::hasIsWeakNullValueFunction)
+    {
+        const_cast<HashTable&>(*this).removeIf([](ValueType&) {
+            return false;
+        });
+    }
+
+    template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
+    inline void HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::deleteWeakNullEntries()
+    {
+        // We must use local copies in case "functor" or "deleteBucket"
+        // make a function call, which prevents the compiler from keeping
+        // the values in register.
+        unsigned removedBucketCount = 0;
+        ValueType* table = m_table;
+
+        for (unsigned i = tableSize(); i--;) {
+            ValueType& bucket = table[i];
+            if constexpr (!HashFunctions::safeToCompareToEmptyOrDeleted) {
+                if (isEmptyOrDeletedBucket(bucket))
+                    continue;
+            }
+
+            if (!isWeakNullBucket(bucket))
+                continue;
+
+            deleteBucket(bucket);
+            ++removedBucketCount;
+        }
+        if (removedBucketCount) {
+            setDeletedCount(deletedCount() + removedBucketCount);
+            setKeyCount(keyCount() - removedBucketCount);
+        }
+
+        internalCheckTableConsistency();
+    }
+
+    template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
     inline bool HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::removeIf(NOESCAPE const Invocable<bool(ValueType&)> auto& functor)
     {
         // We must use local copies in case "functor" or "deleteBucket"
@@ -1113,10 +1173,12 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
             ValueType& bucket = table[i];
             if (isEmptyOrDeletedBucket(bucket))
                 continue;
-            
-            if (!functor(bucket))
-                continue;
-            
+
+            if (!isWeakNullBucket(bucket)) {
+                if (!functor(bucket))
+                    continue;
+            }
+
             deleteBucket(bucket);
             ++removedBucketCount;
         }
@@ -1136,34 +1198,16 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     template<size_t inlineCapacity>
     inline auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::takeIf(NOESCAPE const Invocable<bool(const ValueType&)> auto& functor) -> Vector<TakeType, inlineCapacity>
     {
-        // We must use local copies in case "functor" or "deleteBucket"
-        // make a function call, which prevents the compiler from keeping
-        // the values in register.
-        unsigned removedBucketCount = 0;
-        ValueType* table = m_table;
         Vector<TakeType, inlineCapacity> result;
 
-        for (unsigned i = tableSize(); i--;) {
-            ValueType& bucket = table[i];
-            if (isEmptyOrDeletedBucket(bucket))
-                continue;
+        removeIf([&] (ValueType& value) {
+            if (!functor(value))
+                return false;
 
-            if (!functor(bucket))
-                continue;
+            result.append(ValueTraits::take(WTF::move(value)));
+            return true;
+        });
 
-            result.append(ValueTraits::take(WTFMove(bucket)));
-            deleteBucket(bucket);
-            ++removedBucketCount;
-        }
-        if (removedBucketCount) {
-            setDeletedCount(deletedCount() + removedBucketCount);
-            setKeyCount(keyCount() - removedBucketCount);
-        }
-
-        if (shouldShrink())
-            shrinkToBestSize();
-
-        internalCheckTableConsistency();
         return result;
     }
 
@@ -1197,11 +1241,11 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
     auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::expand(ValueType* entry) -> ValueType*
     {
-        if constexpr (KeyTraits::hasIsReleasedWeakValueFunction)
-            deleteReleasedWeakBuckets();
+        if constexpr (KeyTraits::hasIsWeakNullValueFunction)
+            deleteWeakNullEntries();
 
-        unsigned newSize;
-        unsigned oldSize = tableSize();
+        Checked<unsigned> newSize;
+        Checked<unsigned> oldSize = tableSize();
         if (!oldSize)
             newSize = KeyTraits::minimumTableSize;
         else if (mustRehashInPlace())
@@ -1215,7 +1259,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
     constexpr unsigned HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::computeBestTableSize(unsigned keyCount)
     {
-        unsigned bestTableSize = roundUpToPowerOfTwo(keyCount);
+        Checked<unsigned> bestTableSize = roundUpToPowerOfTwo(keyCount);
         constexpr double minLoadRatio = 1.0 / minLoad;
 
         if (HashTableSizePolicy::shouldExpand(keyCount, bestTableSize))
@@ -1243,7 +1287,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
             if (aboveThresholdForEagerExpansion(largeLoadFactor, keyCount, bestTableSize))
                 bestTableSize *= 2;
         }
-        return std::max(bestTableSize, KeyTraits::minimumTableSize);
+        return std::max(bestTableSize.value(), KeyTraits::minimumTableSize);
     }
 
     template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
@@ -1267,7 +1311,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     }
 
     template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
-    auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::rehash(unsigned newTableSize, ValueType* entry) -> ValueType*
+    auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::rehash(Checked<unsigned> newTableSize, ValueType* entry) -> ValueType*
     {
         internalCheckTableConsistencyExceptSize();
 
@@ -1305,14 +1349,14 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
                 continue;
             }
 
-            if (isReleasedWeakBucket(oldEntry)) {
+            if (isWeakNullBucket(oldEntry)) {
                 ASSERT(std::addressof(oldEntry) != entry);
                 oldEntry.~ValueType();
                 setKeyCount(keyCount() - 1);
                 continue;
             }
 
-            Value* reinsertedEntry = reinsert(WTFMove(oldEntry));
+            Value* reinsertedEntry = reinsert(WTF::move(oldEntry));
             oldEntry.~ValueType();
             if (std::addressof(oldEntry) == entry) {
                 ASSERT(!newEntry);
@@ -1399,7 +1443,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
         m_table = std::exchange(other.m_table, nullptr);
 
 #if DUMP_HASHTABLE_STATS_PER_TABLE
-        m_stats = WTFMove(other.m_stats);
+        m_stats = WTF::move(other.m_stats);
         other.m_stats = nullptr;
 #endif
     }
@@ -1407,7 +1451,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
     inline auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::operator=(HashTable&& other) -> HashTable&
     {
-        HashTable temp = WTFMove(other);
+        HashTable temp = WTF::move(other);
         swap(temp);
         return *this;
     }
@@ -1441,13 +1485,12 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
                 continue;
             }
 
-            auto& key = Extractor::extract(*entry);
-            // A weak key can become null without being eagerly removed from the table.
-            if (!key) {
+            if (isWeakNullBucket(*entry)) {
                 ++count;
                 continue;
             }
 
+            auto& key = Extractor::extract(*entry);
             const_iterator it = find<ShouldValidateKey::No>(key);
             ASSERT(entry == it.m_position);
             ++count;

@@ -231,7 +231,7 @@ public:
         : m_data(data)
     { }
     AXTextMarker(TextMarkerData&& data)
-        : m_data(WTFMove(data))
+        : m_data(WTF::move(data))
     { }
 #if PLATFORM(COCOA)
     AXTextMarker(PlatformTextMarkerData);

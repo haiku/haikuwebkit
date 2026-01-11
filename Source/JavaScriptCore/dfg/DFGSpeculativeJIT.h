@@ -74,7 +74,7 @@ enum GeneratedOperandType { GeneratedOperandTypeUnknown, GeneratedOperandInteger
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(SpeculativeJIT);
 class SpeculativeJIT : public JITCompiler {
     using Base = JITCompiler;
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(SpeculativeJIT, SpeculativeJIT);
+    WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED(SpeculativeJIT);
     friend struct OSRExit;
 private:
     typedef JITCompiler::TrustedImm32 TrustedImm32;
@@ -1985,8 +1985,6 @@ public:
     void speculateOther(Edge, JSValueRegs, GPRReg temp);
     void speculateOther(Edge, JSValueRegs);
     void speculateOther(Edge);
-    void speculateNotOther(Edge, JSValueRegs, GPRReg temp);
-    void speculateNotOther(Edge);
     void speculateMisc(Edge, JSValueRegs);
     void speculateMisc(Edge);
     void speculate(Node*, Edge);

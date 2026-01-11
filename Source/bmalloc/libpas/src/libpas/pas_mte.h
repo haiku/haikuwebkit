@@ -70,7 +70,7 @@ PAS_IGNORE_WARNINGS_BEGIN("unsafe-buffer-usage")
 #define PAS_MTE_MEDIUM_PAGE_NO(ptr) (((uintptr_t)ptr) & PAS_MTE_MEDIUM_PAGE_NO_MASK)
 
 #define PAS_MTE_GET_MTAG(ptr) do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "ldg %0, [%0]" \
             : "+r"(ptr) \
@@ -79,7 +79,7 @@ PAS_IGNORE_WARNINGS_BEGIN("unsafe-buffer-usage")
         ); \
     } while (0)
 #define PAS_MTE_SET_TAG(ptr) do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "stg %0, [%0]" \
             : \
@@ -88,7 +88,7 @@ PAS_IGNORE_WARNINGS_BEGIN("unsafe-buffer-usage")
         ); \
     } while (0)
 #define PAS_MTE_SET_TAG_PAIR(ptr) do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "st2g %0, [%0]" \
             : \
@@ -97,7 +97,7 @@ PAS_IGNORE_WARNINGS_BEGIN("unsafe-buffer-usage")
         ); \
     } while (0)
 #define PAS_MTE_SET_TAG_WITH_OFFSET(ptr, offset) do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "stg %0, [%0, #" #offset "]" \
             : \
@@ -106,7 +106,7 @@ PAS_IGNORE_WARNINGS_BEGIN("unsafe-buffer-usage")
         ); \
     } while (0)
 #define PAS_MTE_SET_TAG_PAIR_WITH_OFFSET(ptr, offset) do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "st2g %0, [%0, #" #offset "]" \
             : \
@@ -115,7 +115,7 @@ PAS_IGNORE_WARNINGS_BEGIN("unsafe-buffer-usage")
         ); \
     } while (0)
 #define PAS_MTE_SET_TAG_POSTINDEX(ptr) do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "stg %0, [%0], #16" \
             : "+r"(ptr) \
@@ -124,7 +124,7 @@ PAS_IGNORE_WARNINGS_BEGIN("unsafe-buffer-usage")
         ); \
     } while (0)
 #define PAS_MTE_SET_TAG_PAIR_POSTINDEX(ptr) do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "st2g %0, [%0], #32" \
             : "+r"(ptr) \
@@ -137,7 +137,7 @@ PAS_IGNORE_WARNINGS_BEGIN("unsafe-buffer-usage")
             ptr &= (uintptr_t)~PAS_MTE_TAG_MASK; \
             break; \
         } \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "irg %0, %0, %1" \
             : "+r"(ptr) \
@@ -162,7 +162,7 @@ PAS_IGNORE_WARNINGS_BEGIN("unsafe-buffer-usage")
  */
 #define DC_GVA_GRANULE_SIZE 64
 #define PAS_MTE_SET_TAGS_USING_DC_GVA(ptr) do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "dc gva, %0" \
             : \
@@ -201,7 +201,7 @@ typedef enum pas_mte_tag_constraint pas_mte_tag_constraint;
 
 PAS_ALWAYS_INLINE pas_mte_tag_constraint pas_mte_exclude_tag(pas_mte_tag_constraint base, uint8_t tag_value_to_exclude)
 {
-    return (pas_mte_tag_constraint)(base & ~(1 << tag_value_to_exclude));
+    return (pas_mte_tag_constraint)((unsigned)base & ~(1u << tag_value_to_exclude));
 }
 
 PAS_ALWAYS_INLINE pas_mte_tag_constraint
@@ -1062,14 +1062,16 @@ void* pas_mte_system_heap_realloc_zero_tagged(malloc_zone_t* zone, void* ptr, si
     } while (false)
 
 #if PAS_OS(DARWIN)
-#define PAS_MTE_HANDLE_PAGE_ALLOCATION(size, is_small, tag) do { \
+#define PAS_MTE_HANDLE_PAGE_ALLOCATION(size, may_contain_small_or_medium, tag) do { \
         pas_mte_ensure_initialized(); \
-        if (PAS_USE_MTE && (is_small)) { \
+        if (PAS_USE_MTE && (may_contain_small_or_medium)) { \
             const vm_inherit_t childProcessInheritance = VM_INHERIT_DEFAULT; \
             const bool copy = false; \
             const vm_prot_t protections = VM_PROT_WRITE | VM_PROT_READ; \
             kern_return_t vm_map_result = mach_vm_map(mach_task_self(), (mach_vm_address_t*)&mmap_result, (size), pas_page_malloc_alignment() - 1, VM_FLAGS_ANYWHERE | PAS_VM_MTE | (tag), MEMORY_OBJECT_NULL, 0, copy, protections, protections, childProcessInheritance); \
-            if (vm_map_result != KERN_SUCCESS) { \
+            if (vm_map_result == KERN_SUCCESS) \
+                PAS_RECORD_STAT(page_alloc_counts, size, may_contain_small_or_medium, true); \
+            else { \
                 errno = 0; \
                 if (PAS_MTE_FEATURE_ENABLED(PAS_MTE_FEATURE_LOG_PAGE_ALLOC)) \
                     printf("[MTE]\tFailed to map %zu bytes with VM_FLAGS_MTE.\n", (size_t)(size)); \

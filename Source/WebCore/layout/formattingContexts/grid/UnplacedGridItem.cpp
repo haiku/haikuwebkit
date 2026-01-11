@@ -27,7 +27,7 @@
 #include "UnplacedGridItem.h"
 
 #include "LayoutElementBox.h"
-#include "RenderStyleInlines.h"
+#include "StyleComputedStyle+InitialInlines.h"
 
 namespace WebCore {
 namespace Layout {
@@ -42,8 +42,8 @@ UnplacedGridItem::UnplacedGridItem(const ElementBox& layoutBox, Style::GridPosit
 
 UnplacedGridItem::UnplacedGridItem(WTF::HashTableEmptyValueType)
     : m_layoutBox(WTF::HashTableEmptyValue)
-    , m_columnPosition({ RenderStyle::initialGridItemColumnStart(), RenderStyle::initialGridItemColumnEnd() })
-    , m_rowPosition({ RenderStyle::initialGridItemRowStart(), RenderStyle::initialGridItemRowEnd() })
+    , m_columnPosition({ Style::ComputedStyle::initialGridItemColumnStart(), Style::ComputedStyle::initialGridItemColumnEnd() })
+    , m_rowPosition({ Style::ComputedStyle::initialGridItemRowStart(), Style::ComputedStyle::initialGridItemRowEnd() })
 {
 }
 

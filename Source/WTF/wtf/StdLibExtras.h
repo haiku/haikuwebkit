@@ -36,6 +36,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <type_traits>
 #include <utility>
@@ -141,8 +142,6 @@ inline bool isPointerTypeAlignmentOkay(Type*)
 #endif
 
 namespace WTF {
-
-enum CheckMoveParameterTag { CheckMoveParameter };
 
 static constexpr size_t KB = 1024;
 static constexpr size_t MB = 1024 * 1024;
@@ -667,7 +666,7 @@ template<size_t I, typename V> constexpr bool holdsAlternative(const V& v)
     }                                                                                \
     template<typename T> friend T&& get(Self&& self)                                 \
     {                                                                                \
-        return std::get<T>(WTFMove(self.name));                                      \
+        return std::get<T>(WTF::move(self.name));                                      \
     }                                                                                \
     template<typename T> friend const T& get(const Self& self)                       \
     {                                                                                \
@@ -849,22 +848,18 @@ inline void* operator new(size_t, NotNullTag, void* location)
     return location;
 }
 
-namespace std {
-
-template<WTF::CheckMoveParameterTag, typename T>
-ALWAYS_INLINE constexpr typename remove_reference<T>::type&& move(T&& value)
-{
-    static_assert(is_lvalue_reference<T>::value, "T is not an lvalue reference; move() is unnecessary.");
-
-    using NonRefQualifiedType = typename remove_reference<T>::type;
-    static_assert(!is_const<NonRefQualifiedType>::value, "T is const qualified.");
-
-    return move(forward<T>(value));
-}
-
-} // namespace std
-
 namespace WTF {
+
+template<typename T>
+[[nodiscard]] ALWAYS_INLINE constexpr std::remove_reference_t<T>&& move(T&& value)
+{
+    static_assert(std::is_lvalue_reference_v<T>, "T is not an lvalue reference; move() is unnecessary.");
+
+    using NonRefQualifiedType = std::remove_reference_t<T>;
+    static_assert(!std::is_const_v<NonRefQualifiedType>, "T is const qualified.");
+
+    return std::move(std::forward<T>(value));
+}
 
 template<class T, class... Args>
 [[nodiscard]] ALWAYS_INLINE decltype(auto) makeUnique(Args&&... args)
@@ -1511,11 +1506,11 @@ template<typename Object, typename Allocator = FastMalloc> void destroyWithTrail
     Allocator::free(object);
 }
 
-template<typename T, typename U>
-ALWAYS_INLINE void lazyInitialize(const std::unique_ptr<T>& ptr, const std::unique_ptr<U>&& obj)
+template<typename T, typename TDeleter, typename U, typename UDeleter>
+ALWAYS_INLINE void lazyInitialize(const std::unique_ptr<T, TDeleter>& ptr, const std::unique_ptr<U, UDeleter>&& obj)
 {
     RELEASE_ASSERT(!ptr);
-    const_cast<std::unique_ptr<T>&>(ptr) = std::move(const_cast<std::unique_ptr<U>&&>(obj));
+    const_cast<std::unique_ptr<T, TDeleter>&>(ptr) = std::move(const_cast<std::unique_ptr<U, UDeleter>&&>(obj)); // NOLINT.
 }
 
 ALWAYS_INLINE std::optional<double> stringToDouble(std::span<const char> buffer, size_t& parsedLength)
@@ -1560,9 +1555,13 @@ struct SizedUnsignedTrait<8> {
 template<typename T>
 using SameSizeUnsignedInteger = SizedUnsignedTrait<sizeof(T)>::Type;
 
-} // namespace WTF
+namespace Views {
 
-#define WTFMove(value) std::move<WTF::CheckMoveParameter>(value)
+static constexpr auto dereferenceView = std::views::transform([](auto&& x) -> decltype(auto) { return *x; });
+
+}
+
+} // namespace WTF
 
 namespace WTF {
 namespace detail {
@@ -1636,5 +1635,7 @@ using WTF::SameSizeUnsignedInteger;
 using WTF::SizedUnsignedTrait;
 using WTF::VariantWrapper;
 using WTF::VariantOrSingle;
+
+using WTF::Views::dereferenceView;
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

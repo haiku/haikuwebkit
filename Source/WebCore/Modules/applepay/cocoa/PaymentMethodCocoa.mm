@@ -156,7 +156,7 @@ static ApplePayPaymentMethod convert(PKPaymentMethod *paymentMethod)
 PaymentMethod::PaymentMethod() = default;
 
 PaymentMethod::PaymentMethod(RetainPtr<PKPaymentMethod>&& pkPaymentMethod)
-    : m_pkPaymentMethod { WTFMove(pkPaymentMethod) }
+    : m_pkPaymentMethod { WTF::move(pkPaymentMethod) }
 {
 }
 

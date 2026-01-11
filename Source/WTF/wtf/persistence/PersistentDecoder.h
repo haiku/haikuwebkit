@@ -43,11 +43,11 @@ public:
     size_t length() const { return m_buffer.size(); }
     size_t currentOffset() const { return static_cast<size_t>(std::distance(m_buffer.begin(), m_bufferPosition)); }
     
-    WTF_EXPORT_PRIVATE WARN_UNUSED_RETURN bool rewind(size_t);
+    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE bool rewind(size_t);
 
-    WTF_EXPORT_PRIVATE WARN_UNUSED_RETURN bool verifyChecksum();
+    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE bool verifyChecksum();
 
-    WTF_EXPORT_PRIVATE WARN_UNUSED_RETURN bool decodeFixedLengthData(std::span<uint8_t>);
+    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE bool decodeFixedLengthData(std::span<uint8_t>);
 
     WTF_EXPORT_PRIVATE Decoder& operator>>(std::optional<bool>&);
     WTF_EXPORT_PRIVATE Decoder& operator>>(std::optional<uint8_t>&);
@@ -90,10 +90,10 @@ public:
         return numElements <= std::numeric_limits<size_t>::max() / sizeof(T) && bufferIsLargeEnoughToContain(numElements * sizeof(T));
     }
 
-    WTF_EXPORT_PRIVATE WARN_UNUSED_RETURN std::span<const uint8_t> bufferPointerForDirectRead(size_t numBytes);
+    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE std::span<const uint8_t> bufferPointerForDirectRead(size_t numBytes);
 
 private:
-    WTF_EXPORT_PRIVATE WARN_UNUSED_RETURN bool bufferIsLargeEnoughToContain(size_t) const;
+    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE bool bufferIsLargeEnoughToContain(size_t) const;
     template<typename Type> Decoder& decodeNumber(std::optional<Type>&);
 
     const std::span<const uint8_t> m_buffer;

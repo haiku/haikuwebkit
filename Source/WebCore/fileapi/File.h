@@ -35,7 +35,7 @@
 namespace WebCore {
 
 class File final : public Blob {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED_EXPORT(File, WEBCORE_EXPORT);
+    WTF_MAKE_TZONE_ALLOCATED_EXPORT(File, WEBCORE_EXPORT);
 public:
     struct PropertyBag : BlobPropertyBag {
         std::optional<int64_t> lastModified;
@@ -47,7 +47,7 @@ public:
     // Create a File using the 'new File' constructor.
     static Ref<File> create(ScriptExecutionContext& context, Vector<BlobPartVariant>&& blobPartVariants, const String& filename, const PropertyBag& propertyBag)
     {
-        auto file = adoptRef(*new File(context, WTFMove(blobPartVariants), filename, propertyBag));
+        auto file = adoptRef(*new File(context, WTF::move(blobPartVariants), filename, propertyBag));
         file->suspendIfNeeded();
         return file;
     }

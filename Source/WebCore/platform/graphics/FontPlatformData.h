@@ -151,7 +151,7 @@ struct FontPlatformDataAttributes {
         , m_syntheticOblique(syntheticOblique)
         , m_familyName(familyName)
         , m_style(style)
-        , m_features(WTFMove(features))
+        , m_features(WTF::move(features))
         { }
 #endif
 
@@ -159,7 +159,7 @@ struct FontPlatformDataAttributes {
 
     FontOrientation m_orientation { FontOrientation::Horizontal };
     FontWidthVariant m_widthVariant { FontWidthVariant::RegularWidth };
-    TextRenderingMode m_textRenderingMode { TextRenderingMode::AutoTextRendering };
+    TextRenderingMode m_textRenderingMode { TextRenderingMode::Auto };
 
     bool m_syntheticBold { false };
     bool m_syntheticOblique { false };
@@ -254,7 +254,7 @@ struct FontMetadata {
     double pointSize = { 0.0 };
     WebCore::FontOrientation orientation = FontOrientation::Horizontal;
     WebCore::FontWidthVariant widthVariant = FontWidthVariant::RegularWidth;
-    WebCore::TextRenderingMode textRenderingMode = TextRenderingMode::AutoTextRendering;
+    WebCore::TextRenderingMode textRenderingMode = TextRenderingMode::Auto;
     bool syntheticBold = false;
     bool syntheticOblique = false;
 };
@@ -346,10 +346,10 @@ public:
     FontPlatformData(WTF::HashTableDeletedValueType);
     FontPlatformData();
 
-    FontPlatformData(float size, bool syntheticBold, bool syntheticOblique, FontOrientation = FontOrientation::Horizontal, FontWidthVariant = FontWidthVariant::RegularWidth, TextRenderingMode = TextRenderingMode::AutoTextRendering, const FontCustomPlatformData* = nullptr);
+    FontPlatformData(float size, bool syntheticBold, bool syntheticOblique, FontOrientation = FontOrientation::Horizontal, FontWidthVariant = FontWidthVariant::RegularWidth, TextRenderingMode = TextRenderingMode::Auto, const FontCustomPlatformData* = nullptr);
 
 #if USE(CORE_TEXT)
-    WEBCORE_EXPORT FontPlatformData(RetainPtr<CTFontRef>&&, float size, bool syntheticBold = false, bool syntheticOblique = false, FontOrientation = FontOrientation::Horizontal, FontWidthVariant = FontWidthVariant::RegularWidth, TextRenderingMode = TextRenderingMode::AutoTextRendering, const FontCustomPlatformData* = nullptr);
+    WEBCORE_EXPORT FontPlatformData(RetainPtr<CTFontRef>&&, float size, bool syntheticBold = false, bool syntheticOblique = false, FontOrientation = FontOrientation::Horizontal, FontWidthVariant = FontWidthVariant::RegularWidth, TextRenderingMode = TextRenderingMode::Auto, const FontCustomPlatformData* = nullptr);
 #endif
 
 #if PLATFORM(HAIKU)
@@ -554,7 +554,7 @@ private:
 
     FontOrientation m_orientation { FontOrientation::Horizontal };
     FontWidthVariant m_widthVariant { FontWidthVariant::RegularWidth };
-    TextRenderingMode m_textRenderingMode { TextRenderingMode::AutoTextRendering };
+    TextRenderingMode m_textRenderingMode { TextRenderingMode::Auto };
 
     // This is conceptually const, but we can't make it actually const,
     // because FontPlatformData is used as a key in a HashMap.

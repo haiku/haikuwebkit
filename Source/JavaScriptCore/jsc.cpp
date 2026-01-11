@@ -244,7 +244,7 @@ public:
     Message(Content&&, int32_t);
     ~Message();
     
-    Content&& releaseContents() { return WTFMove(m_contents); }
+    Content&& releaseContents() { return WTF::move(m_contents); }
     int32_t index() const { return m_index; }
 
 private:
@@ -1290,7 +1290,7 @@ class ShellSourceProvider final : public StringSourceProvider {
 public:
     static Ref<ShellSourceProvider> create(const String& source, const SourceOrigin& sourceOrigin, String&& sourceURL, const TextPosition& startPosition, SourceProviderSourceType sourceType)
     {
-        return adoptRef(*new ShellSourceProvider(source, sourceOrigin, WTFMove(sourceURL), startPosition, sourceType));
+        return adoptRef(*new ShellSourceProvider(source, sourceOrigin, WTF::move(sourceURL), startPosition, sourceType));
     }
 
     ~ShellSourceProvider() final
@@ -1388,11 +1388,11 @@ private:
         if (!mappedFileData)
             return;
 
-        m_cachedBytecode = CachedBytecode::create(WTFMove(*mappedFileData));
+        m_cachedBytecode = CachedBytecode::create(WTF::move(*mappedFileData));
     }
 
     ShellSourceProvider(const String& source, const SourceOrigin& sourceOrigin, String&& sourceURL, const TextPosition& startPosition, SourceProviderSourceType sourceType)
-        : StringSourceProvider(source, sourceOrigin, SourceTaintedOrigin::Untainted, WTFMove(sourceURL), startPosition, sourceType)
+        : StringSourceProvider(source, sourceOrigin, SourceTaintedOrigin::Untainted, WTF::move(sourceURL), startPosition, sourceType)
         // Workers started via $.agent.start are not shut down in a synchronous manner, and it
         // is possible the main thread terminates the process while a worker is writing its
         // bytecode cache, which results in intermittent test failures. As $.agent.start is only
@@ -1409,7 +1409,7 @@ private:
 
 static inline SourceCode jscSource(const String& source, const SourceOrigin& sourceOrigin, String sourceURL = String(), const TextPosition& startPosition = TextPosition(), SourceProviderSourceType sourceType = SourceProviderSourceType::Program)
 {
-    return SourceCode(ShellSourceProvider::create(source, sourceOrigin, WTFMove(sourceURL), startPosition, sourceType), startPosition.m_line.oneBasedInt(), startPosition.m_column.oneBasedInt());
+    return SourceCode(ShellSourceProvider::create(source, sourceOrigin, WTF::move(sourceURL), startPosition, sourceType), startPosition.m_line.oneBasedInt(), startPosition.m_column.oneBasedInt());
 }
 
 template<typename Vector>
@@ -1492,8 +1492,8 @@ JSInternalPromise* GlobalObject::moduleLoaderFetch(JSGlobalObject* globalObject,
 #if ENABLE(WEBASSEMBLY)
     // FileSystem does not have mime-type header. The JSC shell recognizes WebAssembly's magic header.
     if ((buffer.size() >= 4 && buffer[0] == '\0' && buffer[1] == 'a' && buffer[2] == 's' && buffer[3] == 'm') || (attributes && attributes->type() == ScriptFetchParameters::Type::WebAssembly)) {
-        auto source = SourceCode(WebAssemblySourceProvider::create(WTFMove(buffer), SourceOrigin { moduleURL }, WTFMove(moduleKey)));
-        auto sourceCode = JSSourceCode::create(vm, WTFMove(source));
+        auto source = SourceCode(WebAssemblySourceProvider::create(WTF::move(buffer), SourceOrigin { moduleURL }, WTF::move(moduleKey)));
+        auto sourceCode = JSSourceCode::create(vm, WTF::move(source));
         scope.release();
         promise->resolve(globalObject, sourceCode);
         return promise;
@@ -1501,14 +1501,14 @@ JSInternalPromise* GlobalObject::moduleLoaderFetch(JSGlobalObject* globalObject,
 #endif
 
     if (attributes && attributes->type() == ScriptFetchParameters::Type::JSON) {
-        auto source = SourceCode(StringSourceProvider::create(stringFromUTF(buffer), SourceOrigin { moduleURL }, WTFMove(moduleKey), SourceTaintedOrigin::Untainted, TextPosition(), SourceProviderSourceType::JSON));
-        auto sourceCode = JSSourceCode::create(vm, WTFMove(source));
+        auto source = SourceCode(StringSourceProvider::create(stringFromUTF(buffer), SourceOrigin { moduleURL }, WTF::move(moduleKey), SourceTaintedOrigin::Untainted, TextPosition(), SourceProviderSourceType::JSON));
+        auto sourceCode = JSSourceCode::create(vm, WTF::move(source));
         scope.release();
         promise->resolve(globalObject, sourceCode);
         return promise;
     }
 
-    auto sourceCode = JSSourceCode::create(vm, jscSource(stringFromUTF(buffer), SourceOrigin { moduleURL }, WTFMove(moduleKey), TextPosition(), SourceProviderSourceType::Module));
+    auto sourceCode = JSSourceCode::create(vm, jscSource(stringFromUTF(buffer), SourceOrigin { moduleURL }, WTF::move(moduleKey), TextPosition(), SourceProviderSourceType::Module));
     scope.release();
     promise->resolve(globalObject, sourceCode);
     return promise;
@@ -2057,7 +2057,7 @@ JSC_DEFINE_HOST_FUNCTION(functionReadFile, (JSGlobalObject* globalObject, CallFr
         return JSValue::encode(jsString(vm, String::fromUTF8WithLatin1Fallback(content->span())));
 
     Structure* structure = globalObject->typedArrayStructure(TypeUint8, content->isResizableOrGrowableShared());
-    JSObject* result = JSUint8Array::create(vm, structure, WTFMove(content));
+    JSObject* result = JSUint8Array::create(vm, structure, WTF::move(content));
     RETURN_IF_EXCEPTION(scope, encodedJSValue());
 
     return JSValue::encode(result);
@@ -2260,7 +2260,7 @@ JSC_DEFINE_HOST_FUNCTION(functionOpenFile, (JSGlobalObject* globalObject, CallFr
     if (!descriptor)
         return throwVMException(globalObject, scope, createURIError(globalObject, makeString("Could not open file at "_s, filePath.string(), " fopen had error: "_s, safeStrerror(errno).span())));
 
-    RELEASE_AND_RETURN(scope, JSValue::encode(JSFileDescriptor::create(vm, globalObject, WTFMove(descriptor))));
+    RELEASE_AND_RETURN(scope, JSValue::encode(JSFileDescriptor::create(vm, globalObject, WTF::move(descriptor))));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionReadline, (JSGlobalObject* globalObject, CallFrame* callFrame))
@@ -2353,7 +2353,7 @@ JSC_DEFINE_HOST_FUNCTION(functionCallerIsBBQOrOMGCompiled, (JSGlobalObject* glob
 }
 
 Message::Message(Content&& contents, int32_t index)
-    : m_contents(WTFMove(contents))
+    : m_contents(WTF::move(contents))
     , m_index(index)
 {
 }
@@ -2564,7 +2564,7 @@ JSC_DEFINE_HOST_FUNCTION(functionDollarAgentStart, (JSGlobalObject* globalObject
     
     Thread::create(
         "JSC Agent"_s,
-        [sourceCode = WTFMove(sourceCode).isolatedCopy(), workerPath = WTFMove(workerPath).isolatedCopy(), &didStartLock, &didStartCondition, &didStart] () {
+        [sourceCode = WTF::move(sourceCode).isolatedCopy(), workerPath = WTF::move(workerPath).isolatedCopy(), &didStartLock, &didStartCondition, &didStart] () {
             CommandLine commandLine(CommandLine::CommandLineForWorkers);
             commandLine.m_interactive = false;
             runJSC(
@@ -2616,19 +2616,19 @@ JSC_DEFINE_HOST_FUNCTION(functionDollarAgentReceiveBroadcast, (JSGlobalObject* g
     auto content = message->releaseContents();
     JSValue result = ([&]() -> JSValue {
         if (std::holds_alternative<ArrayBufferContents>(content)) {
-            auto nativeBuffer = ArrayBuffer::create(std::get<ArrayBufferContents>(WTFMove(content)));
+            auto nativeBuffer = ArrayBuffer::create(std::get<ArrayBufferContents>(WTF::move(content)));
             ArrayBufferSharingMode sharingMode = nativeBuffer->sharingMode();
-            return JSArrayBuffer::create(vm, globalObject->arrayBufferStructure(sharingMode), WTFMove(nativeBuffer));
+            return JSArrayBuffer::create(vm, globalObject->arrayBufferStructure(sharingMode), WTF::move(nativeBuffer));
         }
 #if ENABLE(WEBASSEMBLY)
         if (std::holds_alternative<RefPtr<SharedArrayBufferContents>>(content)) {
             JSWebAssemblyMemory* jsMemory = JSC::JSWebAssemblyMemory::create(vm, globalObject->webAssemblyMemoryStructure());
             auto handler = [&vm, jsMemory](Wasm::Memory::GrowSuccess, PageCount oldPageCount, PageCount newPageCount) { jsMemory->growSuccessCallback(vm, oldPageCount, newPageCount); };
             RefPtr<Wasm::Memory> memory;
-            if (auto shared = std::get<RefPtr<SharedArrayBufferContents>>(WTFMove(content)))
-                memory = Wasm::Memory::create(vm, shared.releaseNonNull(), WTFMove(handler));
+            if (auto shared = std::get<RefPtr<SharedArrayBufferContents>>(WTF::move(content)))
+                memory = Wasm::Memory::create(shared.releaseNonNull(), WTF::move(handler));
             else
-                memory = Wasm::Memory::createZeroSized(vm, MemorySharingMode::Shared, WTFMove(handler));
+                memory = Wasm::Memory::createZeroSized(MemorySharingMode::Shared, WTF::move(handler));
             jsMemory->adopt(memory.releaseNonNull());
             return jsMemory;
         }
@@ -2685,7 +2685,7 @@ JSC_DEFINE_HOST_FUNCTION(functionDollarAgentBroadcast, (JSGlobalObject* globalOb
                 ArrayBuffer* nativeBuffer = jsBuffer->impl();
                 ArrayBufferContents contents;
                 nativeBuffer->transferTo(vm, contents); // "transferTo" means "share" if the buffer is shared.
-                RefPtr<Message> message = adoptRef(new Message(WTFMove(contents), index));
+                RefPtr<Message> message = adoptRef(new Message(WTF::move(contents), index));
                 worker.enqueue(locker, message);
             });
         return JSValue::encode(jsUndefined());
@@ -2697,7 +2697,7 @@ JSC_DEFINE_HOST_FUNCTION(functionDollarAgentBroadcast, (JSGlobalObject* globalOb
         Workers::singleton().broadcast(
             [&] (const AbstractLocker& locker, Worker& worker) {
                 RefPtr<SharedArrayBufferContents> contents { memory->memory().shared() };
-                RefPtr<Message> message = adoptRef(new Message(WTFMove(contents), index));
+                RefPtr<Message> message = adoptRef(new Message(WTF::move(contents), index));
                 worker.enqueue(locker, message);
             });
         return JSValue::encode(jsUndefined());
@@ -2715,7 +2715,7 @@ JSC_DEFINE_HOST_FUNCTION(functionDollarAgentGetReport, (JSGlobalObject* globalOb
     if (!string)
         return JSValue::encode(jsNull());
     
-    return JSValue::encode(jsString(vm, WTFMove(string)));
+    return JSValue::encode(jsString(vm, WTF::move(string)));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionDollarAgentLeaving, (JSGlobalObject*, CallFrame*))
@@ -2745,7 +2745,7 @@ JSC_DEFINE_HOST_FUNCTION(functionWaitForReport, (JSGlobalObject* globalObject, C
     if (!string)
         return JSValue::encode(jsNull());
     
-    return JSValue::encode(jsString(vm, WTFMove(string)));
+    return JSValue::encode(jsString(vm, WTF::move(string)));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionHeapCapacity, (JSGlobalObject* globalObject, CallFrame*))
@@ -2967,7 +2967,7 @@ JSC_DEFINE_HOST_FUNCTION(functionSetTimeout, (JSGlobalObject* globalObject, Call
     // it will cause setTimeout starvation problem (see stress test settimeout-starvation.js).
     JSValue timeout = callFrame->argument(1);
     Seconds delay = timeout.isNumber() ? Seconds::fromMilliseconds(timeout.asNumber()) : Seconds(0);
-    RunLoop::currentSingleton().dispatchAfter(delay, WTFMove(dispatch));
+    RunLoop::currentSingleton().dispatchAfter(delay, WTF::move(dispatch));
 
     return JSValue::encode(jsUndefined());
 }
@@ -3120,7 +3120,7 @@ JSC_DEFINE_HOST_FUNCTION(functionCreateNonRopeNonAtomString, (JSGlobalObject* gl
 
     RELEASE_ASSERT(!source.impl()->isAtom());
 
-    return JSValue::encode(jsString(vm, WTFMove(source)));
+    return JSValue::encode(jsString(vm, WTF::move(source)));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionCheckModuleSyntax, (JSGlobalObject* globalObject, CallFrame* callFrame))
@@ -3214,7 +3214,7 @@ JSC_DEFINE_HOST_FUNCTION(functionGenerateHeapSnapshotForGCDebugging, (JSGlobalOb
         }
     }
     scope.releaseAssertNoException();
-    return JSValue::encode(jsString(vm, WTFMove(jsonString)));
+    return JSValue::encode(jsString(vm, WTF::move(jsonString)));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionResetSuperSamplerState, (JSGlobalObject*, CallFrame*))
@@ -3254,7 +3254,7 @@ JSC_DEFINE_HOST_FUNCTION(functionSamplingProfilerStackTraces, (JSGlobalObject* g
 
     auto json = vm.samplingProfiler()->stackTracesAsJSON();
     auto jsonString = json->toJSONString();
-    EncodedJSValue result = JSValue::encode(JSONParse(globalObject, WTFMove(jsonString)));
+    EncodedJSValue result = JSValue::encode(JSONParse(globalObject, WTF::move(jsonString)));
     scope.releaseAssertNoException();
     return result;
 }
@@ -3387,7 +3387,7 @@ JSC_DEFINE_HOST_FUNCTION(functionPerformanceMark, (JSGlobalObject* globalObject,
     auto message = asSignpostString(globalObject, callFrame->argument(0));
     RETURN_IF_EXCEPTION(scope, EncodedJSValue());
 
-    globalObject->startSignpost(WTFMove(message));
+    globalObject->startSignpost(WTF::move(message));
     return JSValue::encode(jsUndefined());
 }
 
@@ -3399,7 +3399,7 @@ JSC_DEFINE_HOST_FUNCTION(functionPerformanceMeasure, (JSGlobalObject* globalObje
     auto message = asSignpostString(globalObject, callFrame->argument(0));
     RETURN_IF_EXCEPTION(scope, EncodedJSValue());
 
-    globalObject->stopSignpost(WTFMove(message));
+    globalObject->stopSignpost(WTF::move(message));
     return JSValue::encode(jsUndefined());
 }
 
@@ -4312,6 +4312,9 @@ void CommandLine::parseArguments(int argc, char** argv, int start)
         constexpr auto wasmDebugOption = "--wasm-debugger"_s;
         bool isBareOption = argView.length() == wasmDebugOption.length();
         if (argView.startsWith(wasmDebugOption) && (isBareOption || argView[wasmDebugOption.length()] == '=')) {
+#if !CPU(ARM64)
+            dataLogLn("ERROR: --wasm-debugger only supported on ARM64");
+#else
             JSC::Options::enableWasmDebugger() = true;
             JSC::Options::useBBQJIT() = false;
             JSC::Options::useOMGJIT() = false;
@@ -4322,6 +4325,7 @@ void CommandLine::parseArguments(int argc, char** argv, int start)
                 else
                     dataLogLn("ERROR: invalid port number for --wasm-debugger=", suffix);
             }
+#endif
             continue;
         }
 #endif
@@ -4403,7 +4407,7 @@ int runJSC(const CommandLine& options, bool isWorker, const Func& func)
 
 #if ENABLE(WEBASSEMBLY)
             if (Options::enableWasmDebugger()) [[unlikely]]
-                Wasm::DebugServer::singleton().start(&vm);
+                Wasm::DebugServer::singleton().start();
 #endif
 
             func(vm, globalObject, success);
@@ -4586,7 +4590,7 @@ int jscmain(int argc, char** argv)
     {
         // FIXME: This is a false positive. rdar://160931336
         SUPPRESS_RETAINPTR_CTOR_ADOPT auto queue = adoptOSObject(dispatch_queue_create("jsc shell memory pressure handler", DISPATCH_QUEUE_SERIAL));
-        memoryPressureHandler.setDispatchQueue(WTFMove(queue));
+        memoryPressureHandler.setDispatchQueue(WTF::move(queue));
     }
     Box<Critical> memoryPressureCriticalState = Box<Critical>::create(Critical::No);
     Box<Synchronous> memoryPressureSynchronousState = Box<Synchronous>::create(Synchronous::No);
@@ -4625,7 +4629,7 @@ int jscmain(int argc, char** argv)
         [&] (VM& vm, GlobalObject* globalObject, bool& success) {
             UNUSED_PARAM(vm);
 #if PLATFORM(COCOA)
-            vm.setOnEachMicrotaskTick(WTFMove(onEachMicrotaskTick));
+            vm.setOnEachMicrotaskTick(WTF::move(onEachMicrotaskTick));
 #endif
             runWithOptions(globalObject, mainCommandLine.get(), success);
         });

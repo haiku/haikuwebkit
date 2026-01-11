@@ -469,7 +469,7 @@ void testWebKitFeatures(Test* test, gconstpointer)
 
             auto identifier = String::fromUTF8(webkit_feature_get_identifier(feature));
             g_assert_false(featureIdentifiers.contains(identifier));
-            featureIdentifiers.add(WTFMove(identifier));
+            featureIdentifiers.add(WTF::move(identifier));
         }
 
         g_assert_cmpuint(featureIdentifiers.size(), ==, allFeaturesCount);

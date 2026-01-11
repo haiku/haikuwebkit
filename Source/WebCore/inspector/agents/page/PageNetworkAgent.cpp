@@ -111,7 +111,7 @@ void PageNetworkAgent::setResourceCachingDisabledInternal(bool disabled)
 
 bool PageNetworkAgent::setEmulatedConditionsInternal(std::optional<int>&& bytesPerSecondLimit)
 {
-    return m_client && m_client->setEmulatedConditions(WTFMove(bytesPerSecondLimit));
+    return m_client && m_client->setEmulatedConditions(WTF::move(bytesPerSecondLimit));
 }
 
 #endif // ENABLE(INSPECTOR_NETWORK_THROTTLING)
@@ -142,7 +142,7 @@ void PageNetworkAgent::addConsoleMessage(std::unique_ptr<Inspector::ConsoleMessa
     RefPtr localMainFrame = m_inspectedPage->localMainFrame();
     if (!localMainFrame)
         return;
-    localMainFrame->console().addMessage(WTFMove(message));
+    localMainFrame->console().addMessage(WTF::move(message));
 }
 
 } // namespace WebCore

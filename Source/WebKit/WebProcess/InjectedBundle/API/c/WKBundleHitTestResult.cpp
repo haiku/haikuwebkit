@@ -42,13 +42,13 @@ WKTypeID WKBundleHitTestResultGetTypeID()
 WKBundleNodeHandleRef WKBundleHitTestResultCopyNodeHandle(WKBundleHitTestResultRef hitTestResultRef)
 {
     RefPtr<WebKit::InjectedBundleNodeHandle> nodeHandle = WebKit::toProtectedImpl(hitTestResultRef)->nodeHandle();
-    return toAPILeakingRef(WTFMove(nodeHandle));
+    return toAPILeakingRef(WTF::move(nodeHandle));
 }
 
 WKBundleNodeHandleRef WKBundleHitTestResultCopyURLElementHandle(WKBundleHitTestResultRef hitTestResultRef)
 {
     RefPtr<WebKit::InjectedBundleNodeHandle> urlElementNodeHandle = WebKit::toProtectedImpl(hitTestResultRef)->urlElementHandle();
-    return toAPILeakingRef(WTFMove(urlElementNodeHandle));
+    return toAPILeakingRef(WTF::move(urlElementNodeHandle));
 }
 
 WKBundleFrameRef WKBundleHitTestResultGetFrame(WKBundleHitTestResultRef)

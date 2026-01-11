@@ -237,7 +237,7 @@ public:
     struct ApplyConstraintsError {
         MediaConstraintType invalidConstraint;
         String message;
-        ApplyConstraintsError isolatedCopy() && { return { invalidConstraint, WTFMove(message).isolatedCopy() }; }
+        ApplyConstraintsError isolatedCopy() && { return { invalidConstraint, WTF::move(message).isolatedCopy() }; }
     };
     using ApplyConstraintsHandler = CompletionHandler<void(std::optional<ApplyConstraintsError>&&)>;
     virtual void applyConstraints(const MediaConstraints&, ApplyConstraintsHandler&&);
@@ -431,7 +431,7 @@ private:
 struct CaptureSourceError {
     CaptureSourceError() = default;
     CaptureSourceError(String&& errorMessage, MediaAccessDenialReason denialReason, MediaConstraintType invalidConstraint = MediaConstraintType::Unknown)
-        : errorMessage(WTFMove(errorMessage))
+        : errorMessage(WTF::move(errorMessage))
         , denialReason(denialReason)
         , invalidConstraint(invalidConstraint)
     {
@@ -451,8 +451,8 @@ struct CaptureSourceError {
 
 struct CaptureSourceOrError {
     CaptureSourceOrError() = default;
-    CaptureSourceOrError(Ref<RealtimeMediaSource>&& source) : captureSource(WTFMove(source)) { }
-    explicit CaptureSourceOrError(CaptureSourceError&& error) : error(WTFMove(error)) { }
+    CaptureSourceOrError(Ref<RealtimeMediaSource>&& source) : captureSource(WTF::move(source)) { }
+    explicit CaptureSourceOrError(CaptureSourceError&& error) : error(WTF::move(error)) { }
 
     operator bool() const { return !!captureSource; }
     Ref<RealtimeMediaSource> source() { return captureSource.releaseNonNull(); }

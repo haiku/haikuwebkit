@@ -26,6 +26,7 @@
 #pragma once
 
 #import "BindableResource.h"
+#import <WebGPU/WGPUTextureViewImpl.h>
 #import <wtf/FastMalloc.h>
 #import <wtf/Ref.h>
 #import <wtf/RefCountedAndCanMakeWeakPtr.h>
@@ -33,11 +34,6 @@
 #import <wtf/TZoneMalloc.h>
 #import <wtf/WeakHashSet.h>
 #import <wtf/WeakPtr.h>
-
-// FIXME(rdar://155970441): this annotation should be in WebGPU.h, move it once we support
-// annotating incomplete types
-struct SWIFT_SHARED_REFERENCE(wgpuTextureViewReference, wgpuTextureViewRelease) WGPUTextureViewImpl {
-};
 
 namespace WebGPU {
 
@@ -115,10 +111,10 @@ private:
 
 inline void refTextureView(WebGPU::TextureView* obj)
 {
-    ref(obj);
+    WTF::ref(obj);
 }
 
 inline void derefTextureView(WebGPU::TextureView* obj)
 {
-    deref(obj);
+    WTF::deref(obj);
 }

@@ -44,7 +44,7 @@ void ModuleAnalyzer::appendRequestedModule(const Identifier& specifier, RefPtr<S
 {
     auto result = m_requestedModules.add(specifier.impl());
     if (result.isNewEntry)
-        moduleRecord()->appendRequestedModule(specifier, WTFMove(attributes));
+        moduleRecord()->appendRequestedModule(specifier, WTF::move(attributes));
 }
 
 void ModuleAnalyzer::exportVariable(ModuleProgramNode& moduleProgramNode, const RefPtr<UniquedStringImpl>& localName, const VariableEnvironmentEntry& variable)
@@ -105,7 +105,7 @@ Expected<JSModuleRecord*, std::tuple<ErrorType, String>> ModuleAnalyzer::analyze
     // * Export entries that have star (e.g. export * from "mod")
     // * Aliased export names (e.g. export { a as b })
     if (!moduleProgramNode.analyzeModule(*this))
-        return makeUnexpected(WTFMove(m_errorMessage));
+        return makeUnexpected(WTF::move(m_errorMessage));
 
     // Based on the collected information, categorize export entries into 3 types.
     // 1. Local export entries

@@ -215,7 +215,7 @@ ExceptionOr<PaymentInstallmentConfiguration> PaymentInstallmentConfiguration::cr
     if (!configuration.applicationMetadata.isNull() && !dictionary)
         return Exception { ExceptionCode::TypeError, "applicationMetadata must be a JSON object"_s };
 
-    return PaymentInstallmentConfiguration(ApplePayInstallmentConfiguration(configuration), WTFMove(dictionary));
+    return PaymentInstallmentConfiguration(ApplePayInstallmentConfiguration(configuration), WTF::move(dictionary));
 }
 
 static ApplePayInstallmentConfiguration addApplicationMetadata(ApplePayInstallmentConfiguration configuration, RetainPtr<NSDictionary>&& applicationMetadata)
@@ -226,12 +226,12 @@ static ApplePayInstallmentConfiguration addApplicationMetadata(ApplePayInstallme
 }
 
 PaymentInstallmentConfiguration::PaymentInstallmentConfiguration(const ApplePayInstallmentConfiguration& configuration, RetainPtr<NSDictionary>&& applicationMetadata)
-    : m_configuration { addApplicationMetadata(configuration, WTFMove(applicationMetadata)) }
+    : m_configuration { addApplicationMetadata(configuration, WTF::move(applicationMetadata)) }
 {
 }
 
 PaymentInstallmentConfiguration::PaymentInstallmentConfiguration(std::optional<ApplePayInstallmentConfiguration>&& configuration)
-    : m_configuration { WTFMove(configuration) }
+    : m_configuration { WTF::move(configuration) }
 {
 }
 
@@ -274,13 +274,13 @@ std::optional<ApplePayInstallmentConfiguration> PaymentInstallmentConfiguration:
     installmentConfiguration.referrerIdentifier = [configuration referrerIdentifier];
 
     if (!PAL::getPKPaymentInstallmentItemClassSingleton())
-        return WTFMove(installmentConfiguration);
+        return WTF::move(installmentConfiguration);
 
     installmentConfiguration.items = makeVector<ApplePayInstallmentItem>(retainPtr([configuration installmentItems]).get());
     installmentConfiguration.applicationMetadata = applicationMetadataString(retainPtr([configuration applicationMetadata]).get());
     installmentConfiguration.retailChannel = applePayRetailChannel([configuration retailChannel]);
 
-    return WTFMove(installmentConfiguration);
+    return WTF::move(installmentConfiguration);
 }
 
 } // namespace WebCore

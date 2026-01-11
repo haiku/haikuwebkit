@@ -55,7 +55,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(StyledElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(StyledElement);
 
 static_assert(sizeof(StyledElement) == sizeof(Element), "styledelement should remain same size as element");
 
@@ -244,7 +244,7 @@ bool StyledElement::setInlineStyleProperty(CSSPropertyID propertyID, double valu
 
 bool StyledElement::setInlineStyleProperty(CSSPropertyID propertyID, Ref<CSSValue>&& value, IsImportant important)
 {
-    ensureMutableInlineStyle()->setProperty(propertyID, WTFMove(value), important);
+    ensureMutableInlineStyle()->setProperty(propertyID, WTF::move(value), important);
     inlineStyleChanged();
     return true;
 }
@@ -267,7 +267,7 @@ bool StyledElement::setInlineStyleCustomProperty(const AtomString& property, con
 
 bool StyledElement::setInlineStyleCustomProperty(Ref<CSSValue>&& customPropertyValue, IsImportant important)
 {
-    ensureMutableInlineStyle()->addParsedProperty(CSSProperty(CSSPropertyCustom, WTFMove(customPropertyValue), important));
+    ensureMutableInlineStyle()->addParsedProperty(CSSProperty(CSSPropertyCustom, WTF::move(customPropertyValue), important));
     inlineStyleChanged();
     return true;
 }
@@ -391,7 +391,7 @@ void StyledElement::addPropertyToPresentationalHintStyle(MutableStyleProperties&
 
 void StyledElement::addPropertyToPresentationalHintStyle(MutableStyleProperties& style, CSSPropertyID propertyID, Ref<CSSValue>&& value)
 {
-    style.setProperty(propertyID, WTFMove(value));
+    style.setProperty(propertyID, WTF::move(value));
 }
 
 }

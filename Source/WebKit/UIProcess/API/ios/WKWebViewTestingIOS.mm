@@ -196,7 +196,7 @@ static void dumpSeparatedLayerProperties(TextStream&, CALayer *) { }
 
 static String allowListedClassToString(UIView *view)
 {
-    static constexpr ComparableASCIILiteral allowedClassesArray[] = {
+    static constexpr SortedArraySet allowedClasses { std::to_array<ComparableASCIILiteral>({
         "UIView"_s,
         "WKBackdropView"_s,
         "WKCompositingView"_s,
@@ -211,8 +211,7 @@ static String allowListedClassToString(UIView *view)
         "WKUIRemoteView"_s,
         "WKWebView"_s,
         "_UILayerHostView"_s,
-    };
-    static constexpr SortedArraySet allowedClasses { allowedClassesArray };
+    }) };
 
     String classString { NSStringFromClass(view.class) };
     if (allowedClasses.contains(classString))
@@ -224,11 +223,10 @@ static String allowListedClassToString(UIView *view)
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
 static bool shouldDumpSeparatedDetails(UIView *view)
 {
-    static constexpr ComparableASCIILiteral deniedClassesArray[] = {
+    static constexpr SortedArraySet deniedClasses { std::to_array<ComparableASCIILiteral>({
         "WKCompositingView"_s,
         "WKSeparatedImageView"_s,
-    };
-    static constexpr SortedArraySet deniedClasses { deniedClassesArray };
+    }) };
 
     String classString { NSStringFromClass(view.class) };
     if (deniedClasses.contains(classString))
@@ -459,7 +457,7 @@ static void dumpUIView(TextStream& ts, UIView *view, bool traverse)
     Function<bool()> handlerWrapper;
     if (handler)
         handlerWrapper = [handler = makeBlockPtr(handler)] { return handler(); };
-    _page->setDeviceOrientationUserPermissionHandlerForTesting(WTFMove(handlerWrapper));
+    _page->setDeviceOrientationUserPermissionHandlerForTesting(WTF::move(handlerWrapper));
 }
 
 - (void)_resetObscuredInsetsForTesting

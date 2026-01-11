@@ -49,7 +49,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(ReadableByteStreamController);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(ReadableByteStreamController);
 
 template<typename Algorithm, typename AlgorithmParameter>
 Ref<DOMPromise> getAlgorithmPromise(JSDOMGlobalObject& globalObject, RefPtr<Algorithm> algorithm, JSC::JSValue underlyingSource, AlgorithmParameter&& parameter)
@@ -72,8 +72,8 @@ Ref<DOMPromise> getAlgorithmPromise(JSDOMGlobalObject& globalObject, RefPtr<Algo
 ReadableByteStreamController::ReadableByteStreamController(ReadableStream& stream, JSC::JSValue underlyingSource, RefPtr<UnderlyingSourcePullCallback>&& pullAlgorithm, RefPtr<UnderlyingSourceCancelCallback>&& cancelAlgorithm, double highWaterMark, size_t autoAllocateChunkSize)
     : m_stream(stream)
     , m_strategyHWM(highWaterMark)
-    , m_pullAlgorithm(WTFMove(pullAlgorithm))
-    , m_cancelAlgorithm(WTFMove(cancelAlgorithm))
+    , m_pullAlgorithm(WTF::move(pullAlgorithm))
+    , m_cancelAlgorithm(WTF::move(cancelAlgorithm))
     , m_autoAllocateChunkSize(autoAllocateChunkSize)
     , m_underlyingSource(underlyingSource)
 {
@@ -90,8 +90,8 @@ ReadableByteStreamController::ReadableByteStreamController(ReadableStream& strea
     : m_stream(stream)
     , m_strategyHWM(highWaterMark)
     , m_autoAllocateChunkSize(autoAllocateChunkSize)
-    , m_pullAlgorithmWrapper(WTFMove(pullAlgorithm))
-    , m_cancelAlgorithmWrapper(WTFMove(cancelAlgorithm))
+    , m_pullAlgorithmWrapper(WTF::move(pullAlgorithm))
+    , m_cancelAlgorithmWrapper(WTF::move(cancelAlgorithm))
 {
 }
 
@@ -179,7 +179,7 @@ ReadableStreamBYOBRequest* ReadableByteStreamController::getByobRequest() const
         byobRequest->setController(const_cast<ReadableByteStreamController*>(this));
         byobRequest->setView(view.ptr());
 
-        m_byobRequest = WTFMove(byobRequest);
+        m_byobRequest = WTF::move(byobRequest);
     }
 
     return m_byobRequest.get();
@@ -296,7 +296,7 @@ static ExceptionOr<Ref<JSC::ArrayBuffer>> transferArrayBuffer(JSC::VM& vm, JSC::
     if (!isOK)
         return Exception { ExceptionCode::TypeError, "transfer of buffer failed"_s };
 
-    return ArrayBuffer::create(WTFMove(contents));
+    return ArrayBuffer::create(WTF::move(contents));
 }
 
 // https://streams.spec.whatwg.org/#readablestream-pull-from-bytes
@@ -385,7 +385,7 @@ ExceptionOr<void> ReadableByteStreamController::enqueue(JSDOMGlobalObject& globa
             }
 
             Ref transferredView = Uint8Array::create(transferredBufferOrException.releaseReturnValue(), byteOffset, byteLength);
-            stream->fulfillReadRequest(globalObject, WTFMove(transferredView), false);
+            stream->fulfillReadRequest(globalObject, WTF::move(transferredView), false);
         }
     } else if (RefPtr byobReader = stream->byobReader()) {
         enqueueChunkToQueue(transferredBufferOrException.releaseReturnValue(), byteOffset, byteLength);
@@ -413,7 +413,7 @@ void ReadableByteStreamController::processReadRequestsUsingQueue(JSDOMGlobalObje
             return;
 
         auto readRequest = reader->takeFirstReadRequest();
-        fillReadRequestFromQueue(globalObject, WTFMove(readRequest));
+        fillReadRequestFromQueue(globalObject, WTF::move(readRequest));
     }
 }
 
@@ -465,7 +465,7 @@ ReadableByteStreamController::PullIntoDescriptor ReadableByteStreamController::s
 
 void ReadableByteStreamController::enqueueChunkToQueue(Ref<JSC::ArrayBuffer>&& buffer, size_t byteOffset, size_t byteLength)
 {
-    m_queue.append({ WTFMove(buffer), byteOffset, byteLength });
+    m_queue.append({ WTF::move(buffer), byteOffset, byteLength });
     m_queueTotalSize += byteLength;
 }
 
@@ -603,10 +603,10 @@ static Ref<JSC::ArrayBufferView> createTypedBuffer(JSC::TypedArrayType type, Ref
     switch (type) {
     case JSC::TypedArrayType::NotTypedArray:
     case JSC::TypedArrayType::TypeDataView:
-        return JSC::DataView::create(WTFMove(buffer), byteOffset, size);
+        return JSC::DataView::create(WTF::move(buffer), byteOffset, size);
 #define CREATE_TYPED_ARRAY(name) \
     case JSC::TypedArrayType::Type##name: \
-        return JSC::name##Array::create(WTFMove(buffer), byteOffset, size);
+        return JSC::name##Array::create(WTF::move(buffer), byteOffset, size);
     FOR_EACH_TYPED_ARRAY_TYPE_EXCLUDING_DATA_VIEW(CREATE_TYPED_ARRAY)
 #undef CREATE_TYPED_ARRAY
     }
@@ -703,16 +703,16 @@ void ReadableByteStreamController::pullInto(JSDOMGlobalObject& globalObject, JSC
     Ref buffer = bufferResultOrException.releaseReturnValue();
 
     auto bufferByteLength = buffer->byteLength();
-    PullIntoDescriptor pullIntoDescriptor { WTFMove(buffer), bufferByteLength, byteOffset, byteLength, 0, minimumFill, elementSize, viewType, ReaderType::Byob };
+    PullIntoDescriptor pullIntoDescriptor { WTF::move(buffer), bufferByteLength, byteOffset, byteLength, 0, minimumFill, elementSize, viewType, ReaderType::Byob };
     if (!m_pendingPullIntos.isEmpty()) {
-        m_pendingPullIntos.append(WTFMove(pullIntoDescriptor));
-        stream->addReadIntoRequest(WTFMove(readIntoRequest));
+        m_pendingPullIntos.append(WTF::move(pullIntoDescriptor));
+        stream->addReadIntoRequest(WTF::move(readIntoRequest));
         return;
     }
 
     if (stream->state() == ReadableStream::State::Closed) {
-        Ref emptyView = createTypedBuffer(pullIntoDescriptor.viewConstructor, WTFMove(pullIntoDescriptor.buffer), pullIntoDescriptor.byteOffset, 0);
-        auto chunk = toJS<IDLArrayBufferView>(globalObject, globalObject, WTFMove(emptyView));
+        Ref emptyView = createTypedBuffer(pullIntoDescriptor.viewConstructor, WTF::move(pullIntoDescriptor.buffer), pullIntoDescriptor.byteOffset, 0);
+        auto chunk = toJS<IDLArrayBufferView>(globalObject, globalObject, WTF::move(emptyView));
         readIntoRequest->runCloseSteps(chunk);
         return;
     }
@@ -722,7 +722,7 @@ void ReadableByteStreamController::pullInto(JSDOMGlobalObject& globalObject, JSC
             auto filledView = convertPullIntoDescriptor(vm, pullIntoDescriptor);
             handleQueueDrain(globalObject);
 
-            auto chunk = toJS<IDLNullable<IDLArrayBufferView>>(globalObject, globalObject, WTFMove(filledView));
+            auto chunk = toJS<IDLNullable<IDLArrayBufferView>>(globalObject, globalObject, WTF::move(filledView));
             readIntoRequest->runChunkSteps(chunk);
             return;
         }
@@ -734,8 +734,8 @@ void ReadableByteStreamController::pullInto(JSDOMGlobalObject& globalObject, JSC
         }
     }
 
-    m_pendingPullIntos.append(WTFMove(pullIntoDescriptor));
-    stream->addReadIntoRequest(WTFMove(readIntoRequest));
+    m_pendingPullIntos.append(WTF::move(pullIntoDescriptor));
+    stream->addReadIntoRequest(WTF::move(readIntoRequest));
     callPullIfNeeded(globalObject);
 }
 
@@ -748,8 +748,8 @@ void ReadableByteStreamController::runCancelSteps(JSDOMGlobalObject& globalObjec
     m_queueTotalSize = 0;
 
     auto promise = m_cancelAlgorithmWrapper(globalObject, *this, reason);
-    handleSourcePromise(promise, [callback = WTFMove(callback)](auto&, auto&& reason) mutable {
-        callback(WTFMove(reason));
+    handleSourcePromise(promise, [callback = WTF::move(callback)](auto&, auto&& reason) mutable {
+        callback(WTF::move(reason));
     });
 }
 
@@ -761,15 +761,15 @@ void ReadableByteStreamController::runPullSteps(JSDOMGlobalObject& globalObject,
 
     if (m_queueTotalSize) {
         ASSERT(!stream->getNumReadRequests());
-        fillReadRequestFromQueue(globalObject, WTFMove(readRequest));
+        fillReadRequestFromQueue(globalObject, WTF::move(readRequest));
         return;
     }
 
     if (auto autoAllocateChunkSize = m_autoAllocateChunkSize) {
         auto buffer = JSC::ArrayBuffer::create(autoAllocateChunkSize, 1);
-        m_pendingPullIntos.append({ WTFMove(buffer), autoAllocateChunkSize, 0, autoAllocateChunkSize, 0, 1, 1, JSC::TypedArrayType::TypeUint8, ReaderType::Default });
+        m_pendingPullIntos.append({ WTF::move(buffer), autoAllocateChunkSize, 0, autoAllocateChunkSize, 0, 1, 1, JSC::TypedArrayType::TypeUint8, ReaderType::Default });
     }
-    stream->addReadRequest(WTFMove(readRequest));
+    stream->addReadRequest(WTF::move(readRequest));
     callPullIfNeeded(globalObject);
 }
 
@@ -792,8 +792,8 @@ void ReadableByteStreamController::fillReadRequestFromQueue(JSDOMGlobalObject& g
 
     handleQueueDrain(globalObject);
 
-    Ref view = Uint8Array::create(WTFMove(entry.buffer), entry.byteOffset, entry.byteLength);
-    auto chunk = toJS<IDLArrayBufferView>(globalObject, globalObject, WTFMove(view));
+    Ref view = Uint8Array::create(WTF::move(entry.buffer), entry.byteOffset, entry.byteLength);
+    auto chunk = toJS<IDLArrayBufferView>(globalObject, globalObject, WTF::move(view));
     readRequest->runChunkSteps(chunk);
 }
 
@@ -963,10 +963,10 @@ void ReadableByteStreamController::commitPullIntoDescriptor(JSDOMGlobalObject& g
     Ref vm = globalObject.vm();
     RefPtr filledView = convertPullIntoDescriptor(vm.get(), pullIntoDescriptor);
     if (pullIntoDescriptor.readerType == ReaderType::Default)
-        stream->fulfillReadRequest(globalObject, WTFMove(filledView), done);
+        stream->fulfillReadRequest(globalObject, WTF::move(filledView), done);
     else {
         ASSERT(pullIntoDescriptor.readerType == ReaderType::Byob);
-        stream->fulfillReadIntoRequest(globalObject, WTFMove(filledView), done);
+        stream->fulfillReadIntoRequest(globalObject, WTF::move(filledView), done);
     }
 }
 
@@ -984,7 +984,7 @@ void ReadableByteStreamController::handleQueueDrain(JSDOMGlobalObject& globalObj
 
 void ReadableByteStreamController::handleSourcePromise(DOMPromise& algorithmPromise, Callback&& callback)
 {
-    algorithmPromise.whenSettled([promise = Ref { algorithmPromise }, callback = WTFMove(callback)]() mutable {
+    algorithmPromise.whenSettled([promise = Ref { algorithmPromise }, callback = WTF::move(callback)]() mutable {
         auto* globalObject = promise->globalObject();
         if (!globalObject || promise->isSuspended())
             return;

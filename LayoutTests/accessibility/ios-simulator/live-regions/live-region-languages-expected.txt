@@ -2,8 +2,8 @@ This tests that live region notifications for elements with different languages 
 
 Announcement received, notification: AXAnnouncementRequested, attributed string: Manzana{
     UIAccessibilitySpeechAttributeAnnouncementPriority = UIAccessibilityPriorityLow;
-    UIAccessibilitySpeechAttributeIsLiveRegion = 1;
     UIAccessibilitySpeechAttributeLanguage = es;
+    UIAccessibilityTokenLiveRegionAnnouncement = 1;
 }
 
 

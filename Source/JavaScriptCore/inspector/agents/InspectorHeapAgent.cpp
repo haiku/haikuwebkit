@@ -59,7 +59,7 @@ void InspectorHeapAgent::didCreateFrontendAndBackend()
 
 void InspectorHeapAgent::willDestroyFrontendAndBackend(DisconnectReason)
 {
-    disable();
+    std::ignore = disable();
 }
 
 Protocol::ErrorStringOr<void> InspectorHeapAgent::enable()
@@ -123,9 +123,9 @@ Protocol::ErrorStringOr<void> InspectorHeapAgent::startTracking()
 
     auto result = snapshot();
     if (!result)
-        return makeUnexpected(WTFMove(result.error()));
+        return makeUnexpected(WTF::move(result.error()));
 
-    auto [timestamp, snapshotData] = WTFMove(result.value());
+    auto [timestamp, snapshotData] = WTF::move(result.value());
     m_frontendDispatcher->trackingStart(timestamp, snapshotData);
 
     return { };
@@ -140,9 +140,9 @@ Protocol::ErrorStringOr<void> InspectorHeapAgent::stopTracking()
 
     auto result = snapshot();
     if (!result)
-        return makeUnexpected(WTFMove(result.error()));
+        return makeUnexpected(WTF::move(result.error()));
 
-    auto [timestamp, snapshotData] = WTFMove(result.value());
+    auto [timestamp, snapshotData] = WTF::move(result.value());
     m_frontendDispatcher->trackingComplete(timestamp, snapshotData);
 
     return { };
@@ -325,7 +325,7 @@ void InspectorHeapAgent::dispatchGarbageCollectedEvent(Protocol::Heap::GarbageCo
         .setEndTime(endTime.seconds())
         .release();
 
-    m_frontendDispatcher->garbageCollected(WTFMove(protocolObject));
+    m_frontendDispatcher->garbageCollected(WTF::move(protocolObject));
 }
 
 } // namespace Inspector

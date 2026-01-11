@@ -43,6 +43,9 @@ class RemoteAnimationTimeline : public RefCounted<RemoteAnimationTimeline> {
 public:
     virtual ~RemoteAnimationTimeline() = default;
 
+    bool isMonotonic() const { return !m_duration; }
+    bool isProgressBased() const { return !!m_duration; }
+
     const WebCore::WebAnimationTime& currentTime() const { return m_currentTime; }
     const std::optional<WebCore::WebAnimationTime>& duration() const { return m_duration; }
     const TimelineID& identifier() const { return m_identifier; }
@@ -60,5 +63,10 @@ private:
 };
 
 } // namespace WebKit
+
+#define SPECIALIZE_TYPE_TRAITS_REMOTE_ANIMATION_TIMELINE(ToValueTypeName, predicate) \
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::ToValueTypeName) \
+    static bool isType(const WebKit::RemoteAnimationTimeline& node) { return node.predicate; } \
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(THREADED_ANIMATIONS)

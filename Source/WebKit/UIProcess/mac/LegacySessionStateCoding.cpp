@@ -202,7 +202,7 @@ public:
     MallocSpan<uint8_t, HistoryEntryDataEncoderMalloc> finishEncoding(size_t& size)
     {
         size = m_bufferSize;
-        return WTFMove(m_buffer);
+        return WTF::move(m_buffer);
     }
 
 private:
@@ -527,7 +527,7 @@ RefPtr<API::Data> encodeLegacySessionState(const SessionState& sessionState)
     // Copy in the actual session state data
     CFDataGetBytes(data.get(), CFRangeMake(0, length), buffer.subspan(sizeof(uint32_t)).data());
 
-    return API::Data::createWithoutCopying(buffer, [mallocBuffer = WTFMove(mallocBuffer)] { });
+    return API::Data::createWithoutCopying(buffer, [mallocBuffer = WTF::move(mallocBuffer)] { });
 }
 
 class HistoryEntryDataDecoder {
@@ -816,7 +816,7 @@ static void decodeFormDataElement(HistoryEntryDataDecoder& decoder, HTTPBody::El
     case WTF::alternativeIndexV<Vector<uint8_t>, HTTPBody::Element::Data>: {
         Vector<uint8_t> data;
         decoder >> data;
-        formDataElement.data = WTFMove(data);
+        formDataElement.data = WTF::move(data);
         break;
     }
 
@@ -850,14 +850,14 @@ static void decodeFormDataElement(HistoryEntryDataDecoder& decoder, HTTPBody::El
         if (!std::isnan(expectedFileModificationTime))
             fileData.expectedFileModificationTime = WallTime::fromRawSeconds(expectedFileModificationTime);
 
-        formDataElement.data = WTFMove(fileData);
+        formDataElement.data = WTF::move(fileData);
         break;
     }
 
     case WTF::alternativeIndexV<String, HTTPBody::Element::Data>: {
         String blobURLString;
         decoder >> blobURLString;
-        formDataElement.data = WTFMove(blobURLString);
+        formDataElement.data = WTF::move(blobURLString);
         break;
     }
     }
@@ -881,7 +881,7 @@ static void decodeFormData(HistoryEntryDataDecoder& decoder, HTTPBody& formData)
         if (!decoder.isValid())
             return;
 
-        formData.elements.append(WTFMove(formDataElement));
+        formData.elements.append(WTF::move(formDataElement));
     }
 
     bool hasGeneratedFiles;
@@ -906,7 +906,7 @@ static void decodeBackForwardTreeNode(HistoryEntryDataDecoder& decoder, FrameSta
         if (!decoder.isValid())
             return;
 
-        frameState.children.append(WTFMove(childFrameState));
+        frameState.children.append(WTF::move(childFrameState));
     }
 
     decoder >> frameState.documentSequenceNumber;
@@ -922,7 +922,7 @@ static void decodeBackForwardTreeNode(HistoryEntryDataDecoder& decoder, FrameSta
         if (!decoder.isValid())
             return;
 
-        documentState.append(WTFMove(state));
+        documentState.append(WTF::move(state));
     }
     frameState.setDocumentState(documentState, FrameState::ShouldValidate::Yes);
 
@@ -934,11 +934,11 @@ static void decodeBackForwardTreeNode(HistoryEntryDataDecoder& decoder, FrameSta
 
     if (hasFormData) {
         HTTPBody httpBody;
-        httpBody.contentType = WTFMove(formContentType);
+        httpBody.contentType = WTF::move(formContentType);
 
         decodeFormData(decoder, httpBody);
 
-        frameState.httpBody = WTFMove(httpBody);
+        frameState.httpBody = WTF::move(httpBody);
     }
 
     decoder >> frameState.itemSequenceNumber;
@@ -962,7 +962,7 @@ static void decodeBackForwardTreeNode(HistoryEntryDataDecoder& decoder, FrameSta
         Vector<uint8_t> stateObjectData;
         decoder >> stateObjectData;
 
-        frameState.stateObjectData = WTFMove(stateObjectData);
+        frameState.stateObjectData = WTF::move(stateObjectData);
     }
 
     decoder >> frameState.target;
@@ -977,7 +977,7 @@ static void decodeBackForwardTreeNode(HistoryEntryDataDecoder& decoder, FrameSta
 #endif
 }
 
-static WARN_UNUSED_RETURN bool decodeSessionHistoryEntryData(std::span<const uint8_t> buffer, FrameState& mainFrameState)
+WARN_UNUSED_RETURN static bool decodeSessionHistoryEntryData(std::span<const uint8_t> buffer, FrameState& mainFrameState)
 {
     HistoryEntryDataDecoder decoder { buffer };
 
@@ -992,12 +992,12 @@ static WARN_UNUSED_RETURN bool decodeSessionHistoryEntryData(std::span<const uin
     return decoder.finishDecoding();
 }
 
-static WARN_UNUSED_RETURN bool decodeSessionHistoryEntryData(CFDataRef historyEntryData, FrameState& mainFrameState)
+WARN_UNUSED_RETURN static bool decodeSessionHistoryEntryData(CFDataRef historyEntryData, FrameState& mainFrameState)
 {
     return decodeSessionHistoryEntryData(span(historyEntryData), mainFrameState);
 }
 
-static WARN_UNUSED_RETURN bool decodeSessionHistoryEntry(CFDictionaryRef entryDictionary, FrameState& backForwardListItemState)
+WARN_UNUSED_RETURN static bool decodeSessionHistoryEntry(CFDictionaryRef entryDictionary, FrameState& backForwardListItemState)
 {
     RetainPtr title = dynamic_cf_cast<CFStringRef>(CFDictionaryGetValue(entryDictionary, sessionHistoryEntryTitleKey));
     if (!title)
@@ -1032,7 +1032,7 @@ static WARN_UNUSED_RETURN bool decodeSessionHistoryEntry(CFDictionaryRef entryDi
     return true;
 }
 
-static WARN_UNUSED_RETURN bool decodeSessionHistoryEntries(CFArrayRef entriesArray, Vector<Ref<FrameState>>& entries)
+WARN_UNUSED_RETURN static bool decodeSessionHistoryEntries(CFArrayRef entriesArray, Vector<Ref<FrameState>>& entries)
 {
     for (CFIndex i = 0, size = CFArrayGetCount(entriesArray); i < size; ++i) {
         RetainPtr entryDictionary = dynamic_cf_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(entriesArray, i));
@@ -1043,13 +1043,13 @@ static WARN_UNUSED_RETURN bool decodeSessionHistoryEntries(CFArrayRef entriesArr
         if (!decodeSessionHistoryEntry(entryDictionary.get(), entry))
             return false;
 
-        entries.append(WTFMove(entry));
+        entries.append(WTF::move(entry));
     }
 
     return true;
 }
 
-static WARN_UNUSED_RETURN bool decodeV0SessionHistory(CFDictionaryRef sessionHistoryDictionary, BackForwardListState& backForwardListState)
+WARN_UNUSED_RETURN static bool decodeV0SessionHistory(CFDictionaryRef sessionHistoryDictionary, BackForwardListState& backForwardListState)
 {
     RetainPtr currentIndexNumber = dynamic_cf_cast<CFNumberRef>(CFDictionaryGetValue(sessionHistoryDictionary, sessionHistoryCurrentIndexKey));
     if (!currentIndexNumber)
@@ -1085,7 +1085,7 @@ static WARN_UNUSED_RETURN bool decodeV0SessionHistory(CFDictionaryRef sessionHis
     return true;
 }
 
-static WARN_UNUSED_RETURN bool decodeV1SessionHistory(CFDictionaryRef sessionHistoryDictionary, BackForwardListState& backForwardListState)
+WARN_UNUSED_RETURN static bool decodeV1SessionHistory(CFDictionaryRef sessionHistoryDictionary, BackForwardListState& backForwardListState)
 {
     RetainPtr currentIndexNumber = dynamic_cf_cast<CFNumberRef>(CFDictionaryGetValue(sessionHistoryDictionary, sessionHistoryCurrentIndexKey));
     if (!currentIndexNumber) {
@@ -1116,7 +1116,7 @@ static WARN_UNUSED_RETURN bool decodeV1SessionHistory(CFDictionaryRef sessionHis
     return true;
 }
 
-static WARN_UNUSED_RETURN bool decodeSessionHistory(CFDictionaryRef backForwardListDictionary, BackForwardListState& backForwardListState)
+WARN_UNUSED_RETURN static bool decodeSessionHistory(CFDictionaryRef backForwardListDictionary, BackForwardListState& backForwardListState)
 {
     RetainPtr sessionHistoryVersionNumber = dynamic_cf_cast<CFNumberRef>(CFDictionaryGetValue(backForwardListDictionary, sessionHistoryVersionKey));
     if (!sessionHistoryVersionNumber) {

@@ -144,7 +144,7 @@ void HTMLVideoElementCaptionDisplaySettings::showCaptionDisplaySettings(HTMLVide
 
     element.showCaptionDisplaySettingsPreview();
 
-    page->showCaptionDisplaySettings(element, resolvedOptions, [weakElement = WeakPtr { element }, promise = WTFMove(promise)] (ExceptionOr<void>&& result) {
+    page->showCaptionDisplaySettings(element, resolvedOptions, [weakElement = WeakPtr { element }, promise = WTF::move(promise)] (ExceptionOr<void>&& result) {
 
         if (RefPtr element = weakElement.get())
             element->hideCaptionDisplaySettingsPreview();

@@ -107,7 +107,7 @@ static std::unique_ptr<PushMessageForTesting> pushMessageFromArguments(NSEnumera
     PushMessageForTesting pushMessage = { { }, { }, registrationURL.get(), message.get(), WebKit::WebPushD::PushMessageDisposition::Legacy };
 #endif
 
-    return makeUniqueWithoutFastMallocCheck<PushMessageForTesting>(WTFMove(pushMessage));
+    return makeUniqueWithoutFastMallocCheck<PushMessageForTesting>(WTF::move(pushMessage));
 }
 
 static bool registerDaemonWithLaunchD(WebPushTool::PreferTestService preferTestService)
@@ -183,7 +183,7 @@ class InjectPushMessageVerb : public WebPushToolVerb {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(InjectPushMessageVerb);
 public:
     InjectPushMessageVerb(PushMessageForTesting&& message)
-        : m_pushMessage(WTFMove(message)) { }
+        : m_pushMessage(WTF::move(message)) { }
 
     void run(WebPushTool::Connection& connection) override
     {
@@ -191,7 +191,7 @@ public:
         pushMessage.targetAppCodeSigningIdentifier = connection.bundleIdentifier();
         pushMessage.pushPartitionString = connection.pushPartition();
 
-        connection.sendPushMessage(WTFMove(pushMessage), [this, bundleIdentifier = connection.bundleIdentifier(), webClipIdentifier = connection.pushPartition()](String error) mutable {
+        connection.sendPushMessage(WTF::move(pushMessage), [this, bundleIdentifier = connection.bundleIdentifier(), webClipIdentifier = connection.pushPartition()](String error) mutable {
             if (error.isEmpty())
                 SAFE_PRINTF("Successfully injected push message %s for [bundleID = %s, webClipIdentifier = %s, scope = %s]\n", m_pushMessage.payload.utf8(), bundleIdentifier.utf8(), webClipIdentifier.utf8(), m_pushMessage.registrationURL.string().utf8());
             else
@@ -274,7 +274,7 @@ int WebPushToolMain(int, char **)
                 auto pushMessage = pushMessageFromArguments(enumerator.get());
                 if (!pushMessage)
                     printUsageAndTerminate(adoptNS([[NSString alloc] initWithFormat:@"Invalid push arguments specified"]).get());
-                verb = makeUnique<InjectPushMessageVerb>(WTFMove(*pushMessage));
+                verb = makeUnique<InjectPushMessageVerb>(WTF::move(*pushMessage));
             } else if ([argument isEqualToString:@"getPushPermissionState"]) {
                 String scope { [enumerator nextObject] };
                 verb = makeUnique<GetPushPermissionStateVerb>(scope);

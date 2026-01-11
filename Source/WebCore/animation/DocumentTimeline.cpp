@@ -341,7 +341,7 @@ void DocumentTimeline::transitionDidComplete(Ref<CSSTransition>&& transition)
         if (auto styleable = keyframeEffect->targetStyleable()) {
             auto property = transition->property();
             if (styleable->hasRunningTransitionForProperty(property))
-                styleable->ensureCompletedTransitionsByProperty().set(property, WTFMove(transition));
+                styleable->ensureCompletedTransitionsByProperty().set(property, WTF::move(transition));
         }
     }
 }
@@ -502,18 +502,18 @@ ExceptionOr<Ref<WebAnimation>> DocumentTimeline::animate(Ref<CustomEffectCallbac
             auto customEffectOptions = std::get<CustomAnimationOptions>(*options);
             id = customEffectOptions.id;
             frameRate = customEffectOptions.frameRate;
-            customEffectOptionsVariant = WTFMove(customEffectOptions);
+            customEffectOptionsVariant = WTF::move(customEffectOptions);
         }
         customEffectOptions = customEffectOptionsVariant;
     }
 
-    auto customEffectResult = CustomEffect::create(*document, WTFMove(callback), WTFMove(customEffectOptions));
+    auto customEffectResult = CustomEffect::create(*document, WTF::move(callback), WTF::move(customEffectOptions));
     if (customEffectResult.hasException())
         return customEffectResult.releaseException();
 
     auto animation = WebAnimation::create(*document, &customEffectResult.returnValue().get());
-    animation->setId(WTFMove(id));
-    animation->setBindingsFrameRate(WTFMove(frameRate));
+    animation->setId(WTF::move(id));
+    animation->setBindingsFrameRate(WTF::move(frameRate));
 
     auto animationPlayResult = animation->play();
     if (animationPlayResult.hasException())

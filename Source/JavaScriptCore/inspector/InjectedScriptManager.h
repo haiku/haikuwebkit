@@ -70,6 +70,8 @@ public:
     void clearEventValue();
     void clearExceptionValue();
 
+    virtual bool isWebInjectedScriptManager() const { return false; }
+
 protected:
     virtual void didCreateInjectedScript(const InjectedScript&);
 

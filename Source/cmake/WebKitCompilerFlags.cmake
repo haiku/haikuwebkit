@@ -142,13 +142,6 @@ if (DEVELOPER_MODE OR ARM)
     WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-fno-omit-frame-pointer)
 endif ()
 
-# Record references to files using relative paths instead of absolute.
-# This helps both with reproducible builds and ccache hits.
-# It also breaks debugedit, so limit this to DEVELOPER_MODE.
-if (DEVELOPER_MODE)
-    WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)
-endif ()
-
 if (COMPILER_IS_GCC_OR_CLANG)
     if (COMPILER_IS_CLANG OR (DEVELOPER_MODE AND NOT ARM))
         # Split debug information in ".debug_types" / ".debug_info" sections - this leads

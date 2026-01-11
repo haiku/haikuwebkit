@@ -353,7 +353,7 @@ FloatingObject* FloatingObjects::add(std::unique_ptr<FloatingObject> floatingObj
     increaseObjectsCount(floatingObject->type());
     if (floatingObject->isPlaced())
         addPlacedObject(floatingObject.get());
-    return m_set.add(WTFMove(floatingObject)).iterator->get();
+    return m_set.add(WTF::move(floatingObject)).iterator->get();
 }
 
 void FloatingObjects::remove(FloatingObject* floatingObject)
@@ -431,14 +431,22 @@ LayoutUnit FloatingObjects::logicalRightOffset(LayoutUnit fixedOffset, LayoutUni
 
 void FloatingObjects::shiftFloatsBy(LayoutUnit blockShift)
 {
-    LayoutUnit shiftX = (m_horizontalWritingMode) ? 0_lu : -blockShift;
-    LayoutUnit shiftY = (m_horizontalWritingMode) ? blockShift : 0_lu;
+    auto shiftX = (m_horizontalWritingMode) ? 0_lu : -blockShift;
+    auto shiftY = (m_horizontalWritingMode) ? blockShift : 0_lu;
 
-    for (auto& floatingObject : m_set) {
-        if (!floatingObject->renderer())
+    for (auto& floatBox : m_set) {
+        if (!floatBox->renderer())
             continue;
-        floatingObject->m_frameRect.move(shiftX, shiftY);
-        floatingObject->renderer()->move(shiftX, shiftY);
+
+        auto isPlaced = floatBox->isPlaced();
+        if (isPlaced)
+            removePlacedObject(floatBox.get());
+
+        floatBox->m_frameRect.move(shiftX, shiftY);
+        floatBox->renderer()->move(shiftX, shiftY);
+
+        if (isPlaced)
+            addPlacedObject(floatBox.get());
     }
 }
 

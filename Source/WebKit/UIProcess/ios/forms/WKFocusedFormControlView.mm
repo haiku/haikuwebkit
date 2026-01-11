@@ -475,7 +475,7 @@ static NSDictionary *submitActionNameFontAttributes()
     if (_textSuggestions == displayableTextSuggestions.get() || [_textSuggestions isEqualToArray:displayableTextSuggestions.get()])
         return;
 
-    _textSuggestions = WTFMove(displayableTextSuggestions);
+    _textSuggestions = WTF::move(displayableTextSuggestions);
     [_delegate focusedFormControllerDidUpdateSuggestions:self];
 }
 

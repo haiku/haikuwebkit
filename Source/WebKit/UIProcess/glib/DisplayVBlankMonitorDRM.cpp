@@ -190,7 +190,7 @@ static std::optional<DrmNodeWithCrtc> findDrmNodeWithCrtc()
 #endif
         if (crtcInfo) {
             drmFreeDevices(devices.data(), devicesNum);
-            return DrmNodeWithCrtc { WTFMove(fd), *crtcInfo };
+            return DrmNodeWithCrtc { WTF::move(fd), *crtcInfo };
         }
     }
     drmFreeDevices(devices.data(), devicesNum);
@@ -239,12 +239,12 @@ std::unique_ptr<DisplayVBlankMonitor> DisplayVBlankMonitorDRM::create(PlatformDi
         return nullptr;
     }
 
-    return makeUnique<DisplayVBlankMonitorDRM>(drmNodeWithCrtcInfo->crtcInfo.second / 1000, WTFMove(drmNodeWithCrtcInfo->drmNodeFd), crtcBitmask);
+    return makeUnique<DisplayVBlankMonitorDRM>(drmNodeWithCrtcInfo->crtcInfo.second / 1000, WTF::move(drmNodeWithCrtcInfo->drmNodeFd), crtcBitmask);
 }
 
 DisplayVBlankMonitorDRM::DisplayVBlankMonitorDRM(unsigned refreshRate, UnixFileDescriptor&& fd, int crtcBitmask)
     : DisplayVBlankMonitorThreaded(refreshRate)
-    , m_fd(WTFMove(fd))
+    , m_fd(WTF::move(fd))
     , m_crtcBitmask(crtcBitmask)
 {
 }

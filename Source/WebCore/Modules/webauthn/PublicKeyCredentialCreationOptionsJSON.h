@@ -27,6 +27,7 @@
 
 #if ENABLE(WEB_AUTHN)
 #include <WebCore/AuthenticationExtensionsClientInputsJSON.h>
+#include <WebCore/AuthenticatorSelectionCriteria.h>
 #include <WebCore/PublicKeyCredentialRpEntity.h>
 #include <WebCore/PublicKeyCredentialUserEntityJSON.h>
 #include <wtf/Forward.h>
@@ -35,7 +36,6 @@ namespace WebCore {
 
 enum class AuthenticatorAttachment : uint8_t;
 enum class AttestationConveyancePreference : uint8_t;
-struct AuthenticatorSelectionCriteria;
 struct PublicKeyCredentialDescriptorJSON;
 struct PublicKeyCredentialParameters;
 

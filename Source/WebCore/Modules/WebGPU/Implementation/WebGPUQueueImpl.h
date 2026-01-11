@@ -42,7 +42,7 @@ class QueueImpl final : public Queue {
 public:
     static Ref<QueueImpl> create(WebGPUPtr<WGPUQueue>&& queue, ConvertToBackingContext& convertToBackingContext)
     {
-        return adoptRef(*new QueueImpl(WTFMove(queue), convertToBackingContext));
+        return adoptRef(*new QueueImpl(WTF::move(queue), convertToBackingContext));
     }
 
     virtual ~QueueImpl();
@@ -95,6 +95,7 @@ private:
         const Extent3D& copySize) final;
 
     void setLabelInternal(const String&) final;
+    RefPtr<WebCore::NativeImage> getNativeImage(WebCore::VideoFrame&) final;
 
     WebGPUPtr<WGPUQueue> m_backing;
     const Ref<ConvertToBackingContext> m_convertToBackingContext;

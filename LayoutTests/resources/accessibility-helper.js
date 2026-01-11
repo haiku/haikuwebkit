@@ -75,7 +75,7 @@ function platformStaticTextValue(axElement) {
         return "";
 
     if (!axElement.role.toLowerCase().includes("statictext"))
-        return "FAIL: platformStaticTextValue called on a non-text object.\n";
+        return `FAIL: platformStaticTextValue called on a non-text object (role was ${axElement.role}).\n`;
     return accessibilityController.platformName === "ios" ? axElement.description : axElement.stringValue;
 }
 

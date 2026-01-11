@@ -129,7 +129,7 @@
 #include "RenderSVGViewportContainer.h"
 #include "RenderScrollbar.h"
 #include "RenderScrollbarPart.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+SettersInlines.h"
 #include "RenderTableCell.h"
 #include "RenderTableRow.h"
 #include "RenderText.h"
@@ -151,6 +151,7 @@
 #include "StyleProperties.h"
 #include "StyleResolver.h"
 #include "StyleScaleTransformFunction.h"
+#include "StyleTransformResolver.h"
 #include "StyleTranslateTransformFunction.h"
 #include "Styleable.h"
 #include "TransformOperationData.h"
@@ -267,7 +268,7 @@ public:
 
     void setClipRects(ClipRectsType clipRectsType, bool respectOverflowClip, RefPtr<ClipRects>&& clipRects)
     {
-        m_clipRects[getIndex(clipRectsType, respectOverflowClip)] = WTFMove(clipRects);
+        m_clipRects[getIndex(clipRectsType, respectOverflowClip)] = WTF::move(clipRects);
     }
 
 #if ASSERT_ENABLED
@@ -312,7 +313,7 @@ static ScrollingScope nextScrollingScope()
     return ++currentScope;
 }
 
-WTF_MAKE_PREFERABLY_COMPACT_TZONE_OR_ISO_ALLOCATED_IMPL(RenderLayer);
+WTF_MAKE_PREFERABLY_COMPACT_TZONE_ALLOCATED_IMPL(RenderLayer);
 
 RenderLayer::RenderLayer(RenderLayerModelObject& renderer)
     : m_isRenderViewLayer(renderer.isRenderView())
@@ -568,7 +569,7 @@ void RenderLayer::removeOnlyThisLayer()
         removeChild(*reflectionLayer);
 
     // Now walk our kids and reattach them to our parent.
-    RenderLayer* current = m_first;
+    RenderLayer* current = m_first.get();
     while (current) {
         RenderLayer* next = current->nextSibling();
         removeChild(*current);
@@ -997,11 +998,6 @@ String RenderLayer::name() const
     return makeString(renderer().debugDescription(), " (reflection)"_s);
 }
 
-RenderLayerCompositor& RenderLayer::compositor() const
-{
-    return renderer().view().compositor();
-}
-
 void RenderLayer::contentChanged(ContentChangeType changeType, const std::optional<FloatRect>& dirtyRect)
 {
     if (changeType == ContentChangeType::Canvas || changeType == ContentChangeType::Video || changeType == ContentChangeType::FullScreen || changeType == ContentChangeType::Model || changeType == ContentChangeType::HDRImage) {
@@ -1318,7 +1314,7 @@ void RenderLayer::recursiveUpdateLayerPositions(OptionSet<UpdateLayerPositionsFl
         if (checkForRepaint && shouldRepaintAfterLayout() && newRects) {
             auto needsFullRepaint = repaintStatus() == RepaintStatus::NeedsFullRepaint ? RequiresFullRepaint::Yes : RequiresFullRepaint::No;
             auto resolvedOldRects = valueOrDefault(oldRects);
-            renderer().repaintAfterLayoutIfNeeded(WTFMove(repaintContainer), needsFullRepaint, resolvedOldRects, *newRects);
+            renderer().repaintAfterLayoutIfNeeded(WTF::move(repaintContainer), needsFullRepaint, resolvedOldRects, *newRects);
         }
     };
 
@@ -1694,7 +1690,7 @@ FloatRect RenderLayer::referenceBoxRectForClipPath(CSSBoxType boxType, const Lay
     return referenceBoxRect;
 }
 
-void RenderLayer::updateTransformFromStyle(TransformationMatrix& transform, const RenderStyle& style, OptionSet<RenderStyle::TransformOperationOption> options) const
+void RenderLayer::updateTransformFromStyle(TransformationMatrix& transform, const RenderStyle& style, OptionSet<Style::TransformResolverOption> options) const
 {
     // https://drafts.csswg.org/css-anchor-position-1/#default-scroll-shift
     // > After layout has been performed for abspos, it is additionally shifted by
@@ -1731,7 +1727,7 @@ void RenderLayer::updateTransform()
     
     if (hasTransform) {
         m_transform->makeIdentity();
-        updateTransformFromStyle(*m_transform, renderer().style(), RenderStyle::allTransformOperations());
+        updateTransformFromStyle(*m_transform, renderer().style(), Style::TransformResolver::allTransformOperations);
     }
 
     if (had3DTransform != has3DTransform()) {
@@ -1757,7 +1753,7 @@ void RenderLayer::forceStackingContextIfNeeded()
     }
 }
 
-TransformationMatrix RenderLayer::currentTransform(OptionSet<RenderStyle::TransformOperationOption> options) const
+TransformationMatrix RenderLayer::currentTransform(OptionSet<Style::TransformResolverOption> options) const
 {
     if (!m_transform)
         return { };
@@ -1767,7 +1763,7 @@ TransformationMatrix RenderLayer::currentTransform(OptionSet<RenderStyle::Transf
 
     // Query the animatedStyle() to obtain the current transformation, when accelerated transform animations are running.
     auto styleable = Styleable::fromRenderer(renderer());
-    if ((styleable && styleable->isRunningAcceleratedTransformRelatedAnimation()) || !options.contains(RenderStyle::TransformOperationOption::TransformOrigin)) {
+    if ((styleable && styleable->isRunningAcceleratedTransformRelatedAnimation()) || !options.contains(Style::TransformResolverOption::TransformOrigin)) {
         std::unique_ptr<RenderStyle> animatedStyle = renderer().animatedStyle();
 
         TransformationMatrix transform;
@@ -1780,7 +1776,7 @@ TransformationMatrix RenderLayer::currentTransform(OptionSet<RenderStyle::Transf
 
 TransformationMatrix RenderLayer::currentTransform() const
 {
-    return currentTransform(RenderStyle::allTransformOperations());
+    return currentTransform(Style::TransformResolver::allTransformOperations);
 }
 
 TransformationMatrix RenderLayer::renderableTransform(OptionSet<PaintBehavior> paintBehavior) const
@@ -2237,7 +2233,11 @@ TransformationMatrix RenderLayer::perspectiveTransform() const
         return { };
 
     auto transformReferenceBoxRect = snapRectToDevicePixelsIfNeeded(renderer().transformReferenceBoxRect(style), renderer());
-    auto perspectiveOrigin = style.computePerspectiveOrigin(transformReferenceBoxRect);
+
+    TransformationMatrix transform;
+    Style::TransformResolver transformResolver { transform, style };
+
+    auto perspectiveOrigin = transformResolver.computePerspectiveOrigin(transformReferenceBoxRect);
 
     // In the regular case of a non-clipped, non-scrolled GraphicsLayer, all transformations
     // (via CSS 'transform' / 'perspective') are applied with respect to a predefined anchor point,
@@ -2251,16 +2251,16 @@ TransformationMatrix RenderLayer::perspectiveTransform() const
     // However the GraphicsLayer platform implementations (e.g. CA on macOS) apply the children transform,
     // defined on the parent, with respect to the anchor point of the parent, when rendering child elements.
     // This is wrong, as the perspective transformation (applied to a child of the element defining the
-    // 3d effect), must be independant of the chosen transform-origin (the parents transform origin
+    // 3d effect), must be independent of the chosen transform-origin (the parents transform origin
     // must not affect its children).
     //
-    // To circumvent this, explicitely remove the transform-origin dependency in the perspective matrix.
+    // To circumvent this, explicitly remove the transform-origin dependency in the perspective matrix.
     auto transformOrigin = transformOriginPixelSnappedIfNeeded();
 
-    TransformationMatrix transform;
-    style.unapplyTransformOrigin(transform, transformOrigin);
-    style.applyPerspective(transform, perspectiveOrigin);
-    style.applyTransformOrigin(transform, transformOrigin);
+    transformResolver.unapplyTransformOrigin(transformOrigin);
+    transformResolver.applyPerspective(perspectiveOrigin);
+    transformResolver.applyTransformOrigin(transformOrigin);
+
     return transform;
 }
 
@@ -2272,7 +2272,7 @@ FloatPoint3D RenderLayer::transformOriginPixelSnappedIfNeeded() const
     const auto& style = renderer().style();
     auto referenceBoxRect = renderer().transformReferenceBoxRect(style);
 
-    auto origin = style.computeTransformOrigin(referenceBoxRect);
+    auto origin = Style::TransformResolver::computeTransformOrigin(style, referenceBoxRect);
     if (rendererNeedsPixelSnapping(renderer()))
         origin.setXY(roundPointToDevicePixels(LayoutPoint(origin.xy()), renderer().document().deviceScaleFactor()));
     return origin;
@@ -2760,7 +2760,7 @@ static RenderLayer* findCommonAncestor(const RenderLayer& firstLayer, const Rend
     if (&firstLayer == &secondLayer)
         return const_cast<RenderLayer*>(&firstLayer);
 
-    SingleThreadWeakHashSet<const RenderLayer> ancestorChain;
+    InlineWeakKeyHashSet<const RenderLayer> ancestorChain;
     for (auto* currLayer = &firstLayer; currLayer; currLayer = currLayer->parent())
         ancestorChain.add(*currLayer);
 
@@ -6026,7 +6026,7 @@ static bool rendererHasHDRContent(const RenderElement& renderer)
                 return true;
         }
 
-        if (auto image = style.borderImage().source().tryImage()) {
+        if (auto image = style.borderImageSource().tryImage()) {
             if (auto* cachedImage = image ? image->value->cachedImage() : nullptr) {
                 if (cachedImage->hasHDRContent())
                     return true;
@@ -6189,7 +6189,7 @@ bool RenderLayer::isVisuallyNonEmpty(PaintedContentRequest* request) const
     return request->probablyHasPaintedContent();
 }
 
-void RenderLayer::styleChanged(StyleDifference diff, const RenderStyle* oldStyle)
+void RenderLayer::styleChanged(Style::Difference diff, const RenderStyle* oldStyle)
 {
     setIsNormalFlowOnly(shouldBeNormalFlowOnly());
     setCanBeBackdropRoot(computeCanBeBackdropRoot());
@@ -6228,7 +6228,7 @@ void RenderLayer::styleChanged(StyleDifference diff, const RenderStyle* oldStyle
             if (oldStyle->writingMode() != renderer().style().writingMode())
                 m_scrollableArea->invalidateScrollCornerRect({ });
             if (visibilityChanged || oldStyle->isOverflowVisible() != renderer().style().isOverflowVisible())
-                m_scrollableArea->computeHasCompositedScrollableOverflow(diff <= StyleDifference::RepaintLayer ? LayoutUpToDate::Yes : LayoutUpToDate::No);
+                m_scrollableArea->computeHasCompositedScrollableOverflow(diff <= Style::DifferenceResult::RepaintLayer ? LayoutUpToDate::Yes : LayoutUpToDate::No);
         }
 
         if (oldStyle->isOverflowVisible() != renderer().style().isOverflowVisible())
@@ -6278,7 +6278,7 @@ void RenderLayer::styleChanged(StyleDifference diff, const RenderStyle* oldStyle
         dirtyAncestorChainHasViewportConstrainedDescendantStatus();
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
-    if (diff == StyleDifference::RecompositeLayer || diff >= StyleDifference::LayoutOutOfFlowMovementOnly)
+    if (diff == Style::DifferenceResult::RecompositeLayer || diff >= Style::DifferenceResult::LayoutOutOfFlowMovementOnly)
         renderer().document().invalidateRenderingDependentRegions();
 #else
     UNUSED_PARAM(diff);
@@ -6372,8 +6372,8 @@ RenderLayerFilters& RenderLayer::ensureLayerFilters()
     if (m_filters)
         return *m_filters;
     
-    m_filters = RenderLayerFilters::create(*this);
-    m_filters->setFilterScale({ page().deviceScaleFactor(), page().deviceScaleFactor() });
+    auto scale = page().deviceScaleFactor();
+    m_filters = RenderLayerFilters::create(*this, { scale, scale });
     return *m_filters;
 }
 
@@ -6408,7 +6408,7 @@ void RenderLayer::clearLayerScrollableArea()
     }
 }
 
-void RenderLayer::updateFiltersAfterStyleChange(StyleDifference diff, const RenderStyle* oldStyle)
+void RenderLayer::updateFiltersAfterStyleChange(Style::Difference diff, const RenderStyle* oldStyle)
 {
     if (renderer().style().filter().hasReferenceFilter())
         ensureLayerFilters().updateReferenceFilterClients(renderer().style().filter());
@@ -6420,7 +6420,7 @@ void RenderLayer::updateFiltersAfterStyleChange(StyleDifference diff, const Rend
     auto filterChanged = [&] {
         if (!m_filters)
             return false;
-        if (diff < StyleDifference::RepaintLayer)
+        if (diff < Style::DifferenceResult::RepaintLayer)
             return false;
         if (!oldStyle)
             return false;

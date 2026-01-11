@@ -30,6 +30,7 @@
 #include "InternalReadableStream.h"
 #include "JSValueInWrappedObject.h"
 #include "ReadableByteStreamController.h"
+#include "WebCoreOpaqueRoot.h"
 #include <JavaScriptCore/Strong.h>
 #include <wtf/AbstractRefCounted.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
@@ -126,7 +127,10 @@ public:
     ExceptionOr<Ref<ReadableStream>> pipeThrough(JSDOMGlobalObject&, WritablePair&&, StreamPipeOptions&&);
 
     bool isReachableFromOpaqueRoots() const { return m_isSourceReachableFromOpaqueRoot && m_state == State::Readable; }
-    void visitAdditionalChildren(JSC::AbstractSlotVisitor&);
+    enum class VisitTeedChildren : bool { No, Yes };
+    void visitAdditionalChildren(JSC::AbstractSlotVisitor&, VisitTeedChildren = VisitTeedChildren::No);
+    void setTeedBranches(ReadableStream&, ReadableStream&);
+    void setSourceTeedStream(ReadableStream&);
 
     class DependencyToVisit : public AbstractRefCounted {
     public:
@@ -179,6 +183,7 @@ private:
     void setupReadableByteStreamController(JSDOMGlobalObject&, ReadableByteStreamController::PullAlgorithm&&, ReadableByteStreamController::CancelAlgorithm&&, double, StartSynchronously);
 
     bool isPulling() const;
+    void teedBranchIsDestroyed(ReadableStream&);
 
     const bool m_isSourceReachableFromOpaqueRoot { false };
     bool m_disturbed { false };
@@ -190,6 +195,12 @@ private:
     const RefPtr<InternalReadableStream> m_internalReadableStream;
 
     const RefPtr<DependencyToVisit> m_dependencyToVisit;
+    Lock m_gcLock;
+    WeakPtr<ReadableStream> m_teedBranch0ForGC WTF_GUARDED_BY_LOCK(m_gcLock);
+    WeakPtr<ReadableStream> m_teedBranch1ForGC WTF_GUARDED_BY_LOCK(m_gcLock);
+    WeakPtr<ReadableStream> m_sourceTeedStream;
 };
+
+WebCoreOpaqueRoot root(ReadableStream*);
 
 } // namespace WebCore

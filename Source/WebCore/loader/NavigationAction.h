@@ -129,7 +129,7 @@ public:
     std::optional<NavigationNavigationType> navigationAPIType() const { return m_navigationAPIType; }
     void setNavigationAPIType(NavigationNavigationType navigationAPIType) { m_navigationAPIType = navigationAPIType; }
 
-    void setPendingDispatchNavigateEvent(std::function<bool()>&& function) { m_pendingDispatchNavigateEvent = WTFMove(function); }
+    void setPendingDispatchNavigateEvent(std::function<bool()>&& function) { m_pendingDispatchNavigateEvent = WTF::move(function); }
     std::function<bool()> takePendingDispatchNavigateEvent() { return std::exchange(m_pendingDispatchNavigateEvent, nullptr); }
 
 private:

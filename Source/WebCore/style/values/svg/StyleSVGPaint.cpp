@@ -27,7 +27,7 @@
 
 #include "AnimationUtilities.h"
 #include "CSSURLValue.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+SettersInlines.h"
 #include "StyleBuilderChecking.h"
 #include "StyleForVisitedLink.h"
 

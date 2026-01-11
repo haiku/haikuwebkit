@@ -131,8 +131,8 @@ private:
     KeyValueMap m_keyValueStore;
     std::unique_ptr<IDBKeyDataSet> m_orderedKeys;
 
-    HashMap<IDBIndexIdentifier, RefPtr<MemoryIndex>> m_indexesByIdentifier;
-    HashMap<String, RefPtr<MemoryIndex>> m_indexesByName;
+    HashMap<IDBIndexIdentifier, Ref<MemoryIndex>> m_indexesByIdentifier;
+    HashMap<String, Ref<MemoryIndex>> m_indexesByName;
     HashMap<IDBResourceIdentifier, RefPtr<MemoryObjectStoreCursor>> m_cursors;
 };
 

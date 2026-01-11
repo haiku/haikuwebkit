@@ -269,7 +269,7 @@ static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> si
         enableSiteIsolation(configuration.get());
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:rect configuration:configuration.get()]);
     webView.get().navigationDelegate = navigationDelegate.get();
-    return { WTFMove(webView), WTFMove(navigationDelegate) };
+    return { WTF::move(webView), WTF::move(navigationDelegate) };
 }
 
 static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> viewAndDelegate(RetainPtr<WKWebViewConfiguration> configuration, CGRect rect = CGRectZero)
@@ -316,7 +316,7 @@ static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> si
     enableFeature(configuration.get(), @"SiteIsolationSharedProcessEnabled");
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration.get()]);
     webView.get().navigationDelegate = navigationDelegate.get();
-    return { WTFMove(webView), WTFMove(navigationDelegate) };
+    return { WTF::move(webView), WTF::move(navigationDelegate) };
 }
 
 static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> siteIsolatedViewAndDelegate(const HTTPServer& server, CGRect rect = CGRectZero)
@@ -433,7 +433,7 @@ static void checkFrameTreesInProcesses(NSSet<_WKFrameTreeNode *> *actualTrees, c
 
 void checkFrameTreesInProcesses(WKWebView *webView, Vector<ExpectedFrameTree>&& expectedFrameTrees)
 {
-    checkFrameTreesInProcesses(frameTrees(webView).get(), WTFMove(expectedFrameTrees));
+    checkFrameTreesInProcesses(frameTrees(webView).get(), WTF::move(expectedFrameTrees));
 }
 
 static unsigned countWebPages(const RetainPtr<WKWebView>& webView)
@@ -784,7 +784,7 @@ static std::pair<WebViewAndDelegates, WebViewAndDelegates> openerAndOpenedViews(
         Util::spinRunLoop();
     if (waitForOpenedNavigation)
         [opened.navigationDelegate waitForDidFinishNavigation];
-    return { WTFMove(opener), WTFMove(opened) };
+    return { WTF::move(opener), WTF::move(opened) };
 }
 
 TEST(SiteIsolation, NavigationAfterWindowOpen)
@@ -1616,8 +1616,6 @@ TEST(SiteIsolation, ChildBeingNavigatedToNewDomainByParent)
     EXPECT_WK_STREQ([webView _test_waitForAlert], "parent frame received pingpong");
 }
 
-// FIXME: Investigate why this asserts only on Sequoia and Sonoma. See https://bugs.webkit.org/show_bug.cgi?id=303340
-#if !PLATFORM(MAC) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000 || defined(NDEBUG)
 TEST(SiteIsolation, IframeRedirectSameSite)
 {
     HTTPServer server({
@@ -1672,7 +1670,6 @@ TEST(SiteIsolation, IframeRedirectCrossSite)
         }
     });
 }
-#endif
 
 TEST(SiteIsolation, CrossOriginOpenerPolicy)
 {
@@ -1868,7 +1865,7 @@ TEST(SiteIsolation, ProvisionalLoadFailure)
     [webView evaluateJavaScript:@"iframe.onload = alert('done');iframe.src = 'https://webkit.org/webkit'" completionHandler:nil];
 
     EXPECT_WK_STREQ([webView _test_waitForAlert], "done");
-    checkFrameTreesInProcesses(webView.get(), WTFMove(expectedFrameTreesAfterAddingApple));
+    checkFrameTreesInProcesses(webView.get(), WTF::move(expectedFrameTreesAfterAddingApple));
 }
 
 TEST(SiteIsolation, MultipleReloads)
@@ -2016,12 +2013,7 @@ TEST(SiteIsolation, RunOpenPanel)
         Util::spinRunLoop();
 }
 
-// FIXME when rdar://163227871 is resolved.
-#if PLATFORM(MAC)
-TEST(SiteIsolation, DISABLED_CancelOpenPanel)
-#else
 TEST(SiteIsolation, CancelOpenPanel)
-#endif
 {
     auto subframeHTML = "<!DOCTYPE html><input style='width: 100vw; height: 100vh;' id='file' type='file'>"
         "<script>"
@@ -2044,7 +2036,6 @@ TEST(SiteIsolation, CancelOpenPanel)
     CGPoint eventLocationInWindow = [webView convertPoint:CGPointMake(100, 100) toView:nil];
     [webView mouseDownAtPoint:eventLocationInWindow simulatePressure:NO];
     [webView mouseUpAtPoint:eventLocationInWindow];
-    [webView waitForPendingMouseEvents];
     EXPECT_WK_STREQ([uiDelegate waitForAlert], "cancel");
 }
 
@@ -3019,6 +3010,32 @@ TEST(SiteIsolation, NavigateOpenerWindowCrossSite)
     EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "true");
 }
 
+TEST(SiteIsolation, NavigateOpenedWindowCrossSiteAfterDisowningOpener)
+{
+    HTTPServer server({
+        { "/example"_s, { "<script>w = window.open('https://example.com/text')</script>"_s } },
+        { "/text"_s, { "hi"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [opener, opened] = openerAndOpenedViews(server, @"https://example.com/example");
+    [opened.webView evaluateJavaScript:@"alert(!!window.opener)" completionHandler:nil];
+    EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "true");
+
+    // Opened window disowns opener.
+    [opened.webView evaluateJavaScript:@"window.opener = null; alert(!!window.opener)" completionHandler:nil];
+    EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "false");
+
+    [opener.webView evaluateJavaScript:@"alert(!!w.opener)" completionHandler:nil];
+    EXPECT_WK_STREQ([opener.uiDelegate waitForAlert], "false");
+
+    // Opened window performs cross-site navigation.
+    [opened.webView evaluateJavaScript:@"window.location = 'https://webkit.org/text'" completionHandler:nil];
+    [opened.navigationDelegate waitForDidFinishNavigation];
+
+    [opened.webView evaluateJavaScript:@"alert(!!window.opener)" completionHandler:nil];
+    EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "false");
+}
+
 TEST(SiteIsolation, NavigateOpenerToProvisionalNavigationFailure)
 {
     HTTPServer server({
@@ -3063,8 +3080,6 @@ TEST(SiteIsolation, OpenProvisionalFailure)
     checkFrameTreesInProcesses(opened.webView.get(), { { "https://example.com"_s } });
 }
 
-// FIXME: Investigate why this asserts only on Sequoia and Sonoma. See https://bugs.webkit.org/show_bug.cgi?id=303340
-#if !PLATFORM(MAC) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000 || defined(NDEBUG)
 TEST(SiteIsolation, NavigateIframeToProvisionalNavigationFailure)
 {
     HTTPServer server({
@@ -3125,7 +3140,6 @@ TEST(SiteIsolation, NavigateIframeToProvisionalNavigationFailure)
     checkProvisionalLoadFailure(@"https://webkit.org/redirect_to_apple_terminate");
     checkProvisionalLoadFailure(@"https://apple.com/redirect_to_apple_terminate");
 }
-#endif
 
 TEST(SiteIsolation, DrawAfterNavigateToDomainAgain)
 {
@@ -3190,7 +3204,7 @@ TEST(SiteIsolation, CancelProvisionalLoad)
     auto checkStateAfterSequentialFrameLoads = [webView = RetainPtr { webView }, navigationDelegate = RetainPtr { navigationDelegate }] (NSString *first, NSString *second, Vector<ExpectedFrameTree>&& expectedTrees) {
         [webView evaluateJavaScript:[NSString stringWithFormat:@"i = document.getElementById('testiframe'); i.addEventListener('load', () => { alert('iframe loaded') }); i.src = '%@'; setTimeout(()=>{ i.src = '%@' }, Math.random() * 100)", first, second] completionHandler:nil];
         EXPECT_WK_STREQ([webView _test_waitForAlert], "iframe loaded");
-        checkFrameTreesInProcesses(webView.get(), WTFMove(expectedTrees));
+        checkFrameTreesInProcesses(webView.get(), WTF::move(expectedTrees));
     };
 
     checkStateAfterSequentialFrameLoads(@"https://webkit.org/never_respond", @"https://example.com/respond_quickly", {
@@ -4077,10 +4091,10 @@ static WebViewAndDelegates makeWebViewAndDelegates(HTTPServer& server, bool enab
     RetainPtr uiDelegate = adoptNS([TestUIDelegate new]);
     [webView setUIDelegate:uiDelegate.get()];
     return {
-        WTFMove(webView),
-        WTFMove(messageHandler),
-        WTFMove(navigationDelegate),
-        WTFMove(uiDelegate)
+        WTF::move(webView),
+        WTF::move(messageHandler),
+        WTF::move(navigationDelegate),
+        WTF::move(uiDelegate)
     };
 };
 
@@ -6734,10 +6748,10 @@ TEST(SiteIsolation, AdvanceFocusAcrossFrames)
     }, HTTPServer::Protocol::HttpsProxy);
 
     auto webViewAndDelegates = makeWebViewAndDelegates(server);
-    auto webView = WTFMove(webViewAndDelegates.webView);
-    auto messageHandler = WTFMove(webViewAndDelegates.messageHandler);
-    auto navigationDelegate = WTFMove(webViewAndDelegates.navigationDelegate);
-    auto uiDelegate = WTFMove(webViewAndDelegates.uiDelegate);
+    auto webView = WTF::move(webViewAndDelegates.webView);
+    auto messageHandler = WTF::move(webViewAndDelegates.messageHandler);
+    auto navigationDelegate = WTF::move(webViewAndDelegates.navigationDelegate);
+    auto uiDelegate = WTF::move(webViewAndDelegates.uiDelegate);
 
     __block RetainPtr<NSString> mostRecentMessage;
     __block bool messageReceived = false;
@@ -7104,6 +7118,28 @@ TEST(SiteIsolation, LocalIframeOpensBlobURLFromFileMainFrame)
 
     EXPECT_TRUE(blobWindowOpened);
     EXPECT_NOT_NULL(blobWindow.get());
+}
+
+TEST(SiteIsolation, CrossSiteIframeOpenWindowWithBlobURL)
+{
+    auto iframeHTML = "<script>"
+    "   const blob = new Blob(['<script>function alertOpener() { alert(!!window.opener); }<\\/script>'], { type: 'text/html' });"
+    "   const blobURL = URL.createObjectURL(blob);"
+    "   window.open(blobURL);"
+    "</script>"_s;
+
+    HTTPServer server({
+        { "/main"_s, { "<iframe src='https://webkit.org/iframe'></iframe>"_s } },
+        { "/iframe"_s, { iframeHTML } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [opener, opened] = openerAndOpenedViews(server, @"https://example.com/main");
+    [opened.webView evaluateJavaScript:@"alertOpener()" completionHandler:nil];
+    EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "false");
+
+    pid_t openedMainFramePID = [opened.webView mainFrame].info._processIdentifier;
+    EXPECT_NE([opener.webView mainFrame].info._processIdentifier, openedMainFramePID);
+    EXPECT_NE([opener.webView firstChildFrame]._processIdentifier, openedMainFramePID);
 }
 
 #if PLATFORM(MAC)

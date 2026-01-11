@@ -125,8 +125,8 @@ public:
     }
 
     SingleRootMap(SingleRootMap&& other)
-        : m_map(WTFMove(other.m_map))
-        , m_root(WTFMove(other.m_root))
+        : m_map(WTF::move(other.m_map))
+        , m_root(WTF::move(other.m_root))
     {
     }
 

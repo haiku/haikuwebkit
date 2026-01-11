@@ -126,7 +126,7 @@ public:
     WEBCORE_EXPORT FontCascade(FontCascadeDescription&&);
     WEBCORE_EXPORT FontCascade(FontCascadeDescription&&, const FontCascade&);
     // This constructor is only used if the platform wants to start with a native font.
-    WEBCORE_EXPORT FontCascade(const FontPlatformData&, FontSmoothingMode = FontSmoothingMode::AutoSmoothing);
+    WEBCORE_EXPORT FontCascade(const FontPlatformData&, FontSmoothingMode = FontSmoothingMode::Auto);
 
     WEBCORE_EXPORT FontCascade(const FontCascade&);
     WEBCORE_EXPORT FontCascade& operator=(const FontCascade&);

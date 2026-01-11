@@ -128,7 +128,7 @@ void RemoteAudioSessionProxy::tryToSetActive(bool active, SetActiveCompletion&& 
 void RemoteAudioSessionProxy::setIsPlayingToBluetoothOverride(std::optional<bool>&& value)
 {
     m_isPlayingToBluetoothOverrideChanged = true;
-    protectedAudioSessionManager()->protectedSession()->setIsPlayingToBluetoothOverride(WTFMove(value));
+    protectedAudioSessionManager()->protectedSession()->setIsPlayingToBluetoothOverride(WTF::move(value));
 }
 
 void RemoteAudioSessionProxy::configurationChanged()

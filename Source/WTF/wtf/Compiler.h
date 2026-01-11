@@ -424,7 +424,7 @@
 /* WARN_UNUSED_RETURN */
 
 #if !defined(WARN_UNUSED_RETURN)
-#define WARN_UNUSED_RETURN __attribute__((__warn_unused_result__))
+#define WARN_UNUSED_RETURN [[nodiscard]] // NOLINT: check-webkit-style does not understand annotations.
 #endif
 
 /* DEBUGGER_ANNOTATION_MARKER */

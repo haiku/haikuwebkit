@@ -53,7 +53,7 @@ DisplayRefreshMonitor* DisplayRefreshMonitorManager::ensureMonitorForDisplayID(P
 
     LOG_WITH_STREAM(DisplayLink, stream << "[Web] DisplayRefreshMonitorManager::ensureMonitorForDisplayID() - created monitor " << monitor.get() << " for display " << displayID);
     DisplayRefreshMonitor* result = monitor.get();
-    m_monitors.append(DisplayRefreshMonitorWrapper { WTFMove(monitor) });
+    m_monitors.append(DisplayRefreshMonitorWrapper { WTF::move(monitor) });
     return result;
 }
 

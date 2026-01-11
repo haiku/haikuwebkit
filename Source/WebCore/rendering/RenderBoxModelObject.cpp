@@ -83,7 +83,7 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderBoxModelObject);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderBoxModelObject);
 
 // The HashMap for storing continuation pointers.
 // An inline can be split with blocks occuring in between the inline content.
@@ -138,7 +138,7 @@ static FirstLetterRemainingTextMap& firstLetterRemainingTextMap()
     return map;
 }
 
-void RenderBoxModelObject::styleWillChange(StyleDifference diff, const RenderStyle& newStyle)
+void RenderBoxModelObject::styleWillChange(Style::Difference diff, const RenderStyle& newStyle)
 {
     const RenderStyle* oldStyle = hasInitializedStyle() ? &style() : nullptr;
 
@@ -183,13 +183,13 @@ bool RenderBoxModelObject::hasAcceleratedCompositing() const
 }
 
 RenderBoxModelObject::RenderBoxModelObject(Type type, Element& element, RenderStyle&& style, OptionSet<TypeFlag> baseTypeFlags, TypeSpecificFlags typeSpecificFlags)
-    : RenderLayerModelObject(type, element, WTFMove(style), baseTypeFlags | TypeFlag::IsBoxModelObject, typeSpecificFlags)
+    : RenderLayerModelObject(type, element, WTF::move(style), baseTypeFlags | TypeFlag::IsBoxModelObject, typeSpecificFlags)
 {
     ASSERT(isRenderBoxModelObject());
 }
 
 RenderBoxModelObject::RenderBoxModelObject(Type type, Document& document, RenderStyle&& style, OptionSet<TypeFlag> baseTypeFlags, TypeSpecificFlags typeSpecificFlags)
-    : RenderLayerModelObject(type, document, WTFMove(style), baseTypeFlags | TypeFlag::IsBoxModelObject, typeSpecificFlags)
+    : RenderLayerModelObject(type, document, WTF::move(style), baseTypeFlags | TypeFlag::IsBoxModelObject, typeSpecificFlags)
 {
     ASSERT(isRenderBoxModelObject());
 }
@@ -624,6 +624,28 @@ void RenderBoxModelObject::computeStickyPositionConstraints(StickyPositionViewpo
         constraints.setBottomOffset(Style::evaluate<float>(style().bottom(), constrainingRect.height(), style().usedZoomForLength()));
         constraints.addAnchorEdge(ViewportConstraints::AnchorEdgeBottom);
     }
+
+    if (constraints.hasAnchorEdge(ViewportConstraints::AnchorEdgeRight) && constraints.hasAnchorEdge(ViewportConstraints::AnchorEdgeLeft)) {
+        float availableSpace = constrainingRect.width() - constraints.leftOffset() - constraints.rightOffset();
+        if (constraints.stickyBoxRect().width() > availableSpace) {
+            float delta = constraints.stickyBoxRect().width() - availableSpace;
+            if (writingMode().isAnyLeftToRight())
+                constraints.setRightOffset(constraints.rightOffset() - delta);
+            else
+                constraints.setLeftOffset(constraints.leftOffset() - delta);
+        }
+    }
+
+    if (constraints.hasAnchorEdge(ViewportConstraints::AnchorEdgeBottom) && constraints.hasAnchorEdge(ViewportConstraints::AnchorEdgeTop)) {
+        float availableSpace = constrainingRect.height() - constraints.topOffset() - constraints.bottomOffset();
+        if (constraints.stickyBoxRect().height() > availableSpace) {
+            float delta = constraints.stickyBoxRect().height() - availableSpace;
+            if (writingMode().isAnyTopToBottom())
+                constraints.setBottomOffset(constraints.bottomOffset() - delta);
+            else
+                constraints.setTopOffset(constraints.topOffset() - delta);
+        }
+    }
 }
 
 FloatRect RenderBoxModelObject::constrainingRectForStickyPosition() const
@@ -839,7 +861,7 @@ bool RenderBoxModelObject::borderObscuresBackground() const
         return false;
 
     // Bail if we have any border-image for now. We could look at the image alpha to improve this.
-    if (!style().borderImage().source().isNone())
+    if (!style().borderImageSource().isNone())
         return false;
 
     auto edges = borderEdges(style(), document().deviceScaleFactor());
@@ -995,7 +1017,7 @@ void RenderBoxModelObject::collectAbsoluteQuadsForContinuation(Vector<FloatQuad>
     }
 }
 
-void RenderBoxModelObject::applyTransform(TransformationMatrix&, const RenderStyle&, const FloatRect&, OptionSet<RenderStyle::TransformOperationOption>) const
+void RenderBoxModelObject::applyTransform(TransformationMatrix&, const RenderStyle&, const FloatRect&, OptionSet<Style::TransformResolverOption>) const
 {
     // applyTransform() is only used through RenderLayer*, which only invokes this for RenderBox derived renderers, thus not for
     // RenderInline/RenderLineBreak - the other two renderers that inherit from RenderBoxModelObject.

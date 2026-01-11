@@ -71,7 +71,7 @@ public:
         WTF::storeStoreFence();
         m_array = newArray.get();
         WTF::storeStoreFence();
-        m_allArrays.append(WTFMove(newArray));
+        m_allArrays.append(WTF::move(newArray));
     }
     
     void grow(size_t newSize)

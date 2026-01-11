@@ -46,7 +46,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGMaskElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGMaskElement);
 
 inline SVGMaskElement::SVGMaskElement(const QualifiedName& tagName, Document& document)
     : SVGElement(tagName, document, makeUniqueRef<PropertyRegistry>(*this))
@@ -154,8 +154,8 @@ void SVGMaskElement::childrenChanged(const ChildChange& change)
 RenderPtr<RenderElement> SVGMaskElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
     if (document().settings().layerBasedSVGEngineEnabled())
-        return createRenderer<RenderSVGResourceMasker>(*this, WTFMove(style));
-    return createRenderer<LegacyRenderSVGResourceMasker>(*this, WTFMove(style));
+        return createRenderer<RenderSVGResourceMasker>(*this, WTF::move(style));
+    return createRenderer<LegacyRenderSVGResourceMasker>(*this, WTF::move(style));
 }
 
 FloatRect SVGMaskElement::calculateMaskContentRepaintRect(RepaintRectCalculation repaintRectCalculation)
@@ -172,7 +172,7 @@ FloatRect SVGMaskElement::calculateMaskContentRepaintRect(RepaintRectCalculation
         ASSERT(!child.isRenderSVGRoot());
 
         auto transform = SVGLayerTransformComputation(child).computeAccumulatedTransform(downcast<RenderLayerModelObject>(renderer()), TransformState::TrackSVGCTMMatrix);
-        return transform.isIdentity() ? std::nullopt : std::make_optional(WTFMove(transform));
+        return transform.isIdentity() ? std::nullopt : std::make_optional(WTF::move(transform));
     };
     FloatRect maskRepaintRect;
     for (auto* childNode = firstChild(); childNode; childNode = childNode->nextSibling()) {

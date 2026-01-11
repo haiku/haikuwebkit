@@ -304,7 +304,11 @@ struct UIEdgeInsets;
 - (BOOL)_webView:(WKWebView *)webView touchEventsMustRequireGestureRecognizerToFail:(UIGestureRecognizer *)gestureRecognizer WK_API_AVAILABLE(ios(15.0));
 - (BOOL)_webView:(WKWebView *)webView gestureRecognizerCanBePreventedByTouchEvents:(UIGestureRecognizer *)gestureRecognizer WK_API_AVAILABLE(ios(16.5));
 
+#if TARGET_OS_WATCH
+- (void)_webView:(WKWebView *)webView startXRSessionWithFeatures:(_WKXRSessionFeatureFlags)features colorFormat:(NSUInteger)pixelFormat depthFormat:(NSUInteger)depthFormat completionHandler:(void (^)(id, UIViewController *))completionHandler WK_API_AVAILABLE(ios(17.4), visionos(1.1));
+#else
 - (void)_webView:(WKWebView *)webView startXRSessionWithFeatures:(_WKXRSessionFeatureFlags)features colorFormat:(MTLPixelFormat)pixelFormat depthFormat:(MTLPixelFormat)depthFormat completionHandler:(void (^)(id, UIViewController *))completionHandler WK_API_AVAILABLE(ios(17.4), visionos(1.1));
+#endif
 
 - (void)_webViewDidEnterStandbyForTesting:(WKWebView *)webView WK_API_AVAILABLE(ios(26.0));
 - (void)_webViewDidExitStandbyForTesting:(WKWebView *)webView WK_API_AVAILABLE(ios(26.0));

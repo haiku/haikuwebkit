@@ -25,6 +25,9 @@
 
 #pragma once
 
+#include <wtf/Compiler.h>
+#include <wtf/Platform.h>
+
 #if HAVE(WEBCONTENTRESTRICTIONS)
 
 #if USE(APPLE_INTERNAL_SDK)

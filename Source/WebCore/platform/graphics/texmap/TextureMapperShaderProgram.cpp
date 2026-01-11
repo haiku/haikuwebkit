@@ -197,6 +197,63 @@ static const char* fragmentTemplateLT320Vars =
         varying vec4 v_nonProjectedPosition;
     );
 
+// PQ tone-mapping function with conditional highp precision.
+// Only enabled when highp is available in fragment shaders, because we get banding artifacts with mediump
+// precision.
+static const char* fragmentTemplateToneMapPq =
+    "\n"
+    GLSL_DIRECTIVE(ifdef GL_FRAGMENT_PRECISION_HIGH)
+    STRINGIFY(
+        void applyToneMapPQ(inout vec4 color)
+        {
+            // Reference PQ EOTF (ITU-R BT.2100)
+            highp float m1 = 0.1593017578125;
+            highp float m2 = 78.84375;
+            highp float c1 = 0.8359375;
+            highp float c2 = 18.8515625;
+            highp float c3 = 18.6875;
+
+            highp vec3 pqPowM2 = pow(max(color.rgb, vec3(0.0)), vec3(1.0 / m2));
+            highp vec3 numerator = max(pqPowM2 - c1, vec3(0.0));
+            highp vec3 denominator = c2 - c3 * pqPowM2;
+            highp vec3 linear = pow(numerator / denominator, vec3(1.0 / m1));
+
+            // Normalize using HDR reference white (ITU-R BT.2408)
+            const highp float hdrReferenceWhite = 203.0;
+            const highp float pqMaxNits = 10000.0;
+            highp vec3 normalized = linear * (pqMaxNits / hdrReferenceWhite);
+
+            // Tone-map using maxRGB-based Reinhard, which preserves saturation.
+            // Simplified version of that Chromium does, described in
+            // https://docs.google.com/document/d/17T2ek1i2R7tXdfHCnM-i5n6__RoYe0JyMfKmTEjoGR8/edit?tab=t.0#heading=h.h00l7d53phqy
+            highp float maxRGB = max(max(normalized.r, normalized.g), normalized.b);
+            highp vec3 toneMapped = normalized / (1.0 + maxRGB);
+
+            // Convert from BT.2020 to BT.709 color primaries
+            highp mat3 bt2020ToBt709 = mat3(
+                1.6605, -0.1246, -0.0182,
+                -0.5876, 1.1329, -0.1006,
+                -0.0728, -0.0083, 1.1187
+            );
+            highp vec3 bt709Linear = bt2020ToBt709 * toneMapped;
+
+            // Apply inverse EOTF for sRGB gamma encoding (IEC 61966-2)
+            bvec3 cutoff = lessThan(bt709Linear, vec3(0.0031308));
+            highp vec3 higher = vec3(1.055) * pow(bt709Linear, vec3(1.0 / 2.4)) - vec3(0.055);
+            highp vec3 lower = bt709Linear * vec3(12.92);
+            highp vec3 srgb = mix(higher, lower, vec3(cutoff));
+
+            color = vec4(srgb, color.a);
+        }
+    )
+    "\n"
+    GLSL_DIRECTIVE(else)
+    STRINGIFY(
+        void applyToneMapPQ(inout vec4 color) { }
+    )
+    "\n"
+    GLSL_DIRECTIVE(endif);
+
 static const char* fragmentTemplateCommon =
     STRINGIFY(
         uniform sampler2D s_sampler;
@@ -251,47 +308,7 @@ static const char* fragmentTemplateCommon =
 
         void applyPremultiply(inout vec4 color) { color = vec4(color.rgb * color.a, color.a); }
 
-        void applyToneMapPQ(inout vec4 color)
-        {
-            // Reference PQ EOTF (ITU-R BT.2100)
-            float m1 = 0.1593017578125;
-            float m2 = 78.84375;
-            float c1 = 0.8359375;
-            float c2 = 18.8515625;
-            float c3 = 18.6875;
-
-            vec3 pqPowM2 = pow(max(color.rgb, vec3(0.0)), vec3(1.0 / m2));
-            vec3 numerator = max(pqPowM2 - c1, vec3(0.0));
-            vec3 denominator = c2 - c3 * pqPowM2;
-            vec3 linear = pow(numerator / denominator, vec3(1.0 / m1));
-
-            // Normalize using HDR reference white (ITU-R BT.2408)
-            const float hdrReferenceWhite = 203.0;
-            const float pqMaxNits = 10000.0;
-            vec3 normalized = linear * (pqMaxNits / hdrReferenceWhite);
-
-            // Tone-map using maxRGB-based Reinhard, which preserves saturation.
-            // Simplified version of that Chromium does, described in
-            // https://docs.google.com/document/d/17T2ek1i2R7tXdfHCnM-i5n6__RoYe0JyMfKmTEjoGR8/edit?tab=t.0#heading=h.h00l7d53phqy
-            float maxRGB = max(max(normalized.r, normalized.g), normalized.b);
-            vec3 toneMapped = normalized / (1.0 + maxRGB);
-
-            // Convert from BT.2020 to BT.709 color primaries
-            mat3 bt2020ToBt709 = mat3(
-                1.6605, -0.1246, -0.0182,
-                -0.5876, 1.1329, -0.1006,
-                -0.0728, -0.0083, 1.1187
-            );
-            vec3 bt709Linear = bt2020ToBt709 * toneMapped;
-
-            // Apply inverse EOTF for sRGB gamma encoding (IEC 61966-2)
-            bvec3 cutoff = lessThan(bt709Linear, vec3(0.0031308));
-            vec3 higher = vec3(1.055) * pow(bt709Linear, vec3(1.0 / 2.4)) - vec3(0.055);
-            vec3 lower = bt709Linear * vec3(12.92);
-            vec3 srgb = mix(higher, lower, vec3(cutoff));
-
-            color = vec4(srgb, color.a);
-        }
+        void applyToneMapPQ(inout vec4 color);
 
         vec3 yuvToRgb(float y, float u, float v)
         {
@@ -650,6 +667,9 @@ Ref<TextureMapperShaderProgram> TextureMapperShaderProgram::create(TextureMapper
 
     // Append the common code.
     fragmentShaderBuilder.append(unsafeSpan(fragmentTemplateCommon));
+
+    // Append the PQ tone mapping function.
+    fragmentShaderBuilder.append(unsafeSpan(fragmentTemplateToneMapPq));
 
     return adoptRef(*new TextureMapperShaderProgram(vertexShaderBuilder.toString(), fragmentShaderBuilder.toString()));
 }

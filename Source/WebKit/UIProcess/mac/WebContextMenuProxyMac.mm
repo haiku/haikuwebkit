@@ -101,7 +101,7 @@
     if (!self)
         return nil;
     
-    _selectionHandler = WTFMove(selectionHandler);
+    _selectionHandler = WTF::move(selectionHandler);
     return self;
 }
 
@@ -238,9 +238,8 @@ namespace WebKit {
 using namespace WebCore;
 
 WebContextMenuProxyMac::WebContextMenuProxyMac(NSView *webView, WebPageProxy& page, FrameInfoData&& frameInfo, ContextMenuContextData&& context, const UserData& userData)
-    : WebContextMenuProxy(page, WTFMove(context), userData)
+    : WebContextMenuProxy(page, WTF::move(frameInfo), WTF::move(context), userData)
     , m_webView(webView)
-    , m_frameInfo(WTFMove(frameInfo))
 {
 }
 
@@ -334,7 +333,7 @@ void WebContextMenuProxyMac::setupServicesMenu()
     for (auto& telephoneNumber : m_context.selectedTelephoneNumbers()) {
         if (RetainPtr item = menuItemForTelephoneNumber(telephoneNumber)) {
             [item setIndentationLevel:1];
-            telephoneNumberMenuItems.append(WTFMove(item));
+            telephoneNumberMenuItems.append(WTF::move(item));
         }
     }
 
@@ -380,7 +379,7 @@ void WebContextMenuProxyMac::appendRemoveBackgroundItemToControlledImageMenuIfNe
         if (!image)
             return;
 
-        requestBackgroundRemoval(image.get(), [protectedThis = WTFMove(protectedThis), weakMenu = WTFMove(weakMenu)](CGImageRef result) {
+        requestBackgroundRemoval(image.get(), [protectedThis = WTF::move(protectedThis), weakMenu = WTF::move(weakMenu)](CGImageRef result) {
             if (!result)
                 return;
 
@@ -526,7 +525,7 @@ RetainPtr<NSMenuItem> WebContextMenuProxyMac::createShareMenuItem(ShareMenuItemT
 #if ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
         [placeholder _setActionImage:[shareMenuItem _actionImage]];
 #endif
-        shareMenuItem = WTFMove(placeholder);
+        shareMenuItem = WTF::move(placeholder);
     } else
         [shareMenuItem setRepresentedObject:sharingServicePicker.get()];
 
@@ -831,7 +830,7 @@ void WebContextMenuProxyMac::getContextMenuFromItems(const Vector<WebContextMenu
     auto imageBitmap = hitTestData.imageBitmap;
 
     RetainPtr sparseMenuItems = [NSPointerArray strongObjectsPointerArray];
-    auto insertMenuItem = makeBlockPtr([protectedThis = Ref { *this }, weakPage = WeakPtr { page() }, imageURL = WTFMove(imageURL), imageBitmap = WTFMove(imageBitmap), lookUpImageItem = WTFMove(lookUpImageItem), copySubjectItem = WTFMove(copySubjectItem), completionHandler = WTFMove(completionHandler), itemsRemaining = filteredItems.size(), menu = WTFMove(menu), sparseMenuItems](NSMenuItem *item, NSUInteger index) mutable {
+    auto insertMenuItem = makeBlockPtr([protectedThis = Ref { *this }, weakPage = WeakPtr { page() }, imageURL = WTF::move(imageURL), imageBitmap = WTF::move(imageBitmap), lookUpImageItem = WTF::move(lookUpImageItem), copySubjectItem = WTF::move(copySubjectItem), completionHandler = WTF::move(completionHandler), itemsRemaining = filteredItems.size(), menu = WTF::move(menu), sparseMenuItems](NSMenuItem *item, NSUInteger index) mutable {
         ASSERT(index < [sparseMenuItems count]);
         ASSERT(![sparseMenuItems pointerAtIndex:index]);
         [sparseMenuItems replacePointerAtIndex:index withPointer:item];
@@ -844,7 +843,7 @@ void WebContextMenuProxyMac::getContextMenuFromItems(const Vector<WebContextMenu
         if (page && imageBitmap) {
 #if ENABLE(IMAGE_ANALYSIS)
             if (lookUpImageItem) {
-                page->computeHasVisualSearchResults(imageURL, *imageBitmap, [protectedThis, lookUpImageItem = WTFMove(*lookUpImageItem)] (bool hasVisualSearchResults) mutable {
+                page->computeHasVisualSearchResults(imageURL, *imageBitmap, [protectedThis, lookUpImageItem = WTF::move(*lookUpImageItem)] (bool hasVisualSearchResults) mutable {
                     if (hasVisualSearchResults) {
                         NSInteger index = [protectedThis->m_menu indexOfItemWithTag:lookUpImageItem.action()];
                         if (index >= 0)
@@ -859,7 +858,7 @@ void WebContextMenuProxyMac::getContextMenuFromItems(const Vector<WebContextMenu
             if (copySubjectItem) {
                 if (RetainPtr image = imageBitmap->createPlatformImage()) {
                     protectedThis->m_copySubjectResult = nullptr;
-                    requestBackgroundRemoval(image.get(), [weakPage, protectedThis, copySubjectItem = WTFMove(*copySubjectItem)](auto result) {
+                    requestBackgroundRemoval(image.get(), [weakPage, protectedThis, copySubjectItem = WTF::move(*copySubjectItem)](auto result) {
                         if (!result)
                             return;
 
@@ -957,7 +956,7 @@ void WebContextMenuProxyMac::getContextMenuItem(const WebContextMenuItemData& it
             return;
         }
 
-        getContextMenuFromItems(item.submenu(), [menuItem = WTFMove(menuItem), completionHandler = WTFMove(completionHandler)](NSMenu *menu) mutable {
+        getContextMenuFromItems(item.submenu(), [menuItem = WTF::move(menuItem), completionHandler = WTF::move(completionHandler)](NSMenu *menu) mutable {
             [menuItem setSubmenu:menu];
             completionHandler(menuItem.get());
         });
@@ -995,7 +994,7 @@ void WebContextMenuProxyMac::showContextMenuWithItems(Vector<Ref<WebContextMenuI
 void WebContextMenuProxyMac::useContextMenuItems(Vector<Ref<WebContextMenuItem>>&& items)
 {
     if (items.isEmpty() || !page() || page()->contextMenuClient().canShowContextMenu()) {
-        WebContextMenuProxy::useContextMenuItems(WTFMove(items));
+        WebContextMenuProxy::useContextMenuItems(WTF::move(items));
         return;
     }
 
@@ -1012,7 +1011,7 @@ void WebContextMenuProxyMac::useContextMenuItems(Vector<Ref<WebContextMenuItem>>
         [[WKMenuTarget sharedMenuTarget] setMenuProxy:this];
 
         auto menuFromProposedMenu = [this, protectedThis = Ref { *this }] (RetainPtr<NSMenu>&& menu) {
-            m_menu = WTFMove(menu);
+            m_menu = WTF::move(menu);
             [m_menu setDelegate:RetainPtr { menuDelegate() }.get()];
 
             WebContextMenuProxy::useContextMenuItems({ });
@@ -1031,7 +1030,7 @@ void WebContextMenuProxyMac::useContextMenuItems(Vector<Ref<WebContextMenuItem>>
             webExtensionController->addItemsToContextMenu(page, m_context, menu);
 #endif
 
-        page->contextMenuClient().menuFromProposedMenu(page, menu, m_context, m_userData.protectedObject().get(), WTFMove(menuFromProposedMenu));
+        page->contextMenuClient().menuFromProposedMenu(page, menu, m_context, m_userData.protectedObject().get(), WTF::move(menuFromProposedMenu));
     });
 }
 

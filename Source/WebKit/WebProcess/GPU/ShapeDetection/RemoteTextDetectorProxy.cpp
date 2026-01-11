@@ -71,7 +71,7 @@ void RemoteTextDetectorProxy::detect(const WebCore::NativeImage& image, Completi
         completionHandler({ });
         return;
     }
-    connection->sendWithAsyncReply(Messages::RemoteTextDetector::Detect(image.renderingResourceIdentifier()), WTFMove(completionHandler), identifier());
+    connection->sendWithAsyncReply(Messages::RemoteTextDetector::Detect(image.renderingResourceIdentifier()), WTF::move(completionHandler), identifier());
 }
 
 } // namespace WebKit::WebGPU

@@ -36,7 +36,7 @@ namespace CSS {
 
 void PropertyParserResult::addProperty(CSSProperty&& property)
 {
-    parsedProperties.append(WTFMove(property));
+    parsedProperties.append(WTF::move(property));
 }
 
 void PropertyParserResult::addProperty([[maybe_unused]] CSS::PropertyParserState& state, CSSPropertyID property, CSSPropertyID currentShorthand, RefPtr<CSSValue>&& value, IsImportant important, IsImplicit implicit)
@@ -67,7 +67,7 @@ void PropertyParserResult::addProperty([[maybe_unused]] CSS::PropertyParserState
 
 void PropertyParserResult::addPropertyForCurrentShorthand(CSS::PropertyParserState& state, CSSPropertyID longhand, RefPtr<CSSValue>&& value, IsImplicit implicit)
 {
-    addProperty(state, longhand, state.currentProperty, WTFMove(value), state.important, implicit);
+    addProperty(state, longhand, state.currentProperty, WTF::move(value), state.important, implicit);
 }
 
 void PropertyParserResult::addPropertyForAllLonghandsOfShorthand(CSS::PropertyParserState& state, CSSPropertyID shorthand, RefPtr<CSSValue>&& value, IsImportant important, IsImplicit implicit)
@@ -78,7 +78,7 @@ void PropertyParserResult::addPropertyForAllLonghandsOfShorthand(CSS::PropertyPa
 
 void PropertyParserResult::addPropertyForAllLonghandsOfCurrentShorthand(CSS::PropertyParserState& state, RefPtr<CSSValue>&& value, IsImplicit implicit)
 {
-    addPropertyForAllLonghandsOfShorthand(state, state.currentProperty, WTFMove(value), state.important, implicit);
+    addPropertyForAllLonghandsOfShorthand(state, state.currentProperty, WTF::move(value), state.important, implicit);
 }
 
 } // namespace CSS

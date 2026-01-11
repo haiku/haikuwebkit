@@ -41,7 +41,7 @@ static inline LibWebRTCRtpSenderTransformBackend::MediaType mediaTypeFromSender(
 
 LibWebRTCRtpSenderTransformBackend::LibWebRTCRtpSenderTransformBackend(Ref<webrtc::RtpSenderInterface>&& rtcSender)
     : LibWebRTCRtpTransformBackend(mediaTypeFromSender(rtcSender), Side::Sender)
-    , m_rtcSender(WTFMove(rtcSender))
+    , m_rtcSender(WTF::move(rtcSender))
 {
 }
 
@@ -51,7 +51,7 @@ LibWebRTCRtpSenderTransformBackend::~LibWebRTCRtpSenderTransformBackend()
 
 void LibWebRTCRtpSenderTransformBackend::setTransformableFrameCallback(Callback&& callback)
 {
-    setInputCallback(WTFMove(callback));
+    setInputCallback(WTF::move(callback));
     if (m_isRegistered)
         return;
 

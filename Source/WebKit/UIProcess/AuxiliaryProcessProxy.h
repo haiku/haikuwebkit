@@ -350,13 +350,13 @@ bool AuxiliaryProcessProxy::send(T&& message, uint64_t destinationID, OptionSet<
 
             auto encoder = makeUniqueRef<IPC::Encoder>(T::name(), destinationID);
             message.encode(encoder.get());
-            return sendMessageAfterResuming(WTFMove(coalescingKey), WTFMove(encoder));
+            return sendMessageAfterResuming(WTF::move(coalescingKey), WTF::move(encoder));
         }
     }
 
     auto encoder = makeUniqueRef<IPC::Encoder>(T::name(), destinationID);
     message.encode(encoder.get());
-    return sendMessage(WTFMove(encoder), sendOptions);
+    return sendMessage(WTF::move(encoder), sendOptions);
 }
 
 template<typename T>
@@ -382,7 +382,7 @@ std::optional<AuxiliaryProcessProxy::AsyncReplyID> AuxiliaryProcessProxy::sendWi
     message.encode(encoder.get());
     auto handler = IPC::Connection::makeAsyncReplyHandler<T>(std::forward<C>(completionHandler));
     auto replyID = handler.replyID;
-    if (sendMessage(WTFMove(encoder), sendOptions, WTFMove(handler), shouldStartProcessThrottlerActivity))
+    if (sendMessage(WTF::move(encoder), sendOptions, WTF::move(handler), shouldStartProcessThrottlerActivity))
         return replyID;
     return std::nullopt;
 }

@@ -208,7 +208,7 @@ JSValue createDOMException(JSGlobalObject& lexicalGlobalObject, Exception&& exce
 void propagateExceptionSlowPath(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& throwScope, Exception&& exception)
 {
     throwScope.assertNoExceptionExceptTermination();
-    throwException(&lexicalGlobalObject, throwScope, createDOMException(lexicalGlobalObject, WTFMove(exception)));
+    throwException(&lexicalGlobalObject, throwScope, createDOMException(lexicalGlobalObject, WTF::move(exception)));
 }
     
 static EncodedJSValue throwTypeError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, const String& errorMessage)

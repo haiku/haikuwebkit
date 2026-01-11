@@ -48,7 +48,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(InjectedScriptManager);
 
 InjectedScriptManager::InjectedScriptManager(InspectorEnvironment& environment, Ref<InjectedScriptHost>&& injectedScriptHost)
     : m_environment(&environment)
-    , m_injectedScriptHost(WTFMove(injectedScriptHost))
+    , m_injectedScriptHost(WTF::move(injectedScriptHost))
     , m_nextInjectedScriptId(1)
 {
 }

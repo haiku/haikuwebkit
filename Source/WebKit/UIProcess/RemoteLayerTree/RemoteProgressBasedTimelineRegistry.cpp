@@ -146,13 +146,6 @@ RemoteProgressBasedTimeline* RemoteProgressBasedTimelineRegistry::get(const Time
     return nullptr;
 }
 
-bool RemoteProgressBasedTimelineRegistry::hasTimelineForNode(const WebCore::ScrollingTreeScrollingNode& node) const
-{
-    auto scrollingNodeID = node.scrollingNodeID();
-    auto it = m_timelines.find(scrollingNodeID.processIdentifier());
-    return it != m_timelines.end() && it->value.contains(scrollingNodeID);
-}
-
 void RemoteProgressBasedTimelineRegistry::updateTimelinesForNode(const WebCore::ScrollingTreeScrollingNode& node)
 {
     auto processIterator = m_timelines.find(node.scrollingNodeID().processIdentifier());

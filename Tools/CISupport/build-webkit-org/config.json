@@ -94,6 +94,14 @@
                   { "name": "bot607", "platform": "tvos-26" },
                   { "name": "bot608", "platform": "tvos-simulator-26" },
 
+                  {
+                    "name": "bot10000",
+                    "platform": "mac-tahoe",
+                    "os": "macOS Tahoe 26.0-25A354",
+                    "device": "Mac16,11",
+                    "xcode": "Xcode 26.0.1-17A400"
+                  },
+
                   { "name": "wincairo-debug-build-01", "platform": "win" },
                   { "name": "wincairo-debug-tests-01", "platform": "win" },
                   { "name": "wincairo-debug-tests-02", "platform": "win" },
@@ -256,7 +264,7 @@
                   { "name": "Apple-Tahoe-Debug-AppleSilicon-WK1-Tests", "factory": "TestWebKit1AllButJSCFactory",
                   "platform": "mac-tahoe", "configuration": "debug", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures"],
-                  "workernames": ["bot132"]
+                  "workernames": ["bot132", "bot10000"]
                   },
                   { "name": "Apple-Tahoe-Debug-AppleSilicon-WK2-Tests", "factory": "TestAllButJSCFactory",
                   "platform": "mac-tahoe", "configuration": "debug", "architectures": ["x86_64", "arm64"],

@@ -109,7 +109,7 @@ static RetainPtr<PlatformDDAction> actionForMenuItem(NSMenuItem *item)
         return nil;
 
     RetainPtr<id> action = [representedObject objectForKey:@"DDAction"];
-    return dynamic_objc_cast<PlatformDDAction>(WTFMove(action));
+    return dynamic_objc_cast<PlatformDDAction>(WTF::move(action));
 }
 
 NSMenuItem *menuItemForTelephoneNumber(const String& telephoneNumber)
@@ -117,8 +117,7 @@ NSMenuItem *menuItemForTelephoneNumber(const String& telephoneNumber)
     if (!PAL::isDataDetectorsFrameworkAvailable())
         return nil;
 
-    // FIXME: This is a safer cpp false positive (rdar://161378050).
-    SUPPRESS_UNRETAINED_ARG auto actionContext = adoptNS([PAL::allocWKDDActionContextInstance() init]);
+    auto actionContext = adoptNS([PAL::allocWKDDActionContextInstance() init]);
 
     [actionContext setAllowedActionUTIs:@[ @"com.apple.dial" ]];
 

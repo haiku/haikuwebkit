@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
+
 #if ENABLE(JIT)
 
 #include <JavaScriptCore/AssemblyHelpers.h>
@@ -669,7 +671,7 @@ private:
         if constexpr (std::same_as<FirstArgumentType, CallFrame*>) {
 #if USE(JSVALUE64)
             // This only really works for 64-bit since jsvalue regs mess things up for 32-bit...
-            static_assert(FunctionTraits<OperationType>::cCallArity() == sizeof...(Args) + 1, "Basic sanity check");
+            static_assert(FunctionTraits<OperationType>::cCallArity() == sizeof...(Args) + 1, "Basic sanity check; Did you explicitly pass callFrameRegister for the first argument?");
 #endif
             setupArgumentsImpl<OperationType>(argSourceRegs, GPRInfo::callFrameRegister, args...);
         } else {

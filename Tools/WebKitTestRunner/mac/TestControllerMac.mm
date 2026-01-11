@@ -234,7 +234,7 @@ void TestController::configureContentExtensionForTest(const TestInvocation& test
         return;
 
     auto testURL = adoptCF(WKURLCopyCFURL(kCFAllocatorDefault, test.url()));
-    NSURL *filterURL = [(__bridge NSURL *)testURL.get() URLByAppendingPathExtension:@"json"];
+    NSURL *filterURL = [[(__bridge NSURL *)testURL.get() URLByDeletingPathExtension] URLByAppendingPathExtension:@"json"];
 
     __block RetainPtr<NSString> contentExtensionString;
     __block bool doneFetchingContentExtension = false;

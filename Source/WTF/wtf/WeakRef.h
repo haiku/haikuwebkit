@@ -55,7 +55,7 @@ public:
     }
 
     explicit WeakRef(Ref<WeakPtrImpl>&& impl, EnableWeakPtrThreadingAssertions shouldEnableAssertions = EnableWeakPtrThreadingAssertions::Yes)
-        : m_impl(WTFMove(impl))
+        : m_impl(WTF::move(impl))
 #if ASSERT_ENABLED
         , m_shouldEnableAssertions(shouldEnableAssertions == EnableWeakPtrThreadingAssertions::Yes)
 #endif
@@ -70,7 +70,7 @@ public:
     bool isHashTableEmptyValue() const { return m_impl.isHashTableEmptyValue(); }
 
     WeakPtrImpl& impl() const { return m_impl; }
-    Ref<WeakPtrImpl> releaseImpl() { return WTFMove(m_impl); }
+    Ref<WeakPtrImpl> releaseImpl() { return WTF::move(m_impl); }
 
     T* ptrAllowingHashTableEmptyValue() const
     {
@@ -173,7 +173,7 @@ template<typename P, typename WeakPtrImpl> struct WeakRefHashTraits : SimpleClas
     static PeekType peek(P* value) { return value; }
 
     using TakeType = WeakPtr<P, WeakPtrImpl>;
-    static TakeType take(WeakRef<P, WeakPtrImpl>&& value) { return isEmptyValue(value) ? nullptr : WeakPtr<P, WeakPtrImpl>(WTFMove(value)); }
+    static TakeType take(WeakRef<P, WeakPtrImpl>&& value) { return isEmptyValue(value) ? nullptr : WeakPtr<P, WeakPtrImpl>(WTF::move(value)); }
 };
 
 template<typename P, typename WeakPtrImpl> struct HashTraits<WeakRef<P, WeakPtrImpl>> : WeakRefHashTraits<P, WeakPtrImpl> { };

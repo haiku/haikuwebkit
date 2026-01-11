@@ -75,7 +75,7 @@ class AudioTrackPrivateMediaSourceAVFObjC;
 class VideoTrackPrivateMediaSourceAVFObjC;
 class SharedBuffer;
 
-struct TrackInfo;
+class TrackInfo;
 
 class SourceBufferPrivateAVFObjC final
     : public SourceBufferPrivate

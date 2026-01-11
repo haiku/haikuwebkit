@@ -55,7 +55,7 @@ EnhancedSecuritySitesHolder::EnhancedSecuritySitesHolder(const String& databaseD
         assertIsCurrent(sharedWorkQueueSingleton());
 
         if (RefPtr protectedThis = weakThis.get())
-            protectedThis->m_enhancedSecurityPersistence = makeUnique<EnhancedSecuritySitesPersistence>(WTFMove(path));
+            protectedThis->m_enhancedSecurityPersistence = makeUnique<EnhancedSecuritySitesPersistence>(WTF::move(path));
     });
 }
 
@@ -63,17 +63,17 @@ EnhancedSecuritySitesHolder::~EnhancedSecuritySitesHolder()
 {
     ASSERT(isMainRunLoop());
 
-    sharedWorkQueueSingleton().dispatch([container = WTFMove(m_enhancedSecurityPersistence)] { });
+    sharedWorkQueueSingleton().dispatch([container = WTF::move(m_enhancedSecurityPersistence)] { });
 }
 
 void EnhancedSecuritySitesHolder::fetchEnhancedSecurityOnlyDomains(CompletionHandler<void(HashSet<WebCore::RegistrableDomain>&&)>&& completionHandler)
 {
     ASSERT(isMainRunLoop());
 
-    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTFMove(completionHandler)] mutable {
+    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTF::move(completionHandler)] mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis) {
-            callOnMainRunLoop([completionHandler = WTFMove(completionHandler)] mutable {
+            callOnMainRunLoop([completionHandler = WTF::move(completionHandler)] mutable {
                 completionHandler({ });
             });
             return;
@@ -82,8 +82,8 @@ void EnhancedSecuritySitesHolder::fetchEnhancedSecurityOnlyDomains(CompletionHan
         assertIsCurrent(sharedWorkQueueSingleton());
         auto enhancedSecuritySites = protectedThis->m_enhancedSecurityPersistence->enhancedSecurityOnlyDomains();
 
-        callOnMainRunLoop([enhancedSecuritySites = crossThreadCopy(WTFMove(enhancedSecuritySites)), completionHandler = WTFMove(completionHandler)] mutable {
-            completionHandler(WTFMove(enhancedSecuritySites));
+        callOnMainRunLoop([enhancedSecuritySites = crossThreadCopy(WTF::move(enhancedSecuritySites)), completionHandler = WTF::move(completionHandler)] mutable {
+            completionHandler(WTF::move(enhancedSecuritySites));
         });
     });
 }
@@ -92,10 +92,10 @@ void EnhancedSecuritySitesHolder::fetchAllEnhancedSecuritySites(CompletionHandle
 {
     ASSERT(isMainRunLoop());
 
-    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTFMove(completionHandler)] mutable {
+    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTF::move(completionHandler)] mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis) {
-            callOnMainRunLoop([completionHandler = WTFMove(completionHandler)] mutable {
+            callOnMainRunLoop([completionHandler = WTF::move(completionHandler)] mutable {
                 completionHandler({ });
             });
             return;
@@ -104,8 +104,8 @@ void EnhancedSecuritySitesHolder::fetchAllEnhancedSecuritySites(CompletionHandle
         assertIsCurrent(sharedWorkQueueSingleton());
         auto enhancedSecuritySites = protectedThis->m_enhancedSecurityPersistence->allEnhancedSecuritySites();
 
-        callOnMainRunLoop([enhancedSecuritySites = crossThreadCopy(WTFMove(enhancedSecuritySites)), completionHandler = WTFMove(completionHandler)] mutable {
-            completionHandler(WTFMove(enhancedSecuritySites));
+        callOnMainRunLoop([enhancedSecuritySites = crossThreadCopy(WTF::move(enhancedSecuritySites)), completionHandler = WTF::move(completionHandler)] mutable {
+            completionHandler(WTF::move(enhancedSecuritySites));
         });
     });
 }
@@ -117,11 +117,11 @@ void EnhancedSecuritySitesHolder::trackEnhancedSecurityForDomain(WebCore::Regist
     if (domain.isEmpty())
         return;
 
-    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, domain = crossThreadCopy(WTFMove(domain)), reason]() mutable {
+    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, domain = crossThreadCopy(WTF::move(domain)), reason]() mutable {
         assertIsCurrent(sharedWorkQueueSingleton());
 
         if (RefPtr protectedThis = weakThis.get())
-            protectedThis->m_enhancedSecurityPersistence->trackEnhancedSecurityForDomain(WTFMove(domain), reason);
+            protectedThis->m_enhancedSecurityPersistence->trackEnhancedSecurityForDomain(WTF::move(domain), reason);
     });
 }
 
@@ -132,13 +132,13 @@ void EnhancedSecuritySitesHolder::deleteSites(Vector<WebCore::RegistrableDomain>
     if (sites.isEmpty())
         return completionHandler();
 
-    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, sites = crossThreadCopy(WTFMove(sites)), completionHandler = WTFMove(completionHandler)]() mutable {
+    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, sites = crossThreadCopy(WTF::move(sites)), completionHandler = WTF::move(completionHandler)]() mutable {
         assertIsCurrent(sharedWorkQueueSingleton());
 
         if (RefPtr protectedThis = weakThis.get())
             protectedThis->m_enhancedSecurityPersistence->deleteSites(sites);
 
-        callOnMainRunLoop(WTFMove(completionHandler));
+        callOnMainRunLoop(WTF::move(completionHandler));
     });
 }
 
@@ -146,13 +146,13 @@ void EnhancedSecuritySitesHolder::deleteAllSites(CompletionHandler<void()>&& com
 {
     ASSERT(isMainRunLoop());
 
-    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTFMove(completionHandler)] mutable {
+    sharedWorkQueueSingleton().dispatch([weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTF::move(completionHandler)] mutable {
         assertIsCurrent(sharedWorkQueueSingleton());
 
         if (RefPtr protectedThis = weakThis.get())
             protectedThis->m_enhancedSecurityPersistence->deleteAllSites();
 
-        callOnMainRunLoop(WTFMove(completionHandler));
+        callOnMainRunLoop(WTF::move(completionHandler));
     });
 }
 

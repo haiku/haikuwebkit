@@ -100,7 +100,7 @@ public:
     public:
         static Locker adopt(RetainPtr<IOSurfaceRef> surface)
         {
-            return Locker { WTFMove(surface) };
+            return Locker { WTF::move(surface) };
         }
 
         Locker(Locker&& other)
@@ -138,7 +138,7 @@ public:
 
     private:
         explicit Locker(RetainPtr<IOSurfaceRef> surface)
-            : m_surface(WTFMove(surface))
+            : m_surface(WTF::move(surface))
         {
         }
 

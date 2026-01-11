@@ -1998,7 +1998,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     auto insets = _impl->customSwipeViewsObscuredContentInsets();
     insets.setTop(topContentInset);
-    _impl->setCustomSwipeViewsObscuredContentInsets(WTFMove(insets));
+    _impl->setCustomSwipeViewsObscuredContentInsets(WTF::move(insets));
 }
 
 - (void)_setCustomSwipeViewsObscuredContentInsets:(NSEdgeInsets)insets
@@ -2128,7 +2128,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         WallTime::now(),
         WebCore::PCM::AttributionEphemeral::No
     );
-    _page->setPrivateClickMeasurementImmediately(WTFMove(measurement));
+    _page->setPrivateClickMeasurementImmediately(WTF::move(measurement));
 }
 
 - (void)_storeSimulatedPrivateClickMeasurementConversionWithPriority:(uint8_t)priority triggerData:(uint8_t)triggerData sourceURL:(NSURL *)sourceURL destinationURL:(NSURL *)destinationURL

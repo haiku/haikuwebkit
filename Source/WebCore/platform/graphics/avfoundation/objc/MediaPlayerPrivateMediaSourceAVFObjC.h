@@ -40,7 +40,7 @@
 #include <wtf/LoggerHelper.h>
 #include <wtf/MediaTime.h>
 #include <wtf/NativePromise.h>
-#include <wtf/RefCounted.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/WeakPtr.h>
 
@@ -66,8 +66,7 @@ class VideoMediaSampleRenderer;
 class VideoTrackPrivate;
 
 class MediaPlayerPrivateMediaSourceAVFObjC
-    : public CanMakeWeakPtr<MediaPlayerPrivateMediaSourceAVFObjC>
-    , public RefCounted<MediaPlayerPrivateMediaSourceAVFObjC>
+    : public RefCountedAndCanMakeWeakPtr<MediaPlayerPrivateMediaSourceAVFObjC>
     , public MediaPlayerPrivateInterface
     , private LoggerHelper
 {
@@ -111,7 +110,7 @@ public:
 
     void effectiveRateChanged();
     void setNaturalSize(const FloatSize&);
-    void characteristicsChanged();
+    void characteristicsFromMediaSourceChanged() final;
 
     MediaTime currentTime() const override;
     MediaTime currentOrPendingSeekTime() const final { return currentTime(); }

@@ -71,8 +71,8 @@ public:
     virtual int uniqueId() const { return m_uniqueId; }
 
 #if ENABLE(MEDIA_SOURCE)
-    SourceBuffer* sourceBuffer() const { return m_sourceBuffer; }
-    void setSourceBuffer(SourceBuffer* buffer) { m_sourceBuffer = buffer; }
+    SourceBuffer* sourceBuffer() const;
+    void setSourceBuffer(SourceBuffer*);
 #endif
 
     void setTrackList(TrackListBase&);
@@ -102,7 +102,7 @@ protected:
     virtual void setLanguage(const AtomString&);
 
 #if ENABLE(MEDIA_SOURCE)
-    SourceBuffer* m_sourceBuffer { nullptr };
+    WeakPtr<SourceBuffer> m_sourceBuffer;
 #endif
 
     void addClientToTrackPrivateBase(TrackPrivateBaseClient&, TrackPrivateBase&);

@@ -196,7 +196,7 @@ void RemoteMediaSessionManagerProxy::mediaSessionWillBeginPlayback(RemoteMediaSe
         return;
     }
 
-    REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::sessionWillBeginPlayback(*session, WTFMove(completionHandler));
+    REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::sessionWillBeginPlayback(*session, WTF::move(completionHandler));
 }
 
 void RemoteMediaSessionManagerProxy::addMediaSessionRestriction(WebCore::PlatformMediaSessionMediaType type, WebCore::MediaSessionRestrictions restrictions)
@@ -217,7 +217,7 @@ void RemoteMediaSessionManagerProxy::resetMediaSessionRestrictions()
 #if USE(AUDIO_SESSION)
 void RemoteMediaSessionManagerProxy::remoteAudioConfigurationChanged(RemoteAudioSessionConfiguration&& configuration)
 {
-    m_audioConfiguration = WTFMove(configuration);
+    m_audioConfiguration = WTF::move(configuration);
 }
 
 void RemoteMediaSessionManagerProxy::setCategory(CategoryType type, Mode mode, WebCore::RouteSharingPolicy policy)

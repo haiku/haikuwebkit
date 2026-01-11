@@ -53,8 +53,8 @@ public:
     Frame* firstChild() const { return m_firstChild.get(); }
     Frame* lastChild() const { return m_lastChild.get(); }
 
-    Frame* firstRenderedChild() const;
-    Frame* nextRenderedSibling() const;
+    RefPtr<Frame> firstRenderedChild() const;
+    RefPtr<Frame> nextRenderedSibling() const;
 
     LocalFrame* firstLocalDescendant() const;
     LocalFrame* nextLocalSibling() const;
@@ -64,7 +64,7 @@ public:
     WEBCORE_EXPORT Frame* traverseNext(const Frame* stayWithin = nullptr) const;
     Frame* traverseNextSkippingChildren(const Frame* stayWithin = nullptr) const;
     // Rendered means being the main frame or having an ownerRenderer. It may not have been parented in the Widget tree yet (see WidgetHierarchyUpdatesSuspensionScope).
-    WEBCORE_EXPORT Frame* traverseNextRendered(const Frame* stayWithin = nullptr) const;
+    WEBCORE_EXPORT RefPtr<Frame> traverseNextRendered(const Frame* stayWithin = nullptr) const;
     WEBCORE_EXPORT Frame* traverseNext(CanWrap, DidWrap* = nullptr) const;
     WEBCORE_EXPORT Frame* traversePrevious(CanWrap, DidWrap* = nullptr) const;
 

@@ -367,7 +367,7 @@ static RetainPtr<WebEvent>& currentEvent()
         break;
     }
 
-    currentEvent() = WTFMove(lastEvent);
+    currentEvent() = WTF::move(lastEvent);
 }
 
 - (void)sendMouseMoveEvent:(WebEvent *)event contentChange:(WKContentChange *)aContentChange

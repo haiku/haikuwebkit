@@ -88,7 +88,7 @@ void PlatformCALayer::drawRepaintIndicator(GraphicsContext& graphicsContext, Pla
     fontDescription.setSpecifiedSize(fontSize);
     fontDescription.setComputedSize(fontSize);
 
-    FontCascade cascade(WTFMove(fontDescription));
+    FontCascade cascade(WTF::move(fontDescription));
     cascade.update(nullptr);
 
     float textWidth = cascade.width(textRun);
@@ -221,7 +221,7 @@ void PlatformCALayer::clearContents()
 
 void PlatformCALayer::setMaskLayer(RefPtr<PlatformCALayer>&& layer)
 {
-    m_maskLayer = WTFMove(layer);
+    m_maskLayer = WTF::move(layer);
 }
 
 PlatformCALayer* PlatformCALayer::maskLayer() const

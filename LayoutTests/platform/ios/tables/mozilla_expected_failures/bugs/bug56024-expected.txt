@@ -18,11 +18,10 @@ layer at (0,0) size 800x104
                         text run at (1,61) width 181: "nationally televised debates."
                       RenderBR {BR} at (181,61) size 1x19
             RenderTableCell {TD} at (302,2) size 96x82 [border: (1px inset #000000)] [r=0 c=2 rs=1 cs=1]
-              RenderInline {FONT} at (1,3) size 94x80 [color=#CC3333]
+              RenderInline {FONT} at (1,3) size 84x80 [color=#CC3333]
                 RenderText {#text} at (1,3) size 84x79
                   text run at (1,1) width 71: "Avon.com:"
                   text run at (1,21) width 80: "Fall makeup"
                   text run at (1,41) width 84: "sale. Save up"
                   text run at (1,61) width 50: "to 47%."
-                RenderBlock (anonymous) at (1,83) size 94x0 [color=#000000]
-                  RenderBlock {FORM} at (0,0) size 94x0 [color=#CC3333]
+                RenderBlock {FORM} at (1,83) size 94x0

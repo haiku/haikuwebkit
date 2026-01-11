@@ -31,6 +31,7 @@
 #include "AudioDestinationNode.h"
 #include "AudioIOCallback.h"
 #include "EventTarget.h"
+#include "EventTargetInterfaces.h"
 #include "JSDOMPromiseDeferredForward.h"
 #include "NoiseInjectionPolicy.h"
 #include "OscillatorType.h"
@@ -95,7 +96,7 @@ class BaseAudioContext
     , public LoggerHelper
 #endif
 {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(BaseAudioContext);
+    WTF_MAKE_TZONE_ALLOCATED(BaseAudioContext);
 public:
     USING_CAN_MAKE_WEAKPTR(EventTarget);
 
@@ -320,13 +321,13 @@ private:
 
     class TailProcessingNode {
     public:
-        TailProcessingNode(AudioNode& node)
+        explicit TailProcessingNode(AudioNode& node)
             : m_node(&node)
         {
             ASSERT(!node.isTailProcessing());
             node.setIsTailProcessing(true);
         }
-        TailProcessingNode(TailProcessingNode&& other)
+        explicit TailProcessingNode(TailProcessingNode&& other)
             : m_node(std::exchange(other.m_node, nullptr))
         { }
         ~TailProcessingNode()
@@ -396,5 +397,7 @@ private:
 };
 
 } // WebCore
+
+SPECIALIZE_TYPE_TRAITS_EVENTTARGET(BaseAudioContext)
 
 #endif // ENABLE(WEB_AUDIO)

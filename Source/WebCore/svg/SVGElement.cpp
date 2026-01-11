@@ -45,7 +45,7 @@
 #include "NodeName.h"
 #include "RenderAncestorIterator.h"
 #include "RenderSVGResourceContainer.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "ResolvedStyle.h"
 #include "SVGDocumentExtensions.h"
 #include "SVGElementRareData.h"
@@ -77,12 +77,12 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGElement);
 
 SVGElement::SVGElement(const QualifiedName& tagName, Document& document, UniqueRef<SVGPropertyRegistry>&& propertyRegistry, OptionSet<TypeFlag> typeFlags)
     : StyledElement(tagName, document, typeFlags | TypeFlag::IsSVGElement | TypeFlag::HasCustomStyleResolveCallbacks)
     , m_propertyAnimatorFactory(makeUniqueRef<SVGPropertyAnimatorFactory>())
-    , m_propertyRegistry(WTFMove(propertyRegistry))
+    , m_propertyRegistry(WTF::move(propertyRegistry))
     , m_className(SVGAnimatedString::create(this))
 {
     static bool didRegistration = false;
@@ -230,14 +230,17 @@ SVGSVGElement* SVGElement::ownerSVGElement() const
     return nullptr;
 }
 
-SVGElement* SVGElement::viewportElement() const
+SVGElement* SVGElement::viewportElement(ViewportElementType type) const
 {
     // This function needs shadow tree support - as RenderSVGContainer uses this function
-    // to determine the "overflow" property. <use> on <symbol> wouldn't work otherwhise.
+    // to determine the "overflow" property. <use> on <symbol> wouldn't work otherwise.
     auto* node = parentNode();
     while (node) {
-        if (is<SVGSVGElement>(*node) || is<SVGImageElement>(*node) || node->hasTagName(SVGNames::symbolTag))
-            return downcast<SVGElement>(node);
+        if (is<SVGSVGElement>(*node) || is<SVGImageElement>(*node))
+            return dynamicDowncast<SVGElement>(node);
+
+        if (type == ViewportElementType::Any && node->hasTagName(SVGNames::symbolTag))
+            return dynamicDowncast<SVGElement>(node);
 
         node = node->parentOrShadowHostNode();
     }

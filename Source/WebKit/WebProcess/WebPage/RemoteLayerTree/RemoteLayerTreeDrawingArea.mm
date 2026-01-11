@@ -126,7 +126,7 @@ void RemoteLayerTreeDrawingArea::updateRootLayers()
             if (rootLayer.viewOverlayRootLayer)
                 children.append(Ref { *rootLayer.viewOverlayRootLayer });
         }
-        rootLayer.layer->setChildren(WTFMove(children));
+        rootLayer.layer->setChildren(WTF::move(children));
     }
 }
 
@@ -144,7 +144,7 @@ void RemoteLayerTreeDrawingArea::addRootFrame(WebCore::FrameIdentifier frameID)
     auto layer = GraphicsLayer::create(graphicsLayerFactory(), *this);
     layer->setName(makeString("drawing area root "_s, frameID));
     m_rootLayers.append(RootLayerInfo {
-        WTFMove(layer),
+        WTF::move(layer),
         nullptr,
         nullptr,
         frameID
@@ -398,13 +398,13 @@ void RemoteLayerTreeDrawingArea::updateRendering()
         scrollingTransaction.setFrameIdentifier(rootLayer.frameID);
 #endif
 
-        return { WTFMove(layerTransaction), WTFMove(scrollingTransaction) };
+        return { WTF::move(layerTransaction), WTF::move(scrollingTransaction) };
     });
 
     for (auto& transaction : transactions)
         backingStoreCollection->willCommitLayerTree(CheckedRef { transaction.first });
 
-    RemoteLayerTreeCommitBundle bundle { WTFMove(transactions), { WTFMove(m_pendingCallbackIDs), webPage->protectedCorePage()->renderTreeSize() }, std::nullopt, transactionID };
+    RemoteLayerTreeCommitBundle bundle { WTF::move(transactions), { WTF::move(m_pendingCallbackIDs), webPage->protectedCorePage()->renderTreeSize() }, std::nullopt, transactionID };
 
     if (webPage->localMainFrame()) {
         bundle.mainFrameData = MainFrameData { };
@@ -432,8 +432,8 @@ void RemoteLayerTreeDrawingArea::updateRendering()
     m_backingStoreFlusher->markHasPendingFlush();
 
     auto pageID = webPage->identifier();
-    m_commitQueue->dispatch([backingStoreFlusher = m_backingStoreFlusher, commitEncoder = WTFMove(commitEncoder), flushers = WTFMove(flushers), pageID] () mutable {
-        bool flushSucceeded = backingStoreFlusher->flush(WTFMove(commitEncoder), WTFMove(flushers));
+    m_commitQueue->dispatch([backingStoreFlusher = m_backingStoreFlusher, commitEncoder = WTF::move(commitEncoder), flushers = WTF::move(flushers), pageID] () mutable {
+        bool flushSucceeded = backingStoreFlusher->flush(WTF::move(commitEncoder), WTF::move(flushers));
 
         RunLoop::mainSingleton().dispatch([pageID, flushSucceeded] () mutable {
             if (RefPtr webPage = WebProcess::singleton().webPage(pageID)) {
@@ -496,16 +496,16 @@ void RemoteLayerTreeDrawingArea::mainFrameContentSizeChanged(WebCore::FrameIdent
 
 void RemoteLayerTreeDrawingArea::tryMarkLayersVolatile(CompletionHandler<void(bool)>&& completionFunction)
 {
-    m_remoteLayerTreeContext->backingStoreCollection().tryMarkAllBackingStoreVolatile(WTFMove(completionFunction));
+    m_remoteLayerTreeContext->backingStoreCollection().tryMarkAllBackingStoreVolatile(WTF::move(completionFunction));
 }
 
 Ref<RemoteLayerTreeDrawingArea::BackingStoreFlusher> RemoteLayerTreeDrawingArea::BackingStoreFlusher::create(Ref<IPC::Connection>&& connection)
 {
-    return adoptRef(*new RemoteLayerTreeDrawingArea::BackingStoreFlusher(WTFMove(connection)));
+    return adoptRef(*new RemoteLayerTreeDrawingArea::BackingStoreFlusher(WTF::move(connection)));
 }
 
 RemoteLayerTreeDrawingArea::BackingStoreFlusher::BackingStoreFlusher(Ref<IPC::Connection>&& connection)
-    : m_connection(WTFMove(connection))
+    : m_connection(WTF::move(connection))
 {
 }
 
@@ -522,11 +522,11 @@ bool RemoteLayerTreeDrawingArea::BackingStoreFlusher::flush(UniqueRef<IPC::Encod
             break;
     }
     // FIXME: Currently we send the transaction even if the flush timed out.
-    commitEncoder.get() << WTFMove(handles);
+    commitEncoder.get() << WTF::move(handles);
 
     m_pendingFlushes--;
 
-    m_connection->sendMessage(WTFMove(commitEncoder), { });
+    m_connection->sendMessage(WTF::move(commitEncoder), { });
     return flushSucceeded;
 }
 

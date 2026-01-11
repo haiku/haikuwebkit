@@ -36,7 +36,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRHitTestResult);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebXRHitTestResult);
 
 Ref<WebXRHitTestResult> WebXRHitTestResult::create(WebXRFrame& frame, const PlatformXR::FrameData::HitTestResult& result)
 {
@@ -51,11 +51,31 @@ WebXRHitTestResult::WebXRHitTestResult(WebXRFrame& frame, const PlatformXR::Fram
 
 WebXRHitTestResult::~WebXRHitTestResult() = default;
 
+class WebXRHitTestResultSpace : public WebXRSpace {
+public:
+    WebXRHitTestResultSpace(Document& document, WebXRSession& session, const PlatformXR::FrameData::Pose& pose)
+        : WebXRSpace(document, WebXRRigidTransform::create())
+        , m_session(session)
+        , m_pose(pose)
+    {
+    }
+
+private:
+    WebXRSession* session() const final { return m_session.get(); }
+    std::optional<TransformationMatrix> nativeOrigin() const final { return WebXRFrame::matrixFromPose(m_pose); }
+    void refEventTarget() final { }
+    void derefEventTarget() final { }
+    void ref() const final { }
+    void deref() const final { }
+
+    WeakPtr<WebXRSession> m_session;
+    PlatformXR::FrameData::Pose m_pose;
+};
+
 // https://immersive-web.github.io/hit-test/#dom-xrhittestresult-getpose
 ExceptionOr<RefPtr<WebXRPose>> WebXRHitTestResult::getPose(Document& document, const WebXRSpace& baseSpace)
 {
-    PlatformXR::FrameData::InputSourcePose pose { m_result.pose };
-    Ref space = WebXRInputSpace::create(document, m_frame->session(), pose);
+    WebXRHitTestResultSpace space { document, m_frame->session(), m_result.pose };
     auto exceptionOrPose = m_frame->populatePose(document, space, baseSpace);
     if (exceptionOrPose.hasException())
         return exceptionOrPose.releaseException();

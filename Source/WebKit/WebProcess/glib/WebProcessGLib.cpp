@@ -166,19 +166,19 @@ void WebProcess::initializePlatformDisplayIfNeeded() const
 
 #if OS(ANDROID)
     if (auto display = PlatformDisplayAndroid::create()) {
-        PlatformDisplay::setSharedDisplay(WTFMove(display));
+        PlatformDisplay::setSharedDisplay(WTF::move(display));
         return;
     }
 #endif
 
     if (auto display = PlatformDisplaySurfaceless::create()) {
-        PlatformDisplay::setSharedDisplay(WTFMove(display));
+        PlatformDisplay::setSharedDisplay(WTF::move(display));
         return;
     }
 
 #if PLATFORM(GTK) || OS(ANDROID)
     if (auto display = PlatformDisplayDefault::create()) {
-        PlatformDisplay::setSharedDisplay(WTFMove(display));
+        PlatformDisplay::setSharedDisplay(WTF::move(display));
         return;
     }
 #endif
@@ -202,11 +202,12 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
 #endif
 
 #if USE(GBM)
-    DRMDeviceManager::singleton().initializeMainDevice(WTFMove(parameters.drmDevice));
+    DRMDeviceManager::singleton().initializeMainDevice(WTF::move(parameters.drmDevice));
 #endif
 
     m_rendererBufferTransportMode = parameters.rendererBufferTransportMode;
 #if PLATFORM(WPE)
+#if USE(WPE_RENDERER)
     if (!parameters.isServiceWorkerProcess) {
         if (m_rendererBufferTransportMode.isEmpty()) {
             auto& implementationLibraryName = parameters.implementationLibraryName;
@@ -216,12 +217,15 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
         } else
             initializePlatformDisplayIfNeeded();
     }
+#else
+    initializePlatformDisplayIfNeeded();
+#endif
 #endif
 
     m_availableInputDevices = parameters.availableInputDevices;
 
 #if USE(GSTREAMER)
-    WebCore::setGStreamerOptionsFromUIProcess(WTFMove(parameters.gstreamerOptions));
+    WebCore::setGStreamerOptionsFromUIProcess(WTF::move(parameters.gstreamerOptions));
 #endif
 
 #if PLATFORM(GTK) && !USE(GTK4) && USE(CAIRO)
@@ -229,7 +233,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
 #endif
 
     if (parameters.memoryPressureHandlerConfiguration)
-        MemoryPressureHandler::singleton().setConfiguration(WTFMove(*parameters.memoryPressureHandlerConfiguration));
+        MemoryPressureHandler::singleton().setConfiguration(WTF::move(*parameters.memoryPressureHandlerConfiguration));
 
     if (!parameters.applicationID.isEmpty())
         WebCore::setApplicationID(parameters.applicationID);
@@ -239,7 +243,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
 
 #if ENABLE(REMOTE_INSPECTOR)
     if (!parameters.inspectorServerAddress.isNull())
-        Inspector::RemoteInspector::setInspectorServerAddress(WTFMove(parameters.inspectorServerAddress));
+        Inspector::RemoteInspector::setInspectorServerAddress(WTF::move(parameters.inspectorServerAddress));
 #endif
 
 #if USE(ATSPI)
@@ -272,7 +276,7 @@ void WebProcess::platformTerminate()
 void WebProcess::sendMessageToWebProcessExtension(UserMessage&& message)
 {
     if (auto* extension = WebProcessExtensionManager::singleton().extension())
-        webkitWebProcessExtensionDidReceiveUserMessage(extension, WTFMove(message));
+        webkitWebProcessExtensionDidReceiveUserMessage(extension, WTF::move(message));
 }
 
 #if PLATFORM(GTK) && !USE(GTK4) && USE(CAIRO)

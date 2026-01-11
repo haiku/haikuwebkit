@@ -50,7 +50,7 @@ struct WTF::CFTypeTrait<CMSampleBufferRef> {
 namespace WebCore {
 
 MediaSampleAVFObjC::MediaSampleAVFObjC(RetainPtr<CMSampleBufferRef>&& sample)
-    : m_sample(WTFMove(sample))
+    : m_sample(WTF::move(sample))
 {
     commonInit();
 }

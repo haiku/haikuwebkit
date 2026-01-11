@@ -72,7 +72,7 @@ template<CSS::Numeric CSSType> struct UnevaluatedCalculation : UnevaluatedCalcul
     }
 
     explicit UnevaluatedCalculation(Calculation::Child&& child)
-        : UnevaluatedCalculationBase(WTFMove(child), category, range)
+        : UnevaluatedCalculationBase(WTF::move(child), category, range)
     {
     }
 

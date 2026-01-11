@@ -396,6 +396,7 @@ class TestPort(Port):
         'test-mac-snowleopard', 'test-mac-leopard',
         'test-win-vista', 'test-win-7sp0', 'test-win-xp',
     )
+    DRIVER_NAMES = ('WebKitTestRunner', 'DumpRenderTree')
 
     @classmethod
     def determine_full_port_name(cls, host, options, port_name):

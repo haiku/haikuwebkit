@@ -77,7 +77,7 @@
 #include "RenderObjectInlines.h"
 #include "RenderScrollbar.h"
 #include "RenderScrollbarPart.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
 #include "ScrollAnimator.h"
@@ -424,7 +424,7 @@ void RenderLayerScrollableArea::scrollTo(const ScrollPosition& position)
 
         // We also have to repaint any descendant composited layers that have fixed backgrounds.
         if (auto slowRepaintObjects = view.frameView().slowRepaintObjects()) {
-            for (auto& renderer : *slowRepaintObjects) {
+            for (auto& renderer : *slowRepaintObjects | dereferenceView) {
                 if (isScrolledBy(renderer, m_layer))
                     renderer.repaint();
             }
@@ -1069,9 +1069,10 @@ std::optional<ScrollbarColor> RenderLayerScrollableArea::scrollbarColorStyle() c
 {
     if (m_layer.renderBox()) {
         if (auto value = m_layer.renderer().style().scrollbarColor().tryValue()) {
+            Style::ColorResolver colorResolver { m_layer.renderer().style() };
             return ScrollbarColor {
-                .thumbColor = m_layer.renderer().style().colorResolvingCurrentColor(value->thumb),
-                .trackColor = m_layer.renderer().style().colorResolvingCurrentColor(value->track)
+                .thumbColor = colorResolver.colorResolvingCurrentColor(value->thumb),
+                .trackColor = colorResolver.colorResolvingCurrentColor(value->track)
             };
         }
     }
@@ -1503,31 +1504,63 @@ void RenderLayerScrollableArea::paintOverflowControls(GraphicsContext& context, 
     if (paintingOverlayControls)
         adjustedPaintOffset = m_cachedOverlayScrollbarOffset;
 
-    // Move the scrollbar widgets if necessary. We normally move and resize widgets during layout, but sometimes
-    // widgets can move without layout occurring (most notably when you scroll a document that
-    // contains fixed positioned elements).
-    positionOverflowControls(toIntSize(adjustedPaintOffset));
+    std::optional<RenderLayer::OverflowControlRects> controlRects;
 
-    // Now that we're sure the scrollbars are in the right place, paint them.
-    if (RefPtr hBar = m_hBar; hBar && (!layerForHorizontalScrollbar() || (paintBehavior & PaintBehavior::FlattenCompositingLayers)))
-        hBar->paint(context, damageRect);
-    if (RefPtr vBar = m_vBar; vBar && (!layerForVerticalScrollbar() || (paintBehavior & PaintBehavior::FlattenCompositingLayers)))
-        vBar->paint(context, damageRect);
+    auto layerForScrollbar = [&](ScrollbarOrientation orientation) -> GraphicsLayer* {
+        switch (orientation) {
+        case ScrollbarOrientation::Horizontal:
+            return layerForHorizontalScrollbar();
+        case ScrollbarOrientation::Vertical:
+            return layerForVerticalScrollbar();
+        }
+        return nullptr;
+    };
 
-    if (layerForScrollCorner() && !(paintBehavior & PaintBehavior::FlattenCompositingLayers))
+    auto paintScrollBarIfNecessary = [&](RefPtr<Scrollbar> scrollbar, IntRect damageRect) {
+        if (!scrollbar)
+            return;
+
+        if (layerForScrollbar(scrollbar->orientation()) && !paintBehavior.contains(PaintBehavior::FlattenCompositingLayers))
+            return;
+
+        if (!controlRects)
+            controlRects = overflowControlsRects();
+
+        auto contentPaintOffset = adjustedPaintOffset + controlRects->scrollbarRect(scrollbar->orientation()).location();
+        auto widgetLocation = scrollbar->location();
+        auto widgetPaintOffset = contentPaintOffset - widgetLocation;
+
+        auto stateSaver = GraphicsContextStateSaver { context, false };
+
+        if (!widgetPaintOffset.isZero()) {
+            stateSaver.save();
+            context.translate(widgetPaintOffset);
+            damageRect.move(-widgetPaintOffset.width(), -widgetPaintOffset.height());
+        }
+
+        scrollbar->paint(context, damageRect);
+    };
+
+    paintScrollBarIfNecessary(m_hBar, damageRect);
+    paintScrollBarIfNecessary(m_vBar, damageRect);
+
+    if (layerForScrollCorner() && !paintBehavior.contains(PaintBehavior::FlattenCompositingLayers))
         return;
+
+    if (!controlRects)
+        controlRects = overflowControlsRects();
 
     // We fill our scroll corner with white if we have a scrollbar that doesn't run all the way up to the
     // edge of the box.
-    paintScrollCorner(context, adjustedPaintOffset, damageRect);
+    paintScrollCorner(context, adjustedPaintOffset, controlRects->scrollCorner, damageRect);
 
     // Paint our resizer last, since it sits on top of the scroll corner.
-    paintResizer(context, adjustedPaintOffset, damageRect);
+    paintResizer(context, adjustedPaintOffset, controlRects->resizer, damageRect);
 }
 
-void RenderLayerScrollableArea::paintScrollCorner(GraphicsContext& context, const IntPoint& paintOffset, const IntRect& damageRect)
+void RenderLayerScrollableArea::paintScrollCorner(GraphicsContext& context, const IntPoint& paintOffset, const IntRect& scrollCornerRect, const IntRect& damageRect)
 {
-    IntRect absRect = scrollCornerRect();
+    IntRect absRect = scrollCornerRect;
     absRect.moveBy(paintOffset);
     if (!absRect.intersects(damageRect))
         return;
@@ -1548,15 +1581,13 @@ void RenderLayerScrollableArea::paintScrollCorner(GraphicsContext& context, cons
         ScrollbarTheme::theme().paintScrollCorner(*this, context, absRect);
 }
 
-void RenderLayerScrollableArea::paintResizer(GraphicsContext& context, const LayoutPoint& paintOffset, const LayoutRect& damageRect)
+void RenderLayerScrollableArea::paintResizer(GraphicsContext& context, const LayoutPoint& paintOffset, const IntRect& resizerRect, const LayoutRect& damageRect)
 {
     auto& renderer = m_layer.renderer();
     if (renderer.style().resize() == Style::Resize::None)
         return;
 
-    auto rects = overflowControlsRects();
-
-    LayoutRect resizerAbsRect = rects.resizer;
+    LayoutRect resizerAbsRect = resizerRect;
     resizerAbsRect.moveBy(paintOffset);
     if (!resizerAbsRect.intersects(damageRect))
         return;
@@ -1802,12 +1833,12 @@ void RenderLayerScrollableArea::updateScrollCornerStyle()
     }
 
     if (!m_scrollCorner) {
-        m_scrollCorner = createRenderer<RenderScrollbarPart>(renderer.protectedDocument(), WTFMove(*corner));
+        m_scrollCorner = createRenderer<RenderScrollbarPart>(renderer.protectedDocument(), WTF::move(*corner));
         // FIXME: A renderer should be a child of its parent!
         m_scrollCorner->setParent(&renderer);
         m_scrollCorner->initializeStyle();
     } else
-        m_scrollCorner->setStyle(WTFMove(*corner));
+        m_scrollCorner->setStyle(WTF::move(*corner));
 }
 
 void RenderLayerScrollableArea::clearScrollCorner()
@@ -1833,12 +1864,12 @@ void RenderLayerScrollableArea::updateResizerStyle()
     }
 
     if (!m_resizer) {
-        m_resizer = createRenderer<RenderScrollbarPart>(renderer.protectedDocument(), WTFMove(*resizer));
+        m_resizer = createRenderer<RenderScrollbarPart>(renderer.protectedDocument(), WTF::move(*resizer));
         // FIXME: A renderer should be a child of its parent!
         m_resizer->setParent(&renderer);
         m_resizer->initializeStyle();
     } else
-        m_resizer->setStyle(WTFMove(*resizer));
+        m_resizer->setStyle(WTF::move(*resizer));
 }
 
 void RenderLayerScrollableArea::clearResizer()

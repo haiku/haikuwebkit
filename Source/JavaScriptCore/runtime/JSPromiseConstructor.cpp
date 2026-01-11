@@ -214,24 +214,19 @@ static JSObject* promiseRaceSlow(JSGlobalObject* globalObject, CallFrame* callFr
         }
         ASSERT(nextPromise);
 
-        if (auto* nextPromiseObj = jsDynamicCast<JSPromise*>(nextPromise); nextPromiseObj && nextPromiseObj->isThenFastAndNonObservable()) [[likely]] {
-            scope.release();
-            nextPromiseObj->performPromiseThen(vm, globalObject, resolve, reject, jsUndefined(), promise);
-        } else {
-            JSValue then = nextPromise.get(globalObject, vm.propertyNames->then);
-            RETURN_IF_EXCEPTION(scope, void());
-            CallData thenCallData = getCallDataInline(then);
-            if (thenCallData.type == CallData::Type::None) [[unlikely]] {
-                throwTypeError(globalObject, scope, "then is not a function"_s);
-                return;
-            }
-            MarkedArgumentBuffer thenArguments;
-            thenArguments.append(resolve);
-            thenArguments.append(reject);
-            ASSERT(!thenArguments.hasOverflowed());
-            scope.release();
-            call(globalObject, then, thenCallData, nextPromise, thenArguments);
+        JSValue then = nextPromise.get(globalObject, vm.propertyNames->then);
+        RETURN_IF_EXCEPTION(scope, void());
+        CallData thenCallData = getCallDataInline(then);
+        if (thenCallData.type == CallData::Type::None) [[unlikely]] {
+            throwTypeError(globalObject, scope, "then is not a function"_s);
+            return;
         }
+        MarkedArgumentBuffer thenArguments;
+        thenArguments.append(resolve);
+        thenArguments.append(reject);
+        ASSERT(!thenArguments.hasOverflowed());
+        scope.release();
+        call(globalObject, then, thenCallData, nextPromise, thenArguments);
     });
 
     if (scope.exception()) [[unlikely]]
@@ -276,7 +271,7 @@ JSC_DEFINE_HOST_FUNCTION(promiseConstructorFuncRace, (JSGlobalObject* globalObje
             RETURN_IF_EXCEPTION(scope, void());
             if (constructor == globalObject->promiseConstructor()) [[likely]] {
                 scope.release();
-                nextPromise->performPromiseThenWithInternalMicrotask(vm, globalObject, InternalMicrotask::PromiseFirstResolveWithoutHandlerJob, promise, promise);
+                nextPromise->performPromiseThenWithInternalMicrotask(vm, globalObject, InternalMicrotask::PromiseRaceResolveJob, promise, promise);
                 return;
             }
         }
@@ -1226,7 +1221,7 @@ static JSObject* promiseAnySlow(JSGlobalObject* globalObject, CallFrame* callFra
     --count;
     globalContext->setRemainingElementsCount(vm, jsNumber(count));
     if (!count) {
-        auto* aggregateError = createAggregateError(globalObject, vm, globalObject->errorStructure(ErrorType::AggregateError), errors, jsUndefined(), jsUndefined());
+        auto* aggregateError = createAggregateError(vm, globalObject->errorStructure(ErrorType::AggregateError), errors, String(), jsUndefined());
         callReject(aggregateError);
         if (scope.exception()) [[unlikely]] {
             callRejectWithScopeException();
@@ -1339,7 +1334,7 @@ JSC_DEFINE_HOST_FUNCTION(promiseConstructorFuncAny, (JSGlobalObject* globalObjec
     --count;
     globalContext->setRemainingElementsCount(vm, jsNumber(count));
     if (!count) {
-        auto* aggregateError = createAggregateError(globalObject, vm, globalObject->errorStructure(ErrorType::AggregateError), errors, jsUndefined(), jsUndefined());
+        auto* aggregateError = createAggregateError(vm, globalObject->errorStructure(ErrorType::AggregateError), errors, String(), jsUndefined());
         scope.release();
         promise->reject(vm, globalObject, aggregateError);
         if (scope.exception()) [[unlikely]] {
@@ -1379,7 +1374,7 @@ JSC_DEFINE_HOST_FUNCTION(promiseAnyRejectFunction, (JSGlobalObject* globalObject
     --count;
     globalContext->setRemainingElementsCount(vm, jsNumber(count));
     if (!count) {
-        auto* aggregateError = createAggregateError(globalObject, vm, globalObject->errorStructure(ErrorType::AggregateError), errors, jsUndefined(), jsUndefined());
+        auto* aggregateError = createAggregateError(vm, globalObject->errorStructure(ErrorType::AggregateError), errors, String(), jsUndefined());
         scope.release();
         promise->reject(vm, globalObject, aggregateError);
     }
@@ -1417,7 +1412,7 @@ JSC_DEFINE_HOST_FUNCTION(promiseAnySlowRejectFunction, (JSGlobalObject* globalOb
     --count;
     globalContext->setRemainingElementsCount(vm, jsNumber(count));
     if (!count) {
-        auto* aggregateError = createAggregateError(globalObject, vm, globalObject->errorStructure(ErrorType::AggregateError), errors, jsUndefined(), jsUndefined());
+        auto* aggregateError = createAggregateError(vm, globalObject->errorStructure(ErrorType::AggregateError), errors, String(), jsUndefined());
         MarkedArgumentBuffer rejectArguments;
         rejectArguments.append(aggregateError);
         ASSERT(!rejectArguments.hasOverflowed());

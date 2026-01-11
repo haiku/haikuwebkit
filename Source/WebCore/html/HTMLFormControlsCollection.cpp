@@ -38,7 +38,7 @@ using namespace HTMLNames;
 // Since the collections are to be "live", we have to do the
 // calculation every time if anything has changed.
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLFormControlsCollection);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLFormControlsCollection);
 
 HTMLFormControlsCollection::HTMLFormControlsCollection(ContainerNode& ownerNode)
     : CachedHTMLCollection(ownerNode, CollectionType::FormControls)
@@ -60,7 +60,7 @@ std::optional<Variant<RefPtr<RadioNodeList>, RefPtr<Element>>> HTMLFormControlsC
     if (namedItems.isEmpty())
         return std::nullopt;
     if (namedItems.size() == 1)
-        return Variant<RefPtr<RadioNodeList>, RefPtr<Element>> { RefPtr<Element> { WTFMove(namedItems[0]) } };
+        return Variant<RefPtr<RadioNodeList>, RefPtr<Element>> { RefPtr<Element> { WTF::move(namedItems[0]) } };
 
     return Variant<RefPtr<RadioNodeList>, RefPtr<Element>> { RefPtr<RadioNodeList> { protectedOwnerNode()->radioNodeList(name) } };
 }
@@ -150,7 +150,7 @@ void HTMLFormControlsCollection::updateNamedElementCache() const
             cache->appendToNameCache(name, *element);
     }
 
-    setNamedItemCache(WTFMove(cache));
+    setNamedItemCache(WTF::move(cache));
 }
 
 void HTMLFormControlsCollection::invalidateCacheForDocument(Document& document)

@@ -113,7 +113,7 @@ void RemoteImageBufferSet::endPrepareForDisplay(RenderingUpdateID renderingUpdat
     }
 
     outputData.bufferCacheIdentifiers = BufferIdentifierSet { bufferIdentifier(frontBuffer), bufferIdentifier(m_backBuffer), bufferIdentifier(m_secondaryBackBuffer) };
-    completionHandler(WTFMove(outputData), renderingUpdateID);
+    completionHandler(WTF::move(outputData), renderingUpdateID);
 }
 
 // This is the GPU Process version of RemoteLayerBackingStore::prepareBuffers().
@@ -138,7 +138,7 @@ void RemoteImageBufferSet::ensureBufferForDisplay(ImageBufferSetPrepareBufferFor
         if (m_configuration.includeDisplayList == WebCore::IncludeDynamicContentScalingDisplayList::Yes)
             creationContext.dynamicContentScalingResourceCache = ensureDynamicContentScalingResourceCache();
 #endif
-        m_frontBuffer = m_renderingBackend->allocateImageBuffer(m_configuration.logicalSize, m_configuration.renderingMode, m_configuration.renderingPurpose, m_configuration.resolutionScale, m_configuration.colorSpace, m_configuration.bufferFormat, WTFMove(creationContext));
+        m_frontBuffer = m_renderingBackend->allocateImageBuffer(m_configuration.logicalSize, m_configuration.renderingMode, m_configuration.renderingPurpose, m_configuration.resolutionScale, m_configuration.colorSpace, m_configuration.bufferFormat, WTF::move(creationContext));
         m_frontBufferIsCleared = true;
     }
 
@@ -198,7 +198,7 @@ void RemoteImageBufferSet::dynamicContentScalingDisplayList(CompletionHandler<vo
     std::optional<WebCore::DynamicContentScalingDisplayList> displayList;
     if (m_frontBuffer)
         displayList = m_frontBuffer->dynamicContentScalingDisplayList();
-    completionHandler({ WTFMove(displayList) });
+    completionHandler({ WTF::move(displayList) });
 }
 
 DynamicContentScalingResourceCache RemoteImageBufferSet::ensureDynamicContentScalingResourceCache()

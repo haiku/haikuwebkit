@@ -52,7 +52,7 @@ bool SVGLengthList::parse(StringView value)
             if (parseError != SVGParsingError::None)
                 break;
 
-            append(SVGLength::create(WTFMove(length)));
+            append(SVGLength::create(WTF::move(length)));
             skipOptionalSVGSpacesOrDelimiter(buffer);
         }
 

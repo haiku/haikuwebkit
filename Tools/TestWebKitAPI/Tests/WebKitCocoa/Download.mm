@@ -866,7 +866,7 @@ void respondSlowly(const Connection& connection, double kbps)
     const double writesPerSecond = 100;
     Vector<uint8_t> writeBuffer(static_cast<size_t>(1024 * kbps / writesPerSecond));
     auto before = MonotonicTime::now();
-    connection.send(WTFMove(writeBuffer), [=] {
+    connection.send(WTF::move(writeBuffer), [=] {
         double writeDuration = (MonotonicTime::now() - before).seconds();
         double desiredSleep = 1.0 / writesPerSecond;
         if (writeDuration < desiredSleep)
@@ -1214,10 +1214,10 @@ enum class TerminateAfterFirstReply : bool { No, Yes };
 
 static TestWebKitAPI::HTTPServer downloadTestServer(IncludeETag includeETag = IncludeETag::Yes, Function<void(TestWebKitAPI::Connection)>&& terminator = nullptr)
 {
-    return { [includeETag, terminator = WTFMove(terminator), connectionCount = 0](TestWebKitAPI::Connection connection) mutable {
+    return { [includeETag, terminator = WTF::move(terminator), connectionCount = 0](TestWebKitAPI::Connection connection) mutable {
         switch (++connectionCount) {
         case 1:
-            connection.receiveHTTPRequest([includeETag, connection, terminator = WTFMove(terminator)] (Vector<char>&&) mutable {
+            connection.receiveHTTPRequest([includeETag, connection, terminator = WTF::move(terminator)] (Vector<char>&&) mutable {
                 auto response = makeString(
                     "HTTP/1.1 200 OK\r\n"_s,
                     includeETag == IncludeETag::Yes ? "ETag: test\r\n"_s : ""_s,
@@ -1225,7 +1225,7 @@ static TestWebKitAPI::HTTPServer downloadTestServer(IncludeETag includeETag = In
                     "Content-Disposition: attachment; filename=\"example.txt\"\r\n"
                     "\r\n"_s, longString<5000>('a')
                 );
-                connection.send(WTFMove(response), [connection, terminator = WTFMove(terminator)] () mutable {
+                connection.send(WTF::move(response), [connection, terminator = WTF::move(terminator)] () mutable {
                     if (terminator)
                         terminator(connection);
                 });

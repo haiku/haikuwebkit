@@ -46,14 +46,14 @@ namespace WebCore {
 class SVGElement;
 
 class RenderSVGModelObject : public RenderLayerModelObject {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderSVGModelObject);
+    WTF_MAKE_TZONE_ALLOCATED(RenderSVGModelObject);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderSVGModelObject);
 public:
     virtual ~RenderSVGModelObject();
 
     bool requiresLayer() const override { return true; }
 
-    void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;
+    void styleDidChange(Style::Difference, const RenderStyle* oldStyle) override;
 
     static bool checkIntersection(RenderElement*, const FloatRect&);
     static bool checkEnclosure(RenderElement*, const FloatRect&);

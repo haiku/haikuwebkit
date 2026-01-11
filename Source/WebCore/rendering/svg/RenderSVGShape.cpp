@@ -40,9 +40,9 @@
 #include "PointerEventsHitRules.h"
 #include "RenderObjectDocument.h"
 #include "RenderSVGShapeInlines.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderView.h"
-#include "SVGPaintServerHandling.h"
+#include "SVGPaintServerHandlingInlines.h"
 #include "SVGPathData.h"
 #include "SVGURIReference.h"
 #include "SVGVisitedRendererTracking.h"
@@ -51,10 +51,10 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderSVGShape);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderSVGShape);
 
 RenderSVGShape::RenderSVGShape(Type type, SVGGraphicsElement& element, RenderStyle&& style)
-    : RenderSVGModelObject(type, element, WTFMove(style), SVGModelObjectFlag::IsShape)
+    : RenderSVGModelObject(type, element, WTF::move(style), SVGModelObjectFlag::IsShape)
 {
 }
 
@@ -394,6 +394,25 @@ float RenderSVGShape::strokeWidth() const
     return std::isnan(strokeWidth) ? 0 : strokeWidth;
 }
 
+float RenderSVGShape::strokeWidthForMarkerUnits() const
+{
+    float strokeWidth = this->strokeWidth();
+    if (!hasNonScalingStroke())
+        return strokeWidth;
+
+    auto nonScalingTransform = nonScalingStrokeTransform();
+    if (!nonScalingTransform.isInvertible())
+        return 0.f;
+
+    double xScale = nonScalingTransform.xScale();
+    double yScale = nonScalingTransform.yScale();
+    if (xScale == yScale) [[likely]]
+        return strokeWidth / xScale;
+
+    float scaleFactor = clampTo<float>(std::sqrt((xScale * xScale + yScale * yScale) / 2));
+    return strokeWidth / scaleFactor;
+}
+
 Path& RenderSVGShape::ensurePath()
 {
     if (!hasPath())
@@ -406,11 +425,11 @@ std::unique_ptr<Path> RenderSVGShape::createPath() const
     return makeUnique<Path>(pathFromGraphicsElement(protectedGraphicsElement()));
 }
 
-void RenderSVGShape::styleWillChange(StyleDifference diff, const RenderStyle& newStyle)
+void RenderSVGShape::styleWillChange(Style::Difference diff, const RenderStyle& newStyle)
 {
     auto* oldStyle = hasInitializedStyle() ? &style() : nullptr;
     if (oldStyle) {
-        if (diff == StyleDifference::Layout)
+        if (diff == Style::DifferenceResult::Layout)
             setNeedsShapeUpdate();
     }
 
@@ -422,7 +441,7 @@ bool RenderSVGShape::needsHasSVGTransformFlags() const
     return protectedGraphicsElement()->hasTransformRelatedAttributes();
 }
 
-void RenderSVGShape::applyTransform(TransformationMatrix& transform, const RenderStyle& style, const FloatRect& boundingBox, OptionSet<RenderStyle::TransformOperationOption> options) const
+void RenderSVGShape::applyTransform(TransformationMatrix& transform, const RenderStyle& style, const FloatRect& boundingBox, OptionSet<Style::TransformResolverOption> options) const
 {
     applySVGTransform(transform, protectedGraphicsElement(), style, boundingBox, std::nullopt, std::nullopt, options);
 }

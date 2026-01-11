@@ -197,7 +197,7 @@ void WebGLFramebuffer::removeAttachmentFromBoundFramebuffer(const AbstractLocker
             if (entryObject(it->value) != removedObject)
                 continue;
             GCGLenum attachment = it->key;
-            auto entry = WTFMove(it->value);
+            auto entry = WTF::move(it->value);
             m_attachments.remove(it);
             checkMore = true;
             entryDetachAndClear(entry, locker, gl.get());
@@ -293,7 +293,7 @@ void WebGLFramebuffer::setAttachmentInternal(GCGLenum attachment, AttachmentEntr
     }
     if (!entryHasObject(entry))
         return;
-    auto result = m_attachments.add(attachment, WTFMove(entry));
+    auto result = m_attachments.add(attachment, WTF::move(entry));
     entryAttach(result.iterator->value);
 }
 

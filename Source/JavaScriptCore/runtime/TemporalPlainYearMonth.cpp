@@ -31,6 +31,7 @@
 #include "JSCInlines.h"
 #include "LazyPropertyInlines.h"
 #include "TemporalDuration.h"
+#include "TemporalPlainDate.h"
 #include "TemporalPlainDateTime.h"
 #include "VMTrapsInlines.h"
 
@@ -40,7 +41,7 @@ const ClassInfo TemporalPlainYearMonth::s_info = { "Object"_s, &Base::s_info, nu
 
 TemporalPlainYearMonth* TemporalPlainYearMonth::create(VM& vm, Structure* structure, ISO8601::PlainYearMonth&& plainYearMonth)
 {
-    auto* object = new (NotNull, allocateCell<TemporalPlainYearMonth>(vm)) TemporalPlainYearMonth(vm, structure, WTFMove(plainYearMonth));
+    auto* object = new (NotNull, allocateCell<TemporalPlainYearMonth>(vm)) TemporalPlainYearMonth(vm, structure, WTF::move(plainYearMonth));
     object->finishCreation(vm);
     return object;
 }
@@ -52,7 +53,7 @@ Structure* TemporalPlainYearMonth::createStructure(VM& vm, JSGlobalObject* globa
 
 TemporalPlainYearMonth::TemporalPlainYearMonth(VM& vm, Structure* structure, ISO8601::PlainYearMonth&& plainYearMonth)
     : Base(vm, structure)
-    , m_plainYearMonth(WTFMove(plainYearMonth))
+    , m_plainYearMonth(WTF::move(plainYearMonth))
 {
 }
 
@@ -93,7 +94,7 @@ TemporalPlainYearMonth* TemporalPlainYearMonth::tryCreateIfValid(JSGlobalObject*
         return { };
     }
 
-    return TemporalPlainYearMonth::create(vm, structure, ISO8601::PlainYearMonth(WTFMove(plainDate)));
+    return TemporalPlainYearMonth::create(vm, structure, ISO8601::PlainYearMonth(WTF::move(plainDate)));
 }
 
 String TemporalPlainYearMonth::toString() const
@@ -118,9 +119,191 @@ String TemporalPlainYearMonth::toString(JSGlobalObject* globalObject, JSValue op
     return ISO8601::temporalYearMonthToString(m_plainYearMonth, calendarName);
 }
 
+// https://tc39.es/proposal-temporal/#sec-temporal.plainyearmonth.from
+// https://tc39.es/proposal-temporal/#sec-temporal-totemporalyearmonth
+// optionsValue may be undefined, which is treated as the absence of an options argument
+TemporalPlainYearMonth* TemporalPlainYearMonth::from(JSGlobalObject* globalObject, JSValue item, JSValue optionsValue)
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    // Handle string case first so that string parsing errors (RangeError)
+    // can be thrown before options-related errors (TypeError);
+    // see step 4 of ToTemporalYearMonth
+    auto string = item.getString(globalObject);
+    RETURN_IF_EXCEPTION(scope, { });
+    if (!string.isNull()) {
+        auto* result = TemporalPlainYearMonth::from(globalObject, string);
+        RETURN_IF_EXCEPTION(scope, { });
+        // See step 11 of ToTemporalYearMonth
+        if (!optionsValue.isUndefined()) {
+            toTemporalOverflow(globalObject, optionsValue);
+            RETURN_IF_EXCEPTION(scope, { });
+        }
+        RELEASE_AND_RETURN(scope, result);
+    }
+
+    JSObject* options = intlGetOptionsObject(globalObject, optionsValue);
+    RETURN_IF_EXCEPTION(scope, { });
+
+    if (item.isObject()) {
+        if (item.inherits<TemporalPlainYearMonth>())
+            return jsCast<TemporalPlainYearMonth*>(item);
+
+        JSObject* calendar = TemporalCalendar::getTemporalCalendarWithISODefault(globalObject, item);
+        RETURN_IF_EXCEPTION(scope, { });
+
+        // FIXME: Implement after fleshing out Temporal.Calendar.
+        if (!calendar->inherits<TemporalCalendar>() || !jsCast<TemporalCalendar*>(calendar)->isISO8601()) [[unlikely]] {
+            throwRangeError(globalObject, scope, "unimplemented: from non-ISO8601 calendar"_s);
+            return { };
+        }
+
+        Variant<JSObject*, TemporalOverflow> optionsOrOverflow = TemporalOverflow::Constrain;
+        if (options)
+            optionsOrOverflow = options;
+        auto overflow = TemporalOverflow::Constrain;
+        auto plainYearMonth = TemporalCalendar::isoDateFromFields(globalObject, asObject(item), TemporalDateFormat::YearMonth, optionsOrOverflow, overflow);
+        RETURN_IF_EXCEPTION(scope, { });
+
+        return TemporalPlainYearMonth::create(vm, globalObject->plainYearMonthStructure(), WTF::move(plainYearMonth));
+    }
+
+    throwTypeError(globalObject, scope, "can only convert to PlainYearMonth from object or string values"_s);
+    return { };
+}
+
+// https://tc39.es/proposal-temporal/#sec-temporal.plainyearmonth.from
+TemporalPlainYearMonth* TemporalPlainYearMonth::from(JSGlobalObject* globalObject, StringView string)
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    // https://tc39.es/proposal-temporal/#sec-temporal-parsetemporaldatestring
+    // TemporalDateString :
+    //     CalendarDateTime
+    auto dateTime = ISO8601::parseCalendarDateTime(string, TemporalDateFormat::YearMonth);
+    if (dateTime) [[likely]] {
+        auto [plainDate, plainTimeOptional, timeZoneOptional, calendarOptional] = WTF::move(dateTime.value());
+        if (calendarOptional && !equal(calendarOptional.value().span(), "iso8601"_span8)) [[unlikely]] {
+            throwRangeError(globalObject, scope,
+                "YYYY-MM format is only valid with iso8601 calendar"_s);
+            return { };
+        }
+        if (!(timeZoneOptional && timeZoneOptional->m_z)) [[likely]]
+            RELEASE_AND_RETURN(scope, TemporalPlainYearMonth::tryCreateIfValid(globalObject, globalObject->plainYearMonthStructure(), WTF::move(plainDate)));
+    }
+
+    String message = tryMakeString("Temporal.PlainYearMonth.from: invalid date string "_s, string);
+    if (!message)
+        message = "Temporal.PlainYearMonth.from: invalid date string"_s;
+    throwRangeError(globalObject, scope, message);
+    return { };
+}
+
+ISO8601::PlainDate TemporalPlainYearMonth::with(JSGlobalObject* globalObject, JSObject* temporalYearMonthLike, JSValue optionsValue)
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    rejectObjectWithCalendarOrTimeZone(globalObject, temporalYearMonthLike);
+    RETURN_IF_EXCEPTION(scope, { });
+
+    if (!calendar()->isISO8601()) [[unlikely]] {
+        throwRangeError(globalObject, scope, "unimplemented: with non-ISO8601 calendar"_s);
+        return { };
+    }
+
+
+    auto [optionalMonth, optionalMonthCode, optionalYear] = TemporalPlainDate::toYearMonth(globalObject, temporalYearMonthLike);
+    RETURN_IF_EXCEPTION(scope, { });
+    if (!optionalMonth && !optionalMonthCode && !optionalYear) [[unlikely]] {
+        throwTypeError(globalObject, scope, "Object must contain at least one Temporal date property"_s);
+        return { };
+    }
+
+    TemporalOverflow overflow = toTemporalOverflow(globalObject, optionsValue);
+    RETURN_IF_EXCEPTION(scope, { });
+
+    int32_t y = optionalYear.value_or(year());
+    int32_t m = optionalMonth.value_or(month());
+    RELEASE_AND_RETURN(scope, TemporalCalendar::yearMonthFromFields(globalObject, y, m, optionalMonthCode, overflow));
+}
+
+template<DifferenceOperation op>
+ISO8601::Duration TemporalPlainYearMonth::sinceOrUntil(JSGlobalObject* globalObject, TemporalPlainYearMonth* other, JSValue optionsValue)
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    bool calendarsMatch = calendar()->equals(globalObject, other->calendar());
+    RETURN_IF_EXCEPTION(scope, { });
+    if (!calendarsMatch) [[unlikely]] {
+        throwRangeError(globalObject, scope, "calendars must match"_s);
+        return { };
+    }
+
+    if (!calendar()->isISO8601()) [[unlikely]] {
+        throwRangeError(globalObject, scope, "unimplemented: with non-ISO8601 calendar"_s);
+        return { };
+    }
+
+    auto [smallestUnit, largestUnit, roundingMode, increment] = extractDifferenceOptions(globalObject, optionsValue, UnitGroup::Date, TemporalUnit::Month, TemporalUnit::Year);
+    RETURN_IF_EXCEPTION(scope, { });
+
+    RELEASE_AND_RETURN(scope, TemporalCalendar::differenceTemporalPlainYearMonth<op>(globalObject, plainYearMonth(), other->plainYearMonth(), increment, smallestUnit, largestUnit, roundingMode));
+}
+
+ISO8601::Duration TemporalPlainYearMonth::until(JSGlobalObject* globalObject, TemporalPlainYearMonth* other, JSValue optionsValue)
+{
+    return sinceOrUntil<DifferenceOperation::Until>(globalObject, other, optionsValue);
+}
+
+ISO8601::Duration TemporalPlainYearMonth::since(JSGlobalObject* globalObject, TemporalPlainYearMonth* other, JSValue optionsValue)
+{
+    return sinceOrUntil<DifferenceOperation::Since>(globalObject, other, optionsValue);
+}
+
 String TemporalPlainYearMonth::monthCode() const
 {
     return ISO8601::monthCode(m_plainYearMonth.month());
+}
+
+// https://tc39.es/proposal-temporal/#sec-temporal-adddurationtoyearmonth
+template<AddOrSubtract op>
+ISO8601::PlainYearMonth TemporalPlainYearMonth::addDurationToYearMonth(JSGlobalObject* globalObject, ISO8601::PlainYearMonth yearMonth, ISO8601::Duration duration, TemporalOverflow overflow)
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    if constexpr (op == AddOrSubtract::Subtract)
+        duration = -duration;
+    auto sign = TemporalDuration::sign(duration);
+    auto year = yearMonth.year();
+    auto month = yearMonth.month();
+    auto constexpr day = 1;
+    auto intermediateDate = ISO8601::PlainDate(year, month, day);
+    if (!ISO8601::isDateTimeWithinLimits(year, month, day, 0, 0, 0, 0, 0, 0)) [[unlikely]] {
+        throwRangeError(globalObject, scope, "date out of range in add or subtract"_s);
+        return { };
+    }
+    ISO8601::PlainDate date;
+    if (sign < 0) {
+        auto oneMonthDuration = ISO8601::Duration { 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+        auto nextMonth = TemporalCalendar::isoDateAdd(globalObject,
+            intermediateDate, oneMonthDuration, TemporalOverflow::Constrain);
+        RETURN_IF_EXCEPTION(scope, { });
+        int32_t y = nextMonth.year();
+        uint8_t m = nextMonth.month();
+        uint8_t d = nextMonth.day() - 1;
+        date = TemporalCalendar::balanceISODate(globalObject, y, m, d);
+    } else
+        date = intermediateDate;
+    auto durationToAdd = TemporalDuration::toDateDurationRecordWithoutTime(globalObject, duration);
+    RETURN_IF_EXCEPTION(scope, { });
+    auto addedDate = TemporalCalendar::isoDateAdd(globalObject, date, durationToAdd, overflow);
+    RETURN_IF_EXCEPTION(scope, { });
+    return ISO8601::PlainYearMonth(addedDate.year(), addedDate.month());
 }
 
 } // namespace JSC

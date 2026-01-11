@@ -278,7 +278,7 @@ void PlatformMediaSession::clientWillBeginPlayback(CompletionHandler<void(bool)>
         return;
     }
 
-    manager->sessionWillBeginPlayback(*this, [weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)](bool canBegin) mutable {
+    manager->sessionWillBeginPlayback(*this, [weakThis = WeakPtr { *this }, completionHandler = WTF::move(completionHandler)](bool canBegin) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis) {
             completionHandler(false);

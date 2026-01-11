@@ -37,7 +37,9 @@
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/glib/GUniquePtr.h>
 
-#if USE(LIBDRM)
+#if OS(ANDROID)
+#include <drm/drm_fourcc.h>
+#elif USE(LIBDRM)
 #include <drm_fourcc.h>
 #elif OS(ANDROID)
 #include <drm/drm_fourcc.h>
@@ -124,12 +126,12 @@ void AcceleratedBackingStore::didCreateDMABufBuffer(uint64_t id, const WebCore::
     GRefPtr<WPEBuffer> buffer = adoptGRef(WPE_BUFFER(wpe_buffer_dma_buf_new(wpe_view_get_display(m_wpeView.get()), size.width(), size.height(), format, fds.size(), fileDescriptors.mutableSpan().data(), offsets.mutableSpan().data(), strides.mutableSpan().data(), modifier)));
     g_object_set_data(G_OBJECT(buffer.get()), "wk-buffer-format-usage", GUINT_TO_POINTER(usage));
     m_bufferIDs.add(buffer.get(), id);
-    m_buffers.add(id, WTFMove(buffer));
+    m_buffers.add(id, WTF::move(buffer));
 }
 
 void AcceleratedBackingStore::didCreateSHMBuffer(uint64_t id, WebCore::ShareableBitmap::Handle&& handle)
 {
-    auto bitmap = WebCore::ShareableBitmap::create(WTFMove(handle), WebCore::SharedMemory::Protection::ReadOnly);
+    auto bitmap = WebCore::ShareableBitmap::create(WTF::move(handle), WebCore::SharedMemory::Protection::ReadOnly);
     if (!bitmap)
         return;
 
@@ -142,8 +144,19 @@ void AcceleratedBackingStore::didCreateSHMBuffer(uint64_t id, WebCore::Shareable
 
     GRefPtr<WPEBuffer> buffer = adoptGRef(WPE_BUFFER(wpe_buffer_shm_new(wpe_view_get_display(m_wpeView.get()), size.width(), size.height(), WPE_PIXEL_FORMAT_ARGB8888, bytes.get(), stride)));
     m_bufferIDs.add(buffer.get(), id);
-    m_buffers.add(id, WTFMove(buffer));
+    m_buffers.add(id, WTF::move(buffer));
 }
+
+#if OS(ANDROID)
+void AcceleratedBackingStore::didCreateAndroidBuffer(uint64_t id, RefPtr<AHardwareBuffer>&& hardwareBuffer)
+{
+    RELEASE_ASSERT(hardwareBuffer);
+
+    auto buffer = adoptGRef(WPE_BUFFER(wpe_buffer_android_new(wpe_view_get_display(m_wpeView.get()), hardwareBuffer.get())));
+    m_bufferIDs.add(buffer.get(), id);
+    m_buffers.add(id, WTF::move(buffer));
+}
+#endif // OS(ANDROID)
 
 void AcceleratedBackingStore::didDestroyBuffer(uint64_t id)
 {
@@ -161,12 +174,12 @@ void AcceleratedBackingStore::frame(uint64_t bufferID, Rects&& damageRects, WTF:
     }
 
     m_pendingBuffer = buffer;
-    m_pendingDamageRects = WTFMove(damageRects);
+    m_pendingDamageRects = WTF::move(damageRects);
     if (wpe_display_use_explicit_sync(wpe_view_get_display(m_wpeView.get()))) {
         wpe_buffer_set_rendering_fence(m_pendingBuffer.get(), renderingFenceFD.release());
         renderPendingBuffer();
     } else
-        m_fenceMonitor.addFileDescriptor(WTFMove(renderingFenceFD));
+        m_fenceMonitor.addFileDescriptor(WTF::move(renderingFenceFD));
 }
 
 #if USE(SKIA)
@@ -226,7 +239,7 @@ static Expected<Ref<ViewSnapshot>, String> saveBufferSnapshot(const GRefPtr<WPEB
     if (!image)
         return makeUnexpected("Failed to create snapshot image"_s);
 
-    return { ViewSnapshot::create(WTFMove(image)) };
+    return { ViewSnapshot::create(WTF::move(image)) };
 }
 
 Expected<Ref<ViewSnapshot>, String> AcceleratedBackingStore::takeSnapshot(std::optional<WebCore::IntRect>&& clipRect)
@@ -234,7 +247,7 @@ Expected<Ref<ViewSnapshot>, String> AcceleratedBackingStore::takeSnapshot(std::o
     if (!m_committedBuffer && !m_pendingBuffer) [[unlikely]]
         return makeUnexpected("No buffer to create snapshot from"_s);
 
-    return saveBufferSnapshot(m_committedBuffer ? m_committedBuffer : m_pendingBuffer, WTFMove(clipRect));
+    return saveBufferSnapshot(m_committedBuffer ? m_committedBuffer : m_pendingBuffer, WTF::move(clipRect));
 }
 
 #endif
@@ -266,7 +279,7 @@ void AcceleratedBackingStore::frameDone()
 void AcceleratedBackingStore::bufferRendered()
 {
     frameDone();
-    m_committedBuffer = WTFMove(m_pendingBuffer);
+    m_committedBuffer = WTF::move(m_pendingBuffer);
 }
 
 void AcceleratedBackingStore::bufferReleased(WPEBuffer* buffer)
@@ -275,7 +288,7 @@ void AcceleratedBackingStore::bufferReleased(WPEBuffer* buffer)
         auto releaseFence = UnixFileDescriptor { wpe_buffer_take_release_fence(buffer), UnixFileDescriptor::Adopt };
 
         if (RefPtr legacyMainFrameProcess = m_legacyMainFrameProcess.get())
-            legacyMainFrameProcess->send(Messages::AcceleratedSurface::ReleaseBuffer(id, WTFMove(releaseFence)), m_surfaceID);
+            legacyMainFrameProcess->send(Messages::AcceleratedSurface::ReleaseBuffer(id, WTF::move(releaseFence)), m_surfaceID);
     }
 }
 
@@ -303,6 +316,13 @@ RendererBufferDescription AcceleratedBackingStore::bufferDescription() const
         }
         description.usage = RendererBufferFormat::Usage::Rendering;
     }
+#if OS(ANDROID)
+    else if (WPE_IS_BUFFER_ANDROID(buffer)) {
+        auto* bufferAndroid = WPE_BUFFER_ANDROID(buffer);
+        description.type = RendererBufferDescription::Type::AHardwareBuffer;
+        description.fourcc = wpe_buffer_android_get_format(bufferAndroid);
+    }
+#endif // OS(ANDROID)
 
     return description;
 }

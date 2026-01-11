@@ -58,7 +58,7 @@ public:
     bool isLoading() const;
     
     const MQ::MediaQueryList& mediaQueries() const { return m_mediaQueries; }
-    void setMediaQueries(MQ::MediaQueryList&& queries) { m_mediaQueries = WTFMove(queries); }
+    void setMediaQueries(MQ::MediaQueryList&& queries) { m_mediaQueries = WTF::move(queries); }
 
     void requestStyleSheet();
     const CachedCSSStyleSheet* cachedCSSStyleSheet() const { return m_cachedSheet.get(); }

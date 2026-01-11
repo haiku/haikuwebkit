@@ -134,7 +134,7 @@ void AccessibilityController::executeOnAXThread(Function<void()>&& function)
 {
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     if (m_accessibilityIsolatedTreeMode) {
-        AXThread::dispatch([function = WTFMove(function)] {
+        AXThread::dispatch([function = WTF::move(function)] {
             function();
         });
     } else
@@ -149,7 +149,7 @@ void AccessibilityController::executeOnMainThread(Function<void()>&& function)
         return;
     }
 
-    AXThread::dispatchBarrier([function = WTFMove(function)] {
+    AXThread::dispatchBarrier([function = WTF::move(function)] {
         function();
     });
 }
@@ -200,7 +200,7 @@ void AXThread::dispatch(Function<void()>&& function)
 
     {
         Locker locker { axThread.m_functionsMutex };
-        axThread.m_functions.append(WTFMove(function));
+        axThread.m_functions.append(WTF::move(function));
     }
 
     axThread.wakeUpRunLoop();
@@ -208,8 +208,8 @@ void AXThread::dispatch(Function<void()>&& function)
 
 void AXThread::dispatchBarrier(Function<void()>&& function)
 {
-    dispatch([function = WTFMove(function)] () mutable {
-        callOnMainThread(WTFMove(function));
+    dispatch([function = WTF::move(function)] () mutable {
+        callOnMainThread(WTF::move(function));
     });
 }
 
@@ -248,7 +248,7 @@ void AXThread::dispatchFunctionsFromAXThread()
 
     {
         Locker locker { m_functionsMutex };
-        functions = WTFMove(m_functions);
+        functions = WTF::move(m_functions);
     }
 
     for (auto& function : functions)

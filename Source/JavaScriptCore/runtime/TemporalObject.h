@@ -93,6 +93,10 @@ private:
     void finishCreation(VM&);
 };
 
+enum class TemporalAuto : bool {
+    Auto
+};
+
 enum class RoundingMode : uint8_t {
     Ceil,
     Floor,
@@ -131,6 +135,12 @@ enum class UnitGroup : uint8_t {
     Time,
 };
 
+enum class AllowedUnit : uint8_t {
+    Auto,
+    Day,
+    None
+};
+
 enum class Inclusivity : bool {
     Inclusive,
     Exclusive
@@ -151,21 +161,28 @@ struct ParsedMonthCode {
     bool isLeapMonth;
 };
 
+static inline bool isAbsentUnit(Variant<TemporalAuto, std::optional<TemporalUnit>> unit)
+{
+    return std::holds_alternative<std::optional<TemporalUnit>>(unit) && !std::get<std::optional<TemporalUnit>>(unit);
+}
+
 WTF::String ellipsizeAt(unsigned maxLength, const WTF::String&);
 PropertyName temporalUnitPluralPropertyName(VM&, TemporalUnit);
 PropertyName temporalUnitSingularPropertyName(VM&, TemporalUnit);
 std::optional<TemporalUnit> temporalUnitType(StringView);
-std::optional<TemporalUnit> temporalLargestUnit(JSGlobalObject*, JSObject* options, std::initializer_list<TemporalUnit> disallowedUnits, TemporalUnit autoValue);
-std::optional<TemporalUnit> temporalSmallestUnit(JSGlobalObject*, JSObject* options, std::initializer_list<TemporalUnit> disallowedUnits);
-std::tuple<TemporalUnit, TemporalUnit, RoundingMode, double> extractDifferenceOptions(JSGlobalObject*, JSValue, UnitGroup, TemporalUnit defaultSmallestUnit, TemporalUnit defaultLargestUnit);
+Variant<TemporalAuto, std::optional<TemporalUnit>>
+getTemporalUnitValuedOption(JSGlobalObject*, JSObject*, PropertyName);
+void validateTemporalUnitValue(JSGlobalObject*, Variant<TemporalAuto, std::optional<TemporalUnit>>, UnitGroup, AllowedUnit, StringView);
+void validateTemporalRoundingIncrement(JSGlobalObject*, double, std::optional<double>, Inclusivity);
+std::tuple<TemporalUnit, TemporalUnit, RoundingMode, double> extractDifferenceOptions(JSGlobalObject*, JSValue, UnitGroup, TemporalUnit, TemporalUnit);
 std::optional<unsigned> temporalFractionalSecondDigits(JSGlobalObject*, JSObject* options);
 PrecisionData secondsStringPrecision(JSGlobalObject*, JSObject* options);
 RoundingMode temporalRoundingMode(JSGlobalObject*, JSObject*, RoundingMode);
 RoundingMode negateTemporalRoundingMode(RoundingMode);
 void formatSecondsStringFraction(StringBuilder&, unsigned fraction, std::tuple<Precision, unsigned>);
 void formatSecondsStringPart(StringBuilder&, unsigned second, unsigned fraction, PrecisionData);
-std::optional<double> maximumRoundingIncrement(TemporalUnit);
-double temporalRoundingIncrement(JSGlobalObject*, JSObject* options, std::optional<double> dividend, bool inclusive);
+std::optional<unsigned> maximumRoundingIncrement(TemporalUnit);
+double temporalRoundingIncrement(JSGlobalObject*, JSObject* options);
 double roundNumberToIncrement(double, double increment, RoundingMode);
 double roundNumberToIncrementDouble(double, double increment, RoundingMode);
 Int128 roundNumberToIncrementInt128(Int128, Int128, RoundingMode);

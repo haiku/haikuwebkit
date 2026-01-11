@@ -34,7 +34,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(AudioBasicInspectorNode);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(AudioBasicInspectorNode);
 
 AudioBasicInspectorNode::AudioBasicInspectorNode(BaseAudioContext& context, NodeType type)
     : AudioNode(context, type)

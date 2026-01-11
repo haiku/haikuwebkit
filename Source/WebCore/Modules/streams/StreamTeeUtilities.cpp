@@ -48,7 +48,7 @@ public:
     static Ref<StreamTeeState> create(JSDOMGlobalObject& globalObject, Ref<ReadableStream>&& stream, Ref<Reader>&& reader)
     {
         auto [cancelPromise, cancelDeferred] = createPromiseAndWrapper(globalObject);
-        return adoptRef(*new StreamTeeState(globalObject.protectedScriptExecutionContext().get(), WTFMove(stream), WTFMove(reader), WTFMove(cancelDeferred), WTFMove(cancelPromise)));
+        return adoptRef(*new StreamTeeState(globalObject.protectedScriptExecutionContext().get(), WTF::move(stream), WTF::move(reader), WTF::move(cancelDeferred), WTF::move(cancelPromise)));
     }
 
     ~StreamTeeState();
@@ -89,6 +89,7 @@ public:
     {
         m_branch1Reason.visit(visitor);
         m_branch2Reason.visit(visitor);
+        m_stream->visitAdditionalChildren(visitor);
     }
     void clearReasons()
     {
@@ -108,7 +109,7 @@ public:
     {
         ASSERT(!m_defaultReader);
         ASSERT(!m_byobReader);
-        m_byobReader = WTFMove(reader);
+        m_byobReader = WTF::move(reader);
     }
 
     ReadableStreamDefaultReader* defaultReader() const { return m_defaultReader.get(); }
@@ -117,7 +118,7 @@ public:
     {
         ASSERT(!m_defaultReader);
         ASSERT(!m_byobReader);
-        m_defaultReader = WTFMove(reader);
+        m_defaultReader = WTF::move(reader);
     }
 
     DOMPromise& cancelPromise() { return m_cancelPromise; }
@@ -164,7 +165,7 @@ public:
             return;
 
         auto& globalObject = *JSC::jsCast<JSDOMGlobalObject*>(context->globalObject());
-        context->checkedEventLoop()->queueMicrotask([task = WTFMove(task), value = JSC::Strong<JSC::Unknown> { globalObject.vm(), value }] {
+        context->checkedEventLoop()->queueMicrotask([task = WTF::move(task), value = JSC::Strong<JSC::Unknown> { globalObject.vm(), value }] {
             task(value.get());
         });
     }
@@ -181,19 +182,19 @@ public:
 private:
     StreamTeeState(ScriptExecutionContext* context, Ref<ReadableStream>&& stream, Ref<ReadableStreamDefaultReader>&& reader, Ref<DeferredPromise>&& cancelDeferred, Ref<DOMPromise>&& cancelPromise)
         : ContextDestructionObserver(context)
-        , m_stream(WTFMove(stream))
-        , m_defaultReader(WTFMove(reader))
-        , m_cancelDeferredPromise(WTFMove(cancelDeferred))
-        , m_cancelPromise(WTFMove(cancelPromise))
+        , m_stream(WTF::move(stream))
+        , m_defaultReader(WTF::move(reader))
+        , m_cancelDeferredPromise(WTF::move(cancelDeferred))
+        , m_cancelPromise(WTF::move(cancelPromise))
     {
     }
 
     StreamTeeState(ScriptExecutionContext* context, Ref<ReadableStream>&& stream, Ref<ReadableStreamBYOBReader>&& reader, Ref<DeferredPromise>&& cancelDeferred, Ref<DOMPromise>&& cancelPromise)
         : ContextDestructionObserver(context)
-        , m_stream(WTFMove(stream))
-        , m_byobReader(WTFMove(reader))
-        , m_cancelDeferredPromise(WTFMove(cancelDeferred))
-        , m_cancelPromise(WTFMove(cancelPromise))
+        , m_stream(WTF::move(stream))
+        , m_byobReader(WTF::move(reader))
+        , m_cancelDeferredPromise(WTF::move(cancelDeferred))
+        , m_cancelPromise(WTF::move(cancelPromise))
     {
     }
 
@@ -285,11 +286,11 @@ ExceptionOr<Vector<Ref<ReadableStream>>> byteStreamTee(JSDOMGlobalObject& global
 
     auto isSourceReachableFromOpaqueRoot = stream.isReachableFromOpaqueRoots() ? ReadableStream::IsSourceReachableFromOpaqueRoot::Yes : ReadableStream::IsSourceReachableFromOpaqueRoot::No;
     Vector<Ref<ReadableStream>> branches;
-    Ref branch0 = ReadableStream::createReadableByteStream(globalObject, WTFMove(pull1Algorithm), WTFMove(cancel1Algorithm), {
+    Ref branch0 = ReadableStream::createReadableByteStream(globalObject, WTF::move(pull1Algorithm), WTF::move(cancel1Algorithm), {
         .dependencyToVisit = state.ptr(),
         .isSourceReachableFromOpaqueRoot = isSourceReachableFromOpaqueRoot
     });
-    Ref branch1 = ReadableStream::createReadableByteStream(globalObject, WTFMove(pull2Algorithm), WTFMove(cancel2Algorithm), {
+    Ref branch1 = ReadableStream::createReadableByteStream(globalObject, WTF::move(pull2Algorithm), WTF::move(cancel2Algorithm), {
         .dependencyToVisit = state.ptr(),
         .isSourceReachableFromOpaqueRoot = isSourceReachableFromOpaqueRoot
     });
@@ -297,8 +298,9 @@ ExceptionOr<Vector<Ref<ReadableStream>>> byteStreamTee(JSDOMGlobalObject& global
     state->setBranch1(branch0);
     state->setBranch2(branch1);
 
-    branches.append(WTFMove(branch0));
-    branches.append(WTFMove(branch1));
+    stream.setTeedBranches(branch0, branch1);
+    branches.append(WTF::move(branch0));
+    branches.append(WTF::move(branch1));
 
     state->forwardReadError(reader.get());
 
@@ -313,7 +315,7 @@ static ExceptionOr<Ref<JSC::ArrayBufferView>> cloneAsUInt8Array(JSC::ArrayBuffer
     if (!buffer)
         return Exception { ExceptionCode::OutOfMemoryError };
 
-    Ref<JSC::ArrayBufferView> clone = JSC::Uint8Array::create(WTFMove(buffer), 0, o.byteLength());
+    Ref<JSC::ArrayBufferView> clone = JSC::Uint8Array::create(WTF::move(buffer), 0, o.byteLength());
 
     return clone;
 }
@@ -367,11 +369,11 @@ static Ref<DOMPromise> pull2Steps(JSDOMGlobalObject& globalObject, StreamTeeStat
 
 class TeeDefaultReadRequest : public ReadableStreamReadRequest {
 public:
-    static Ref<TeeDefaultReadRequest> create(Ref<StreamTeeState>&& state) { return adoptRef(*new TeeDefaultReadRequest(WTFMove(state))); }
+    static Ref<TeeDefaultReadRequest> create(Ref<StreamTeeState>&& state) { return adoptRef(*new TeeDefaultReadRequest(WTF::move(state))); }
 
 private:
     explicit TeeDefaultReadRequest(Ref<StreamTeeState>&& state)
-        : m_state(WTFMove(state))
+        : m_state(WTF::move(state))
     {
     }
 
@@ -478,11 +480,11 @@ private:
 
 class TeeBYOBReadRequest : public ReadableStreamReadIntoRequest {
 public:
-    static Ref<TeeBYOBReadRequest> create(Ref<StreamTeeState>&& state, bool forBranch2) { return adoptRef(*new TeeBYOBReadRequest(WTFMove(state), forBranch2)); }
+    static Ref<TeeBYOBReadRequest> create(Ref<StreamTeeState>&& state, bool forBranch2) { return adoptRef(*new TeeBYOBReadRequest(WTF::move(state), forBranch2)); }
 
 private:
     explicit TeeBYOBReadRequest(Ref<StreamTeeState>&& state, bool forBranch2)
-        : m_state(WTFMove(state))
+        : m_state(WTF::move(state))
         , m_forBranch2(forBranch2)
     {
     }

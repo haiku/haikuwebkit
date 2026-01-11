@@ -30,7 +30,6 @@
 #include "RenderElement.h"
 #include "RenderStyle.h"
 #include "ResolvedStyle.h"
-#include "StyleInheritedData.h"
 #include "StyleResolver.h"
 #include "Text.h"
 #include "TextManipulationController.h"
@@ -41,7 +40,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLTitleElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLTitleElement);
 
 using namespace HTMLNames;
 
@@ -110,7 +109,7 @@ StringWithDirection HTMLTitleElement::computedTextWithDirection()
 
 void HTMLTitleElement::setText(String&& value)
 {
-    setTextContent(WTFMove(value));
+    setTextContent(WTF::move(value));
 }
 
 }

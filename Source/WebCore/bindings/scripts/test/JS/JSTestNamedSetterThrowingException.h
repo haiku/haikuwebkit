@@ -32,7 +32,7 @@ public:
     static JSTestNamedSetterThrowingException* create(JSC::Structure* structure, JSDOMGlobalObject* globalObject, Ref<TestNamedSetterThrowingException>&& impl)
     {
         SUPPRESS_UNCOUNTED_LOCAL auto& vm = globalObject->vm();
-        JSTestNamedSetterThrowingException* ptr = new (NotNull, JSC::allocateCell<JSTestNamedSetterThrowingException>(vm)) JSTestNamedSetterThrowingException(structure, *globalObject, WTFMove(impl));
+        JSTestNamedSetterThrowingException* ptr = new (NotNull, JSC::allocateCell<JSTestNamedSetterThrowingException>(vm)) JSTestNamedSetterThrowingException(structure, *globalObject, WTF::move(impl));
         ptr->finishCreation(vm);
         return ptr;
     }

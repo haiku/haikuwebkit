@@ -68,10 +68,12 @@ public:
 
     WARN_UNUSED_RETURN GUniquePtr<GstStructure> stats();
 
-    virtual WARN_UNUSED_RETURN GRefPtr<GstPad> outgoingSourcePad() const = 0;
+    WARN_UNUSED_RETURN GUniquePtr<GstStructure> mediaCaptureStats();
+
+    WARN_UNUSED_RETURN virtual GRefPtr<GstPad> outgoingSourcePad() const = 0;
     virtual RefPtr<GStreamerRTPPacketizer> createPacketizer(RefPtr<UniqueSSRCGenerator>, const GstStructure*, GUniquePtr<GstStructure>&&) = 0;
 
-    void replaceTrack(RefPtr<MediaStreamTrack>&&);
+    void replaceTrack(const RefPtr<MediaStreamTrack>&);
 
     void teardown();
 
@@ -107,6 +109,8 @@ protected:
     RefPtr<MediaStreamTrackPrivate> m_track;
     std::optional<RealtimeMediaSourceSettings> m_initialSettings;
     GRefPtr<GstElement> m_bin;
+    GRefPtr<GstElement> m_inputSelector;
+    GRefPtr<GstElement> m_fallbackSource;
     GRefPtr<GstElement> m_outgoingSource;
     GRefPtr<GstElement> m_tee;
     GRefPtr<GstElement> m_rtpFunnel;

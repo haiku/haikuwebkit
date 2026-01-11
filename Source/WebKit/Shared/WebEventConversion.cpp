@@ -49,6 +49,10 @@ WebCore::MouseButton platform(WebMouseEventButton button)
         return WebCore::MouseButton::Middle;
     case WebMouseEventButton::Right:
         return WebCore::MouseButton::Right;
+    case WebMouseEventButton::Back:
+        return WebCore::MouseButton::Back;
+    case WebMouseEventButton::Forward:
+        return WebCore::MouseButton::Forward;
     default:
         RELEASE_ASSERT_NOT_REACHED();
     }
@@ -65,6 +69,10 @@ WebMouseEventButton kit(WebCore::MouseButton button)
         return WebMouseEventButton::Middle;
     case WebCore::MouseButton::Right:
         return WebMouseEventButton::Right;
+    case WebCore::MouseButton::Back:
+        return WebMouseEventButton::Back;
+    case WebCore::MouseButton::Forward:
+        return WebMouseEventButton::Forward;
     default:
         RELEASE_ASSERT_NOT_REACHED();
     }
@@ -340,7 +348,7 @@ public:
         m_phase = platform(webEvent.phase());
         m_momentumPhase = platform(webEvent.momentumPhase());
 #endif
-#if PLATFORM(COCOA) || PLATFORM(GTK) || USE(LIBWPE)
+#if PLATFORM(COCOA) || PLATFORM(GTK) || USE(LIBWPE) || ENABLE(WPE_PLATFORM)
         m_hasPreciseScrollingDeltas = webEvent.hasPreciseScrollingDeltas();
 #endif
 #if PLATFORM(COCOA)
@@ -374,10 +382,10 @@ public:
         m_code = webEvent.code();
         m_keyIdentifier = webEvent.keyIdentifier();
         m_windowsVirtualKeyCode = webEvent.windowsVirtualKeyCode();
-#if USE(APPKIT) || PLATFORM(IOS_FAMILY) || PLATFORM(GTK) || USE(LIBWPE)
+#if USE(APPKIT) || PLATFORM(IOS_FAMILY) || PLATFORM(GTK) || USE(LIBWPE) || ENABLE(WPE_PLATFORM)
         m_handledByInputMethod = webEvent.handledByInputMethod();
 #endif
-#if PLATFORM(GTK) || USE(LIBWPE)
+#if PLATFORM(GTK) || USE(LIBWPE) || ENABLE(WPE_PLATFORM)
         m_preeditUnderlines = webEvent.preeditUnderlines();
         if (auto preeditSelectionRange = webEvent.preeditSelectionRange()) {
             m_preeditSelectionRangeStart = preeditSelectionRange->location;

@@ -35,7 +35,7 @@
 #include "RenderBlock.h"
 #include "RenderListMarker.h"
 #include "RenderObjectInlines.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+SettersInlines.h"
 #include "RenderText.h"
 #include "RenderTextFragment.h"
 #include "RenderTreeBuilder.h"
@@ -136,7 +136,7 @@ auto TextAutoSizingValue::adjustTextNodeSizes() -> StillHasNodes
         auto fontDescription = style.fontDescription();
         fontDescription.setComputedSize(averageSize);
         style.setFontDescription(FontCascadeDescription { fontDescription });
-        parentRenderer->setStyle(WTFMove(style));
+        parentRenderer->setStyle(WTF::move(style));
 
         if (parentRenderer->isAnonymousBlock())
             parentRenderer = parentRenderer->parent();
@@ -145,7 +145,7 @@ auto TextAutoSizingValue::adjustTextNodeSizes() -> StillHasNodes
         if (auto* listMarkerRenderer = dynamicDowncast<RenderListMarker>(*parentRenderer->firstChild())) {
             auto style = cloneRenderStyleWithState(listMarkerRenderer->style());
             style.setFontDescription(FontCascadeDescription { fontDescription });
-            listMarkerRenderer->setStyle(WTFMove(style));
+            listMarkerRenderer->setStyle(WTF::move(style));
         }
 
         // Resize the line height of the parent.
@@ -157,7 +157,7 @@ auto TextAutoSizingValue::adjustTextNodeSizes() -> StillHasNodes
                 return 0;
             },
             [&](const Style::LineHeight::Fixed& fixed) {
-                return Style::evaluate<LayoutUnit>(fixed, Style::ZoomFactor { 1.0f, parentStyle.deviceScaleFactor() }).toInt();
+                return Style::evaluate<LayoutUnit>(fixed, Style::ZoomFactor { 1.0f }).toInt();
             },
             [&](const Style::LineHeight::Percentage& percentage) {
                 return Style::evaluate<LayoutUnit>(percentage, LayoutUnit { fontDescription.specifiedSize() }).toInt();
@@ -169,14 +169,14 @@ auto TextAutoSizingValue::adjustTextNodeSizes() -> StillHasNodes
 
         // This calculation matches the line-height computed size calculation in StyleBuilderCustom::applyValueLineHeight().
         int lineHeight = specifiedLineHeight * scaleChange;
-        if (auto fixedLineHeight = lineHeightLength.tryFixed(); fixedLineHeight && fixedLineHeight->resolveZoom(Style::ZoomFactor { 1.0f, parentStyle.deviceScaleFactor() }) == lineHeight)
+        if (auto fixedLineHeight = lineHeightLength.tryFixed(); fixedLineHeight && fixedLineHeight->resolveZoom(Style::ZoomFactor { 1.0f }) == lineHeight)
             continue;
 
         auto newParentStyle = cloneRenderStyleWithState(parentStyle);
         newParentStyle.setLineHeight(lineHeightLength.isNormal() ? Style::LineHeight { lineHeightLength } : Style::LineHeight { Style::LineHeight::Fixed { static_cast<float>(lineHeight) } });
         newParentStyle.setSpecifiedLineHeight(Style::LineHeight { lineHeightLength });
-        newParentStyle.setFontDescription(WTFMove(fontDescription));
-        parentRenderer->setStyle(WTFMove(newParentStyle));
+        newParentStyle.setFontDescription(WTF::move(fontDescription));
+        parentRenderer->setStyle(WTF::move(newParentStyle));
 
         builder.updateAfterDescendants(*parentRenderer);
     }
@@ -229,7 +229,7 @@ void TextAutoSizingValue::reset()
             fontDescription.setComputedSize(originalSize);
             auto style = cloneRenderStyleWithState(renderer->style());
             style.setFontDescription(FontCascadeDescription { fontDescription });
-            parentRenderer->setStyle(WTFMove(style));
+            parentRenderer->setStyle(WTF::move(style));
         }
 
         // Reset the line height of the parent.
@@ -243,8 +243,8 @@ void TextAutoSizingValue::reset()
 
         auto newParentStyle = cloneRenderStyleWithState(parentStyle);
         newParentStyle.setLineHeight(Style::LineHeight { originalLineHeight });
-        newParentStyle.setFontDescription(WTFMove(fontDescription));
-        parentRenderer->setStyle(WTFMove(newParentStyle));
+        newParentStyle.setFontDescription(WTF::move(fontDescription));
+        parentRenderer->setStyle(WTF::move(newParentStyle));
     }
 }
 

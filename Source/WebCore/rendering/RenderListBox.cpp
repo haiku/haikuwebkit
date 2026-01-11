@@ -79,7 +79,7 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderListBox);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderListBox);
  
 const int itemBlockSpacing = 1;
 
@@ -89,7 +89,7 @@ const int optionsSpacingInlineStart = 2;
 const int defaultSize = 4;
 
 RenderListBox::RenderListBox(HTMLSelectElement& element, RenderStyle&& style)
-    : RenderBlockFlow(Type::ListBox, element, WTFMove(style))
+    : RenderBlockFlow(Type::ListBox, element, WTF::move(style))
 {
     view().frameView().addScrollableArea(this);
 }
@@ -113,7 +113,7 @@ static FontCascade bolder(Document& document, const FontCascade& font)
 {
     auto description = font.fontDescription();
     description.setWeight(description.bolderWeight());
-    FontCascade result(WTFMove(description), font);
+    FontCascade result(WTF::move(description), font);
     result.update(&document.fontSelector());
     return result;
 }
@@ -202,7 +202,7 @@ void RenderListBox::layout()
     }
 }
 
-void RenderListBox::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)
+void RenderListBox::styleDidChange(Style::Difference diff, const RenderStyle* oldStyle)
 {
     RenderBlockFlow::styleDidChange(diff, oldStyle);
 
@@ -486,7 +486,7 @@ void RenderListBox::paintItemForeground(PaintInfo& paintInfo, const LayoutPoint&
     if (itemText.isNull())
         return;
 
-    Color textColor = itemStyle->visitedDependentColorWithColorFilter(CSSPropertyColor);
+    Color textColor = itemStyle->visitedDependentColorApplyingColorFilter();
     if (optionElement && optionElement->selected()) {
         if (frame().selection().isFocusedAndActive() && document().focusedElement() == &selectElement())
             textColor = theme().activeListBoxSelectionForegroundColor(styleColorOptions());
@@ -518,7 +518,7 @@ void RenderListBox::paintItemForeground(PaintInfo& paintInfo, const LayoutPoint&
     if (optGroupElement) {
         auto description = itemFont.fontDescription();
         description.setWeight(description.bolderWeight());
-        itemFont = FontCascade(WTFMove(description), itemFont);
+        itemFont = FontCascade(WTF::move(description), itemFont);
         itemFont.update(&document().fontSelector());
     }
 
@@ -541,7 +541,7 @@ void RenderListBox::paintItemBackground(PaintInfo& paintInfo, const LayoutPoint&
         else
             backColor = theme().inactiveListBoxSelectionBackgroundColor(styleColorOptions());
     } else
-        backColor = itemStyle->visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor);
+        backColor = itemStyle->visitedDependentBackgroundColorApplyingColorFilter();
 
     // Draw the background for this list box item
     if (itemStyle->usedVisibility() == Visibility::Hidden)

@@ -132,8 +132,6 @@ AudioDestinationGStreamer::~AudioDestinationGStreamer()
         return;
 
     GST_DEBUG_OBJECT(m_pipeline.get(), "Disposing");
-    if (m_src) [[likely]]
-        g_object_set(m_src.get(), "destination", nullptr, nullptr);
     unregisterPipeline(m_pipeline);
     disconnectSimpleBusMessageCallback(m_pipeline.get());
     gst_element_set_state(m_pipeline.get(), GST_STATE_NULL);
@@ -151,10 +149,8 @@ void AudioDestinationGStreamer::initializePipeline()
         this->handleMessage(message);
     });
 
-    m_src = GST_ELEMENT_CAST(g_object_new(WEBKIT_TYPE_WEB_AUDIO_SRC, "rate", sampleRate(),
-        "destination", this, "frames", AudioUtilities::renderQuantumSize, nullptr));
-
-    webkitWebAudioSourceSetBus(WEBKIT_WEB_AUDIO_SRC(m_src.get()), m_renderBus);
+    m_src = GST_ELEMENT_CAST(g_object_new(WEBKIT_TYPE_WEB_AUDIO_SRC, nullptr));
+    webkitWebAudioSourceSetDestination(WEBKIT_WEB_AUDIO_SRC(m_src.get()), this);
 
     auto& quirksManager = GStreamerQuirksManager::singleton();
     GRefPtr<GstElement> audioSink = quirksManager.createWebAudioSink();
@@ -221,15 +217,15 @@ void AudioDestinationGStreamer::start(Function<void(Function<void()>&&)>&& dispa
 {
     if (!m_pipeline)
         initializePipeline();
-    webkitWebAudioSourceSetDispatchToRenderThreadFunction(WEBKIT_WEB_AUDIO_SRC(m_src.get()), WTFMove(dispatchToRenderThread));
-    startRendering(WTFMove(completionHandler));
+    webkitWebAudioSourceSetDispatchToRenderThreadFunction(WEBKIT_WEB_AUDIO_SRC(m_src.get()), WTF::move(dispatchToRenderThread));
+    startRendering(WTF::move(completionHandler));
 }
 
 void AudioDestinationGStreamer::startRendering(CompletionHandler<void(bool)>&& completionHandler)
 {
     ASSERT(m_audioSinkAvailable);
     ASSERT(m_pipeline);
-    m_startupCompletionHandler = WTFMove(completionHandler);
+    m_startupCompletionHandler = WTF::move(completionHandler);
     GST_DEBUG_OBJECT(m_pipeline.get(), "Starting audio rendering, sink %s", m_audioSinkAvailable ? "available" : "not available");
 
     if (m_isPlaying) {
@@ -249,14 +245,14 @@ void AudioDestinationGStreamer::startRendering(CompletionHandler<void(bool)>&& c
 
 void AudioDestinationGStreamer::stop(CompletionHandler<void(bool)>&& completionHandler)
 {
-    stopRendering(WTFMove(completionHandler));
+    stopRendering(WTF::move(completionHandler));
     if (m_src)
         webkitWebAudioSourceSetDispatchToRenderThreadFunction(WEBKIT_WEB_AUDIO_SRC(m_src.get()), nullptr);
 }
 
 void AudioDestinationGStreamer::stopRendering(CompletionHandler<void(bool)>&& completionHandler)
 {
-    m_stopCompletionHandler = WTFMove(completionHandler);
+    m_stopCompletionHandler = WTF::move(completionHandler);
     if (!m_pipeline) {
         notifyStopResult(true);
         return;
@@ -286,7 +282,7 @@ void AudioDestinationGStreamer::notifyStartupResult(bool success)
     if (success)
         notifyIsPlaying(true);
 
-    callOnMainThreadAndWait([this, completionHandler = WTFMove(m_startupCompletionHandler), success]() mutable {
+    callOnMainThreadAndWait([this, completionHandler = WTF::move(m_startupCompletionHandler), success]() mutable {
 #ifdef GST_DISABLE_GST_DEBUG
         UNUSED_VARIABLE(this);
 #endif
@@ -301,7 +297,7 @@ void AudioDestinationGStreamer::notifyStopResult(bool success)
     if (success)
         notifyIsPlaying(false);
 
-    callOnMainThreadAndWait([this, completionHandler = WTFMove(m_stopCompletionHandler), success]() mutable {
+    callOnMainThreadAndWait([this, completionHandler = WTF::move(m_stopCompletionHandler), success]() mutable {
 #ifdef GST_DISABLE_GST_DEBUG
         UNUSED_VARIABLE(this);
 #endif

@@ -194,12 +194,12 @@ RetainPtr<CTFontRef> fontFrom(const RenderStyle& style)
 
 Color textColorFrom(const RenderStyle& style)
 {
-    return style.visitedDependentColor(CSSPropertyColor);
+    return style.visitedDependentColor();
 }
 
 Color backgroundColorFrom(const RenderStyle& style)
 {
-    return style.visitedDependentColor(CSSPropertyBackgroundColor);
+    return style.visitedDependentBackgroundColor();
 }
 
 RetainPtr<CTFontRef> AccessibilityObject::font() const

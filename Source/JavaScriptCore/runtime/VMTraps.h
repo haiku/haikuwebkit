@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <JavaScriptCore/JSExportMacros.h>
 #include <JavaScriptCore/StackManager.h>
 #include <wtf/AutomaticThread.h>
 #include <wtf/Box.h>

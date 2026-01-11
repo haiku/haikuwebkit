@@ -126,7 +126,7 @@ static inline void populateIFCWithNewlyPlacedFloats(auto& blockRenderer, auto& p
         RefPtr shape = shapeOutsideInfo ? &shapeOutsideInfo->computedShape() : nullptr;
 
         auto usedPosition = RenderStyle::usedFloat(*floatingObject->renderer()) == UsedFloat::Left ? Layout::PlacedFloats::Item::Position::Start : Layout::PlacedFloats::Item::Position::End;
-        placedFloats.add({ usedPosition, boxGeometry, floatRect.location(), WTFMove(shape) });
+        placedFloats.add({ usedPosition, boxGeometry, floatRect.location(), WTF::move(shape) });
     }
 }
 

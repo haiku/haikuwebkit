@@ -123,9 +123,9 @@ static WebViewAndDelegates makeWebViewAndDelegates(HTTPServer& server)
     [webView setUIDelegate:uiDelegate.get()];
 
     return {
-        WTFMove(webView),
-        WTFMove(navigationDelegate),
-        WTFMove(uiDelegate)
+        WTF::move(webView),
+        WTF::move(navigationDelegate),
+        WTF::move(uiDelegate)
     };
 };
 
@@ -138,9 +138,9 @@ TEST(FocusWebView, AdvanceFocusRelinquishToChrome)
     }, HTTPServer::Protocol::HttpsProxy);
 
     auto webViewAndDelegates = makeWebViewAndDelegates(server);
-    RetainPtr webView = WTFMove(webViewAndDelegates.webView);
-    RetainPtr navigationDelegate = WTFMove(webViewAndDelegates.navigationDelegate);
-    RetainPtr uiDelegate = WTFMove(webViewAndDelegates.uiDelegate);
+    RetainPtr webView = WTF::move(webViewAndDelegates.webView);
+    RetainPtr navigationDelegate = WTF::move(webViewAndDelegates.navigationDelegate);
+    RetainPtr uiDelegate = WTF::move(webViewAndDelegates.uiDelegate);
 
     NSRect newWindowFrame = NSMakeRect(0, 0, 400, 500);
     NSRect textFieldFrame = NSMakeRect(0, 400, 400, 100);

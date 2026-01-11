@@ -50,7 +50,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteDDMesh);
 RemoteDDMesh::RemoteDDMesh(GPUConnectionToWebProcess& gpuConnectionToWebProcess, RemoteGPU& gpu, WebCore::DDModel::DDMesh& mesh, DDModel::ObjectHeap& objectHeap, Ref<IPC::StreamServerConnection>&& streamConnection, DDModelIdentifier identifier)
     : m_backing(mesh)
     , m_objectHeap(objectHeap)
-    , m_streamConnection(WTFMove(streamConnection))
+    , m_streamConnection(WTF::move(streamConnection))
     , m_identifier(identifier)
     , m_gpuConnectionToWebProcess(gpuConnectionToWebProcess)
     , m_gpu(gpu)
@@ -80,7 +80,7 @@ void RemoteDDMesh::destruct()
 
 void RemoteDDMesh::setLabel(String&& label)
 {
-    m_backing->setLabel(WTFMove(label));
+    m_backing->setLabel(WTF::move(label));
 }
 
 void RemoteDDMesh::update(const WebCore::DDModel::DDUpdateMeshDescriptor& descriptor)

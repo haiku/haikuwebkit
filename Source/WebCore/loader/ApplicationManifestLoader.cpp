@@ -89,9 +89,9 @@ bool ApplicationManifestLoader::startLoading()
         CachingPolicy::AllowCaching);
     options.destination = FetchOptions::Destination::Manifest;
     options.sameOriginDataURLFlag = SameOriginDataURLFlag::Set;
-    CachedResourceRequest request(WTFMove(resourceRequest), options);
+    CachedResourceRequest request(WTF::move(resourceRequest), options);
 
-    auto cachedResource = frame->document()->protectedCachedResourceLoader()->requestApplicationManifest(WTFMove(request));
+    auto cachedResource = frame->document()->protectedCachedResourceLoader()->requestApplicationManifest(WTF::move(request));
     m_resource = cachedResource.value_or(nullptr);
     if (CachedResourceHandle resource = m_resource)
         resource->addClient(*this);

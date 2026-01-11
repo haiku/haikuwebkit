@@ -39,7 +39,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGForeignObjectElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGForeignObjectElement);
 
 inline SVGForeignObjectElement::SVGForeignObjectElement(const QualifiedName& tagName, Document& document)
     : SVGGraphicsElement(tagName, document, makeUniqueRef<PropertyRegistry>(*this))
@@ -106,8 +106,8 @@ RenderPtr<RenderElement> SVGForeignObjectElement::createElementRenderer(RenderSt
 {
     protectedDocument()->setMayHaveRenderedSVGForeignObjects();
     if (document().settings().layerBasedSVGEngineEnabled())
-        return createRenderer<RenderSVGForeignObject>(*this, WTFMove(style));
-    return createRenderer<LegacyRenderSVGForeignObject>(*this, WTFMove(style));
+        return createRenderer<RenderSVGForeignObject>(*this, WTF::move(style));
+    return createRenderer<LegacyRenderSVGForeignObject>(*this, WTF::move(style));
 }
 
 bool SVGForeignObjectElement::childShouldCreateRenderer(const Node& child) const

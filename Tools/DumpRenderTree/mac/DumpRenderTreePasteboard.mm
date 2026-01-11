@@ -213,7 +213,7 @@ static RetainPtr<CFStringRef> toUTI(NSString *type)
     if (!_types.contains(uti))
         return NO;
 
-    _data.set(WTFMove(uti), (__bridge CFDataRef)(data ?: [NSData data]));
+    _data.set(WTF::move(uti), (__bridge CFDataRef)(data ?: [NSData data]));
     return YES;
 }
 

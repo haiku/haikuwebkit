@@ -45,7 +45,7 @@ class WebGLBindingPoint {
 public:
     WebGLBindingPoint() = default;
     explicit WebGLBindingPoint(RefPtr<T> object)
-        : m_object(WTFMove(object))
+        : m_object(WTF::move(object))
     {
         if (m_object)
             didBind(*m_object);
@@ -57,7 +57,7 @@ public:
     {
         if (m_object == object)
             return *this;
-        m_object = WTFMove(object);
+        m_object = WTF::move(object);
         if (RefPtr object = m_object)
             didBind(*object);
         return *this;

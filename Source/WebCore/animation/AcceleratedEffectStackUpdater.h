@@ -28,17 +28,13 @@
 #if ENABLE(THREADED_ANIMATIONS)
 
 #include <WebCore/AcceleratedEffect.h>
-#include <WebCore/AcceleratedTimeline.h>
 #include <WebCore/AnimationMalloc.h>
-#include <WebCore/TimelineIdentifier.h>
 #include <wtf/HashSet.h>
 
 namespace WebCore {
 
-class AcceleratedTimeline;
 class Document;
 class Element;
-class ScrollTimeline;
 struct Styleable;
 
 class AcceleratedEffectStackUpdater {
@@ -49,16 +45,10 @@ public:
     void update();
     void scheduleUpdateForTarget(const Styleable&);
     bool hasTargetsPendingUpdate() const { return !m_targetsPendingUpdate.isEmpty(); }
-    void scrollTimelineDidChange(ScrollTimeline&);
-
-    WEBCORE_EXPORT AcceleratedTimelinesUpdate takeTimelinesUpdate();
 
 private:
     using HashedStyleable = std::pair<Element*, std::optional<Style::PseudoElementIdentifier>>;
     HashSet<HashedStyleable> m_targetsPendingUpdate;
-    HashSet<Ref<ScrollTimeline>> m_scrollTimelinesPendingUpdate;
-    HashMap<TimelineIdentifier, WeakPtr<AcceleratedTimeline>> m_timelines;
-    AcceleratedTimelinesUpdate m_timelinesUpdate;
 };
 
 } // namespace WebCore

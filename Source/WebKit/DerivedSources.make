@@ -1042,8 +1042,6 @@ all : JSWebExtensionAPIUnified.mm $(EXTENSION_INTERFACES:%=JS%.h) $(EXTENSION_IN
 
 ifeq ($(USE_INTERNAL_SDK),YES)
 WEBKIT_ADDITIONS_SWIFT_FILES = \
-	WKSeparatedImageView.swift \
-	CredentialUpdaterShim.swift \
 	UIWindowScene+Extras.swift \
 #
 

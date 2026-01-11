@@ -155,7 +155,7 @@ bool hasAnyRole(Element& element, Vector<StringView>&& roles)
 
 bool hasAnyRole(Element* element, Vector<StringView>&& roles)
 {
-    return element ? hasAnyRole(*element, WTFMove(roles)) : false;
+    return element ? hasAnyRole(*element, WTF::move(roles)) : false;
 }
 
 bool hasTableRole(Element& element)

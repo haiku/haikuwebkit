@@ -44,6 +44,8 @@ SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE(WebKit, Network, nw_webtransport_metadata
 
 SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE(WebKit, Network, nw_webtransport_metadata_copy_connect_response, nw_http_response_t, (nw_protocol_metadata_t metadata), (metadata))
 
+SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE(WebKit, Network, nw_webtransport_metadata_get_transport_mode, nw_webtransport_transport_mode_t, (nw_protocol_metadata_t metadata), (metadata))
+
 SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE(WebKit, Network, nw_webtransport_metadata_set_remote_receive_error_handler, void, (nw_protocol_metadata_t metadata, nw_webtransport_receive_error_handler_t handler, dispatch_queue_t queue), (metadata, handler, queue))
 
 SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE(WebKit, Network, nw_webtransport_metadata_set_remote_send_error_handler, void, (nw_protocol_metadata_t metadata, nw_webtransport_send_error_handler_t handler, dispatch_queue_t queue), (metadata, handler, queue))

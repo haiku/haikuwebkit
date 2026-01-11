@@ -25,6 +25,9 @@
 
 #pragma once
 
+#include <wtf/Compiler.h>
+#include <wtf/Platform.h>
+
 DECLARE_SYSTEM_HEADER
 
 #include <CoreText/CoreText.h>
@@ -34,7 +37,11 @@ DECLARE_SYSTEM_HEADER
 
 #include <CoreText/CoreTextPriv.h>
 #include <OTSVG/OTSVG.h>
+
+// FIXME: (rdar://167351286) Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
 #include <fparse/FPFontParser.h>
+#endif
 
 #else
 
@@ -104,9 +111,14 @@ typedef CF_OPTIONS(uint32_t, CTFontDescriptorOptions) {
 
 typedef CF_ENUM(uint32_t, CTFontTextStylePlatform)
 {
-    kCTFontTextStylePlatformDefault = (CTFontTextStylePlatform)-1,
-    kCTFontTextStylePlatformPhone = (CTFontTextStylePlatform)0,
-    kCTFontTextStylePlatformVision = (CTFontTextStylePlatform)5,
+    kCTFontTextStylePlatformDefault      = (CTFontTextStylePlatform)-1,
+    kCTFontTextStylePlatformPhone        = 0,
+    kCTFontTextStylePlatformWatch        = 1,
+    kCTFontTextStylePlatformTV           = 2,
+    kCTFontTextStylePlatformMac          = 3,
+    kCTFontTextStylePlatformMacTouchBar  = 4,
+    kCTFontTextStylePlatformVision       = 5,
+    kCTFontTextStylePlatformVisionLegacy = 6,
 };
 
 typedef CF_OPTIONS(CFOptionFlags, CTFontDescriptorMatchingOptions) {
@@ -251,6 +263,7 @@ CFBitVectorRef CTFontCopyColorGlyphCoverage(CTFontRef);
 
 #if HAVE(CTFONTMANAGER_CREATEMEMORYSAFEFONTDESCRIPTORFROMDATA)
 CTFontDescriptorRef CTFontManagerCreateMemorySafeFontDescriptorFromData(CFDataRef);
+CFArrayRef FPFontCreateMemorySafeFontsFromData(CFDataRef);
 #endif
 
 typedef const struct __FPFont* FPFontRef;

@@ -110,7 +110,7 @@ static NSAttributedString *attributedStringForNSRange(const AXCoreObject& backin
     if (!markerRange)
         return nil;
 
-    auto attributedString = backingObject.attributedStringForTextMarkerRange(WTFMove(markerRange), AXCoreObject::SpellCheck::Yes);
+    auto attributedString = backingObject.attributedStringForTextMarkerRange(WTF::move(markerRange), AXCoreObject::SpellCheck::Yes);
     return [attributedString length] ? attributedString.autorelease() : nil;
 }
 
@@ -627,7 +627,11 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
         // AppKit needs to know the screen height in order to do the coordinate conversion.
         NSAccessibilityPrimaryScreenHeightAttribute,
         // All objects should expose the ARIA busy attribute (ARIA 1.1 with ISSUE-538).
-        NSAccessibilityElementBusyAttribute
+        NSAccessibilityElementBusyAttribute,
+        // This exists to tell assistive technologies that WebKit stitches adjacent text
+        // elements together in the accessibility tree — thus, assistive technologies know
+        // they don't need to.
+        @"AXPerformsOwnTextStitching"
     ];
     static NeverDestroyed spinButtonCommonAttributes = [] {
         auto tempArray = adoptNS([[NSMutableArray alloc] initWithArray:attributes.get().get()]);
@@ -1078,7 +1082,7 @@ static NSArray *transformSpecialChildrenCases(AXCoreObject& backingObject, const
     if (backingObject.isModel()) {
         auto modelChildren = backingObject.modelElementChildren();
         if (modelChildren.children.size()) {
-            return createNSArray(WTFMove(modelChildren.children), [](auto&& child) -> id {
+            return createNSArray(WTF::move(modelChildren.children), [](auto&& child) -> id {
                 return child.get();
             }).autorelease();
         }
@@ -1237,7 +1241,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 
     if ([attributeName isEqualToString:NSAccessibilitySelectedChildrenAttribute]) {
         auto selectedChildren = backingObject->selectedChildren();
-        return selectedChildren.size() ? makeNSArray(WTFMove(selectedChildren)) : nil;
+        return selectedChildren.size() ? makeNSArray(WTF::move(selectedChildren)) : nil;
     }
 
     if ([attributeName isEqualToString:NSAccessibilityActiveElementAttribute]) {
@@ -1462,7 +1466,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 
         if ([attributeName isEqualToString:NSAccessibilitySelectedRowsAttribute]) {
             auto selectedChildren = backingObject->selectedChildren();
-            return selectedChildren.size() ? makeNSArray(WTFMove(selectedChildren)) : nil;
+            return selectedChildren.size() ? makeNSArray(WTF::move(selectedChildren)) : nil;
         }
 
         // HTML tables don't support this attribute yet.
@@ -1557,7 +1561,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
     if (backingObject->isTree()) {
         if ([attributeName isEqualToString:NSAccessibilitySelectedRowsAttribute]) {
             auto selectedChildren = backingObject->selectedChildren();
-            return selectedChildren.size() ? makeNSArray(WTFMove(selectedChildren)) : nil;
+            return selectedChildren.size() ? makeNSArray(WTF::move(selectedChildren)) : nil;
         }
 
         if ([attributeName isEqualToString:NSAccessibilityRowsAttribute])
@@ -2159,7 +2163,7 @@ id attributeValueForTesting(const RefPtr<AXCoreObject>& backingObject, NSString 
                     callback(nsStringNilIfEmpty(result).get());
                 };
 
-                page->chrome().client().resolveAccessibilityHitTestForTesting(*axRemoteFrame->frameID(), IntPoint(point), WTFMove(clientCallback));
+                page->chrome().client().resolveAccessibilityHitTestForTesting(*axRemoteFrame->frameID(), IntPoint(point), WTF::move(clientCallback));
             }
         }
     } else {
@@ -2557,7 +2561,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 
     // In case anything we do by changing values causes an alert or other modal
     // behaviors, we need to return now, so that VoiceOver doesn't hang indefinitely.
-    callOnMainThread([retainedValue = WTFMove(retainedValue), attributeName = retainPtr(attributeName), protectedSelf = retainPtr(self)] {
+    callOnMainThread([retainedValue = WTF::move(retainedValue), attributeName = retainPtr(attributeName), protectedSelf = retainPtr(self)] {
         [protectedSelf _accessibilitySetValue:retainedValue.get() forAttribute:attributeName.get()];
     });
 #else
@@ -2631,7 +2635,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         AccessibilityObject::AccessibilityChildrenVector selectedRows;
         convertToVector(array, selectedRows);
         if (backingObject->isTree() || backingObject->isExposableTable())
-            backingObject->setSelectedRows(WTFMove(selectedRows));
+            backingObject->setSelectedRows(WTF::move(selectedRows));
     } else if ([attributeName isEqualToString:NSAccessibilityGrabbedAttribute])
         backingObject->setARIAGrabbed([number boolValue]);
     else if (backingObject->isWebArea() && [attributeName isEqualToString:NSAccessibilityPreventKeyboardDOMEventDispatchAttribute])
@@ -3041,8 +3045,8 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
             if (ranges.isEmpty())
                 return nil;
             CheckedPtr cache = backingObject->axObjectCache();
-            return createNSArray(WTFMove(ranges), [&] (SimpleRange&& range) {
-                return (id)textMarkerRangeFromRange(cache.get(), WTFMove(range));
+            return createNSArray(WTF::move(ranges), [&] (SimpleRange&& range) {
+                return (id)textMarkerRangeFromRange(cache.get(), WTF::move(range));
             }).autorelease();
         });
     }
@@ -3066,7 +3070,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
         auto criteria = accessibilitySearchCriteriaForSearchPredicate(*backingObject, dictionary);
         if (criteria.searchKeys.size() == 1 && criteria.searchKeys[0] == AccessibilitySearchKey::MisspelledWord) {
             // Request for the next/previous misspelling.
-            auto textMarkerRange = AXSearchManager().findMatchingRange(WTFMove(criteria));
+            auto textMarkerRange = AXSearchManager().findMatchingRange(WTF::move(criteria));
             if (!textMarkerRange)
                 return nil;
 
@@ -3109,7 +3113,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
             }
         }
 
-        auto results = backingObject->findMatchingObjects(WTFMove(criteria));
+        auto results = backingObject->findMatchingObjects(WTF::move(criteria));
         if (widgetChildren)
             return [widgetChildren arrayByAddingObjectsFromArray:makeNSArray(results)];
         return makeNSArray(results);

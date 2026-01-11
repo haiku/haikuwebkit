@@ -129,6 +129,7 @@ public:
 
     InstrumentingAgents& instrumentingAgents() const { return m_instrumentingAgents.get(); }
     Inspector::BackendDispatcher& backendDispatcher() const { return m_backendDispatcher.get(); }
+    WebInjectedScriptManager& injectedScriptManager() const { return m_injectedScriptManager.get(); }
 
     Inspector::InspectorAgent& ensureInspectorAgent();
     InspectorDOMAgent& ensureDOMAgent();
@@ -152,7 +153,7 @@ private:
 
     WeakRef<Page> m_page;
     const Ref<InstrumentingAgents> m_instrumentingAgents;
-    const UniqueRef<WebInjectedScriptManager> m_injectedScriptManager;
+    const Ref<WebInjectedScriptManager> m_injectedScriptManager;
     const Ref<Inspector::FrontendRouter> m_frontendRouter;
     const Ref<Inspector::BackendDispatcher> m_backendDispatcher;
     const UniqueRef<InspectorOverlay> m_overlay;
@@ -164,9 +165,9 @@ private:
     InspectorFrontendClient* m_inspectorFrontendClient { nullptr };
 
     // Lazy, but also on-demand agents.
-    Inspector::InspectorAgent* m_inspectorAgent { nullptr };
+    CheckedPtr<Inspector::InspectorAgent> m_inspectorAgent;
     CheckedPtr<InspectorDOMAgent> m_domAgent;
-    InspectorPageAgent* m_pageAgent { nullptr };
+    CheckedPtr<InspectorPageAgent> m_pageAgent;
 
     bool m_isUnderTest { false };
     bool m_isAutomaticInspection { false };

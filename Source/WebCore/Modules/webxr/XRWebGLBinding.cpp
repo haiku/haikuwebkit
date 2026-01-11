@@ -37,7 +37,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(XRWebGLBinding);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(XRWebGLBinding);
 
 ExceptionOr<Ref<XRWebGLBinding>> XRWebGLBinding::create(Ref<WebXRSession>&& session, WebXRWebGLRenderingContext&& context)
 {
@@ -55,7 +55,7 @@ ExceptionOr<Ref<XRWebGLBinding>> XRWebGLBinding::create(Ref<WebXRSession>&& sess
             if (!baseContext->isXRCompatible())
                 return Exception { ExceptionCode::InvalidStateError, "Cannot create an XRWebGLBinding with a non XR compatible WebGL context."_s };
 
-            return adoptRef(*new XRWebGLBinding(WTFMove(session), WTFMove(context)));
+            return adoptRef(*new XRWebGLBinding(WTF::move(session), WTF::move(context)));
         },
         [](std::monostate) {
             ASSERT_NOT_REACHED();
@@ -65,8 +65,8 @@ ExceptionOr<Ref<XRWebGLBinding>> XRWebGLBinding::create(Ref<WebXRSession>&& sess
 }
 
 XRWebGLBinding::XRWebGLBinding(Ref<WebXRSession>&& session, WebXRWebGLRenderingContext&& context)
-    : m_session(WTFMove(session))
-    , m_context(WTFMove(context))
+    : m_session(WTF::move(session))
+    , m_context(WTF::move(context))
 {
 }
 

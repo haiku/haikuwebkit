@@ -95,7 +95,6 @@ BEGIN {
        &configuration
        &configuredXcodeWorkspace
        &coverageIsEnabled
-       &fuzzilliIsEnabled
        &currentPerlPath
        &currentSVNRevision
        &debugMiniBrowser
@@ -110,6 +109,7 @@ BEGIN {
        &extractNonMacOSHostConfiguration
        &forceOptimizationLevel
        &formatBuildTime
+       &fuzzilliIsEnabled
        &generateBuildSystemFromCMakeProject
        &getCrossTargetName
        &getJhbuildPath
@@ -146,6 +146,7 @@ BEGIN {
        &libFuzzerIsEnabled
        &ltoMode
        &markBaseProductDirectoryAsCreatedByXcodeBuildSystem
+       &maybeUseContainerSDKRootDir
        &maxCPULoad
        &nativeArchitecture
        &nmPath
@@ -1408,9 +1409,6 @@ sub XcodeOptions
     push @options, @baseProductDirOption;
     push @options, "ARCHS=$architecture" if $didUserSpecifyArchitecture;
     push @options, "SDKROOT=$xcodeSDK" if $xcodeSDK;
-    if (xcodeVersion() lt "15.0") {
-        push @options, "TAPI_USE_SRCROOT=YES" if $ENV{UseSRCROOTSupportForTAPI};
-    }
 
     my @features = webkitperl::FeatureList::getFeatureOptionList();
     foreach (@features) {
@@ -2538,6 +2536,39 @@ sub runInCrossTargetEnvironment(@)
     my @command = @_;
     exec @prefix, @command, argumentsForConfiguration(), @ARGV or die;
 }
+
+sub maybeUseContainerSDKRootDir()
+{
+    return if not isLinux();
+    return if (shouldUseFlatpak() or shouldBuildForCrossTarget() or inCrossTargetEnvironment());
+    return if ($ENV{'WEBKIT_CONTAINER_SDK'} // '') ne '1';
+    return if ($ENV{'WEBKIT_CONTAINER_SDK_INSIDE_MOUNT_NAMESPACE'} // '') eq '1';
+
+    my $sourceDir = sourceDir();
+    my @wrapperScript = (File::Spec->catfile($sourceDir, "Tools", "Scripts", "container-sdk-rootdir-wrapper"));
+
+    if (system(@wrapperScript, "--create-symlink") != 0) {
+        print STDERR "WARNING: Unable to create symlink at /sdk/webkit. Skipping setting up SDK common root dir feature\n";
+        return 1;
+    }
+
+    my @checkCommand = ('test', '-f', '/sdk/webkit/Tools/Scripts/build-webkit');
+    my $command = $0;
+    if (system(@wrapperScript, @checkCommand) == 0) {
+        if (index($command, $sourceDir) == 0) {
+            $command = '/sdk/webkit' . substr($command, length($sourceDir));
+        }
+        print "Running in private mount namespace at /sdk/webkit\n";
+        exec @wrapperScript, $command, argumentsForConfiguration(), @ARGV or die;
+    }
+    print STDERR "WARNING: Unable to create /sdk/webkit private mount namespace. Continuing only with symlink support.\n";
+    if ($command =~ /\/build-webkit$/) {
+        # This can allow remote ccache to hit even when the bind-mount was not possible, however it won't work for sccache.
+        $ENV{"CFLAGS"} = "-ffile-prefix-map=$sourceDir=/sdk/webkit" . ($ENV{"CFLAGS"} || "");
+        $ENV{"CXXFLAGS"} = "-ffile-prefix-map=$sourceDir=/sdk/webkit" . ($ENV{"CXXFLAGS"} || "");
+    }
+}
+
 
 sub runInFlatpak(@)
 {

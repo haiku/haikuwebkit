@@ -57,7 +57,7 @@
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_remoteTokenData release];
+    [_remoteTokenDictionary release];
     [super dealloc];
 }
 

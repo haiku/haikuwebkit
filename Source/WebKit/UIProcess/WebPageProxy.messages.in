@@ -159,7 +159,7 @@ messages -> WebPageProxy {
     DidDestroyNavigation(WebCore::NavigationIdentifier navigationID)
     UpdateSandboxFlags(WebCore::FrameIdentifier frameID, WebCore::SandboxFlags sandboxFlags)
     UpdateReferrerPolicy(WebCore::FrameIdentifier frameID, WebCore::ReferrerPolicy referrerPolicy)
-    UpdateOpener(WebCore::FrameIdentifier frameID, WebCore::FrameIdentifier newOpener)
+    UpdateOpener(WebCore::FrameIdentifier frameID, std::optional<WebCore::FrameIdentifier> newOpener)
     [EnabledBy=SiteIsolationEnabled] UpdateScrollingMode(WebCore::FrameIdentifier frameID, enum:uint8_t WebCore::ScrollbarMode scrollingMode)
     [EnabledBy=SiteIsolationEnabled] SetFramePrinting(WebCore::FrameIdentifier frameID, bool printing, WebCore::FloatSize pageSize, WebCore::FloatSize originalPageSize, float maximumShrinkRatio, enum:bool WebCore::AdjustViewSize shouldAdjustViewSize);
     ResolveAccessibilityHitTestForTesting(WebCore::FrameIdentifier frameID, WebCore::IntPoint point) -> (String result)
@@ -653,12 +653,12 @@ messages -> WebPageProxy {
     [EnabledBy=SiteIsolationEnabled] DispatchLoadEventToFrameOwnerElement(WebCore::FrameIdentifier frameID)
 
     [EnabledBy=SiteIsolationEnabled] FocusRemoteFrame(WebCore::FrameIdentifier frameID)
-    [EnabledBy=SiteIsolationEnabled] PostMessageToRemote(WebCore::FrameIdentifier source, String sourceOrigin, WebCore::FrameIdentifier target, std::optional<WebCore::SecurityOriginData> targetOrigin, struct WebCore::MessageWithMessagePorts message)
+    [EnabledBy=SiteIsolationEnabled] PostMessageToRemote(WebCore::FrameIdentifier source, WebCore::SecurityOriginData sourceOrigin, WebCore::FrameIdentifier target, std::optional<WebCore::SecurityOriginData> targetOrigin, struct WebCore::MessageWithMessagePorts message)
     [EnabledBy=SiteIsolationEnabled] RenderTreeAsTextForTesting(WebCore::FrameIdentifier identifier, uint64_t baseIndent, OptionSet<WebCore::RenderAsTextFlag> behavior) -> (String renderTreeDump) Synchronous
     [EnabledBy=SiteIsolationEnabled] FrameTextForTesting(WebCore::FrameIdentifier frameID) -> (String text) Synchronous
     [EnabledBy=SiteIsolationEnabled] LayerTreeAsTextForTesting(WebCore::FrameIdentifier identifier, uint64_t baseIndent, OptionSet<WebCore::LayerTreeAsTextOptions> options) -> (String layerTreeDump) Synchronous
     AddMessageToConsoleForTesting(String message) AllowedWhenWaitingForSyncReply
-    [EnabledBy=SiteIsolationEnabled] BindRemoteAccessibilityFrames(int processIdentifier, WebCore::FrameIdentifier frameID, Vector<uint8_t> dataToken) -> (Vector<uint8_t> token, int processIdentifier) Synchronous
+    [EnabledBy=SiteIsolationEnabled] BindRemoteAccessibilityFrames(int processIdentifier, WebCore::FrameIdentifier frameID, struct WebCore::AccessibilityRemoteToken dataToken) -> (struct WebCore::AccessibilityRemoteToken token, int processIdentifier) Synchronous
     [EnabledBy=SiteIsolationEnabled] UpdateRemoteFrameAccessibilityOffset(WebCore::FrameIdentifier frameID, WebCore::IntPoint offset)
     [EnabledBy=SiteIsolationEnabled] DocumentURLForConsoleLog(WebCore::FrameIdentifier frameID) -> (URL url)
     [EnabledBy=SiteIsolationEnabled] ReportMixedContentViolation(WebCore::FrameIdentifier frameID, bool blocked, URL target)

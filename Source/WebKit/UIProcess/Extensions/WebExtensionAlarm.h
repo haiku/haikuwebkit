@@ -52,7 +52,7 @@ public:
 
     explicit WebExtensionAlarm(String name, Seconds initialInterval, Seconds repeatInterval, Function<void(WebExtensionAlarm&)>&& handler = nullptr)
         : m_parameters({ name, initialInterval, repeatInterval, MonotonicTime::nan() })
-        , m_handler(WTFMove(handler))
+        , m_handler(WTF::move(handler))
     {
         ASSERT(!name.isNull());
         schedule();

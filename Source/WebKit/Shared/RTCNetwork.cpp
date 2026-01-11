@@ -46,8 +46,8 @@ static_assert
  */
 
 RTCNetwork::RTCNetwork(String&& name, String&& description, IPAddress prefix, int prefixLength, int type, uint16_t id, int preference, bool active, bool ignored, int scopeID, Vector<InterfaceAddress>&& ips)
-    : name(WTFMove(name))
-    , description(WTFMove(description))
+    : name(WTF::move(name))
+    , description(WTF::move(description))
     , prefix(prefix)
     , prefixLength(prefixLength)
     , type(type)
@@ -56,7 +56,7 @@ RTCNetwork::RTCNetwork(String&& name, String&& description, IPAddress prefix, in
     , active(active)
     , ignored(ignored)
     , scopeID(scopeID)
-    , ips(WTFMove(ips)) { }
+    , ips(WTF::move(ips)) { }
 
 webrtc::Network RTCNetwork::value() const
 {
@@ -73,7 +73,7 @@ webrtc::Network RTCNetwork::value() const
     vector.reserve(ips.size());
     for (auto& ip : ips)
         vector.push_back(ip.rtcAddress());
-    network.SetIPs(WTFMove(vector), true);
+    network.SetIPs(WTF::move(vector), true);
 
     return network;
 }

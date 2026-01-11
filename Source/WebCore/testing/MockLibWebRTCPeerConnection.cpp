@@ -73,7 +73,7 @@ void useMockRTCPeerConnectionFactory(LibWebRTCProvider* provider, const String& 
 MockLibWebRTCPeerConnection::~MockLibWebRTCPeerConnection()
 {
     // Free senders and receivers in a different thread like an actual peer connection would probably do.
-    Thread::create("MockLibWebRTCPeerConnection thread"_s, [transceivers = WTFMove(m_transceivers)] { });
+    Thread::create("MockLibWebRTCPeerConnection thread"_s, [transceivers = WTF::move(m_transceivers)] { });
 }
 
 std::vector<webrtc::scoped_refptr<webrtc::RtpTransceiverInterface>> MockLibWebRTCPeerConnection::GetTransceivers() const
@@ -372,11 +372,11 @@ webrtc::RTCErrorOr<webrtc::scoped_refptr<webrtc::RtpSenderInterface>> MockLibWeb
     if (!streamIds.empty())
         m_streamLabel = streamIds.front();
 
-    webrtc::scoped_refptr<webrtc::RtpSenderInterface> sender = webrtc::make_ref_counted<MockRtpSender>(WTFMove(track));
+    webrtc::scoped_refptr<webrtc::RtpSenderInterface> sender = webrtc::make_ref_counted<MockRtpSender>(WTF::move(track));
     webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver = webrtc::make_ref_counted<MockRtpReceiver>();
-    auto transceiver = webrtc::make_ref_counted<MockRtpTransceiver>(WTFMove(sender), WTFMove(receiver));
+    auto transceiver = webrtc::make_ref_counted<MockRtpTransceiver>(WTF::move(sender), WTF::move(receiver));
 
-    m_transceivers.append(WTFMove(transceiver));
+    m_transceivers.append(WTF::move(transceiver));
     return webrtc::scoped_refptr<webrtc::RtpSenderInterface>(m_transceivers.last()->sender());
 }
 

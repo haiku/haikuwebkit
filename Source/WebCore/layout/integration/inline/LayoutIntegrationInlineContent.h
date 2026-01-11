@@ -81,6 +81,7 @@ public:
     float clearBeforeAfterGaps() const { return m_clearGapBeforeFirstLine + m_clearGapAfterLastLine; }
     float clearGapBeforeFirstLine() const { return m_clearGapBeforeFirstLine; }
     bool hasBlockLevelBoxes() const { return m_hasBlockLevelBoxes; }
+    bool hasPaintedInlineLevelBoxes() const { return m_hasPaintedInlineLevelBoxes; }
 
     IteratorRange<const InlineDisplay::Box*> boxesForRect(const LayoutRect&) const;
 
@@ -114,6 +115,7 @@ private:
     void setClearGapAfterLastLine(float clearGapAfterLastLine) { m_clearGapAfterLastLine = clearGapAfterLastLine; }
     void setFirstLinePaginationOffset(float firstLinePaginationOffset) { m_firstLinePaginationOffset = firstLinePaginationOffset; }
     void setHasBlockLevelBoxes() { m_hasBlockLevelBoxes = true; }
+    void setHasPaintedInlineLevelBoxes() { m_hasPaintedInlineLevelBoxes = true; }
 
     const Vector<size_t>& nonRootInlineBoxIndexesForLayoutBox(const Layout::Box&) const;
 
@@ -133,6 +135,7 @@ private:
 
     bool m_hasMultilinePaintOverlap { false };
     bool m_hasBlockLevelBoxes { false };
+    bool m_hasPaintedInlineLevelBoxes { false };
 
     Vector<Vector<SVGTextFragment>> m_svgTextFragmentsForBoxes;
 };

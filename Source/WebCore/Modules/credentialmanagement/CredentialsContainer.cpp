@@ -41,7 +41,7 @@
 namespace WebCore {
 
 CredentialsContainer::CredentialsContainer(WeakPtr<Document, WeakPtrImplWithEventTargetData>&& document)
-    : m_document(WTFMove(document))
+    : m_document(WTF::move(document))
 {
 }
 
@@ -55,11 +55,11 @@ void CredentialsContainer::get(CredentialRequestOptions&& options, CredentialPro
 
 #if ENABLE(WEB_AUTHN)
     if (options.digital) {
-        DigitalCredential::discoverFromExternalSource(*document(), WTFMove(promise), WTFMove(options));
+        DigitalCredential::discoverFromExternalSource(*document(), WTF::move(promise), WTF::move(options));
         return;
     }
 
-    document()->page()->authenticatorCoordinator().discoverFromExternalSource(*document(), WTFMove(options), WTFMove(promise));
+    document()->page()->authenticatorCoordinator().discoverFromExternalSource(*document(), WTF::move(options), WTF::move(promise));
 #else
     promise.resolve(nullptr);
 #endif
@@ -83,7 +83,7 @@ void CredentialsContainer::isCreate(CredentialCreationOptions&& options, Credent
 
 #if ENABLE(WEB_AUTHN)
     if (options.publicKey) {
-        document()->page()->authenticatorCoordinator().create(*document(), WTFMove(options), WTFMove(options.signal), WTFMove(promise));
+        document()->page()->authenticatorCoordinator().create(*document(), WTF::move(options), WTF::move(options.signal), WTF::move(promise));
         return;
     }
 #endif

@@ -140,11 +140,11 @@ void LegacyPreviewLoader::previewConverterDidStartConverting(PreviewConverter& c
 
     if (m_shouldDecidePolicyBeforeLoading) {
         m_hasProcessedResponse = true;
-        resourceLoader->didReceivePreviewResponse(WTFMove(response));
+        resourceLoader->didReceivePreviewResponse(WTF::move(response));
         return;
     }
 
-    resourceLoader->didReceiveResponse(WTFMove(response), [this, weakThis = WeakPtr { static_cast<PreviewConverterClient&>(*this) }, converter = Ref { converter }] {
+    resourceLoader->didReceiveResponse(WTF::move(response), [this, weakThis = WeakPtr { static_cast<PreviewConverterClient&>(*this) }, converter = Ref { converter }] {
         if (!weakThis)
             return;
 
@@ -246,7 +246,7 @@ void LegacyPreviewLoader::providePasswordForPreviewConverter(PreviewConverter& c
         return;
     }
 
-    client->didRequestPassword(WTFMove(completionHandler));
+    client->didRequestPassword(WTF::move(completionHandler));
 }
 
 void LegacyPreviewLoader::provideMainResourceForPreviewConverter(PreviewConverter& converter, CompletionHandler<void(Ref<FragmentedSharedBuffer>&&)>&& completionHandler)
@@ -262,7 +262,7 @@ bool LegacyPreviewLoader::didReceiveResponse(const ResourceResponse&)
 
 void LegacyPreviewLoader::setClientForTesting(RefPtr<LegacyPreviewLoaderClient>&& client)
 {
-    testingClient() = WTFMove(client);
+    testingClient() = WTF::move(client);
 }
 
 } // namespace WebCore

@@ -154,13 +154,13 @@ RefPtr<LocalSampleBufferDisplayLayer> LocalSampleBufferDisplayLayer::create(Samp
     if (!sampleBufferDisplayLayer)
         return nullptr;
 
-    return adoptRef(*new LocalSampleBufferDisplayLayer(WTFMove(sampleBufferDisplayLayer), client));
+    return adoptRef(*new LocalSampleBufferDisplayLayer(WTF::move(sampleBufferDisplayLayer), client));
 }
 
 LocalSampleBufferDisplayLayer::LocalSampleBufferDisplayLayer(RetainPtr<AVSampleBufferDisplayLayer>&& sampleBufferDisplayLayer, SampleBufferDisplayLayerClient& client)
     : SampleBufferDisplayLayer(client)
     , m_statusChangeListener(adoptNS([[WebAVSampleBufferStatusChangeListener alloc] initWithParent:this]))
-    , m_sampleBufferDisplayLayer(WTFMove(sampleBufferDisplayLayer))
+    , m_sampleBufferDisplayLayer(WTF::move(sampleBufferDisplayLayer))
     , m_processingQueue(WorkQueue::create("LocalSampleBufferDisplayLayer queue"_s))
 #if !RELEASE_LOG_DISABLED
     , m_frameRateMonitor([this](auto info) { onIrregularFrameRateNotification(info.frameTime, info.lastFrameTime); })
@@ -475,7 +475,7 @@ void LocalSampleBufferDisplayLayer::addVideoFrameToPendingQueue(Ref<VideoFrame>&
     assertIsCurrent(workQueue());
 
     removeOldVideoFramesFromPendingQueue();
-    m_pendingVideoFrameQueue.append(WTFMove(videoFrame));
+    m_pendingVideoFrameQueue.append(WTF::move(videoFrame));
 }
 
 void LocalSampleBufferDisplayLayer::clearVideoFrames()

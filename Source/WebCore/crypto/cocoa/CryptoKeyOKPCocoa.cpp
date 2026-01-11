@@ -57,11 +57,11 @@ std::optional<CryptoKeyPair> CryptoKeyOKP::platformGeneratePair(CryptoAlgorithmI
         if (publicKeyPlatformRv.errorCode != Cpp::ErrorCodes::Success)
             return std::nullopt;
         bool isPublicKeyExtractable = true;
-        auto publicKey = CryptoKeyOKP::create(identifier, namedCurve, CryptoKeyType::Public, WTFMove(publicKeyPlatformRv.result), isPublicKeyExtractable, usages);
+        auto publicKey = CryptoKeyOKP::create(identifier, namedCurve, CryptoKeyType::Public, WTF::move(publicKeyPlatformRv.result), isPublicKeyExtractable, usages);
         RELEASE_ASSERT(publicKey);
-        auto privateKey = CryptoKeyOKP::create(identifier, namedCurve, CryptoKeyType::Private, WTFMove(privateKeyPlatform), extractable, usages);
+        auto privateKey = CryptoKeyOKP::create(identifier, namedCurve, CryptoKeyType::Private, WTF::move(privateKeyPlatform), extractable, usages);
         RELEASE_ASSERT(privateKey);
-        return CryptoKeyPair { WTFMove(publicKey), WTFMove(privateKey) };
+        return CryptoKeyPair { WTF::move(publicKey), WTF::move(privateKey) };
     }
     case CryptoAlgorithmIdentifier::X25519: {
         auto privateKeyPlatform = PAL::EdKey::generatePrivateKeyKeyAgreement(PAL::EdKeyAgreementAlgorithm::x25519());
@@ -70,11 +70,11 @@ std::optional<CryptoKeyPair> CryptoKeyOKP::platformGeneratePair(CryptoAlgorithmI
         if (publicKeyPlatformRv.errorCode != Cpp::ErrorCodes::Success)
             return std::nullopt;
         bool isPublicKeyExtractable = true;
-        auto publicKey = CryptoKeyOKP::create(identifier, namedCurve, CryptoKeyType::Public, WTFMove(publicKeyPlatformRv.result), isPublicKeyExtractable, usages);
+        auto publicKey = CryptoKeyOKP::create(identifier, namedCurve, CryptoKeyType::Public, WTF::move(publicKeyPlatformRv.result), isPublicKeyExtractable, usages);
         RELEASE_ASSERT(publicKey);
-        auto privateKey = CryptoKeyOKP::create(identifier, namedCurve, CryptoKeyType::Private, WTFMove(privateKeyPlatform), extractable, usages);
+        auto privateKey = CryptoKeyOKP::create(identifier, namedCurve, CryptoKeyType::Private, WTF::move(privateKeyPlatform), extractable, usages);
         RELEASE_ASSERT(privateKey);
-        return CryptoKeyPair { WTFMove(publicKey), WTFMove(privateKey) };
+        return CryptoKeyPair { WTF::move(publicKey), WTF::move(privateKey) };
     }
     default:
         RELEASE_ASSERT_NOT_REACHED();
@@ -240,7 +240,7 @@ ExceptionOr<Vector<uint8_t>> CryptoKeyOKP::exportSpki() const
 
     ASSERT(result.size() == totalSize);
 
-    return WTFMove(result);
+    return WTF::move(result);
 }
 
 // Per https://www.ietf.org/rfc/rfc5280.txt
@@ -355,7 +355,7 @@ ExceptionOr<Vector<uint8_t>> CryptoKeyOKP::exportPkcs8() const
 
     ASSERT(result.size() == totalSize);
 
-    return WTFMove(result);
+    return WTF::move(result);
 }
 
 String CryptoKeyOKP::generateJwkD() const

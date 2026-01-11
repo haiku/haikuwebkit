@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 DECLARE_SYSTEM_HEADER
 
 #if PLATFORM(IOS_FAMILY)
@@ -316,3 +319,5 @@ typedef NS_ENUM(NSUInteger, NSTextTabType) {
 @end
 
 #endif // PLATFORM(IOS_FAMILY)
+
+#endif // !__has_feature(modules)

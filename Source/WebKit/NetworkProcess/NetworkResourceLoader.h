@@ -95,7 +95,7 @@ public:
 
     static Ref<NetworkResourceLoader> create(NetworkResourceLoadParameters&& parameters, NetworkConnectionToWebProcess& connection, CompletionHandler<void(const WebCore::ResourceError&, const WebCore::ResourceResponse, Vector<uint8_t>&&)>&& reply = nullptr)
     {
-        return adoptRef(*new NetworkResourceLoader(WTFMove(parameters), connection, WTFMove(reply)));
+        return adoptRef(*new NetworkResourceLoader(WTF::move(parameters), connection, WTF::move(reply)));
     }
     virtual ~NetworkResourceLoader();
 
@@ -113,7 +113,7 @@ public:
 
     void continueWillSendRequest(WebCore::ResourceRequest&&, bool isAllowedToAskUserForCredentials, CompletionHandler<void(WebCore::ResourceRequest&&)>&&);
 
-    void setResponse(WebCore::ResourceResponse&& response) { m_response = WTFMove(response); }
+    void setResponse(WebCore::ResourceResponse&& response) { m_response = WTF::move(response); }
     const WebCore::ResourceResponse& response() const { return m_response; }
 
     NetworkConnectionToWebProcess& connectionToWebProcess() const { return m_connection; }

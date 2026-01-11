@@ -173,7 +173,7 @@ using namespace WebKit;
     if (extensionContext->canOpenNewWindow()) {
         WebExtensionWindowParameters windowParameters;
         windowParameters.focused = true;
-        windowParameters.tabs = { WTFMove(tabParameters) };
+        windowParameters.tabs = { WTF::move(tabParameters) };
         windowParameters.type = windowFeatures._wantsPopup ? WebExtensionWindow::Type::Popup : WebExtensionWindow::Type::Normal;
         windowParameters.state = windowFeatures._fullscreenDisplay.boolValue ? WebExtensionWindow::State::Fullscreen : WebExtensionWindow::State::Normal;
 

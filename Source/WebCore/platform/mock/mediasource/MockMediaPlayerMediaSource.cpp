@@ -117,7 +117,7 @@ void MockMediaPlayerMediaSource::load(const URL&, const LoadOptions&, MediaSourc
 {
     if (RefPtr mediaSourcePrivate = downcast<MockMediaSourcePrivate>(source.mediaSourcePrivate())) {
         mediaSourcePrivate->setPlayer(this);
-        m_mediaSourcePrivate = WTFMove(mediaSourcePrivate);
+        m_mediaSourcePrivate = WTF::move(mediaSourcePrivate);
         source.reOpen();
     } else
         m_mediaSourcePrivate = MockMediaSourcePrivate::create(*this, source);
@@ -155,6 +155,13 @@ bool MockMediaPlayerMediaSource::hasAudio() const
 {
     RefPtr mediaSourcePrivate = m_mediaSourcePrivate;
     return mediaSourcePrivate ? mediaSourcePrivate->hasAudio() : false;
+}
+
+void MockMediaPlayerMediaSource::characteristicsFromMediaSourceChanged()
+{
+    assertIsMainThread();
+    if (RefPtr player = m_player.get())
+        player->characteristicChanged();
 }
 
 void MockMediaPlayerMediaSource::setPageIsVisible(bool)
@@ -267,7 +274,7 @@ void MockMediaPlayerMediaSource::seekToTarget(const SeekTarget& target)
         }
 
         if (protectedThis->m_playing) {
-            callOnMainThread([protectedThis = WTFMove(protectedThis)] {
+            callOnMainThread([protectedThis = WTF::move(protectedThis)] {
                 protectedThis->advanceCurrentTime();
             });
         }

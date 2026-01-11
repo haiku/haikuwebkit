@@ -356,7 +356,7 @@ public:
     const WebsiteDataStoreConfiguration& configuration() const { return m_configuration.get(); }
 
     WebsiteDataStoreClient& client() { return m_client.get(); }
-    void setClient(UniqueRef<WebsiteDataStoreClient>&& client) { m_client = WTFMove(client); }
+    void setClient(UniqueRef<WebsiteDataStoreClient>&& client) { m_client = WTF::move(client); }
 
     API::HTTPCookieStore& cookieStore();
     Ref<API::HTTPCookieStore> protectedCookieStore();

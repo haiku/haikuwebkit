@@ -113,11 +113,11 @@ namespace WebCore {
 
 const GCGLuint64 MaxClientWaitTimeout = 0u;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebGL2RenderingContext);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebGL2RenderingContext);
 
 std::unique_ptr<WebGL2RenderingContext> WebGL2RenderingContext::create(CanvasBase& canvas, WebGLContextAttributes&& attributes)
 {
-    return std::unique_ptr<WebGL2RenderingContext>(new WebGL2RenderingContext(canvas, Type::WebGL2, WTFMove(attributes)));
+    return std::unique_ptr<WebGL2RenderingContext>(new WebGL2RenderingContext(canvas, Type::WebGL2, WTF::move(attributes)));
 }
 
 WebGL2RenderingContext::~WebGL2RenderingContext()
@@ -889,7 +889,7 @@ void WebGL2RenderingContext::texImage2D(GCGLenum target, GCGLint level, GCGLenum
         synthesizeGLError(GraphicsContextGL::INVALID_OPERATION, "texImage2D"_s, "a buffer is bound to PIXEL_UNPACK_BUFFER"_s);
         return;
     }
-    WebGLRenderingContextBase::texImage2D(target, level, internalformat, width, height, border, format, type, WTFMove(data));
+    WebGLRenderingContextBase::texImage2D(target, level, internalformat, width, height, border, format, type, WTF::move(data));
 }
 
 ExceptionOr<void> WebGL2RenderingContext::texImage2D(GCGLenum target, GCGLint level, GCGLenum internalformat, GCGLenum format, GCGLenum type, std::optional<TexImageSource> data)
@@ -932,7 +932,7 @@ ExceptionOr<void> WebGL2RenderingContext::texImage2D(GCGLenum target, GCGLint le
         return { };
     }
 
-    return WebGLRenderingContextBase::texImageSourceHelper(TexImageFunctionID::TexImage2D, target, level, internalformat, border, format, type, 0, 0, 0, getTextureSourceSubRectangle(width, height), 1, 0, WTFMove(source));
+    return WebGLRenderingContextBase::texImageSourceHelper(TexImageFunctionID::TexImage2D, target, level, internalformat, border, format, type, 0, 0, 0, getTextureSourceSubRectangle(width, height), 1, 0, WTF::move(source));
 }
 
 void WebGL2RenderingContext::texImage2D(GCGLenum target, GCGLint level, GCGLint internalformat, GCGLsizei width, GCGLsizei height, GCGLint border, GCGLenum format, GCGLenum type, RefPtr<ArrayBufferView>&& srcData, GCGLuint srcOffset)
@@ -944,7 +944,7 @@ void WebGL2RenderingContext::texImage2D(GCGLenum target, GCGLint level, GCGLint 
         return;
     }
 
-    texImageArrayBufferViewHelper(TexImageFunctionID::TexImage2D, target, level, internalformat, width, height, 1, border, format, type, 0, 0, 0, WTFMove(srcData), NullNotReachable, srcOffset);
+    texImageArrayBufferViewHelper(TexImageFunctionID::TexImage2D, target, level, internalformat, width, height, 1, border, format, type, 0, 0, 0, WTF::move(srcData), NullNotReachable, srcOffset);
 }
 
 void WebGL2RenderingContext::texImage3D(GCGLenum target, GCGLint level, GCGLint internalformat, GCGLsizei width, GCGLsizei height, GCGLsizei depth, GCGLint border, GCGLenum format, GCGLenum type, GCGLint64 offset)
@@ -976,7 +976,7 @@ ExceptionOr<void> WebGL2RenderingContext::texImage3D(GCGLenum target, GCGLint le
         return { };
     }
 
-    return WebGLRenderingContextBase::texImageSourceHelper(TexImageFunctionID::TexImage3D, target, level, internalformat, border, format, type, 0, 0, 0, getTextureSourceSubRectangle(width, height), depth, m_unpackParameters.imageHeight, WTFMove(source));
+    return WebGLRenderingContextBase::texImageSourceHelper(TexImageFunctionID::TexImage3D, target, level, internalformat, border, format, type, 0, 0, 0, getTextureSourceSubRectangle(width, height), depth, m_unpackParameters.imageHeight, WTF::move(source));
 }
 
 void WebGL2RenderingContext::texImage3D(GCGLenum target, GCGLint level, GCGLint internalformat, GCGLsizei width, GCGLsizei height, GCGLsizei depth, GCGLint border, GCGLenum format, GCGLenum type, RefPtr<ArrayBufferView>&& srcData)
@@ -992,7 +992,7 @@ void WebGL2RenderingContext::texImage3D(GCGLenum target, GCGLint level, GCGLint 
         return;
     }
 
-    texImageArrayBufferViewHelper(TexImageFunctionID::TexImage3D, target, level, internalformat, width, height, depth, border, format, type, 0, 0, 0, WTFMove(srcData), NullAllowed, 0);
+    texImageArrayBufferViewHelper(TexImageFunctionID::TexImage3D, target, level, internalformat, width, height, depth, border, format, type, 0, 0, 0, WTF::move(srcData), NullAllowed, 0);
 }
 
 void WebGL2RenderingContext::texImage3D(GCGLenum target, GCGLint level, GCGLint internalformat, GCGLsizei width, GCGLsizei height, GCGLsizei depth, GCGLint border, GCGLenum format, GCGLenum type, RefPtr<ArrayBufferView>&& srcData, GCGLuint srcOffset)
@@ -1008,7 +1008,7 @@ void WebGL2RenderingContext::texImage3D(GCGLenum target, GCGLint level, GCGLint 
         return;
     }
 
-    texImageArrayBufferViewHelper(TexImageFunctionID::TexImage3D, target, level, internalformat, width, height, depth, border, format, type, 0, 0, 0, WTFMove(srcData), NullNotReachable, srcOffset);
+    texImageArrayBufferViewHelper(TexImageFunctionID::TexImage3D, target, level, internalformat, width, height, depth, border, format, type, 0, 0, 0, WTF::move(srcData), NullNotReachable, srcOffset);
 }
 
 void WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint level, GCGLint xoffset, GCGLint yoffset, GCGLsizei width, GCGLsizei height, GCGLenum format, GCGLenum type, RefPtr<ArrayBufferView>&& srcData)
@@ -1019,7 +1019,7 @@ void WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint level, GCGLi
         synthesizeGLError(GraphicsContextGL::INVALID_OPERATION, "texSubImage2D"_s, "a buffer is bound to PIXEL_UNPACK_BUFFER"_s);
         return;
     }
-    WebGLRenderingContextBase::texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, WTFMove(srcData));
+    WebGLRenderingContextBase::texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, WTF::move(srcData));
 }
 
 ExceptionOr<void> WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint level, GCGLint xoffset, GCGLint yoffset, GCGLenum format, GCGLenum type, std::optional<TexImageSource>&& data)
@@ -1030,7 +1030,7 @@ ExceptionOr<void> WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint
         synthesizeGLError(GraphicsContextGL::INVALID_OPERATION, "texSubImage2D"_s, "a buffer is bound to PIXEL_UNPACK_BUFFER"_s);
         return { };
     }
-    return WebGLRenderingContextBase::texSubImage2D(target, level, xoffset, yoffset, format, type, WTFMove(data));
+    return WebGLRenderingContextBase::texSubImage2D(target, level, xoffset, yoffset, format, type, WTF::move(data));
 }
 
 void WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint level, GCGLint xoffset, GCGLint yoffset, GCGLsizei width, GCGLsizei height, GCGLenum format , GCGLenum type, GCGLintptr offset)
@@ -1062,7 +1062,7 @@ ExceptionOr<void> WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint
         return { };
     }
 
-    return WebGLRenderingContextBase::texImageSourceHelper(TexImageFunctionID::TexSubImage2D, target, level, 0, 0, format, type, xoffset, yoffset, 0, getTextureSourceSubRectangle(width, height), 1, 0, WTFMove(source));
+    return WebGLRenderingContextBase::texImageSourceHelper(TexImageFunctionID::TexSubImage2D, target, level, 0, 0, format, type, xoffset, yoffset, 0, getTextureSourceSubRectangle(width, height), 1, 0, WTF::move(source));
 }
 
 void WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint level, GCGLint xoffset, GCGLint yoffset, GCGLsizei width, GCGLsizei height, GCGLenum format, GCGLenum type, RefPtr<ArrayBufferView>&& srcData, GCGLuint srcOffset)
@@ -1074,7 +1074,7 @@ void WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint level, GCGLi
         return;
     }
 
-    texImageArrayBufferViewHelper(TexImageFunctionID::TexSubImage2D, target, level, 0, width, height, 1, 0, format, type, xoffset, yoffset, 0, WTFMove(srcData), NullNotReachable, srcOffset);
+    texImageArrayBufferViewHelper(TexImageFunctionID::TexSubImage2D, target, level, 0, width, height, 1, 0, format, type, xoffset, yoffset, 0, WTF::move(srcData), NullNotReachable, srcOffset);
 }
 
 void WebGL2RenderingContext::texSubImage3D(GCGLenum target, GCGLint level, GCGLint xoffset, GCGLint yoffset, GCGLint zoffset, GCGLsizei width, GCGLsizei height, GCGLsizei depth, GCGLenum format, GCGLenum type, GCGLint64 offset)
@@ -1110,7 +1110,7 @@ void WebGL2RenderingContext::texSubImage3D(GCGLenum target, GCGLint level, GCGLi
         return;
     }
 
-    texImageArrayBufferViewHelper(TexImageFunctionID::TexSubImage3D, target, level, 0, width, height, depth, 0, format, type, xoffset, yoffset, zoffset, WTFMove(srcData), NullNotReachable, srcOffset);
+    texImageArrayBufferViewHelper(TexImageFunctionID::TexSubImage3D, target, level, 0, width, height, depth, 0, format, type, xoffset, yoffset, zoffset, WTF::move(srcData), NullNotReachable, srcOffset);
 }
 
 ExceptionOr<void> WebGL2RenderingContext::texSubImage3D(GCGLenum target, GCGLint level, GCGLint xoffset, GCGLint yoffset, GCGLint zoffset, GCGLsizei width, GCGLsizei height, GCGLsizei depth, GCGLenum format, GCGLenum type, TexImageSource&& source)
@@ -1122,7 +1122,7 @@ ExceptionOr<void> WebGL2RenderingContext::texSubImage3D(GCGLenum target, GCGLint
         return { };
     }
 
-    return WebGLRenderingContextBase::texImageSourceHelper(TexImageFunctionID::TexSubImage3D, target, level, 0, 0, format, type, xoffset, yoffset, zoffset, getTextureSourceSubRectangle(width, height), depth, m_unpackParameters.imageHeight, WTFMove(source));
+    return WebGLRenderingContextBase::texImageSourceHelper(TexImageFunctionID::TexSubImage3D, target, level, 0, 0, format, type, xoffset, yoffset, zoffset, getTextureSourceSubRectangle(width, height), depth, m_unpackParameters.imageHeight, WTF::move(source));
 }
 
 void WebGL2RenderingContext::copyTexSubImage3D(GCGLenum target, GCGLint level, GCGLint xoffset, GCGLint yoffset, GCGLint zoffset, GCGLint x, GCGLint y, GCGLsizei width, GCGLsizei height)
@@ -1809,7 +1809,7 @@ void WebGL2RenderingContext::endQuery(GCGLenum target)
     graphicsContextGL()->endQuery(target);
 
     // A query's result must not be made available until control has returned to the user agent's main loop.
-    protectedScriptExecutionContext()->checkedEventLoop()->queueMicrotask([query = WTFMove(m_activeQueries[*activeQueryKey])] {
+    protectedScriptExecutionContext()->checkedEventLoop()->queueMicrotask([query = WTF::move(m_activeQueries[*activeQueryKey])] {
         query->makeResultAvailable();
     });
 }
@@ -2846,8 +2846,8 @@ WebGLAny WebGL2RenderingContext::getFramebufferAttachmentParameter(GCGLenum targ
         return static_cast<unsigned>(GraphicsContextGL::RENDERBUFFER);
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME:
         if (isTexture)
-            return std::get<RefPtr<WebGLTexture>>(WTFMove(*attachmentObject));
-        return std::get<RefPtr<WebGLRenderbuffer>>(WTFMove(*attachmentObject));
+            return std::get<RefPtr<WebGLTexture>>(WTF::move(*attachmentObject));
+        return std::get<RefPtr<WebGLRenderbuffer>>(WTF::move(*attachmentObject));
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL:
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE:
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER:
@@ -3451,7 +3451,7 @@ void WebGL2RenderingContext::readPixels(GCGLint x, GCGLint y, GCGLsizei width, G
             "a buffer is bound to PIXEL_PACK_BUFFER"_s);
         return;
     }
-    WebGLRenderingContextBase::readPixels(x, y, width, height, format, type, WTFMove(pixels));
+    WebGLRenderingContextBase::readPixels(x, y, width, height, format, type, WTF::move(pixels));
 }
 
 void WebGL2RenderingContext::readPixels(GCGLint x, GCGLint y, GCGLsizei width, GCGLsizei height, GCGLenum format, GCGLenum type, GCGLintptr offset)
@@ -3512,7 +3512,7 @@ void WebGL2RenderingContext::readPixels(GCGLint x, GCGLint y, GCGLsizei width, G
     auto slice = sliceArrayBufferView("readPixels"_s, dstData, dstOffset, 0);
     if (!slice)
         return;
-    WebGLRenderingContextBase::readPixels(x, y, width, height, format, type, WTFMove(slice));
+    WebGLRenderingContextBase::readPixels(x, y, width, height, format, type, WTF::move(slice));
 }
 
 #define REMOVE_BUFFER_FROM_BINDING(binding) \

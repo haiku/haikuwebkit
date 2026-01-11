@@ -28,7 +28,7 @@
 
 #include "InlineIteratorBox.h"
 #include "LayoutIntegrationLineLayout.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "SVGTextFragment.h"
 #include "TextPainter.h"
 

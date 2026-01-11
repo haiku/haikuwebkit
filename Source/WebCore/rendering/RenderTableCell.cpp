@@ -4,7 +4,7 @@
  *           (C) 1998 Waldo Bastian (bastian@kde.org)
  *           (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
- * Copyright (C) 2003-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2016-2017 Google Inc. All rights reserved.
  * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
@@ -63,7 +63,7 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderTableCell);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderTableCell);
 
 struct SameSizeAsRenderTableCell : public RenderBlockFlow {
     unsigned bitfields;
@@ -76,7 +76,7 @@ static_assert(sizeof(RenderTableCell) == sizeof(SameSizeAsRenderTableCell), "Ren
 static_assert(sizeof(CollapsedBorderValue) <= 24, "CollapsedBorderValue should stay small");
 
 RenderTableCell::RenderTableCell(Element& element, RenderStyle&& style)
-    : RenderBlockFlow(Type::TableCell, element, WTFMove(style))
+    : RenderBlockFlow(Type::TableCell, element, WTF::move(style))
     , m_column(unsetColumnIndex)
     , m_cellWidthChanged(false)
     , m_hasColSpan(false)
@@ -93,7 +93,7 @@ RenderTableCell::RenderTableCell(Element& element, RenderStyle&& style)
 }
 
 RenderTableCell::RenderTableCell(Document& document, RenderStyle&& style)
-    : RenderBlockFlow(Type::TableCell, document, WTFMove(style))
+    : RenderBlockFlow(Type::TableCell, document, WTF::move(style))
     , m_column(unsetColumnIndex)
     , m_cellWidthChanged(false)
     , m_hasColSpan(false)
@@ -288,6 +288,12 @@ bool RenderTableCell::computeIntrinsicPadding(LayoutUnit heightConstraint)
 
     auto applyStandard = [&] {
         auto baseline = cellBaselinePosition();
+        if (!firstInFlowChild() && baseline == borderAndPaddingBefore()) {
+            // If baseline equals borderAndPaddingBefore(), there is no real content.
+            intrinsicPaddingBefore = 0;
+            return;
+        }
+
         auto needsIntrinsicPadding = baseline > borderAndPaddingBefore() || !borderBoxLogicalHeight;
         if (needsIntrinsicPadding)
             intrinsicPaddingBefore = section()->rowBaseline(rowIndex()) - (baseline - oldIntrinsicPaddingBefore);
@@ -362,7 +368,7 @@ LayoutUnit RenderTableCell::logicalHeightForRowSizing() const
             return logicalHeight() - (intrinsicPaddingBefore() + intrinsicPaddingAfter());
         LogicalExtentComputedValues values;
         computeLogicalWidth(values);
-        return values.m_extent;
+        return values.extent;
     };
     // FIXME: This function does too much work, and is very hot during table layout!
     auto usedLogicalSize = logicalSizeForRowSizing();
@@ -543,7 +549,7 @@ auto RenderTableCell::localRectsForRepaint(RepaintOutlineBounds repaintOutlineBo
         return RenderBlockFlow::localRectsForRepaint(repaintOutlineBounds);
 
     bool flippedInline = tableWritingMode().isInlineFlipped();
-    LayoutUnit outlineSize { style().outlineSize() };
+    LayoutUnit outlineSize { style().usedOutlineSize() };
     LayoutUnit left = std::max(borderHalfLeft(true), outlineSize);
     LayoutUnit right = std::max(borderHalfRight(true), outlineSize);
     LayoutUnit top = std::max(borderHalfTop(true), outlineSize);
@@ -616,7 +622,7 @@ static inline void markCellDirtyWhenCollapsedBorderChanges(RenderTableCell* cell
     cell->setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
-void RenderTableCell::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)
+void RenderTableCell::styleDidChange(Style::Difference diff, const RenderStyle* oldStyle)
 {
     ASSERT(style().display() == DisplayType::TableCell);
     ASSERT(!row() || row()->rowIndexWasSet());
@@ -633,7 +639,7 @@ void RenderTableCell::styleDidChange(StyleDifference diff, const RenderStyle* ol
 
     if (CheckedPtr table = this->table(); table && oldStyle) {
         table->invalidateCollapsedBordersAfterStyleChangeIfNeeded(*oldStyle, style(), this);
-        if (table->collapseBorders() && diff == StyleDifference::Layout) {
+        if (table->collapseBorders() && diff == Style::DifferenceResult::Layout) {
             markCellDirtyWhenCollapsedBorderChanges(table->cellBelow(this));
             markCellDirtyWhenCollapsedBorderChanges(table->cellAbove(this));
             markCellDirtyWhenCollapsedBorderChanges(table->cellBefore(this));
@@ -726,13 +732,30 @@ CollapsedBorderValue RenderTableCell::collapsedStartBorder(IncludeBorderColorOrN
     return result;
 }
 
+static Color resolvedBorderColor(const RenderStyle& style, CSSPropertyID borderColor)
+{
+    switch (borderColor) {
+    case CSSPropertyBorderTopColor:
+        return style.visitedDependentBorderTopColorApplyingColorFilter();
+    case CSSPropertyBorderRightColor:
+        return style.visitedDependentBorderRightColorApplyingColorFilter();
+    case CSSPropertyBorderBottomColor:
+        return style.visitedDependentBorderBottomColorApplyingColorFilter();
+    case CSSPropertyBorderLeftColor:
+        return style.visitedDependentBorderLeftColorApplyingColorFilter();
+    default:
+        ASSERT_NOT_REACHED();
+        return Color::black;
+    }
+}
+
 CollapsedBorderValue RenderTableCell::computeCollapsedStartBorder(IncludeBorderColorOrNot includeColor) const
 {
     // For the start border, we need to check, in order of precedence:
     // (1) Our start border.
     CSSPropertyID startColorProperty = includeColor ? CSSProperty::resolveDirectionAwareProperty(CSSPropertyBorderInlineStartColor, tableWritingMode()) : CSSPropertyInvalid;
     CSSPropertyID endColorProperty = includeColor ? CSSProperty::resolveDirectionAwareProperty(CSSPropertyBorderInlineEndColor, tableWritingMode()) : CSSPropertyInvalid;
-    CollapsedBorderValue result(style().borderStart(tableWritingMode()), includeColor ? style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::Cell, style().usedZoomForLength());
+    CollapsedBorderValue result(style().borderStart(tableWritingMode()), includeColor ? resolvedBorderColor(style(), startColorProperty) : Color(), BorderPrecedence::Cell, style().usedZoomForLength());
 
     RenderTable* table = this->table();
     if (!table)
@@ -740,7 +763,7 @@ CollapsedBorderValue RenderTableCell::computeCollapsedStartBorder(IncludeBorderC
     // (2) The end border of the preceding cell.
     RenderTableCell* cellBefore = table->cellBefore(this);
     if (cellBefore) {
-        CollapsedBorderValue cellBeforeAdjoiningBorder = CollapsedBorderValue(cellBefore->borderAdjoiningCellAfter(*this), includeColor ? cellBefore->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::Cell, cellBefore->style().usedZoomForLength());
+        CollapsedBorderValue cellBeforeAdjoiningBorder = CollapsedBorderValue(cellBefore->borderAdjoiningCellAfter(*this), includeColor ? resolvedBorderColor(cellBefore->style(), endColorProperty) : Color(), BorderPrecedence::Cell, cellBefore->style().usedZoomForLength());
         // |result| should be the 2nd argument as |cellBefore| should win in case of equality per CSS 2.1 (Border conflict resolution, point 4).
         result = chooseBorder(cellBeforeAdjoiningBorder, result);
         if (!result.exists())
@@ -750,12 +773,12 @@ CollapsedBorderValue RenderTableCell::computeCollapsedStartBorder(IncludeBorderC
     bool startBorderAdjoinsTable = hasStartBorderAdjoiningTable();
     if (startBorderAdjoinsTable) {
         // (3) Our row's start border.
-        result = chooseBorder(result, CollapsedBorderValue(row()->borderAdjoiningStartCell(*this), includeColor ? parent()->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::Row, row()->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(row()->borderAdjoiningStartCell(*this), includeColor ? resolvedBorderColor(parent()->style(), startColorProperty) : Color(), BorderPrecedence::Row, row()->style().usedZoomForLength()));
         if (!result.exists())
             return result;
 
         // (4) Our row group's start border.
-        result = chooseBorder(result, CollapsedBorderValue(section()->borderAdjoiningStartCell(*this), includeColor ? section()->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::RowGroup, section()->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(section()->borderAdjoiningStartCell(*this), includeColor ? resolvedBorderColor(section()->style(), startColorProperty) : Color(), BorderPrecedence::RowGroup, section()->style().usedZoomForLength()));
         if (!result.exists())
             return result;
     }
@@ -766,19 +789,19 @@ CollapsedBorderValue RenderTableCell::computeCollapsedStartBorder(IncludeBorderC
     if (RenderTableCol* colElt = table->colElement(col(), &startColEdge, &endColEdge)) {
         if (colElt->isTableColumnGroup() && startColEdge) {
             // The |colElt| is a column group and is also the first colgroup (in case of spanned colgroups).
-            result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellStartBorder(), includeColor ? colElt->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::ColumnGroup, colElt->style().usedZoomForLength()));
+            result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellStartBorder(), includeColor ? resolvedBorderColor(colElt->style(), startColorProperty) : Color(), BorderPrecedence::ColumnGroup, colElt->style().usedZoomForLength()));
             if (!result.exists())
                 return result;
         } else if (!colElt->isTableColumnGroup()) {
             // We first consider the |colElt| and irrespective of whether it is a spanned col or not, we apply
             // its start border. This is as per HTML5 which states that: "For the purposes of the CSS table model,
             // the col element is expected to be treated as if it was present as many times as its span attribute specifies".
-            result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellStartBorder(), includeColor ? colElt->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
+            result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellStartBorder(), includeColor ? resolvedBorderColor(colElt->style(), startColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
             if (!result.exists())
                 return result;
             // Next, apply the start border of the enclosing colgroup but only if it is adjacent to the cell's edge.
             if (RenderTableCol* enclosingColumnGroup = colElt->enclosingColumnGroupIfAdjacentBefore()) {
-                result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->borderAdjoiningCellStartBorder(), includeColor ? enclosingColumnGroup->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
+                result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->borderAdjoiningCellStartBorder(), includeColor ? resolvedBorderColor(enclosingColumnGroup->style(), startColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
                 if (!result.exists())
                     return result;
             }
@@ -790,18 +813,18 @@ CollapsedBorderValue RenderTableCell::computeCollapsedStartBorder(IncludeBorderC
         if (RenderTableCol* colElt = table->colElement(col() - 1, &startColEdge, &endColEdge)) {
             if (colElt->isTableColumnGroup() && endColEdge) {
                 // The element is a colgroup and is also the last colgroup (in case of spanned colgroups).
-                result = chooseBorder(CollapsedBorderValue(colElt->borderAdjoiningCellAfter(*this), includeColor ? colElt->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::ColumnGroup, colElt->style().usedZoomForLength()), result);
+                result = chooseBorder(CollapsedBorderValue(colElt->borderAdjoiningCellAfter(*this), includeColor ? resolvedBorderColor(colElt->style(), endColorProperty) : Color(), BorderPrecedence::ColumnGroup, colElt->style().usedZoomForLength()), result);
                 if (!result.exists())
                     return result;
             } else if (colElt->isTableColumn()) {
                 // Resolve the collapsing border against the col's border ignoring any 'span' as per HTML5.
-                result = chooseBorder(CollapsedBorderValue(colElt->borderAdjoiningCellAfter(*this), includeColor ? colElt->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()), result);
+                result = chooseBorder(CollapsedBorderValue(colElt->borderAdjoiningCellAfter(*this), includeColor ? resolvedBorderColor(colElt->style(), endColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()), result);
                 if (!result.exists())
                     return result;
                 // Next, if the previous col has a parent colgroup then its end border should be applied
                 // but only if it is adjacent to the cell's edge.
                 if (RenderTableCol* enclosingColumnGroup = colElt->enclosingColumnGroupIfAdjacentAfter()) {
-                    result = chooseBorder(CollapsedBorderValue(enclosingColumnGroup->borderAdjoiningCellEndBorder(), includeColor ? enclosingColumnGroup->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()), result);
+                    result = chooseBorder(CollapsedBorderValue(enclosingColumnGroup->borderAdjoiningCellEndBorder(), includeColor ? resolvedBorderColor(enclosingColumnGroup->style(), endColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()), result);
                     if (!result.exists())
                         return result;
                 }
@@ -811,7 +834,7 @@ CollapsedBorderValue RenderTableCell::computeCollapsedStartBorder(IncludeBorderC
 
     if (startBorderAdjoinsTable) {
         // (7) The table's start border.
-        result = chooseBorder(result, CollapsedBorderValue(table->style().borderStart(), includeColor ? table->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::Table, table->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(table->style().borderStart(), includeColor ? resolvedBorderColor(table->style(), startColorProperty) : Color(), BorderPrecedence::Table, table->style().usedZoomForLength()));
         if (!result.exists())
             return result;
     }
@@ -844,7 +867,7 @@ CollapsedBorderValue RenderTableCell::computeCollapsedEndBorder(IncludeBorderCol
     CSSPropertyID startColorProperty = includeColor
         ? CSSProperty::resolveDirectionAwareProperty(CSSPropertyBorderInlineStartColor, tableWritingMode()) : CSSPropertyInvalid;
     CSSPropertyID endColorProperty = includeColor ? CSSProperty::resolveDirectionAwareProperty(CSSPropertyBorderInlineEndColor, tableWritingMode()) : CSSPropertyInvalid;
-    CollapsedBorderValue result = CollapsedBorderValue(style().borderEnd(tableWritingMode()), includeColor ? style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::Cell, style().usedZoomForLength());
+    CollapsedBorderValue result = CollapsedBorderValue(style().borderEnd(tableWritingMode()), includeColor ? resolvedBorderColor(style(), endColorProperty) : Color(), BorderPrecedence::Cell, style().usedZoomForLength());
 
     RenderTable* table = this->table();
     if (!table)
@@ -855,7 +878,7 @@ CollapsedBorderValue RenderTableCell::computeCollapsedEndBorder(IncludeBorderCol
     // (2) The start border of the following cell.
     if (!isEndColumn) {
         if (RenderTableCell* cellAfter = table->cellAfter(this)) {
-            CollapsedBorderValue cellAfterAdjoiningBorder = CollapsedBorderValue(cellAfter->borderAdjoiningCellBefore(*this), includeColor ? cellAfter->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::Cell, cellAfter->style().usedZoomForLength());
+            CollapsedBorderValue cellAfterAdjoiningBorder = CollapsedBorderValue(cellAfter->borderAdjoiningCellBefore(*this), includeColor ? resolvedBorderColor(cellAfter->style(), startColorProperty) : Color(), BorderPrecedence::Cell, cellAfter->style().usedZoomForLength());
             result = chooseBorder(result, cellAfterAdjoiningBorder);
             if (!result.exists())
                 return result;
@@ -865,12 +888,12 @@ CollapsedBorderValue RenderTableCell::computeCollapsedEndBorder(IncludeBorderCol
     bool endBorderAdjoinsTable = hasEndBorderAdjoiningTable();
     if (endBorderAdjoinsTable) {
         // (3) Our row's end border.
-        result = chooseBorder(result, CollapsedBorderValue(row()->borderAdjoiningEndCell(*this), includeColor ? parent()->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::Row, row()->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(row()->borderAdjoiningEndCell(*this), includeColor ? resolvedBorderColor(parent()->style(), endColorProperty) : Color(), BorderPrecedence::Row, row()->style().usedZoomForLength()));
         if (!result.exists())
             return result;
         
         // (4) Our row group's end border.
-        result = chooseBorder(result, CollapsedBorderValue(section()->borderAdjoiningEndCell(*this), includeColor ? section()->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::RowGroup, section()->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(section()->borderAdjoiningEndCell(*this), includeColor ? resolvedBorderColor(section()->style(), endColorProperty) : Color(), BorderPrecedence::RowGroup, section()->style().usedZoomForLength()));
         if (!result.exists())
             return result;
     }
@@ -881,19 +904,19 @@ CollapsedBorderValue RenderTableCell::computeCollapsedEndBorder(IncludeBorderCol
     if (RenderTableCol* colElt = table->colElement(col() + colSpan() - 1, &startColEdge, &endColEdge)) {
         if (colElt->isTableColumnGroup() && endColEdge) {
             // The element is a colgroup and is also the last colgroup (in case of spanned colgroups).
-            result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellEndBorder(), includeColor ? colElt->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::ColumnGroup, colElt->style().usedZoomForLength()));
+            result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellEndBorder(), includeColor ? resolvedBorderColor(colElt->style(), endColorProperty) : Color(), BorderPrecedence::ColumnGroup, colElt->style().usedZoomForLength()));
             if (!result.exists())
                 return result;
         } else if (!colElt->isTableColumnGroup()) {
             // First apply the end border of the column irrespective of whether it is spanned or not. This is as per
             // HTML5 which states that: "For the purposes of the CSS table model, the col element is expected to be
             // treated as if it was present as many times as its span attribute specifies".
-            result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellEndBorder(), includeColor ? colElt->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
+            result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellEndBorder(), includeColor ? resolvedBorderColor(colElt->style(), endColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
             if (!result.exists())
                 return result;
             // Next, if it has a parent colgroup then we apply its end border but only if it is adjacent to the cell.
             if (RenderTableCol* enclosingColumnGroup = colElt->enclosingColumnGroupIfAdjacentAfter()) {
-                result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->borderAdjoiningCellEndBorder(), includeColor ? enclosingColumnGroup->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
+                result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->borderAdjoiningCellEndBorder(), includeColor ? resolvedBorderColor(enclosingColumnGroup->style(), endColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
                 if (!result.exists())
                     return result;
             }
@@ -905,17 +928,17 @@ CollapsedBorderValue RenderTableCell::computeCollapsedEndBorder(IncludeBorderCol
         if (RenderTableCol* colElt = table->colElement(col() + colSpan(), &startColEdge, &endColEdge)) {
             if (colElt->isTableColumnGroup() && startColEdge) {
                 // This case is a colgroup without any col, we only compute it if it is adjacent to the cell's edge.
-                result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellBefore(*this), includeColor ? colElt->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::ColumnGroup, colElt->style().usedZoomForLength()));
+                result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellBefore(*this), includeColor ? resolvedBorderColor(colElt->style(), startColorProperty) : Color(), BorderPrecedence::ColumnGroup, colElt->style().usedZoomForLength()));
                 if (!result.exists())
                     return result;
             } else if (colElt->isTableColumn()) {
                 // Resolve the collapsing border against the col's border ignoring any 'span' as per HTML5.
-                result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellBefore(*this), includeColor ? colElt->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
+                result = chooseBorder(result, CollapsedBorderValue(colElt->borderAdjoiningCellBefore(*this), includeColor ? resolvedBorderColor(colElt->style(), startColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
                 if (!result.exists())
                     return result;
                 // If we have a parent colgroup, resolve the border only if it is adjacent to the cell.
                 if (RenderTableCol* enclosingColumnGroup = colElt->enclosingColumnGroupIfAdjacentBefore()) {
-                    result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->borderAdjoiningCellStartBorder(), includeColor ? enclosingColumnGroup->style().visitedDependentColorWithColorFilter(startColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
+                    result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->borderAdjoiningCellStartBorder(), includeColor ? resolvedBorderColor(enclosingColumnGroup->style(), startColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
                     if (!result.exists())
                         return result;
                 }
@@ -925,7 +948,7 @@ CollapsedBorderValue RenderTableCell::computeCollapsedEndBorder(IncludeBorderCol
 
     if (endBorderAdjoinsTable) {
         // (7) The table's end border.
-        result = chooseBorder(result, CollapsedBorderValue(table->style().borderEnd(), includeColor ? table->style().visitedDependentColorWithColorFilter(endColorProperty) : Color(), BorderPrecedence::Table, table->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(table->style().borderEnd(), includeColor ? resolvedBorderColor(table->style(), endColorProperty) : Color(), BorderPrecedence::Table, table->style().usedZoomForLength()));
         if (!result.exists())
             return result;
     }
@@ -957,21 +980,21 @@ CollapsedBorderValue RenderTableCell::computeCollapsedBeforeBorder(IncludeBorder
     // (1) Our before border.
     CSSPropertyID beforeColorProperty = includeColor ? CSSProperty::resolveDirectionAwareProperty(CSSPropertyBorderBlockStartColor, tableWritingMode()) : CSSPropertyInvalid;
     CSSPropertyID afterColorProperty = includeColor ? CSSProperty::resolveDirectionAwareProperty(CSSPropertyBorderBlockEndColor, tableWritingMode()) : CSSPropertyInvalid;
-    CollapsedBorderValue result = CollapsedBorderValue(style().borderBefore(tableWritingMode()), includeColor ? style().visitedDependentColorWithColorFilter(beforeColorProperty) : Color(), BorderPrecedence::Cell, style().usedZoomForLength());
-    
+    CollapsedBorderValue result = CollapsedBorderValue(style().borderBefore(tableWritingMode()), includeColor ? resolvedBorderColor(style(), beforeColorProperty) : Color(), BorderPrecedence::Cell, style().usedZoomForLength());
+
     RenderTable* table = this->table();
     if (!table)
         return result;
     RenderTableCell* previousCell = table->cellAbove(this);
     if (previousCell) {
         // (2) A before cell's after border.
-        result = chooseBorder(CollapsedBorderValue(previousCell->style().borderAfter(), includeColor ? previousCell->style().visitedDependentColorWithColorFilter(afterColorProperty) : Color(), BorderPrecedence::Cell, previousCell->style().usedZoomForLength()), result);
+        result = chooseBorder(CollapsedBorderValue(previousCell->style().borderAfter(), includeColor ? resolvedBorderColor(previousCell->style(), afterColorProperty) : Color(), BorderPrecedence::Cell, previousCell->style().usedZoomForLength()), result);
         if (!result.exists())
             return result;
     }
     
     // (3) Our row's before border.
-    result = chooseBorder(result, CollapsedBorderValue(parent()->style().borderBefore(tableWritingMode()), includeColor ? parent()->style().visitedDependentColorWithColorFilter(beforeColorProperty) : Color(), BorderPrecedence::Row, parent()->style().usedZoomForLength()));
+    result = chooseBorder(result, CollapsedBorderValue(parent()->style().borderBefore(tableWritingMode()), includeColor ? resolvedBorderColor(parent()->style(), beforeColorProperty) : Color(), BorderPrecedence::Row, parent()->style().usedZoomForLength()));
     if (!result.exists())
         return result;
     
@@ -984,7 +1007,7 @@ CollapsedBorderValue RenderTableCell::computeCollapsedBeforeBorder(IncludeBorder
             previousRow = previousCell->section()->lastRow();
     
         if (previousRow) {
-            result = chooseBorder(CollapsedBorderValue(previousRow->style().borderAfter(), includeColor ? previousRow->style().visitedDependentColorWithColorFilter(afterColorProperty) : Color(), BorderPrecedence::Row, previousRow->style().usedZoomForLength()), result);
+            result = chooseBorder(CollapsedBorderValue(previousRow->style().borderAfter(), includeColor ? resolvedBorderColor(previousRow->style(), afterColorProperty) : Color(), BorderPrecedence::Row, previousRow->style().usedZoomForLength()), result);
             if (!result.exists())
                 return result;
         }
@@ -994,14 +1017,14 @@ CollapsedBorderValue RenderTableCell::computeCollapsedBeforeBorder(IncludeBorder
     RenderTableSection* currSection = section();
     if (!rowIndex()) {
         // (5) Our row group's before border.
-        result = chooseBorder(result, CollapsedBorderValue(currSection->style().borderBefore(tableWritingMode()), includeColor ? currSection->style().visitedDependentColorWithColorFilter(beforeColorProperty) : Color(), BorderPrecedence::RowGroup, currSection->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(currSection->style().borderBefore(tableWritingMode()), includeColor ? resolvedBorderColor(currSection->style(), beforeColorProperty) : Color(), BorderPrecedence::RowGroup, currSection->style().usedZoomForLength()));
         if (!result.exists())
             return result;
         
         // (6) Previous row group's after border.
         currSection = table->sectionAbove(currSection, SkipEmptySections);
         if (currSection) {
-            result = chooseBorder(CollapsedBorderValue(currSection->style().borderAfter(), includeColor ? currSection->style().visitedDependentColorWithColorFilter(afterColorProperty) : Color(), BorderPrecedence::RowGroup, currSection->style().usedZoomForLength()), result);
+            result = chooseBorder(CollapsedBorderValue(currSection->style().borderAfter(), includeColor ? resolvedBorderColor(currSection->style(), afterColorProperty) : Color(), BorderPrecedence::RowGroup, currSection->style().usedZoomForLength()), result);
             if (!result.exists())
                 return result;
         }
@@ -1011,18 +1034,18 @@ CollapsedBorderValue RenderTableCell::computeCollapsedBeforeBorder(IncludeBorder
         // (8) Our column and column group's before borders.
         RenderTableCol* colElt = table->colElement(col());
         if (colElt) {
-            result = chooseBorder(result, CollapsedBorderValue(colElt->style().borderBefore(tableWritingMode()), includeColor ? colElt->style().visitedDependentColorWithColorFilter(beforeColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
+            result = chooseBorder(result, CollapsedBorderValue(colElt->style().borderBefore(tableWritingMode()), includeColor ? resolvedBorderColor(colElt->style(), beforeColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
             if (!result.exists())
                 return result;
             if (RenderTableCol* enclosingColumnGroup = colElt->enclosingColumnGroup()) {
-                result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->style().borderBefore(tableWritingMode()), includeColor ? enclosingColumnGroup->style().visitedDependentColorWithColorFilter(beforeColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
+                result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->style().borderBefore(tableWritingMode()), includeColor ? resolvedBorderColor(enclosingColumnGroup->style(), beforeColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
                 if (!result.exists())
                     return result;
             }
         }
         
         // (9) The table's before border.
-        result = chooseBorder(result, CollapsedBorderValue(table->style().borderBefore(), includeColor ? table->style().visitedDependentColorWithColorFilter(beforeColorProperty) : Color(), BorderPrecedence::Table, table->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(table->style().borderBefore(), includeColor ? resolvedBorderColor(table->style(), beforeColorProperty) : Color(), BorderPrecedence::Table, table->style().usedZoomForLength()));
         if (!result.exists())
             return result;
     }
@@ -1054,27 +1077,27 @@ CollapsedBorderValue RenderTableCell::computeCollapsedAfterBorder(IncludeBorderC
     // (1) Our after border.
     CSSPropertyID beforeColorProperty = includeColor ? CSSProperty::resolveDirectionAwareProperty(CSSPropertyBorderBlockStartColor, tableWritingMode()) : CSSPropertyInvalid;
     CSSPropertyID afterColorProperty = includeColor ? CSSProperty::resolveDirectionAwareProperty(CSSPropertyBorderBlockEndColor, tableWritingMode()) : CSSPropertyInvalid;
-    CollapsedBorderValue result = CollapsedBorderValue(style().borderAfter(tableWritingMode()), includeColor ? style().visitedDependentColorWithColorFilter(afterColorProperty) : Color(), BorderPrecedence::Cell, style().usedZoomForLength());
-    
+    CollapsedBorderValue result = CollapsedBorderValue(style().borderAfter(tableWritingMode()), includeColor ? resolvedBorderColor(style(), afterColorProperty) : Color(), BorderPrecedence::Cell, style().usedZoomForLength());
+
     RenderTable* table = this->table();
     if (!table)
         return result;
     RenderTableCell* nextCell = table->cellBelow(this);
     if (nextCell) {
         // (2) An after cell's before border.
-        result = chooseBorder(result, CollapsedBorderValue(nextCell->style().borderBefore(tableWritingMode()), includeColor ? nextCell->style().visitedDependentColorWithColorFilter(beforeColorProperty) : Color(), BorderPrecedence::Cell, nextCell->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(nextCell->style().borderBefore(tableWritingMode()), includeColor ? resolvedBorderColor(nextCell->style(), beforeColorProperty) : Color(), BorderPrecedence::Cell, nextCell->style().usedZoomForLength()));
         if (!result.exists())
             return result;
     }
     
     // (3) Our row's after border. (FIXME: Deal with rowspan!)
-    result = chooseBorder(result, CollapsedBorderValue(parent()->style().borderAfter(), includeColor ? parent()->style().visitedDependentColorWithColorFilter(afterColorProperty) : Color(), BorderPrecedence::Row, parent()->style().usedZoomForLength()));
+    result = chooseBorder(result, CollapsedBorderValue(parent()->style().borderAfter(), includeColor ? resolvedBorderColor(parent()->style(), afterColorProperty) : Color(), BorderPrecedence::Row, parent()->style().usedZoomForLength()));
     if (!result.exists())
         return result;
     
     // (4) The next row's before border.
     if (nextCell) {
-        result = chooseBorder(result, CollapsedBorderValue(nextCell->parent()->style().borderBefore(tableWritingMode()), includeColor ? nextCell->parent()->style().visitedDependentColorWithColorFilter(beforeColorProperty) : Color(), BorderPrecedence::Row, nextCell->parent()->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(nextCell->parent()->style().borderBefore(tableWritingMode()), includeColor ? resolvedBorderColor(nextCell->parent()->style(), beforeColorProperty) : Color(), BorderPrecedence::Row, nextCell->parent()->style().usedZoomForLength()));
         if (!result.exists())
             return result;
     }
@@ -1083,14 +1106,14 @@ CollapsedBorderValue RenderTableCell::computeCollapsedAfterBorder(IncludeBorderC
     RenderTableSection* currSection = section();
     if (rowIndex() + rowSpan() >= currSection->numRows()) {
         // (5) Our row group's after border.
-        result = chooseBorder(result, CollapsedBorderValue(currSection->style().borderAfter(tableWritingMode()), includeColor ? currSection->style().visitedDependentColorWithColorFilter(afterColorProperty) : Color(), BorderPrecedence::RowGroup, currSection->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(currSection->style().borderAfter(tableWritingMode()), includeColor ? resolvedBorderColor(currSection->style(), afterColorProperty) : Color(), BorderPrecedence::RowGroup, currSection->style().usedZoomForLength()));
         if (!result.exists())
             return result;
         
         // (6) Following row group's before border.
         currSection = table->sectionBelow(currSection, SkipEmptySections);
         if (currSection) {
-            result = chooseBorder(result, CollapsedBorderValue(currSection->style().borderBefore(tableWritingMode()), includeColor ? currSection->style().visitedDependentColorWithColorFilter(beforeColorProperty) : Color(), BorderPrecedence::RowGroup, currSection->style().usedZoomForLength()));
+            result = chooseBorder(result, CollapsedBorderValue(currSection->style().borderBefore(tableWritingMode()), includeColor ? resolvedBorderColor(currSection->style(), beforeColorProperty) : Color(), BorderPrecedence::RowGroup, currSection->style().usedZoomForLength()));
             if (!result.exists())
                 return result;
         }
@@ -1100,17 +1123,17 @@ CollapsedBorderValue RenderTableCell::computeCollapsedAfterBorder(IncludeBorderC
         // (8) Our column and column group's after borders.
         RenderTableCol* colElt = table->colElement(col());
         if (colElt) {
-            result = chooseBorder(result, CollapsedBorderValue(colElt->style().borderAfter(tableWritingMode()), includeColor ? colElt->style().visitedDependentColorWithColorFilter(afterColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
+            result = chooseBorder(result, CollapsedBorderValue(colElt->style().borderAfter(tableWritingMode()), includeColor ? resolvedBorderColor(colElt->style(), afterColorProperty) : Color(), BorderPrecedence::Column, colElt->style().usedZoomForLength()));
             if (!result.exists()) return result;
             if (RenderTableCol* enclosingColumnGroup = colElt->enclosingColumnGroup()) {
-                result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->style().borderAfter(tableWritingMode()), includeColor ? enclosingColumnGroup->style().visitedDependentColorWithColorFilter(afterColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
+                result = chooseBorder(result, CollapsedBorderValue(enclosingColumnGroup->style().borderAfter(tableWritingMode()), includeColor ? resolvedBorderColor(enclosingColumnGroup->style(), afterColorProperty) : Color(), BorderPrecedence::ColumnGroup, enclosingColumnGroup->style().usedZoomForLength()));
                 if (!result.exists())
                     return result;
             }
         }
         
         // (9) The table's after border.
-        result = chooseBorder(result, CollapsedBorderValue(table->style().borderAfter(tableWritingMode()), includeColor ? table->style().visitedDependentColorWithColorFilter(afterColorProperty) : Color(), BorderPrecedence::Table, table->style().usedZoomForLength()));
+        result = chooseBorder(result, CollapsedBorderValue(table->style().borderAfter(tableWritingMode()), includeColor ? resolvedBorderColor(table->style(), afterColorProperty) : Color(), BorderPrecedence::Table, table->style().usedZoomForLength()));
         if (!result.exists())
             return result;
     }
@@ -1496,11 +1519,12 @@ void RenderTableCell::paintBackgroundsBehindCell(PaintInfo& paintInfo, LayoutPoi
     const auto& style = backgroundObject->style();
     auto& bgLayers = style.backgroundLayers();
 
-    auto color = style.visitedDependentColor(CSSPropertyBackgroundColor);
+    auto color = style.visitedDependentBackgroundColor();
     if (!Style::hasImageInAnyLayer(bgLayers) && !color.isVisible())
         return;
 
-    color = style.colorByApplyingColorFilter(color);
+    Style::ColorResolver colorResolver { style };
+    color = colorResolver.colorApplyingColorFilter(color);
 
     LayoutPoint adjustedPaintOffset = paintOffset;
     if (backgroundObject != this)

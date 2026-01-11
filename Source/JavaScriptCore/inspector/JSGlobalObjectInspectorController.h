@@ -29,6 +29,7 @@
 #include "InspectorEnvironment.h"
 #include "InspectorFrontendRouter.h"
 #include "Strong.h"
+#include <wtf/CheckedPtr.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
@@ -62,7 +63,7 @@ struct JSAgentContext;
 
 class JSGlobalObjectInspectorController final
     : public InspectorEnvironment
-    , public CanMakeCheckedPtr<JSGlobalObjectInspectorController>
+    , public CanMakeThreadSafeCheckedPtr<JSGlobalObjectInspectorController>
 #if ENABLE(INSPECTOR_ALTERNATE_DISPATCHERS)
     , public AugmentableInspectorController
 #endif
@@ -75,11 +76,11 @@ public:
     ~JSGlobalObjectInspectorController() final;
 
     // AbstractCanMakeCheckedPtr overrides
-    uint32_t checkedPtrCount() const final { return CanMakeCheckedPtr::checkedPtrCount(); }
-    uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
-    void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
-    void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
-    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
+    uint32_t checkedPtrCount() const final { return CanMakeThreadSafeCheckedPtr::checkedPtrCount(); }
+    uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeThreadSafeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
+    void incrementCheckedPtrCount() const final { CanMakeThreadSafeCheckedPtr::incrementCheckedPtrCount(); }
+    void decrementCheckedPtrCount() const final { CanMakeThreadSafeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeThreadSafeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
     void connectFrontend(FrontendChannel&, bool isAutomaticInspection, bool immediatelyPause);
     void disconnectFrontend(FrontendChannel&);
@@ -93,7 +94,7 @@ public:
 
     void reportAPIException(JSC::JSGlobalObject*, JSC::Exception*);
 
-    WeakPtr<JSC::ConsoleClient> consoleClient() const;
+    CheckedPtr<JSC::ConsoleClient> consoleClient() const;
 
     bool developerExtrasEnabled() const final;
     bool canAccessInspectedScriptState(JSC::JSGlobalObject*) const final { return true; }
@@ -131,7 +132,7 @@ private:
     InspectorConsoleAgent* m_consoleAgent { nullptr };
 
     // Lazy, but also on-demand agents.
-    InspectorAgent* m_inspectorAgent { nullptr };
+    CheckedPtr<InspectorAgent> m_inspectorAgent;
     InspectorDebuggerAgent* m_debuggerAgent { nullptr };
 
     const Ref<FrontendRouter> m_frontendRouter;

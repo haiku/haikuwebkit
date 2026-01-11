@@ -38,7 +38,7 @@ namespace WebCore {
 class WebXRSession;
 
 class WebXRTransientInputHitTestSource : public RefCounted<WebXRTransientInputHitTestSource> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebXRTransientInputHitTestSource);
+    WTF_MAKE_TZONE_ALLOCATED(WebXRTransientInputHitTestSource);
 public:
     static Ref<WebXRTransientInputHitTestSource> create(WebXRSession&, PlatformXR::TransientInputHitTestSource&&);
     ~WebXRTransientInputHitTestSource();

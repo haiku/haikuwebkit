@@ -38,7 +38,7 @@ class FrameHandle;
 
 class FrameTreeNode final : public ObjectImpl<Object::Type::FrameTreeNode> {
 public:
-    static Ref<FrameTreeNode> create(WebKit::FrameTreeNodeData&& data, WebKit::WebPageProxy& page) { return adoptRef(*new FrameTreeNode(WTFMove(data), page)); }
+    static Ref<FrameTreeNode> create(WebKit::FrameTreeNodeData&& data, WebKit::WebPageProxy& page) { return adoptRef(*new FrameTreeNode(WTF::move(data), page)); }
     virtual ~FrameTreeNode();
 
     WebKit::WebPageProxy& page() { return m_page.get(); }
@@ -48,7 +48,7 @@ public:
 
 private:
     FrameTreeNode(WebKit::FrameTreeNodeData&& data, WebKit::WebPageProxy& page)
-        : m_data(WTFMove(data))
+        : m_data(WTF::move(data))
         , m_page(page) { }
 
     const WebKit::FrameTreeNodeData m_data;

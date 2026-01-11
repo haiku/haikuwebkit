@@ -130,7 +130,7 @@ void JSTestAsyncIterableWithoutFlagsPrototype::finishCreation(VM& vm)
 const ClassInfo JSTestAsyncIterableWithoutFlags::s_info = { "TestAsyncIterableWithoutFlags"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSTestAsyncIterableWithoutFlags) };
 
 JSTestAsyncIterableWithoutFlags::JSTestAsyncIterableWithoutFlags(Structure* structure, JSDOMGlobalObject& globalObject, Ref<TestAsyncIterableWithoutFlags>&& impl)
-    : JSDOMWrapper<TestAsyncIterableWithoutFlags>(structure, globalObject, WTFMove(impl))
+    : JSDOMWrapper<TestAsyncIterableWithoutFlags>(structure, globalObject, WTF::move(impl))
 {
 }
 
@@ -200,7 +200,7 @@ public:
 
     static TestAsyncIterableWithoutFlagsIterator* create(JSC::VM& vm, JSC::Structure* structure, JSTestAsyncIterableWithoutFlags& iteratedObject, IterationKind kind, InternalIterator&& iterator)
     {
-        auto* instance = new (NotNull, JSC::allocateCell<TestAsyncIterableWithoutFlagsIterator>(vm)) TestAsyncIterableWithoutFlagsIterator(structure, iteratedObject, kind, WTFMove(iterator));
+        auto* instance = new (NotNull, JSC::allocateCell<TestAsyncIterableWithoutFlagsIterator>(vm)) TestAsyncIterableWithoutFlagsIterator(structure, iteratedObject, kind, WTF::move(iterator));
         instance->finishCreation(vm);
         return instance;
     }
@@ -210,7 +210,7 @@ public:
     JSC::JSBoundFunction* createOnRejectedFunction(JSC::JSGlobalObject*);
 private:
     TestAsyncIterableWithoutFlagsIterator(JSC::Structure* structure, JSTestAsyncIterableWithoutFlags& iteratedObject, IterationKind kind, InternalIterator&& iterator)
-        : Base(structure, iteratedObject, kind, WTFMove(iterator))
+        : Base(structure, iteratedObject, kind, WTF::move(iterator))
     {
     }
 };
@@ -310,7 +310,7 @@ JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlo
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestAsyncIterableWithoutFlags>(impl.ptr());
 #endif
-    return createWrapper<TestAsyncIterableWithoutFlags>(globalObject, WTFMove(impl));
+    return createWrapper<TestAsyncIterableWithoutFlags>(globalObject, WTF::move(impl));
 }
 
 JSC::JSValue toJS(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, TestAsyncIterableWithoutFlags& impl)

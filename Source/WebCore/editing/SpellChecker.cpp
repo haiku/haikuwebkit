@@ -187,11 +187,11 @@ void SpellChecker::requestCheckingFor(Ref<SpellCheckRequest>&& request)
     request->setCheckerAndIdentifier(this, identifier);
 
     if (m_timerToProcessQueuedRequest.isActive() || m_processingRequest) {
-        enqueueRequest(WTFMove(request));
+        enqueueRequest(WTF::move(request));
         return;
     }
 
-    invokeRequest(WTFMove(request));
+    invokeRequest(WTF::move(request));
 }
 
 void SpellChecker::requestExtendedCheckingFor(Ref<SpellCheckRequest>&& request, const Vector<TextCheckingResult>& results)
@@ -203,7 +203,7 @@ void SpellChecker::requestExtendedCheckingFor(Ref<SpellCheckRequest>&& request, 
     request->setCheckerAndIdentifier(this, identifier);
     request->setExistingResults(results);
 
-    client()->requestExtendedCheckingOfString(WTFMove(request), protectedDocument()->selection().selection());
+    client()->requestExtendedCheckingOfString(WTF::move(request), protectedDocument()->selection().selection());
 }
 
 void SpellChecker::invokeRequest(Ref<SpellCheckRequest>&& request)
@@ -211,7 +211,7 @@ void SpellChecker::invokeRequest(Ref<SpellCheckRequest>&& request)
     ASSERT(!m_processingRequest);
     if (!client())
         return;
-    m_processingRequest = WTFMove(request);
+    m_processingRequest = WTF::move(request);
     client()->requestCheckingOfString(*m_processingRequest, protectedDocument()->selection().selection());
 }
 
@@ -221,11 +221,11 @@ void SpellChecker::enqueueRequest(Ref<SpellCheckRequest>&& request)
         if (request->rootEditableElement() != queue->rootEditableElement())
             continue;
 
-        queue = WTFMove(request);
+        queue = WTF::move(request);
         return;
     }
 
-    m_requestQueue.append(WTFMove(request));
+    m_requestQueue.append(WTF::move(request));
 }
 
 static bool containsGrammarResult(TextCheckingResult result, const Vector<TextCheckingResult>& existingResults)

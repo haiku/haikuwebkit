@@ -39,10 +39,10 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGGradientElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGGradientElement);
 
 SVGGradientElement::SVGGradientElement(const QualifiedName& tagName, Document& document, UniqueRef<SVGPropertyRegistry>&& propertyRegistry)
-    : SVGElement(tagName, document, WTFMove(propertyRegistry))
+    : SVGElement(tagName, document, WTF::move(propertyRegistry))
     , SVGURIReference(this)
 {
     static bool didRegistration = false;

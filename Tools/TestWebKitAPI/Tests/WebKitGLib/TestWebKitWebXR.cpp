@@ -258,6 +258,57 @@ static void testWebKitXRPermissionRequest(WebXRTest* test, gconstpointer)
     g_assert_cmpstr(data.result.title.utf8().data(), ==, "pass");
 }
 
+static void testWebKitXRHitTest(WebXRTest* test, gconstpointer)
+{
+    test->showInWindow();
+
+    // Register permission-request callback
+    typedef gboolean (*PermissionRequestCallback)(WebKitWebView*, WebKitPermissionRequest*, void*);
+    PermissionRequestCallback permissionRequestCallback = [](WebKitWebView*, WebKitPermissionRequest* request, void*) -> gboolean {
+        webkit_permission_request_allow(request);
+        return TRUE;
+    };
+    g_signal_connect(test->webView(), "permission-request", G_CALLBACK(permissionRequestCallback), nullptr);
+
+    // Enable WebXRHitTestModule
+    g_autoptr(WebKitFeatureList) featureList = webkit_settings_get_experimental_features();
+    WebKitFeature* feature = findFeature(featureList, "WebXRHitTestModule");
+    g_assert_nonnull(feature);
+    auto settings = webkit_web_view_get_settings(test->webView());
+    webkit_settings_set_feature_enabled(settings, feature, true);
+
+    auto testHitTest = [&]() {
+        auto script = makeString(
+            "async function start() {"
+            "    try {"
+            "        const canvas = document.createElement('canvas');"
+            "        document.body.appendChild(canvas);"
+            "        const session = await navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['hit-test'] });"
+            "        const gl = canvas.getContext('webgl', {xrCompatible: true});"
+            "        const layer = new XRWebGLLayer(session, gl);"
+            "        session.updateRenderState({ baseLayer: layer });"
+            "        const refSpace = await session.requestReferenceSpace('viewer');"
+            "        const hitTestSource = await session.requestHitTestSource({ space: refSpace, offsetRay: new XRRay() });"
+            "        const frame = await new Promise(resolve => session.requestAnimationFrame((time, frame) => resolve(frame)));"
+            "        const hitTestResults = frame.getHitTestResults(hitTestSource);"
+            "        session.end();"
+            "        document.title = 'pass';"
+            "    } catch (e) {"
+            "        document.title = e.toString();"
+            "    }"
+            "}"
+            "start()"_s);
+        test->loadHtml("", "https://foo.com/bar");
+        test->waitUntilLoadFinished();
+        test->runJavaScriptAndWaitUntilFinished(script.utf8().data(), nullptr);
+        test->waitUntilTitleChanged();
+        return String::fromUTF8(webkit_web_view_get_title(test->webView()));
+    };
+
+    // FIXME: requestHitTestSource throws NotSupportedError because the SDK doesn't support XR_ANDROID_raycast yet
+    g_assert_cmpstr(testHitTest().utf8().data(), ==, "NotSupportedError: The operation is not supported.");
+}
+
 void beforeAll()
 {
     kHttpsServer = new WebKitTestServer(WebKitTestServer::ServerHTTPS);
@@ -265,6 +316,7 @@ void beforeAll()
 
     WebXRTest::add("WebKitWebXR", "leave-immersive-mode", testWebKitWebXRLeaveImmersiveModeAndWaitUntilImmersiveModeChanged);
     WebXRTest::add("WebKitWebXR", "permission-request", testWebKitXRPermissionRequest);
+    WebXRTest::add("WebKitWebXR", "hit-test", testWebKitXRHitTest);
 }
 
 void afterAll()

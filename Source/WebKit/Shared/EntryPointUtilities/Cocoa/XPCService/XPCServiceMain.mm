@@ -50,6 +50,7 @@
 #import <wtf/spi/cocoa/OSLogSPI.h>
 #import <wtf/spi/darwin/SandboxSPI.h>
 #import <wtf/text/MakeString.h>
+#import <wtf/text/TextStream.h>
 
 #if __has_include(<WebKitAdditions/DyldCallbackAdditions.h>)
 #import <WebKitAdditions/DyldCallbackAdditions.h>
@@ -190,7 +191,7 @@ void XPCServiceEventHandler(xpc_connection_t peer)
                     }).get());
                 }
                 LOG_WITH_STREAM(Language, stream << "Bootstrap message contains OverrideLanguages: " << newLanguages);
-                stageOverrideLanguagesForMainThread(WTFMove(newLanguages));
+                stageOverrideLanguagesForMainThread(WTF::move(newLanguages));
             } else
                 LOG(Language, "Bootstrap message does not contain OverrideLanguages");
 
@@ -199,13 +200,13 @@ void XPCServiceEventHandler(xpc_connection_t peer)
 #endif
 
 #if PLATFORM(IOS_FAMILY)
-            auto containerEnvironmentVariables = xpc_dictionary_get_value(event, "ContainerEnvironmentVariables");
-            xpc_dictionary_apply(containerEnvironmentVariables, ^(const char *key, xpc_object_t value) {
-                setenv(key, xpc_string_get_string_ptr(value), 1);  // NOLINT
-                return true;
-            });
+            if (auto containerEnvironmentVariables = xpc_dictionary_get_value(event, "ContainerEnvironmentVariables")) {
+                xpc_dictionary_apply(containerEnvironmentVariables, ^(const char *key, xpc_object_t value) {
+                    setenv(key, xpc_string_get_string_ptr(value), 1);  // NOLINT
+                    return true;
+                });
+            }
 #endif
-
             String serviceName = xpcDictionaryGetString(event, "service-name"_s);
             if (!serviceName) {
                 RELEASE_LOG_ERROR(IPC, "XPCServiceEventHandler: 'service-name' is not present in the XPC dictionary");
@@ -215,7 +216,9 @@ void XPCServiceEventHandler(xpc_connection_t peer)
             CFStringRef entryPointFunctionName = nullptr;
             if (serviceName.startsWith(webContentServiceName)) {
                 s_isWebProcess = true;
+#if !USE(EXTENSIONKIT)
                 setUserDirSuffix(webContentServiceName);
+#endif
                 entryPointFunctionName = CFSTR(STRINGIZE_VALUE_OF(WEBCONTENT_SERVICE_INITIALIZER));
             } else if (serviceName == networkingServiceName) {
                 setUserDirSuffix(networkingServiceName);

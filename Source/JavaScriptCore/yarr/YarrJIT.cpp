@@ -289,7 +289,7 @@ std::tuple<BoyerMooreBitmap::Map, BoyerMooreFastCandidates> BoyerMooreInfo::crea
         map.merge(bmBitmap.map());
         charactersFastPath.merge(bmBitmap.charactersFastPath());
     }
-    return std::tuple { WTFMove(map), WTFMove(charactersFastPath) };
+    return std::tuple { WTF::move(map), WTF::move(charactersFastPath) };
 }
 
 void BoyerMooreInfo::dump(PrintStream& out) const
@@ -4809,7 +4809,7 @@ class YarrGenerator final : public YarrJITInfo {
             if (collectBoyerMooreInfo(disjunction, currentAlternativeIndex, bmInfo.get())) {
                 dataLogLnIf(YarrJITInternal::verbose, bmInfo.get());
                 m_ops.last().m_bmInfo = bmInfo.ptr();
-                m_bmInfos.append(WTFMove(bmInfo));
+                m_bmInfos.append(WTF::move(bmInfo));
                 m_usesT2 = true;
                 if (m_sampleString)
                     m_sampler.sample(m_sampleString.value());
@@ -5031,7 +5031,7 @@ class YarrGenerator final : public YarrJITInfo {
 
         auto heapMap = makeUniqueRef<BoyerMooreBitmap::Map>(map);
         auto pointer = heapMap->storage();
-        m_bmMaps.append(WTFMove(heapMap));
+        m_bmMaps.append(WTF::move(heapMap));
         return pointer;
     }
 
@@ -5395,17 +5395,17 @@ public:
 
         if (m_compileMode == JITCompileMode::MatchOnly) {
             if (m_charSize == CharSize::Char8) {
-                codeBlock.set8BitCodeMatchOnly(FINALIZE_REGEXP_CODE(linkBuffer, YarrMatchOnly8BitPtrTag, nullptr, "Match-only 8-bit regular expression"), WTFMove(m_bmMaps));
+                codeBlock.set8BitCodeMatchOnly(FINALIZE_REGEXP_CODE(linkBuffer, YarrMatchOnly8BitPtrTag, nullptr, "Match-only 8-bit regular expression"), WTF::move(m_bmMaps));
                 codeBlock.set8BitInlineStats(codeSize, m_callFrameSizeInBytes, canInline, m_usesT2);
             } else {
-                codeBlock.set16BitCodeMatchOnly(FINALIZE_REGEXP_CODE(linkBuffer, YarrMatchOnly16BitPtrTag, nullptr, "Match-only 16-bit regular expression"), WTFMove(m_bmMaps));
+                codeBlock.set16BitCodeMatchOnly(FINALIZE_REGEXP_CODE(linkBuffer, YarrMatchOnly16BitPtrTag, nullptr, "Match-only 16-bit regular expression"), WTF::move(m_bmMaps));
                 codeBlock.set16BitInlineStats(codeSize, m_callFrameSizeInBytes, canInline, m_usesT2);
             }
         } else {
             if (m_charSize == CharSize::Char8)
-                codeBlock.set8BitCode(FINALIZE_REGEXP_CODE(linkBuffer, Yarr8BitPtrTag, nullptr, "8-bit regular expression"), WTFMove(m_bmMaps));
+                codeBlock.set8BitCode(FINALIZE_REGEXP_CODE(linkBuffer, Yarr8BitPtrTag, nullptr, "8-bit regular expression"), WTF::move(m_bmMaps));
             else
-                codeBlock.set16BitCode(FINALIZE_REGEXP_CODE(linkBuffer, Yarr16BitPtrTag, nullptr, "16-bit regular expression"), WTFMove(m_bmMaps));
+                codeBlock.set16BitCode(FINALIZE_REGEXP_CODE(linkBuffer, Yarr16BitPtrTag, nullptr, "16-bit regular expression"), WTF::move(m_bmMaps));
         }
         if (m_failureReason)
             codeBlock.setFallBackWithFailureReason(*m_failureReason);
@@ -5502,7 +5502,7 @@ public:
             });
         }
 
-        boyerMooreData.saveMaps(WTFMove(m_bmMaps));
+        boyerMooreData.saveMaps(WTF::move(m_bmMaps));
     }
 #endif
 

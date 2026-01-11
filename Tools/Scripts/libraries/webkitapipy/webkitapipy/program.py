@@ -306,8 +306,8 @@ def main(argv: Optional[list[str]] = None):
 
     for binary_path in args.input_files:
         add_corresponding_sdkdb(binary_path)
-        report = APIReport.from_binary(use_input(binary_path), arch=args.arch_name)
-        db.add_for_auditing(report)
+        db.add_binary(use_input(binary_path), arch=args.arch_name,
+                      for_auditing=True)
     for diagnostic in db.audit():
         reporter.emit_diagnostic(diagnostic)
 

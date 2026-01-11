@@ -25,6 +25,9 @@
 
 // FIXME (rdar://164119356): Move StdLibExtras.swift from WebGPU to WTF
 
+private import CxxStdlib
+internal import WebGPU_Private.WebGPU
+
 // FIXME (rdar://162375123): This should be in the standard library.
 extension MutableSpan where Element: BitwiseCopyable {
     @_lifetime(self: copy self)

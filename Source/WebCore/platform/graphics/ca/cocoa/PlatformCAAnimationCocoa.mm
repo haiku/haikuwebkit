@@ -334,14 +334,13 @@ void PlatformCAAnimationCocoa::setTimingFunction(const TimingFunction* timingFun
         [m_animation setTimingFunction:toCAMediaTimingFunction(*timingFunction, reverse).get()];
         break;
     case AnimationType::Spring:
-        if (timingFunction->isSpringTimingFunction()) {
+        if (auto* function = dynamicDowncast<SpringTimingFunction>(timingFunction)) {
             // FIXME: Handle reverse.
-            auto& function = *static_cast<const SpringTimingFunction*>(timingFunction);
             CASpringAnimation *springAnimation = (CASpringAnimation *)m_animation.get();
-            springAnimation.mass = function.mass();
-            springAnimation.stiffness = function.stiffness();
-            springAnimation.damping = function.damping();
-            springAnimation.initialVelocity = function.initialVelocity();
+            springAnimation.mass = function->mass();
+            springAnimation.stiffness = function->stiffness();
+            springAnimation.damping = function->damping();
+            springAnimation.initialVelocity = function->initialVelocity();
         }
         break;
     case AnimationType::Group:

@@ -50,8 +50,8 @@
 namespace WebCore {
 
 ContentFilterUnblockHandler::ContentFilterUnblockHandler(String unblockURLHost, UnblockRequesterFunction&& unblockRequester)
-    : m_unblockURLHost { WTFMove(unblockURLHost) }
-    , m_unblockRequester { WTFMove(unblockRequester) }
+    : m_unblockURLHost { WTF::move(unblockURLHost) }
+    , m_unblockRequester { WTF::move(unblockRequester) }
 {
     LOG(ContentFiltering, "Creating ContentFilterUnblockHandler with an unblock requester and unblock URL host <%s>.\n", m_unblockURLHost.ascii().data());
 }
@@ -63,8 +63,8 @@ ContentFilterUnblockHandler::ContentFilterUnblockHandler(const URL& evaluatedURL
 }
 #elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
 ContentFilterUnblockHandler::ContentFilterUnblockHandler(String unblockURLHost, RetainPtr<WebFilterEvaluator> evaluator)
-    : m_unblockURLHost { WTFMove(unblockURLHost) }
-    , m_webFilterEvaluator { WTFMove(evaluator) }
+    : m_unblockURLHost { WTF::move(unblockURLHost) }
+    , m_webFilterEvaluator { WTF::move(evaluator) }
 {
     LOG(ContentFiltering, "Creating ContentFilterUnblockHandler with a WebFilterEvaluator and unblock URL host <%s>.\n", m_unblockURLHost.ascii().data());
 }
@@ -80,12 +80,12 @@ ContentFilterUnblockHandler::ContentFilterUnblockHandler(
 #endif
     bool unblockedAfterRequest
 )
-    : m_unblockURLHost(WTFMove(unblockURLHost))
-    , m_unreachableURL(WTFMove(unreachableURL))
+    : m_unblockURLHost(WTF::move(unblockURLHost))
+    , m_unreachableURL(WTF::move(unreachableURL))
 #if HAVE(WEBCONTENTRESTRICTIONS)
-    , m_evaluatedURL(WTFMove(evaluatedURL))
+    , m_evaluatedURL(WTF::move(evaluatedURL))
 #elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-    , m_webFilterEvaluator(WTFMove(webFilterEvaluator))
+    , m_webFilterEvaluator(WTF::move(webFilterEvaluator))
 #endif
     , m_unblockedAfterRequest(unblockedAfterRequest)
 {
@@ -166,8 +166,8 @@ void ContentFilterUnblockHandler::requestUnblockAsync(DecisionHandlerFunction&& 
 #else
         Ref filter = WebCore::ParentalControlsURLFilter::singleton();
 #endif
-        filter->allowURL(*m_evaluatedURL, [decisionHandler = WTFMove(decisionHandler)](bool didAllow) mutable {
-            callOnMainThread([decisionHandler = WTFMove(decisionHandler), didAllow]() {
+        filter->allowURL(*m_evaluatedURL, [decisionHandler = WTF::move(decisionHandler)](bool didAllow) mutable {
+            callOnMainThread([decisionHandler = WTF::move(decisionHandler), didAllow]() {
                 decisionHandler(didAllow);
             });
         });
@@ -175,8 +175,8 @@ void ContentFilterUnblockHandler::requestUnblockAsync(DecisionHandlerFunction&& 
     }
 #elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
     if (RetainPtr evaluator = webFilterEvaluator()) {
-        [evaluator unblockWithCompletion:[decisionHandler = WTFMove(decisionHandler)](BOOL unblocked, NSError *) mutable {
-            callOnMainThread([decisionHandler = WTFMove(decisionHandler), unblocked] {
+        [evaluator unblockWithCompletion:[decisionHandler = WTF::move(decisionHandler)](BOOL unblocked, NSError *) mutable {
+            callOnMainThread([decisionHandler = WTF::move(decisionHandler), unblocked] {
                 LOG(ContentFiltering, "WebFilterEvaluator %s the unblock request.\n", unblocked ? "allowed" : "did not allow");
                 decisionHandler(unblocked);
             });
@@ -191,13 +191,13 @@ void ContentFilterUnblockHandler::requestUnblockAsync(DecisionHandlerFunction&& 
         };
     }
     if (unblockRequester) {
-        unblockRequester([decisionHandler = WTFMove(decisionHandler)](bool unblocked) mutable {
-            callOnMainThread([decisionHandler = WTFMove(decisionHandler), unblocked] {
+        unblockRequester([decisionHandler = WTF::move(decisionHandler)](bool unblocked) mutable {
+            callOnMainThread([decisionHandler = WTF::move(decisionHandler), unblocked] {
                 decisionHandler(unblocked);
             });
         });
     } else {
-        callOnMainThread([decisionHandler = WTFMove(decisionHandler)] {
+        callOnMainThread([decisionHandler = WTF::move(decisionHandler)] {
             auto unblocked = false;
             decisionHandler(unblocked);
         });

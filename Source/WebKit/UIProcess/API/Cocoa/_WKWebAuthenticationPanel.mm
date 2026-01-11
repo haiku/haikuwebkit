@@ -71,14 +71,6 @@
 
 #if ENABLE(WEB_AUTHN)
 
-namespace WebCore {
-String convertEnumerationToString(AttestationConveyancePreference);
-String convertEnumerationToString(AuthenticatorAttachment);
-String convertEnumerationToString(AuthenticatorTransport);
-String convertEnumerationToString(ResidentKeyRequirement);
-String convertEnumerationToString(UserVerificationRequirement);
-}
-
 #if USE(APPLE_INTERNAL_SDK)
 #import <WebKitAdditions/LocalAuthenticatorAdditions.h>
 #else
@@ -177,7 +169,7 @@ NSString * const _WKLocalAuthenticatorCredentialLastUsedDateKey = @"_WKLocalAuth
 {
     Ref client = WebKit::WebAuthenticationPanelClient::create(self, delegate);
     _client = client.ptr();
-    self._protectedPanel->setClient(WTFMove(client));
+    self._protectedPanel->setClient(WTF::move(client));
 }
 
 
@@ -488,7 +480,7 @@ static RetainPtr<NSArray> getAllLocalAuthenticatorCredentialsImpl(NSString *acce
     }
     if (!nameSet && displayName)
         updatedUserMap[cbor::CBORValue(fido::kDisplayNameMapKey)] = cbor::CBORValue(String(displayName));
-    auto updatedTag = cbor::CBORWriter::write(cbor::CBORValue(WTFMove(updatedUserMap)));
+    auto updatedTag = cbor::CBORWriter::write(cbor::CBORValue(WTF::move(updatedUserMap)));
 
     RetainPtr secAttrApplicationTag = toNSData(updatedTag->span());
 
@@ -560,7 +552,7 @@ static RetainPtr<NSArray> getAllLocalAuthenticatorCredentialsImpl(NSString *acce
     }
     if (!nameSet && name)
         updatedUserMap[cbor::CBORValue(fido::kEntityNameMapKey)] = cbor::CBORValue(String(name));
-    auto updatedTag = cbor::CBORWriter::write(cbor::CBORValue(WTFMove(updatedUserMap)));
+    auto updatedTag = cbor::CBORWriter::write(cbor::CBORValue(WTF::move(updatedUserMap)));
 
     RetainPtr secAttrApplicationTag = toNSData(updatedTag->span());
 
@@ -801,8 +793,8 @@ static void createNSErrorFromWKErrorIfNecessary(NSError **error, WKErrorCode err
         createNSErrorFromWKErrorIfNecessary(error, WKErrorMalformedCredential);
         return nullptr;
     }
-    credentialMap[cbor::CBORValue(WebCore::applicationTagKey)] = cbor::CBORValue(WTFMove(*decodedResponse));
-    auto serializedCredential = cbor::CBORWriter::write(cbor::CBORValue(WTFMove(credentialMap)));
+    credentialMap[cbor::CBORValue(WebCore::applicationTagKey)] = cbor::CBORValue(WTF::move(*decodedResponse));
+    auto serializedCredential = cbor::CBORWriter::write(cbor::CBORValue(WTF::move(credentialMap)));
     return toNSData(serializedCredential.value().span()).autorelease();
 #else
     return nullptr;
@@ -865,16 +857,13 @@ static WebCore::AuthenticatorTransport authenticatorTransport(_WKWebAuthenticati
     case _WKWebAuthenticationTransportSmartCard:
         return WebCore::AuthenticatorTransport::SmartCard;
     }
-    ASSERT_NOT_REACHED();
-    return WebCore::AuthenticatorTransport::Usb;
 }
 
-static Vector<String> authenticatorTransports(NSArray<NSNumber *> *transports)
+static Vector<WebCore::AuthenticatorTransport> authenticatorTransports(NSArray<NSNumber *> *transports)
 {
-    return Vector<String>(transports.count, [transports](size_t i) {
+    return Vector<WebCore::AuthenticatorTransport>(transports.count, [transports](size_t i) {
         NSNumber *transport = transports[i];
-        auto enumTransport = authenticatorTransport((_WKWebAuthenticationTransport)transport.intValue);
-        return WebCore::convertEnumerationToString(enumTransport);
+        return authenticatorTransport((_WKWebAuthenticationTransport)transport.intValue);
     });
 }
 
@@ -939,14 +928,10 @@ static std::optional<WebCore::ResidentKeyRequirement> toWebCore(_WKResidentKeyRe
 static WebCore::AuthenticatorSelectionCriteria authenticatorSelectionCriteria(_WKAuthenticatorSelectionCriteria *authenticatorSelection)
 {
     WebCore::AuthenticatorSelectionCriteria result;
-    auto attachment = authenticatorAttachment(authenticatorSelection.authenticatorAttachment);
-    if (attachment)
-        result.authenticatorAttachmentString = WebCore::convertEnumerationToString(*attachment);
-    auto rk = toWebCore(authenticatorSelection.residentKey);
-    if (rk)
-        result.residentKeyString = WebCore::convertEnumerationToString(*rk);
+    result.authenticatorAttachment = authenticatorAttachment(authenticatorSelection.authenticatorAttachment);
+    result.residentKey = toWebCore(authenticatorSelection.residentKey);
     result.requireResidentKey = authenticatorSelection.requireResidentKey;
-    result.userVerificationString = WebCore::convertEnumerationToString(userVerification(authenticatorSelection.userVerification));
+    result.userVerification = userVerification(authenticatorSelection.userVerification);
 
     return result;
 }
@@ -984,7 +969,7 @@ static WebCore::AuthenticationExtensionsClientInputs authenticationExtensionsCli
             prfValues.first = WebCore::toBufferSource(eval.get().prfSalt1);
             if (eval.get().prfSalt2)
                 prfValues.second = WebCore::toBufferSource(eval.get().prfSalt2);
-            prfInputs.eval = WTFMove(prfValues);
+            prfInputs.eval = WTF::move(prfValues);
         }
         if (evalByCredentialValue) {
             RetainPtr<NSDictionary<NSData *, _WKAuthenticationPRFInputValues *>> evalByCredential = (NSDictionary<NSData *, _WKAuthenticationPRFInputValues *> *)evalByCredentialValue;
@@ -997,12 +982,12 @@ static WebCore::AuthenticationExtensionsClientInputs authenticationExtensionsCli
                     prfValues.second = WebCore::toBufferSource(prfInputValues.prfSalt2);
                 evalByCredentialVector.append({
                     base64URLEncodeToString(span(credentialId)),
-                    WTFMove(prfValues)
+                    WTF::move(prfValues)
                 });
             }
-            prfInputs.evalByCredential = WTFMove(evalByCredentialVector);
+            prfInputs.evalByCredential = WTF::move(evalByCredentialVector);
         }
-        result.prf = WTFMove(prfInputs);
+        result.prf = WTF::move(prfInputs);
     }
 
     if (extensions.largeBlob) {
@@ -1018,7 +1003,7 @@ static WebCore::AuthenticationExtensionsClientInputs authenticationExtensionsCli
         if (largeBlob.write)
             largeBlobInputs.write = WebCore::toBufferSource(largeBlob.write);
 
-        result.largeBlob = WTFMove(largeBlobInputs);
+        result.largeBlob = WTF::move(largeBlobInputs);
     }
 
     return result;
@@ -1058,7 +1043,7 @@ static WebCore::MediationRequirement toWebCore(_WKWebAuthenticationMediationRequ
         result.excludeCredentials = publicKeyCredentialDescriptors(retainPtr(options.excludeCredentials).get());
     if (options.authenticatorSelection)
         result.authenticatorSelection = authenticatorSelectionCriteria(retainPtr(options.authenticatorSelection).get());
-    result.attestationString = WebCore::convertEnumerationToString(attestationConveyancePreference(options.attestation));
+    result.attestation = attestationConveyancePreference(options.attestation);
     result.extensions = authenticationExtensionsClientInputs(retainPtr(options.extensions).get());
     if (options.extensionsCBOR && options.extensionsCBOR.length > 0)
         result.extensions = WebCore::AuthenticationExtensionsClientInputs::fromCBOR(span(options.extensionsCBOR));
@@ -1076,27 +1061,14 @@ static _WKAuthenticatorAttachment authenticatorAttachmentToWKAuthenticatorAttach
     case WebCore::AuthenticatorAttachment::CrossPlatform:
         return _WKAuthenticatorAttachmentCrossPlatform;
     }
-    ASSERT_NOT_REACHED();
-    return _WKAuthenticatorAttachmentPlatform;
-}
-
-static RetainPtr<NSArray<NSNumber *>> wkTransports(const Vector<String>& transports)
-{
-    auto wkTransports = adoptNS([NSMutableArray<NSNumber *> new]);
-    for (const auto& transportString : transports) {
-        if (auto transport = WebCore::convertStringToAuthenticatorTransport(transportString))
-            [wkTransports addObject:[NSNumber numberWithInt:(int)*transport]];
-    }
-    return wkTransports;
 }
 
 static RetainPtr<NSArray<NSNumber *>> wkTransports(const Vector<WebCore::AuthenticatorTransport>& transports)
 {
-    Vector<String> transportStrings;
-    transportStrings.reserveInitialCapacity(transports.size());
+    auto wkTransports = adoptNS([NSMutableArray<NSNumber *> new]);
     for (auto transport : transports)
-        transportStrings.append(WebCore::convertEnumerationToString(transport));
-    return wkTransports(transportStrings);
+        [wkTransports addObject:[NSNumber numberWithInt:(int)transport]];
+    return wkTransports;
 }
 
 static RetainPtr<_WKAuthenticationExtensionsClientOutputs> wkAuthenticationExtensionsClientOutputs(const WebCore::AuthenticationExtensionsClientOutputs& outputs)
@@ -1115,7 +1087,7 @@ static RetainPtr<_WKAuthenticatorAttestationResponse> wkAuthenticatorAttestation
     RetainPtr<_WKAuthenticationExtensionsClientOutputs> extensions;
     if (data.extensionOutputs)
         extensions = wkAuthenticationExtensionsClientOutputs(*data.extensionOutputs);
-    auto value = adoptNS([[_WKAuthenticatorAttestationResponse alloc] initWithClientDataJSON:clientDataJSON rawId:toNSData(WebCore::BufferSource { *data.rawId }).get() extensions:WTFMove(extensions) attestationObject:toNSData(WebCore::BufferSource { *data.attestationObject }).get() attachment:authenticatorAttachmentToWKAuthenticatorAttachment(attachment) transports:wkTransports(data.transports).get()]);
+    auto value = adoptNS([[_WKAuthenticatorAttestationResponse alloc] initWithClientDataJSON:clientDataJSON rawId:toNSData(WebCore::BufferSource { *data.rawId }).get() extensions:WTF::move(extensions) attestationObject:toNSData(WebCore::BufferSource { *data.attestationObject }).get() attachment:authenticatorAttachmentToWKAuthenticatorAttachment(attachment) transports:wkTransports(data.transports).get()]);
     
     return value;
 }
@@ -1126,14 +1098,14 @@ static RetainPtr<_WKAuthenticatorAttestationResponse> wkAuthenticatorAttestation
 #if ENABLE(WEB_AUTHN)
     auto clientDataJSON = produceClientDataJson(_WKWebAuthenticationTypeCreate, challenge, origin);
     auto hash = produceClientDataJsonHash(clientDataJSON.get());
-    auto callback = [handler = makeBlockPtr(handler), clientDataJSON = WTFMove(clientDataJSON)] (Variant<Ref<WebCore::AuthenticatorResponse>, WebCore::ExceptionData>&& result) mutable {
+    auto callback = [handler = makeBlockPtr(handler), clientDataJSON = WTF::move(clientDataJSON)] (Variant<Ref<WebCore::AuthenticatorResponse>, WebCore::ExceptionData>&& result) mutable {
         WTF::switchOn(result, [&](const Ref<WebCore::AuthenticatorResponse>& response) {
             handler(wkAuthenticatorAttestationResponse(response->data(), clientDataJSON.get(), response->attachment()).get(), nil);
         }, [&](const WebCore::ExceptionData& exception) {
             handler(nil, adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:static_cast<NSInteger>(exception.code) userInfo:@{ NSLocalizedDescriptionKey: exception.message.createNSString().get() }]).get());
         });
     };
-    self._protectedPanel->handleRequest({ WTFMove(hash), [_WKWebAuthenticationPanel convertToCoreCreationOptionsWithOptions:options], nullptr, WebKit::WebAuthenticationPanelResult::Unavailable, nullptr, std::nullopt, { }, String(), nullptr, std::nullopt, std::nullopt }, WTFMove(callback));
+    self._protectedPanel->handleRequest({ WTF::move(hash), [_WKWebAuthenticationPanel convertToCoreCreationOptionsWithOptions:options], nullptr, WebKit::WebAuthenticationPanelResult::Unavailable, nullptr, std::nullopt, { }, String(), nullptr, std::nullopt, std::nullopt }, WTF::move(callback));
 #endif
 }
 
@@ -1147,7 +1119,7 @@ static RetainPtr<_WKAuthenticatorAttestationResponse> wkAuthenticatorAttestation
             handler(nil, adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:static_cast<NSInteger>(exception.code) userInfo:@{ NSLocalizedDescriptionKey: exception.message.createNSString().get() }]).get());
         });
     };
-    self._protectedPanel->handleRequest({ makeVector(clientDataHash), [_WKWebAuthenticationPanel convertToCoreCreationOptionsWithOptions:options], nullptr, WebKit::WebAuthenticationPanelResult::Unavailable, nullptr, std::nullopt, { }, String(), nullptr, toWebCore(mediation), std::nullopt }, WTFMove(callback));
+    self._protectedPanel->handleRequest({ makeVector(clientDataHash), [_WKWebAuthenticationPanel convertToCoreCreationOptionsWithOptions:options], nullptr, WebKit::WebAuthenticationPanelResult::Unavailable, nullptr, std::nullopt, { }, String(), nullptr, toWebCore(mediation), std::nullopt }, WTF::move(callback));
 #endif
 }
 
@@ -1170,7 +1142,7 @@ static RetainPtr<_WKAuthenticatorAttestationResponse> wkAuthenticatorAttestation
     result.extensions = authenticationExtensionsClientInputs(retainPtr(options.extensions).get());
     if (options.extensionsCBOR && options.extensionsCBOR.length > 0)
         result.extensions = WebCore::AuthenticationExtensionsClientInputs::fromCBOR(span(options.extensionsCBOR));
-    result.userVerificationString = WebCore::convertEnumerationToString(userVerification(options.userVerification));
+    result.userVerification = userVerification(options.userVerification);
     result.authenticatorAttachment = authenticatorAttachment(options.authenticatorAttachment);
 #endif
 
@@ -1187,7 +1159,7 @@ static RetainPtr<_WKAuthenticatorAssertionResponse> wkAuthenticatorAssertionResp
     if (data.extensionOutputs)
         extensions = wkAuthenticationExtensionsClientOutputs(*data.extensionOutputs);
 
-    return adoptNS([[_WKAuthenticatorAssertionResponse alloc] initWithClientDataJSON:clientDataJSON rawId:toNSData(Ref { *data.rawId }->span()).get() extensions:WTFMove(extensions) authenticatorData:toNSData(Ref { *data.authenticatorData }->span()).get() signature:toNSData(Ref { *data.signature }->span()).get() userHandle:userHandle.get() attachment:authenticatorAttachmentToWKAuthenticatorAttachment(attachment)]);
+    return adoptNS([[_WKAuthenticatorAssertionResponse alloc] initWithClientDataJSON:clientDataJSON rawId:toNSData(Ref { *data.rawId }->span()).get() extensions:WTF::move(extensions) authenticatorData:toNSData(Ref { *data.authenticatorData }->span()).get() signature:toNSData(Ref { *data.signature }->span()).get() userHandle:userHandle.get() attachment:authenticatorAttachmentToWKAuthenticatorAttachment(attachment)]);
 }
 #endif
 
@@ -1196,14 +1168,14 @@ static RetainPtr<_WKAuthenticatorAssertionResponse> wkAuthenticatorAssertionResp
 #if ENABLE(WEB_AUTHN)
     auto clientDataJSON = produceClientDataJson(_WKWebAuthenticationTypeGet, challenge, origin);
     auto hash = produceClientDataJsonHash(clientDataJSON.get());
-    auto callback = [handler = makeBlockPtr(handler), clientDataJSON = WTFMove(clientDataJSON)] (Variant<Ref<WebCore::AuthenticatorResponse>, WebCore::ExceptionData>&& result) mutable {
+    auto callback = [handler = makeBlockPtr(handler), clientDataJSON = WTF::move(clientDataJSON)] (Variant<Ref<WebCore::AuthenticatorResponse>, WebCore::ExceptionData>&& result) mutable {
         WTF::switchOn(result, [&](const Ref<WebCore::AuthenticatorResponse>& response) {
             handler(wkAuthenticatorAssertionResponse(response->data(), clientDataJSON.get(), response->attachment()).get(), nil);
         }, [&](const WebCore::ExceptionData& exception) {
             handler(nil, adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:static_cast<NSInteger>(exception.code) userInfo:@{ NSLocalizedDescriptionKey: exception.message.createNSString().get() }]).get());
         });
     };
-    self._protectedPanel->handleRequest({ WTFMove(hash), [_WKWebAuthenticationPanel convertToCoreRequestOptionsWithOptions:options], nullptr, WebKit::WebAuthenticationPanelResult::Unavailable, nullptr, std::nullopt, { }, String(), nullptr, std::nullopt, std::nullopt }, WTFMove(callback));
+    self._protectedPanel->handleRequest({ WTF::move(hash), [_WKWebAuthenticationPanel convertToCoreRequestOptionsWithOptions:options], nullptr, WebKit::WebAuthenticationPanelResult::Unavailable, nullptr, std::nullopt, { }, String(), nullptr, std::nullopt, std::nullopt }, WTF::move(callback));
 #endif
 }
 
@@ -1217,7 +1189,7 @@ static RetainPtr<_WKAuthenticatorAssertionResponse> wkAuthenticatorAssertionResp
             handler(nil, adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:static_cast<NSInteger>(exception.code) userInfo:@{ NSLocalizedDescriptionKey: exception.message.createNSString().get() }]).get());
         });
     };
-    self._protectedPanel->handleRequest({ makeVector(clientDataHash), [_WKWebAuthenticationPanel convertToCoreRequestOptionsWithOptions:options], nullptr, WebKit::WebAuthenticationPanelResult::Unavailable, nullptr, std::nullopt, { }, String(), nullptr, toWebCore(mediation), std::nullopt }, WTFMove(callback));
+    self._protectedPanel->handleRequest({ makeVector(clientDataHash), [_WKWebAuthenticationPanel convertToCoreRequestOptionsWithOptions:options], nullptr, WebKit::WebAuthenticationPanelResult::Unavailable, nullptr, std::nullopt, { }, String(), nullptr, toWebCore(mediation), std::nullopt }, WTF::move(callback));
 #endif
 }
 
@@ -1270,7 +1242,7 @@ static RetainPtr<_WKAuthenticatorAssertionResponse> wkAuthenticatorAssertionResp
     auto coreOptions = [_WKWebAuthenticationPanel convertToCoreCreationOptionsWithOptions:options];
     bool needsPRF = coreOptions.extensions && coreOptions.extensions->prf;
     bool supportsHmacSecret = authenticatorSupportedExtensions && [authenticatorSupportedExtensions containsObject:@"hmac-secret"];
-    WebCore::UserVerificationRequirement effectiveUVRequirement = coreOptions.authenticatorSelection ? coreOptions.authenticatorSelection->userVerification() : WebCore::UserVerificationRequirement::Preferred;
+    WebCore::UserVerificationRequirement effectiveUVRequirement = coreOptions.authenticatorSelection ? coreOptions.authenticatorSelection->userVerification : WebCore::UserVerificationRequirement::Preferred;
     if (needsPRF && supportsHmacSecret)
         effectiveUVRequirement = WebCore::UserVerificationRequirement::Required;
     auto encodedVector = fido::encodeMakeCredentialRequestAsCBOR(hash, coreOptions, coreUserVerificationAvailability(userVerificationAvailability), effectiveUVRequirement, fido::AuthenticatorSupportedOptions::ResidentKeyAvailability::kSupported, makeVector<String>(authenticatorSupportedExtensions), std::nullopt);
@@ -1296,7 +1268,7 @@ static RetainPtr<_WKAuthenticatorAssertionResponse> wkAuthenticatorAssertionResp
     bool supportsHmacSecret = authenticatorSupportedExtensions && [authenticatorSupportedExtensions containsObject:@"hmac-secret"];
     WebCore::UserVerificationRequirement effectiveUVRequirement = (needsPRF && supportsHmacSecret)
         ? WebCore::UserVerificationRequirement::Required
-        : coreOptions.userVerification();
+        : coreOptions.userVerification;
 
     auto encodedVector = fido::encodeGetAssertionRequestAsCBOR(hash, coreOptions, coreUserVerificationAvailability(userVerificationAvailability), effectiveUVRequirement, makeVector<String>(authenticatorSupportedExtensions), std::nullopt);
     encodedCommand = toNSData(encodedVector);
@@ -1315,7 +1287,7 @@ static RetainPtr<_WKAuthenticatorAssertionResponse> wkAuthenticatorAssertionResp
     RetainPtr<NSData> encodedCommand;
 #if ENABLE(WEB_AUTHN)
     auto coreOptions = [_WKWebAuthenticationPanel convertToCoreCreationOptionsWithOptions:options];
-    auto effectiveUV = coreOptions.authenticatorSelection ? coreOptions.authenticatorSelection->userVerification() : WebCore::UserVerificationRequirement::Discouraged;
+    auto effectiveUV = coreOptions.authenticatorSelection ? coreOptions.authenticatorSelection->userVerification : WebCore::UserVerificationRequirement::Discouraged;
     auto encodedVector = fido::encodeMakeCredentialRequestAsCBOR(makeVector(clientDataHash), coreOptions, coreUserVerificationAvailability(userVerificationAvailability), effectiveUV, fido::AuthenticatorSupportedOptions::ResidentKeyAvailability::kSupported, makeVector<String>(authenticatorSupportedExtensions), std::nullopt);
     encodedCommand = toNSData(encodedVector);
 #endif
@@ -1329,7 +1301,7 @@ static RetainPtr<_WKAuthenticatorAssertionResponse> wkAuthenticatorAssertionResp
 
 #if ENABLE(WEB_AUTHN)
     auto coreOptions = [_WKWebAuthenticationPanel convertToCoreCreationOptionsWithOptions:options];
-    auto effectiveUV = coreOptions.authenticatorSelection ? coreOptions.authenticatorSelection->userVerification() : WebCore::UserVerificationRequirement::Discouraged;
+    auto effectiveUV = coreOptions.authenticatorSelection ? coreOptions.authenticatorSelection->userVerification : WebCore::UserVerificationRequirement::Discouraged;
     auto encodedVector = fido::encodeMakeCredentialRequestAsCBOR(makeVector(clientDataHash), coreOptions, coreUserVerificationAvailability(userVerificationAvailability), effectiveUV, fido::AuthenticatorSupportedOptions::ResidentKeyAvailability::kSupported, { }, std::nullopt, publicKeyCredentialParameters(credentialParameters));
     encodedCommand = toNSData(encodedVector);
 #endif
@@ -1354,7 +1326,7 @@ static RetainPtr<_WKAuthenticatorAssertionResponse> wkAuthenticatorAssertionResp
     bool supportsHmacSecret = authenticatorSupportedExtensions && [authenticatorSupportedExtensions containsObject:@"hmac-secret"];
     WebCore::UserVerificationRequirement effectiveUVRequirement = (needsPRF && supportsHmacSecret)
         ? WebCore::UserVerificationRequirement::Required
-        : coreOptions.userVerification();
+        : coreOptions.userVerification;
 
     auto encodedVector = fido::encodeGetAssertionRequestAsCBOR(makeVector(clientDataHash), coreOptions, coreUserVerificationAvailability(userVerificationAvailability), effectiveUVRequirement, makeVector<String>(authenticatorSupportedExtensions), std::nullopt);
     encodedCommand = toNSData(encodedVector);
@@ -1372,9 +1344,9 @@ static RetainPtr<_WKAuthenticatorAssertionResponse> wkAuthenticatorAssertionResp
         localConfiguration.privateKeyBase64 = configuration[@"privateKeyBase64"];
 
     WebCore::MockWebAuthenticationConfiguration mockConfiguration;
-    mockConfiguration.local = WTFMove(localConfiguration);
+    mockConfiguration.local = WTF::move(localConfiguration);
 
-    self._protectedPanel->setMockConfiguration(WTFMove(mockConfiguration));
+    self._protectedPanel->setMockConfiguration(WTF::move(mockConfiguration));
 #endif
 }
 

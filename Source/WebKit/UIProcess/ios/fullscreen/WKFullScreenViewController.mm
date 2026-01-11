@@ -513,8 +513,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         }
         [self _removeEnvironmentPickerButtonView];
         return;
-    } else
-        [self _removeEnvironmentFullscreenVideoButtonView];
+    }
+    [self _removeEnvironmentFullscreenVideoButtonView];
 
     WKSPlayableViewControllerHost *playableViewController = videoPresentationInterface ? videoPresentationInterface->playableViewController() : nil;
     UIViewController *environmentPickerButtonViewController = playableViewController.environmentPickerButtonViewController;
@@ -817,7 +817,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         [stackView addArrangedSubview:_cancelButton.get() applyingMaterialStyle:AVBackgroundViewMaterialStyleSecondary tintEffectStyle:AVBackgroundViewTintEffectStyleSecondary];
         [stackView addArrangedSubview:_pipButton.get() applyingMaterialStyle:AVBackgroundViewMaterialStylePrimary tintEffectStyle:AVBackgroundViewTintEffectStyleSecondary];
 #endif
-        _stackView = WTFMove(stackView);
+        _stackView = WTF::move(stackView);
     }
 
     [_stackView setTranslatesAutoresizingMaskIntoConstraints:NO];
@@ -840,7 +840,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     auto banner = adoptNS([[WKFullscreenStackView alloc] init]);
     [banner addArrangedSubview:_bannerLabel.get() applyingMaterialStyle:AVBackgroundViewMaterialStyleSecondary tintEffectStyle:AVBackgroundViewTintEffectStyleSecondary];
-    _banner = WTFMove(banner);
+    _banner = WTF::move(banner);
 
     _bannerTapToDismissRecognizer = adoptNS([[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_bannerDismissalRecognized:)]);
     [_bannerTapToDismissRecognizer setDelegate:self];

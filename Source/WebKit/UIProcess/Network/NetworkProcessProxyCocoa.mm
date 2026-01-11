@@ -130,7 +130,7 @@ void NetworkProcessProxy::removeBackgroundStateObservers()
 
 void NetworkProcessProxy::setBackupExclusionPeriodForTesting(PAL::SessionID sessionID, Seconds period, CompletionHandler<void()>&& completionHandler)
 {
-    sendWithAsyncReply(Messages::NetworkProcess::SetBackupExclusionPeriodForTesting(sessionID, period), WTFMove(completionHandler));
+    sendWithAsyncReply(Messages::NetworkProcess::SetBackupExclusionPeriodForTesting(sessionID, period), WTF::move(completionHandler));
 }
 
 #endif

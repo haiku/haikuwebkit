@@ -131,7 +131,7 @@ void JSTestAsyncIterablePrototype::finishCreation(VM& vm)
 const ClassInfo JSTestAsyncIterable::s_info = { "TestAsyncIterable"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSTestAsyncIterable) };
 
 JSTestAsyncIterable::JSTestAsyncIterable(Structure* structure, JSDOMGlobalObject& globalObject, Ref<TestAsyncIterable>&& impl)
-    : JSDOMWrapper<TestAsyncIterable>(structure, globalObject, WTFMove(impl))
+    : JSDOMWrapper<TestAsyncIterable>(structure, globalObject, WTF::move(impl))
 {
 }
 
@@ -201,7 +201,7 @@ public:
 
     static TestAsyncIterableIterator* create(JSC::VM& vm, JSC::Structure* structure, JSTestAsyncIterable& iteratedObject, IterationKind kind, InternalIterator&& iterator)
     {
-        auto* instance = new (NotNull, JSC::allocateCell<TestAsyncIterableIterator>(vm)) TestAsyncIterableIterator(structure, iteratedObject, kind, WTFMove(iterator));
+        auto* instance = new (NotNull, JSC::allocateCell<TestAsyncIterableIterator>(vm)) TestAsyncIterableIterator(structure, iteratedObject, kind, WTF::move(iterator));
         instance->finishCreation(vm);
         return instance;
     }
@@ -211,7 +211,7 @@ public:
     JSC::JSBoundFunction* createOnRejectedFunction(JSC::JSGlobalObject*);
 private:
     TestAsyncIterableIterator(JSC::Structure* structure, JSTestAsyncIterable& iteratedObject, IterationKind kind, InternalIterator&& iterator)
-        : Base(structure, iteratedObject, kind, WTFMove(iterator))
+        : Base(structure, iteratedObject, kind, WTF::move(iterator))
     {
     }
 };
@@ -315,7 +315,7 @@ JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlo
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestAsyncIterable>(impl.ptr());
 #endif
-    return createWrapper<TestAsyncIterable>(globalObject, WTFMove(impl));
+    return createWrapper<TestAsyncIterable>(globalObject, WTF::move(impl));
 }
 
 JSC::JSValue toJS(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, TestAsyncIterable& impl)

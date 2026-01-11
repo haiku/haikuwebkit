@@ -85,11 +85,12 @@ TypeInfoBlob JSWebAssemblyStruct::typeInfoBlob()
     return TypeInfoBlob(0, TypeInfo(WebAssemblyGCObjectType, StructureFlags));
 }
 
-WebAssemblyGCStructure* JSWebAssemblyStruct::createStructure(VM& vm, JSGlobalObject* globalObject, Ref<const Wasm::TypeDefinition>&& type, Ref<const Wasm::RTT>&& rtt)
+WebAssemblyGCStructure* JSWebAssemblyStruct::createStructure(VM& vm, JSGlobalObject* globalObject, Ref<const Wasm::TypeDefinition>&& unexpandedType, Ref<const Wasm::RTT>&& rtt)
 {
-    RELEASE_ASSERT(rtt->kind() == Wasm::RTTKind::Struct);
+    Ref<const Wasm::TypeDefinition> type { unexpandedType->expand() };
     RELEASE_ASSERT(type->is<Wasm::StructType>());
-    return WebAssemblyGCStructure::create(vm, globalObject, TypeInfo(WebAssemblyGCObjectType, StructureFlags), info(), WTFMove(type), WTFMove(rtt));
+    RELEASE_ASSERT(rtt->kind() == Wasm::RTTKind::Struct);
+    return WebAssemblyGCStructure::create(vm, globalObject, TypeInfo(WebAssemblyGCObjectType, StructureFlags), info(), WTF::move(unexpandedType), WTF::move(type), WTF::move(rtt));
 }
 
 } // namespace JSC

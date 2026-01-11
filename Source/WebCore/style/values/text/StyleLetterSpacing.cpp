@@ -26,7 +26,7 @@
 #include "StyleLetterSpacing.h"
 
 #include "FrameDestructionObserverInlines.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "StyleBuilderChecking.h"
 #include "StyleLengthWrapper+CSSValueConversion.h"
 
@@ -39,7 +39,7 @@ auto CSSValueConversion<LetterSpacing>::operator()(BuilderState& state, const CS
         auto zoom = state.zoomWithTextZoomFactor();
         if (zoom == state.cssToLengthConversionData().zoom())
             return state.cssToLengthConversionData();
-        return state.cssToLengthConversionData().copyWithAdjustedZoom(zoom);
+        return state.cssToLengthConversionData().copyWithAdjustedZoom(zoom, LetterSpacing::Fixed::range.zoomOptions);
     };
 
     RefPtr primitiveValue = requiredDowncast<CSSPrimitiveValue>(state, value);

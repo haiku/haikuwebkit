@@ -54,12 +54,12 @@ static JSValue *jsValueWithValueInContext(id, JSContext *);
 
 Ref<SerializedPlatformDataCue> SerializedPlatformDataCue::create(SerializedPlatformDataCueValue&& value)
 {
-    return adoptRef(*new SerializedPlatformDataCueMac(WTFMove(value)));
+    return adoptRef(*new SerializedPlatformDataCueMac(WTF::move(value)));
 }
 
 SerializedPlatformDataCueMac::SerializedPlatformDataCueMac(SerializedPlatformDataCueValue&& value)
     : SerializedPlatformDataCue()
-    , m_value(WTFMove(value))
+    , m_value(WTF::move(value))
 {
 }
 

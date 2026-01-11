@@ -278,9 +278,9 @@ WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(const GdkEvent* event, 
         WebKeyboardEvent::windowsKeyCodeForGdkKeyval(keyval),
         static_cast<int>(keyval),
         handledByInputMethod,
-        WTFMove(preeditUnderlines),
-        WTFMove(preeditSelectionRange),
-        WTFMove(commands),
+        WTF::move(preeditUnderlines),
+        WTF::move(preeditSelectionRange),
+        WTF::move(commands),
         isAutoRepeat,
         isGdkKeyCodeFromKeyPad(keyval)
         );
@@ -308,7 +308,7 @@ WebTouchEvent WebEventFactory::createWebTouchEvent(const GdkEvent* event, Vector
         ASSERT_NOT_REACHED();
     }
 
-    return WebTouchEvent({ type, modifiersForEvent(event), monotonicTimeForEvent(event) }, WTFMove(touchPoints), { }, { });
+    return WebTouchEvent({ type, modifiersForEvent(event), monotonicTimeForEvent(event) }, WTF::move(touchPoints), { }, { });
 }
 #endif
 

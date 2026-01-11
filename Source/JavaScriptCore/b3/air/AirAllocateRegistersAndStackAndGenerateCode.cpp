@@ -642,7 +642,7 @@ void GenerateAndAllocateRegisters::generate(CCallHelpers& jit)
             ScalarRegisterSet availableRegisters;
             for (Reg reg : m_registers[bank])
                 availableRegisters.add(reg, IgnoreVectors);
-            m_availableRegs[bank] = WTFMove(availableRegisters);
+            m_availableRegs[bank] = WTF::move(availableRegisters);
         });
 
         IndexMap<Reg, Tmp>& currentAllocation = currentAllocationMap[block];
@@ -1038,7 +1038,7 @@ void GenerateAndAllocateRegisters::generate(CCallHelpers& jit)
     Vector<CCallHelpers::Label> entrypointLabels(m_code.numEntrypoints());
     for (unsigned i = m_code.numEntrypoints(); i--;)
         entrypointLabels[i] = *context.blockLabels[m_code.entrypoint(i).block()];
-    m_code.setEntrypointLabels(WTFMove(entrypointLabels));
+    m_code.setEntrypointLabels(WTF::move(entrypointLabels));
 
     pcToOriginMap.appendItem(m_jit->labelIgnoringWatchpoints(), Origin());
     if (disassembler)

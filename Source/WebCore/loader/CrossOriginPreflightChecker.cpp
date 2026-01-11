@@ -53,12 +53,12 @@ namespace WebCore {
 
 Ref<CrossOriginPreflightChecker> CrossOriginPreflightChecker::create(DocumentThreadableLoader& loader, ResourceRequest&& request)
 {
-    return adoptRef(*new CrossOriginPreflightChecker(loader, WTFMove(request)));
+    return adoptRef(*new CrossOriginPreflightChecker(loader, WTF::move(request)));
 }
 
 CrossOriginPreflightChecker::CrossOriginPreflightChecker(DocumentThreadableLoader& loader, ResourceRequest&& request)
     : m_loader(loader)
-    , m_request(WTFMove(request))
+    , m_request(WTF::move(request))
 {
 }
 
@@ -97,7 +97,7 @@ void CrossOriginPreflightChecker::validatePreflightResponse(DocumentThreadableLo
     InspectorInstrumentation::didReceiveResourceResponse(*frame, *identifier, documentLoader.get(), response, nullptr);
     InspectorInstrumentation::didFinishLoading(frame.get(), documentLoader.get(), *identifier, emptyMetrics, nullptr);
 
-    loader.preflightSuccess(WTFMove(request));
+    loader.preflightSuccess(WTF::move(request));
 }
 
 void CrossOriginPreflightChecker::notifyFinished(CachedResource& resource, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess)
@@ -119,14 +119,14 @@ void CrossOriginPreflightChecker::notifyFinished(CachedResource& resource, const
         loader->preflightFailure(m_resource->resourceLoaderIdentifier(), preflightError);
         return;
     }
-    validatePreflightResponse(*loader, WTFMove(m_request), *m_resource->resourceLoaderIdentifier(), m_resource->response());
+    validatePreflightResponse(*loader, WTF::move(m_request), *m_resource->resourceLoaderIdentifier(), m_resource->response());
 }
 
 void CrossOriginPreflightChecker::redirectReceived(CachedResource& resource, ResourceRequest&&, const ResourceResponse& response, CompletionHandler<void(ResourceRequest&&)>&& completionHandler)
 {
     ASSERT_UNUSED(resource, &resource == m_resource);
     if (RefPtr loader = m_loader.get())
-        validatePreflightResponse(*loader, WTFMove(m_request), m_resource->resourceLoaderIdentifier(), response);
+        validatePreflightResponse(*loader, WTF::move(m_request), m_resource->resourceLoaderIdentifier(), response);
     completionHandler(ResourceRequest { });
 }
 
@@ -144,7 +144,7 @@ void CrossOriginPreflightChecker::startPreflight()
     preflightRequest.setInitiatorType(AtomString { loader->options().initiatorType });
 
     ASSERT(!m_resource);
-    m_resource = loader->document().protectedCachedResourceLoader()->requestRawResource(WTFMove(preflightRequest)).value_or(nullptr);
+    m_resource = loader->document().protectedCachedResourceLoader()->requestRawResource(WTF::move(preflightRequest)).value_or(nullptr);
     if (CachedResourceHandle resource = m_resource)
         resource->addClient(*this);
 }
@@ -185,7 +185,7 @@ void CrossOriginPreflightChecker::doPreflight(DocumentThreadableLoader& loader, 
         return;
     }
 
-    validatePreflightResponse(loader, WTFMove(request), identifier, response);
+    validatePreflightResponse(loader, WTF::move(request), identifier, response);
 }
 
 void CrossOriginPreflightChecker::setDefersLoading(bool value)

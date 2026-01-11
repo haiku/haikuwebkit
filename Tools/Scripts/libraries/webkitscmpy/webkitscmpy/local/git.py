@@ -583,29 +583,52 @@ class Git(Scm):
 
     @decorators.Memoize(cached=False)
     def branches_for(self, hash=None, remote=True):
-        branch = run(
-            [self.executable(), 'branch'] + (['--contains', hash, '-a'] if hash else ['-a']),
+        if hash:
+            contains = ['--contains', hash]
+        else:
+            contains = []
+
+        group_remotes = False
+        if isinstance(remote, str):
+            patterns = [f'refs/remotes/{remote}/**']
+        else:
+            patterns = ['refs/heads/**']
+            if remote is not False:
+                patterns.append('refs/remotes/**')
+                group_remotes = remote is not True
+
+        refs = run(
+            [self.executable(), 'for-each-ref', '--format', '%(refname)'] + contains + patterns,
             cwd=self.root_path,
             capture_output=True,
             encoding='utf-8',
+            check=True,
         )
-        if branch.returncode:
-            raise self.Exception('Failed to retrieve branch list for {}'.format(self.root_path))
-        result = defaultdict(set)
-        for branch in [branch.lstrip(' *') for branch in filter(lambda branch: '->' not in branch, branch.stdout.splitlines())]:
-            match = self.REMOTE_BRANCH.match(branch)
-            if match:
-                result[match.group('remote')].add(match.group('branch'))
-            else:
-                result[None].add(branch)
 
-        if remote is False:
-            return sorted(result[None])
-        if remote is True:
-            return sorted(set.union(*result.values())) if result else []
-        if isinstance(remote, string_utils.basestring):
-            return sorted(result.get(remote, []))
-        return result
+        results = set()
+        by_remote = defaultdict(set)
+
+        for line in refs.stdout.split('\n'):
+            if not line:
+                continue
+
+            if line.startswith('refs/heads/'):
+                results.add(line[len('refs/heads/'):])
+            elif line.startswith('refs/remotes/'):
+                ref_path = line.split('/', 3)
+                if len(ref_path) == 4:
+                    if group_remotes:
+                        by_remote[ref_path[2]].add(ref_path[3])
+                    else:
+                        results.add(ref_path[3])
+            elif line:
+                raise self.Exception('unexpected output from for-each-ref')
+
+        if group_remotes:
+            by_remote[None] = results
+            return by_remote
+
+        return sorted(results)
 
     def is_suitable_branch_for_pull_request(self, branch, source_remote):
         if branch is None or branch in self.DEFAULT_BRANCHES or self.PROD_BRANCHES.match(branch):
@@ -1408,7 +1431,7 @@ class Git(Scm):
         return output.stdout.rstrip().splitlines()
 
     def remote_for(self, argument):
-        candidates = self.source_remotes()
+        candidates = list(self.source_remotes())
         while candidates:
             if argument not in self.branches_for(remote=candidates[-1]):
                 candidates.remove(candidates[-1])

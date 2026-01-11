@@ -72,8 +72,8 @@ struct GrammarDetail {
     GrammarDetail isolatedCopy() && {
         return {
             range,
-            crossThreadCopy(WTFMove(guesses)),
-            WTFMove(userDescription).isolatedCopy()
+            crossThreadCopy(WTF::move(guesses)),
+            WTF::move(userDescription).isolatedCopy()
         };
     }
 };
@@ -88,8 +88,8 @@ struct TextCheckingResult {
         return {
             type,
             range,
-            crossThreadCopy(WTFMove(details)),
-            WTFMove(replacement).isolatedCopy()
+            crossThreadCopy(WTF::move(details)),
+            WTF::move(replacement).isolatedCopy()
         };
     }
 };

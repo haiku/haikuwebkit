@@ -107,7 +107,7 @@ private:
 class MockLibWebRTCDataChannel : public webrtc::DataChannelInterface {
 public:
     MockLibWebRTCDataChannel(std::string&& label, bool ordered, bool reliable, int id)
-        : m_label(WTFMove(label))
+        : m_label(WTF::move(label))
         , m_ordered(ordered)
         , m_reliable(reliable)
         , m_id(id) { }
@@ -150,7 +150,7 @@ private:
 class MockRtpSender : public webrtc::RtpSenderInterface {
 public:
     explicit MockRtpSender(webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>&& track)
-        : m_track(WTFMove(track))
+        : m_track(WTF::move(track))
     {
     }
 
@@ -211,8 +211,8 @@ private:
 class MockRtpTransceiver : public webrtc::RtpTransceiverInterface {
 public:
     MockRtpTransceiver(webrtc::scoped_refptr<webrtc::RtpSenderInterface>&& sender, webrtc::scoped_refptr<webrtc::RtpReceiverInterface>&& receiver)
-        : m_sender(WTFMove(sender))
-        , m_receiver(WTFMove(receiver))
+        : m_sender(WTF::move(sender))
+        , m_receiver(WTF::move(receiver))
     {
     }
 

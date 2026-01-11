@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(EXTTextureNorm16);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(EXTTextureNorm16);
 
 EXTTextureNorm16::EXTTextureNorm16(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::EXTTextureNorm16)

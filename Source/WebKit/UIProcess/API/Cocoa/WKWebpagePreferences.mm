@@ -219,7 +219,7 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
         exceptions.add(identifier);
 
     auto defaultEnablement = enabled ? WebCore::ContentExtensionDefaultEnablement::Enabled : WebCore::ContentExtensionDefaultEnablement::Disabled;
-    protectedWebsitePolicies(self)->setContentExtensionEnablement({ defaultEnablement, WTFMove(exceptions) });
+    protectedWebsitePolicies(self)->setContentExtensionEnablement({ defaultEnablement, WTF::move(exceptions) });
 }
 
 - (void)_setActiveContentRuleListActionPatterns:(NSDictionary<NSString *, NSSet<NSString *> *> *)patterns
@@ -230,9 +230,9 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
         vector.reserveInitialCapacity(value.count);
         for (NSString *pattern in value)
             vector.append(pattern);
-        map.add(key, WTFMove(vector));
+        map.add(key, WTF::move(vector));
     }];
-    protectedWebsitePolicies(self)->setActiveContentRuleListActionPatterns(WTFMove(map));
+    protectedWebsitePolicies(self)->setActiveContentRuleListActionPatterns(WTF::move(map));
 }
 
 - (NSDictionary<NSString *, NSSet<NSString *> *> *)_activeContentRuleListActionPatterns
@@ -406,7 +406,7 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
         RetainPtr<_WKCustomHeaderFields> element = fields[i];
         return downcast<API::CustomHeaderFields>([element _apiObject]).coreFields();
     });
-    protectedWebsitePolicies(self)->setCustomHeaderFields(WTFMove(vector));
+    protectedWebsitePolicies(self)->setCustomHeaderFields(WTF::move(vector));
 }
 
 - (WKWebsiteDataStore *)_websiteDataStore
@@ -753,11 +753,11 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
             selectors.reserveInitialCapacity(nsSelectors.count);
             for (NSString *selector in nsSelectors)
                 selectors.add(selector);
-            selectorsForElement.append(WTFMove(selectors));
+            selectorsForElement.append(WTF::move(selectors));
         }
-        result.append(WTFMove(selectorsForElement));
+        result.append(WTF::move(selectorsForElement));
     }
-    protectedWebsitePolicies(self)->setVisibilityAdjustmentSelectors(WTFMove(result));
+    protectedWebsitePolicies(self)->setVisibilityAdjustmentSelectors(WTF::move(result));
 }
 
 - (NSArray<NSArray<NSSet<NSString *> *> *> *)_visibilityAdjustmentSelectorsIncludingShadowHosts

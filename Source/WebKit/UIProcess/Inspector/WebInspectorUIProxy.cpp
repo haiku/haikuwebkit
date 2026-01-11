@@ -95,7 +95,7 @@ void WebInspectorUIProxy::setInspectorClient(std::unique_ptr<API::InspectorClien
         return;
     }
 
-    m_inspectorClient = WTFMove(inspectorClient);
+    m_inspectorClient = WTF::move(inspectorClient);
 }
 
 unsigned WebInspectorUIProxy::inspectionLevel() const
@@ -264,7 +264,7 @@ void WebInspectorUIProxy::setFrontendConnection(IPC::Connection::Handle&& connec
     if (!m_inspectedPage)
         return;
 
-    inspectedPage->protectedLegacyMainFrameProcess()->send(Messages::WebInspectorBackend::SetFrontendConnection(WTFMove(connectionIdentifier)), inspectedPage->webPageIDInMainFrameProcess());
+    inspectedPage->protectedLegacyMainFrameProcess()->send(Messages::WebInspectorBackend::SetFrontendConnection(WTF::move(connectionIdentifier)), inspectedPage->webPageIDInMainFrameProcess());
 }
 
 void WebInspectorUIProxy::showConsole()
@@ -815,7 +815,7 @@ void WebInspectorUIProxy::setDeveloperPreferenceOverride(WebCore::InspectorBacke
 void WebInspectorUIProxy::setEmulatedConditions(std::optional<int64_t>&& bytesPerSecondLimit)
 {
     if (auto inspectedPage = this->inspectedPage())
-        inspectedPage->websiteDataStore().setEmulatedConditions(WTFMove(bytesPerSecondLimit));
+        inspectedPage->websiteDataStore().setEmulatedConditions(WTF::move(bytesPerSecondLimit));
 }
 
 #endif // ENABLE(INSPECTOR_NETWORK_THROTTLING)
@@ -842,7 +842,7 @@ void WebInspectorUIProxy::save(Vector<InspectorFrontendClient::SaveData>&& saveD
     if (saveDatas[0].url.isEmpty())
         return;
 
-    platformSave(WTFMove(saveDatas), forceSaveAs);
+    platformSave(WTF::move(saveDatas), forceSaveAs);
 }
 
 void WebInspectorUIProxy::load(const String& path, CompletionHandler<void(const String&)>&& completionHandler)
@@ -854,7 +854,7 @@ void WebInspectorUIProxy::load(const String& path, CompletionHandler<void(const 
     if (path.isEmpty())
         return;
 
-    platformLoad(path, WTFMove(completionHandler));
+    platformLoad(path, WTF::move(completionHandler));
 }
 
 void WebInspectorUIProxy::pickColorFromScreen(CompletionHandler<void(const std::optional<WebCore::Color> &)>&& completionHandler)
@@ -864,7 +864,7 @@ void WebInspectorUIProxy::pickColorFromScreen(CompletionHandler<void(const std::
         return;
     }
 
-    platformPickColorFromScreen(WTFMove(completionHandler));
+    platformPickColorFromScreen(WTF::move(completionHandler));
 }
 
 bool WebInspectorUIProxy::shouldOpenAttached()

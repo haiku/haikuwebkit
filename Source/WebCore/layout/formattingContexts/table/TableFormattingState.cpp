@@ -27,7 +27,7 @@
 #include "TableFormattingState.h"
 
 #include "LayoutBoxInlines.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderObject.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "TableFormattingContext.h"
@@ -36,7 +36,7 @@
 namespace WebCore {
 namespace Layout {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(TableFormattingState);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(TableFormattingState);
 
 static UniqueRef<TableGrid> ensureTableGrid(const ElementBox& tableBox)
 {

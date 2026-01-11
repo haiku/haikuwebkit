@@ -99,7 +99,7 @@ enum class NavigationHistoryBehavior : uint8_t;
 using IntDegrees = int32_t;
 
 class DOMWindow : public RefCounted<DOMWindow>, public EventTarget {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(DOMWindow);
+    WTF_MAKE_TZONE_ALLOCATED(DOMWindow);
 public:
     virtual ~DOMWindow();
 
@@ -254,6 +254,4 @@ WebCoreOpaqueRoot root(DOMWindow*);
 
 } // namespace WebCore
 
-SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::DOMWindow)
-    static bool isType(const WebCore::EventTarget& target) { return target.eventTargetInterface() == WebCore::EventTargetInterfaceType::DOMWindow; }
-SPECIALIZE_TYPE_TRAITS_END()
+SPECIALIZE_TYPE_TRAITS_EVENTTARGET(DOMWindow)

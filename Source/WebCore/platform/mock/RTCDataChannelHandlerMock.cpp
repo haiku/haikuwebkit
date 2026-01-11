@@ -49,7 +49,7 @@ void RTCDataChannelHandlerMock::setClient(RTCDataChannelHandlerClient& client, s
     ASSERT(!m_client);
     m_client = client;
     auto notifier = adoptRef(*new DataChannelStateNotifier(&client, RTCDataChannelState::Open));
-    m_timerEvents.append(adoptRef(new TimerEvent(this, WTFMove(notifier))));
+    m_timerEvents.append(adoptRef(new TimerEvent(this, WTF::move(notifier))));
 }
 
 bool RTCDataChannelHandlerMock::sendStringData(const CString& string)
@@ -73,7 +73,7 @@ void RTCDataChannelHandlerMock::close()
         return;
 
     auto notifier = adoptRef(*new DataChannelStateNotifier(client.get(), RTCDataChannelState::Closed));
-    m_timerEvents.append(adoptRef(new TimerEvent(this, WTFMove(notifier))));
+    m_timerEvents.append(adoptRef(new TimerEvent(this, WTF::move(notifier))));
 }
 
 } // namespace WebCore

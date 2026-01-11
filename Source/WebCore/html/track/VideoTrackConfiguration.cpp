@@ -77,7 +77,7 @@ void VideoTrackConfiguration::setColorSpace(Ref<VideoColorSpace>&& colorSpace)
     if (m_colorSpace == colorSpace)
         return;
 
-    m_colorSpace = WTFMove(colorSpace);
+    m_colorSpace = WTF::move(colorSpace);
     notifyObservers();
 }
 
@@ -99,21 +99,12 @@ void VideoTrackConfiguration::setBitrate(uint64_t bitrate)
     notifyObservers();
 }
 
-void VideoTrackConfiguration::setSpatialVideoMetadata(std::optional<SpatialVideoMetadata> metadata)
+void VideoTrackConfiguration::setImmersiveVideoMetadata(std::optional<ImmersiveVideoMetadata> metadata)
 {
-    if (m_state.spatialVideoMetadata == metadata)
+    if (m_state.immersiveVideoMetadata == metadata)
         return;
 
-    m_state.spatialVideoMetadata = metadata;
-    notifyObservers();
-}
-
-void VideoTrackConfiguration::setVideoProjectionMetadata(std::optional<VideoProjectionMetadata> metadata)
-{
-    if (m_state.videoProjectionMetadata == metadata)
-        return;
-
-    m_state.videoProjectionMetadata = metadata;
+    m_state.immersiveVideoMetadata = metadata;
     notifyObservers();
 }
 
@@ -142,8 +133,8 @@ Ref<JSON::Object> VideoTrackConfiguration::toJSON() const
     json->setObject("colorSpace"_s, colorSpace()->toJSON());
     json->setDouble("framerate"_s, framerate());
     json->setInteger("bitrate"_s, bitrate());
-    json->setBoolean("isSpatial"_s, !!spatialVideoMetadata());
-    json->setBoolean("isImmersive"_s, !!videoProjectionMetadata());
+    json->setBoolean("isSpatial"_s, immersiveVideoMetadata() && immersiveVideoMetadata()->isSpatial());
+    json->setBoolean("isImmersive"_s, immersiveVideoMetadata() && immersiveVideoMetadata()->isImmersive());
     json->setBoolean("isProtected"_s, isProtected());
     return json;
 }

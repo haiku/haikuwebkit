@@ -107,7 +107,7 @@ void WebKitProtocolHandler::handleRequest(WebKitURISchemeRequest* request)
     if (requestURL.host() == "gpu"_s) {
         auto& page = webkitURISchemeRequestGetWebPage(request);
         page.protectedLegacyMainFrameProcess()->sendWithAsyncReply(Messages::WebPage::GetRenderProcessInfo(), [this, request = GRefPtr<WebKitURISchemeRequest>(request)](RenderProcessInfo&& info) {
-            handleGPU(request.get(), WTFMove(info));
+            handleGPU(request.get(), WTF::move(info));
         }, page.webPageIDInMainFrameProcess());
         return;
     }
@@ -282,6 +282,11 @@ static String renderBufferDescription(WebKitURISchemeRequest* request)
         case RendererBufferDescription::Type::SharedMemory:
             bufferDescription.append("Shared Memory: "_s, formatName);
             break;
+#if OS(ANDROID)
+        case RendererBufferDescription::Type::AHardwareBuffer:
+            bufferDescription.append("AHardwareBuffer: "_s, formatName);
+            break;
+#endif
         }
         switch (description.usage) {
         case RendererBufferFormat::Usage::Rendering:
@@ -345,8 +350,8 @@ static String preferredBufferFormats(WebKitURISchemeRequest* request, JSON::Arra
             jsonFormats->pushString(jsonStringBuilder.toString());
         }
         builder.append(formatsBuilder.toString());
-        jsonObject->setArray("Formats"_s, WTFMove(jsonFormats));
-        jsonArray.pushObject(WTFMove(jsonObject));
+        jsonObject->setArray("Formats"_s, WTF::move(jsonFormats));
+        jsonArray.pushObject(WTF::move(jsonObject));
     }
     builder.append("</ul>"_s);
     return builder.toString();
@@ -643,14 +648,16 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
 
 #if PLATFORM(WPE)
     bool usingWPEPlatformAPI = WKWPE::isUsingWPEPlatformAPI();
+#if USE(LIBWPE)
     if (!usingWPEPlatformAPI) {
         addTableRow(versionObject, "WPE version"_s, makeString(WPE_MAJOR_VERSION, '.', WPE_MINOR_VERSION, '.', WPE_MICRO_VERSION, " (build) "_s, wpe_get_major_version(), '.', wpe_get_minor_version(), '.', wpe_get_micro_version(), " (runtime)"_s));
         addTableRow(versionObject, "WPE backend"_s, String::fromUTF8(wpe_loader_get_loaded_implementation_library_name()));
     }
 #endif
+#endif
 
     stopTable();
-    jsonObject->setObject("Version Information"_s, WTFMove(versionObject));
+    jsonObject->setObject("Version Information"_s, WTF::move(versionObject));
 
     auto displayObject = JSON::Object::create();
     startTable("Display Information"_s);
@@ -703,7 +710,7 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
 #endif
 
     stopTable();
-    jsonObject->setObject("Display Information"_s, WTFMove(displayObject));
+    jsonObject->setObject("Display Information"_s, WTF::move(displayObject));
 
     auto viewObject = JSON::Object::create();
     startTable("View Information"_s);
@@ -715,7 +722,7 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
         addTableRow(viewObject, "Toplevel state"_s, state);
 
     stopTable();
-    jsonObject->setObject("View Information"_s, WTFMove(viewObject));
+    jsonObject->setObject("View Information"_s, WTF::move(viewObject));
 
     auto hardwareAccelerationObject = JSON::Object::create();
     startTable("Hardware Acceleration Information"_s);
@@ -745,7 +752,7 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
 #if USE(GBM)
             auto jsonFormats = JSON::Array::create();
             auto formatsString = preferredBufferFormats(request, jsonFormats.get());
-            addTableRow(hardwareAccelerationObject, "Preferred buffer formats"_s, formatsString, WTFMove(jsonFormats));
+            addTableRow(hardwareAccelerationObject, "Preferred buffer formats"_s, formatsString, WTF::move(jsonFormats));
 #endif
             addTableRow(hardwareAccelerationObject, "Buffer format"_s, renderBufferDescription(request));
 #endif // USE(LIBDRM)
@@ -759,7 +766,7 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
     }
 
     stopTable();
-    jsonObject->setObject("Hardware Acceleration Information"_s, WTFMove(hardwareAccelerationObject));
+    jsonObject->setObject("Hardware Acceleration Information"_s, WTF::move(hardwareAccelerationObject));
 
     if (policy != "never"_s && !info.platform.isEmpty()) {
         auto hardwareAccelerationObject = JSON::Object::create();
@@ -779,7 +786,7 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
         if (!info.supportedBufferFormats.isEmpty()) {
             auto jsonFormats = JSON::Array::create();
             auto formatsString = supportedBufferFormats(info, jsonFormats.get());
-            addTableRow(hardwareAccelerationObject, "Supported buffers"_s, formatsString, WTFMove(jsonFormats));
+            addTableRow(hardwareAccelerationObject, "Supported buffers"_s, formatsString, WTF::move(jsonFormats));
         }
 #endif
 
@@ -793,7 +800,7 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
         addTableRow(hardwareAccelerationObject, "EGL_EXTENSIONS"_s, info.eglExtensions);
 
         stopTable();
-        jsonObject->setObject("Hardware Acceleration Information (Render process)"_s, WTFMove(hardwareAccelerationObject));
+        jsonObject->setObject("Hardware Acceleration Information (Render process)"_s, WTF::move(hardwareAccelerationObject));
     }
 
     auto infoAsString = jsonObject->toJSONString();

@@ -59,7 +59,7 @@ void BasicCredential::isConditionalMediationAvailable(Document& document, DOMPro
 {
     if (RefPtr page = document.page()) {
 #if ENABLE(WEB_AUTHN)
-        page->authenticatorCoordinator().isConditionalMediationAvailable(document, WTFMove(promise));
+        page->authenticatorCoordinator().isConditionalMediationAvailable(document, WTF::move(promise));
 #else
         promise.resolve(false);
 #endif

@@ -47,6 +47,12 @@ public:
 
     DECLARE_INFO;
 
+    template<AddOrSubtract>
+    static ISO8601::PlainYearMonth addDurationToYearMonth(JSGlobalObject*, ISO8601::PlainYearMonth, ISO8601::Duration, TemporalOverflow);
+
+    static TemporalPlainYearMonth* from(JSGlobalObject*, JSValue, JSValue);
+    static TemporalPlainYearMonth* from(JSGlobalObject*, StringView);
+
     TemporalCalendar* calendar() { return m_calendar.get(this); }
     ISO8601::PlainYearMonth plainYearMonth() const { return m_plainYearMonth; }
 
@@ -55,16 +61,24 @@ public:
     JSC_TEMPORAL_PLAIN_YEAR_MONTH_UNITS(JSC_DEFINE_TEMPORAL_PLAIN_YEAR_MONTH_FIELD);
 #undef JSC_DEFINE_TEMPORAL_PLAIN_YEAR_MONTH_FIELD
 
+    ISO8601::PlainDate with(JSGlobalObject*, JSObject*, JSValue);
+
     String monthCode() const;
 
     String toString(JSGlobalObject*, JSValue options) const;
     String toString() const;
+
+    ISO8601::Duration until(JSGlobalObject*, TemporalPlainYearMonth*, JSValue options);
+    ISO8601::Duration since(JSGlobalObject*, TemporalPlainYearMonth*, JSValue options);
 
     DECLARE_VISIT_CHILDREN;
 
 private:
     TemporalPlainYearMonth(VM&, Structure*, ISO8601::PlainYearMonth&&);
     void finishCreation(VM&);
+
+    template<DifferenceOperation>
+    ISO8601::Duration sinceOrUntil(JSGlobalObject*, TemporalPlainYearMonth*, JSValue);
 
     ISO8601::PlainYearMonth m_plainYearMonth;
     LazyProperty<TemporalPlainYearMonth, TemporalCalendar> m_calendar;

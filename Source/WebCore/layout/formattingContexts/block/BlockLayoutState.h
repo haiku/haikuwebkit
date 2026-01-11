@@ -43,11 +43,11 @@ public:
         bool shouldDiscardOverflow { false };
         bool isLegacy { true };
     };
-    enum class TextBoxTrimSide : uint8_t {
-        Start = 1 << 0,
-        End   = 1 << 1
+    enum class TextBoxTrimSide : bool {
+        Start,
+        End
     };
-    using TextBoxTrim = OptionSet<TextBoxTrimSide>;
+    using TextBoxTrim = EnumSet<TextBoxTrimSide>;
 
     struct LineGrid {
         LayoutSize layoutOffset;

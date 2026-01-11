@@ -38,7 +38,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(UndoManager);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(UndoManager);
 
 UndoManager::UndoManager(Document& document)
     : m_document(document)
@@ -58,7 +58,7 @@ ExceptionOr<void> UndoManager::addItem(Ref<UndoItem>&& item)
 
     item->setUndoManager(this);
     frame->protectedEditor()->registerCustomUndoStep(CustomUndoStep::create(item));
-    m_items.add(WTFMove(item));
+    m_items.add(WTF::move(item));
     return { };
 }
 

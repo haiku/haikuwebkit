@@ -34,7 +34,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(OESVertexArrayObject);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(OESVertexArrayObject);
 
 OESVertexArrayObject::OESVertexArrayObject(WebGLRenderingContext& context)
     : WebGLExtension(context, WebGLExtensionName::OESVertexArrayObject)

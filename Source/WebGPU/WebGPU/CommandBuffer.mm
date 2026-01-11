@@ -37,7 +37,7 @@ CommandBuffer::CommandBuffer(id<MTLCommandBuffer> commandBuffer, Device& device,
     : m_commandBuffer(commandBuffer)
     , m_device(device)
     , m_sharedEvent(sharedEvent)
-    , m_preCommitHandlers(WTFMove(onCommitHandlers))
+    , m_preCommitHandlers(WTF::move(onCommitHandlers))
     , m_sharedEventSignalValue(sharedEventSignalValue)
     , m_commandEncoder(&commandEncoder)
 {
@@ -108,7 +108,7 @@ void CommandBuffer::postCommitHandler()
 
 void CommandBuffer::addPostCommitHandler(Function<void(id<MTLCommandBuffer>)>&& function)
 {
-    m_postCommitHandlers.append(WTFMove(function));
+    m_postCommitHandlers.append(WTF::move(function));
 }
 
 void CommandBuffer::makeInvalidDueToCommit(NSString* lastError)

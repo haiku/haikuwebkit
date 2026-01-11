@@ -55,7 +55,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 std::optional<String> WebAutomationSession::platformGetBase64EncodedPNGData(ShareableBitmap::Handle&& handle)
 {
-    auto bitmap = ShareableBitmap::create(WTFMove(handle), SharedMemory::Protection::ReadOnly);
+    auto bitmap = ShareableBitmap::create(WTF::move(handle), SharedMemory::Protection::ReadOnly);
     if (!bitmap)
         return std::nullopt;
 

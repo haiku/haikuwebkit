@@ -29,7 +29,7 @@ template <typename T>
 class DataRef {
 public:
     DataRef(Ref<T>&& data)
-        : m_data(WTFMove(data))
+        : m_data(WTF::move(data))
     {
     }
 
@@ -49,7 +49,7 @@ public:
 
     DataRef replace(DataRef&& other)
     {
-        return m_data.replace(WTFMove(other.m_data));
+        return m_data.replace(WTF::move(other.m_data));
     }
 
     operator const T&() const LIFETIME_BOUND

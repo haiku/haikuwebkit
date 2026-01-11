@@ -82,7 +82,7 @@ public:
 
     FixedVector& operator=(FixedVector&& other)
     {
-        FixedVector tmp(WTFMove(other));
+        FixedVector tmp(WTF::move(other));
         swap(tmp);
         return *this;
     }
@@ -114,8 +114,8 @@ public:
     template<size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename VectorMalloc>
     explicit FixedVector(Vector<T, inlineCapacity, OverflowHandler, minCapacity, VectorMalloc>&& other)
     {
-        auto target = WTFMove(other);
-        m_storage = target.isEmpty() ? nullptr : Storage::createFromVector(WTFMove(target)).moveToUniquePtr();
+        auto target = WTF::move(other);
+        m_storage = target.isEmpty() ? nullptr : Storage::createFromVector(WTF::move(target)).moveToUniquePtr();
     }
 
     // FIXME: Should we remove this now that it's not required for HashTable::add? This assignment is non-trivial and
@@ -123,8 +123,8 @@ public:
     template<size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename VectorMalloc>
     FixedVector& operator=(Vector<T, inlineCapacity, OverflowHandler, minCapacity, VectorMalloc>&& other)
     {
-        auto target = WTFMove(other);
-        m_storage = target.isEmpty() ? nullptr : Storage::createFromVector(WTFMove(target)).moveToUniquePtr();
+        auto target = WTF::move(other);
+        m_storage = target.isEmpty() ? nullptr : Storage::createFromVector(WTF::move(target)).moveToUniquePtr();
         return *this;
     }
 
@@ -234,7 +234,7 @@ private:
     friend class JSC::LLIntOffsetsExtractor;
 
     FixedVector(std::unique_ptr<Storage>&& storage)
-        :  m_storage { WTFMove(storage) }
+        :  m_storage { WTF::move(storage) }
     { }
 
     std::unique_ptr<Storage> m_storage;

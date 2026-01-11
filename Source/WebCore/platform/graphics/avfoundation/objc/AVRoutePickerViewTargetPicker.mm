@@ -248,7 +248,7 @@ void AVRoutePickerViewTargetPicker::devicePickerWasDismissed()
     if (!(self = [super init]))
         return nil;
 
-    m_callback = WTFMove(callback);
+    m_callback = WTF::move(callback);
 
     return self;
 }

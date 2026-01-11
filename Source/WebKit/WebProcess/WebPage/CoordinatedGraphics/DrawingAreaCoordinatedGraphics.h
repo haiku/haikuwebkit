@@ -36,6 +36,7 @@ class GraphicsContext;
 }
 
 namespace WebKit {
+class NonCompositedFrameRenderer;
 struct RenderProcessInfo;
 struct UpdateInfo;
 
@@ -73,7 +74,7 @@ private:
     void backgroundColorDidChange() override;
 #endif
 
-#if PLATFORM(WPE) && USE(GBM) && ENABLE(WPE_PLATFORM)
+#if PLATFORM(WPE) && ENABLE(WPE_PLATFORM) && (USE(GBM)|| OS(ANDROID))
     void preferredBufferFormatsDidChange() override;
 #endif
 
@@ -148,6 +149,11 @@ private:
 
     // The layer tree host that handles accelerated compositing.
     std::unique_ptr<LayerTreeHost> m_layerTreeHost;
+
+#if PLATFORM(WPE)
+    // Frame renderer used in non-composited mode.
+    std::unique_ptr<NonCompositedFrameRenderer> m_nonCompositedFrameRenderer;
+#endif
 
     WebCore::Region m_dirtyRegion;
     WebCore::IntRect m_scrollRect;

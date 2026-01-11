@@ -47,7 +47,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLStyleElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLStyleElement);
 
 using namespace HTMLNames;
 

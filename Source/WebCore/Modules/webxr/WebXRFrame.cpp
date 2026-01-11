@@ -49,7 +49,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRFrame);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebXRFrame);
 
 Ref<WebXRFrame> WebXRFrame::create(WebXRSession& session, IsAnimationFrame isAnimationFrame)
 {
@@ -229,15 +229,15 @@ ExceptionOr<RefPtr<WebXRViewerPose>> WebXRFrame::getViewerPose(const Document& d
             return TransformationMatrix::fromProjection(fov, aspect, near, far).toColumnMajorFloatArray();
         });
 
-        auto xrView = WebXRView::create(Ref { *this }, view.eye, WTFMove(transform), Float32Array::create(projection.data(), projection.size()));
+        auto xrView = WebXRView::create(Ref { *this }, view.eye, WTF::move(transform), Float32Array::create(projection.data(), projection.size()));
         xrView->setViewportModifiable(m_session->supportsViewportScaling());
 
         //  8.8. Append xrview to xrviews
-        xrViews.append(WTFMove(xrView));
+        xrViews.append(WTF::move(xrView));
     }
 
     // 9. Set pose’s views to xrviews
-    pose->setViews(WTFMove(xrViews));
+    pose->setViews(WTF::move(xrViews));
 
     // 10. Return pose.
     return pose;
@@ -421,7 +421,7 @@ ExceptionOr<Vector<Ref<WebXRTransientInputHitTestResult>>> WebXRFrame::getHitTes
         if (!inputSource)
             continue;
         Vector<Ref<WebXRHitTestResult>> hitTestResults = platformResult.results.map([&](auto& platformHitTestResult) { return WebXRHitTestResult::create(*this, platformHitTestResult); });
-        results.append(WebXRTransientInputHitTestResult::create(inputSource.releaseNonNull(), WTFMove(hitTestResults)));
+        results.append(WebXRTransientInputHitTestResult::create(inputSource.releaseNonNull(), WTF::move(hitTestResults)));
     }
     return results;
 }

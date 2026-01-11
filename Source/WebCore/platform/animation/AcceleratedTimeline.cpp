@@ -46,7 +46,7 @@ Ref<AcceleratedTimeline> AcceleratedTimeline::create(const TimelineIdentifier& i
 
 Ref<AcceleratedTimeline> AcceleratedTimeline::create(TimelineIdentifier&& identifier, Data&& data)
 {
-    return adoptRef(*new AcceleratedTimeline(WTFMove(identifier), WTFMove(data)));
+    return adoptRef(*new AcceleratedTimeline(WTF::move(identifier), WTF::move(data)));
 }
 
 AcceleratedTimeline::AcceleratedTimeline(const TimelineIdentifier& identifier, Seconds originTime)
@@ -62,8 +62,8 @@ AcceleratedTimeline::AcceleratedTimeline(const TimelineIdentifier& identifier, P
 }
 
 AcceleratedTimeline::AcceleratedTimeline(TimelineIdentifier&& identifier, Data&& data)
-    : m_identifier(WTFMove(identifier))
-    , m_data(WTFMove(data))
+    : m_identifier(WTF::move(identifier))
+    , m_data(WTF::move(data))
 {
 }
 
@@ -84,7 +84,7 @@ std::optional<ProgressResolutionData> AcceleratedTimeline::progressResolutionDat
 void AcceleratedTimeline::setProgressResolutionData(ProgressResolutionData&& progressResolutionData)
 {
     ASSERT(!originTime());
-    m_data = WTFMove(progressResolutionData);
+    m_data = WTF::move(progressResolutionData);
 }
 
 } // namespace WebCore

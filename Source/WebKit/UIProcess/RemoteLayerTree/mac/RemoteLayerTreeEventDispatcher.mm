@@ -148,7 +148,7 @@ void RemoteLayerTreeEventDispatcher::setScrollingTree(RefPtr<RemoteScrollingTree
     ASSERT(isMainRunLoop());
 
     Locker locker { m_scrollingTreeLock };
-    m_scrollingTree = WTFMove(scrollingTree);
+    m_scrollingTree = WTF::move(scrollingTree);
 }
 
 RefPtr<RemoteScrollingTree> RemoteLayerTreeEventDispatcher::scrollingTree()
@@ -195,7 +195,7 @@ void RemoteLayerTreeEventDispatcher::cacheWheelEventScrollingAccelerationCurve(c
         });
         return curve;
     });
-    m_momentumEventDispatcher->setScrollingAccelerationCurve(m_pageIdentifier, WTFMove(curve));
+    m_momentumEventDispatcher->setScrollingAccelerationCurve(m_pageIdentifier, WTF::move(curve));
 #endif
 }
 
@@ -704,7 +704,7 @@ void RemoteLayerTreeEventDispatcher::updateAnimations()
         // call to applyEffects() is important so that the base values
         // were re-applied.
         if (!animationStack->isEmpty())
-            m_animationStacks.set(layerID, WTFMove(animationStack));
+            m_animationStacks.set(layerID, WTF::move(animationStack));
     }
 }
 

@@ -37,7 +37,11 @@
 #include <wtf/WeakPtr.h>
 
 #if USE(APPLE_INTERNAL_SDK)
+// FIXME: Properly support using WKA in modules.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnon-modular-include-in-module"
 #include <WebKitAdditions/JSGlobalObjectAdditions.h>
+#pragma clang diagnostic pop
 #else
 #define JS_GLOBAL_OBJECT_ADDITIONS_1
 #define JS_GLOBAL_OBJECT_ADDITIONS_2
@@ -744,7 +748,6 @@ public:
     JSFunction* parseIntFunction() const { return m_parseIntFunction.get(this); }
     JSFunction* parseFloatFunction() const { return m_parseFloatFunction.get(this); }
 
-    JSFunction* asyncGeneratorYieldOnRejectedFunction() const;
     JSFunction* promiseEmptyOnFulfilledFunction() const;
     JSFunction* promiseEmptyOnRejectedFunction() const;
     JSFunction* evalFunction() const;
@@ -1022,7 +1025,7 @@ public:
     unsigned* addressOfGlobalLexicalBindingEpoch() { return &m_globalLexicalBindingEpoch; }
 
     JS_EXPORT_PRIVATE void setConsoleClient(WeakPtr<ConsoleClient>&&);
-    JS_EXPORT_PRIVATE WeakPtr<ConsoleClient> consoleClient() const;
+    JS_EXPORT_PRIVATE CheckedPtr<ConsoleClient> consoleClient() const;
 
     void setName(const String&);
     const String& name() const { return m_name; }
@@ -1157,7 +1160,7 @@ public:
             m_trustedTypesEnforcement = enforcement;
     }
 
-    void queueMicrotask(InternalMicrotask, JSValue, JSValue, JSValue, JSValue);
+    void queueMicrotask(InternalMicrotask, uint8_t, JSValue, JSValue, JSValue);
 
 #if ASSERT_ENABLED
     const JSGlobalObject* globalObjectAtDebuggerEntry() const { return m_globalObjectAtDebuggerEntry; }

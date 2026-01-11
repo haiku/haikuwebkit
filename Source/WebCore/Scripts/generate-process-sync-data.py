@@ -160,7 +160,7 @@ def generate_process_sync_client_header(prefix, synched_datas):
     for data in synched_datas:
         if data.conditional is not None:
             result.append('#if %s' % data.conditional)
-        result.append('    void broadcast%sToOtherProcesses(const %s&);' % (data.name, data.fully_qualified_type))
+        result.append('    WEBCORE_EXPORT void broadcast%sToOtherProcesses(const %s&);' % (data.name, data.fully_qualified_type))
         if data.conditional is not None:
             result.append('#endif')
 
@@ -191,7 +191,7 @@ def generate_process_sync_client_impl(prefix, synched_datas):
         result.append('{')
         result.append('    %sSyncDataVariant dataVariant;' % (prefix))
         result.append('    dataVariant.emplace<enumToUnderlyingType(%sSyncDataType::%s)>(data);' % (prefix, data.name))
-        result.append('    broadcast%sSyncDataToOtherProcesses({ %sSyncDataType::%s, WTFMove(dataVariant) });' % (prefix, prefix, data.name))
+        result.append('    broadcast%sSyncDataToOtherProcesses({ %sSyncDataType::%s, WTF::move(dataVariant) });' % (prefix, prefix, data.name))
         result.append('}')
         if data.conditional is not None:
             result.append('#endif')

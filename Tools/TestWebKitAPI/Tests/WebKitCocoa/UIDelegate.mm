@@ -49,6 +49,7 @@
 #import <WebKit/WKWebViewConfiguration.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
 #import <WebKit/WKWebViewPrivateForTestingMac.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/darwin/DispatchExtras.h>
 
 #if ENABLE(POINTER_LOCK)
@@ -58,13 +59,15 @@
 - (instancetype)initWithName:(NSString *)name additionalButtons:(uint32_t)additionalButtons;
 @end
 
-@interface GCMouseInput ()
-- (void)handleMouseMovementEventWithDelta:(CGPoint)delta;
+@interface GCPhysicalInputProfile (SPI)
+@property (readonly) dispatch_queue_t handlerQueue;
 @end
 #endif
 
+#import <WebKit/WKWebsiteDataStorePrivate.h>
 #import <WebKit/_WKFeature.h>
 #import <WebKit/_WKHitTestResult.h>
+#import <WebKit/_WKWebsiteDataStoreConfiguration.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/Vector.h>
@@ -152,7 +155,7 @@ TEST(WebKit, WindowOpenWithoutUIDelegate)
 }
 
 - (void)setValidationHandler:(Function<void(WKFrameInfo*)>&&)validationHandler {
-    _validationHandler = WTFMove(validationHandler);
+    _validationHandler = WTF::move(validationHandler);
 }
 
 - (void)_webView:(WKWebView *)webView requestGeolocationPermissionForFrame:(WKFrameInfo *)frame decisionHandler:(void (^)(BOOL allowed))decisionHandler
@@ -253,7 +256,7 @@ TEST(WebKit, GeolocationPermission)
     Function<void(WKSecurityOrigin*, WKFrameInfo*)> _validationHandler;
 }
 - (void)setValidationHandler:(Function<void(WKSecurityOrigin*, WKFrameInfo*)>&&)validationHandler {
-    _validationHandler = WTFMove(validationHandler);
+    _validationHandler = WTF::move(validationHandler);
 }
 
 - (void)_webView:(WKWebView *)webView requestGeolocationPermissionForOrigin:(WKSecurityOrigin*)origin initiatedByFrame:(WKFrameInfo *)frame decisionHandler:(void (^)(WKPermissionDecision decision))decisionHandler {
@@ -341,6 +344,115 @@ TEST(WebKit, GeolocationPermissionInIFrame)
     [webView loadRequest:server1.request()];
     TestWebKitAPI::Util::run(&didReceiveMessage);
     EXPECT_TRUE(done);
+}
+
+TEST(WebKit, GeolocationPermissionInIFrameExampleWebArchive)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { mainFrameText } }
+    }, TestWebKitAPI::HTTPServer::Protocol::HttpsProxy);
+
+    auto pool = adoptNS([[WKProcessPool alloc] init]);
+
+    WKGeolocationProviderV1 providerCallback;
+    zeroBytes(providerCallback);
+    providerCallback.base.version = 1;
+    providerCallback.startUpdating = [] (WKGeolocationManagerRef manager, const void*) {
+        WKGeolocationManagerProviderDidChangePosition(manager, adoptWK(WKGeolocationPositionCreate(0, 50.644358, 3.345453, 2.53)).get());
+    };
+    WKGeolocationManagerSetProvider(WKContextGetGeolocationManager((WKContextRef)pool.get()), &providerCallback.base);
+
+    auto storeConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration]);
+    [storeConfiguration setProxyConfiguration:@{
+        (NSString *)kCFStreamPropertyHTTPSProxyHost: @"127.0.0.1",
+        (NSString *)kCFStreamPropertyHTTPSProxyPort: @(server.port())
+    }];
+    auto dataStore = adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:storeConfiguration.get()]);
+
+    auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    configuration.get().processPool = pool.get();
+    [configuration setWebsiteDataStore:dataStore.get()];
+
+    auto messageHandler = adoptNS([[GeolocationPermissionMessageHandler alloc] init]);
+    [[configuration userContentController] addScriptMessageHandler:messageHandler.get() name:@"testHandler"];
+
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration.get()]);
+
+    auto permissionDelegate = adoptNS([[GeolocationDelegateNew alloc] init]);
+    [webView setUIDelegate:permissionDelegate.get()];
+
+    auto navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+
+    webView.get().navigationDelegate = navigationDelegate.get();
+
+    [permissionDelegate setValidationHandler:[&webView](WKSecurityOrigin *origin, WKFrameInfo *frame) {
+        if ([origin.protocol isEqualToString:@"https"]) {
+            EXPECT_WK_STREQ(origin.protocol, @"https");
+            EXPECT_WK_STREQ(origin.host, @"example.com");
+        } else {
+            EXPECT_WK_STREQ(origin.protocol, @"file");
+            EXPECT_WK_STREQ(origin.host, @"");
+        }
+        EXPECT_EQ(origin.port, 0);
+
+        EXPECT_WK_STREQ(frame.securityOrigin.protocol, @"https");
+        EXPECT_WK_STREQ(frame.securityOrigin.host, @"example.com");
+        EXPECT_EQ(frame.securityOrigin.port, 0);
+        EXPECT_TRUE(frame.isMainFrame);
+        EXPECT_TRUE(frame.webView == webView);
+    }];
+
+    NSString *getCurrentPosition = @"navigator.geolocation.getCurrentPosition(() => { webkit.messageHandlers.testHandler.postMessage(\"ok\") }, () => { webkit.messageHandlers.testHandler.postMessage(\"ko\") });";
+
+    done = false;
+    didReceiveMessage = false;
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    [webView evaluateJavaScript:getCurrentPosition completionHandler:nil];
+    TestWebKitAPI::Util::run(&didReceiveMessage);
+    TestWebKitAPI::Util::run(&done);
+
+#if ENABLE(WEB_ARCHIVE)
+    RetainPtr<NSURL> testURL = [NSBundle.test_resourcesBundle URLForResource:@"example" withExtension:@"webarchive"];
+    [webView loadRequest:[NSURLRequest requestWithURL:testURL.get()]];
+    [navigationDelegate waitForDidFinishNavigation];
+    __block bool doneEvaluatingJavaScript { false };
+    [webView callAsyncJavaScript:@"return (await navigator.permissions.query({ name: \"geolocation\" })).state" arguments:nil inFrame:nil inContentWorld:WKContentWorld.pageWorld completionHandler:^(id result, NSError *error) {
+        EXPECT_NULL(error);
+        EXPECT_TRUE([result isKindOfClass:[NSString class]]);
+        EXPECT_WK_STREQ(@"prompt", result);
+        doneEvaluatingJavaScript = true;
+    }];
+    TestWebKitAPI::Util::run(&doneEvaluatingJavaScript);
+
+    done = false;
+    didReceiveMessage = false;
+    [webView evaluateJavaScript:getCurrentPosition completionHandler:nil];
+    TestWebKitAPI::Util::run(&didReceiveMessage);
+    TestWebKitAPI::Util::run(&done);
+
+    // Reset web process state.
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    [webView loadRequest:[NSURLRequest requestWithURL:testURL.get()]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    done = false;
+    didReceiveMessage = false;
+    doneEvaluatingJavaScript = false;
+    [webView callAsyncJavaScript:@"return (await new Promise(function (resolve, reject) {"
+        "navigator.geolocation.getCurrentPosition((position) => { resolve(JSON.stringify(position.toJSON())) }, (error) => { reject(error.message) });"
+    "}));" arguments:nil inFrame:nil inContentWorld:WKContentWorld.pageWorld completionHandler:^(id result, NSError *error) {
+        EXPECT_NULL(error);
+        EXPECT_TRUE([result isKindOfClass:[NSString class]]);
+        EXPECT_WK_STREQ(@"{\"coords\":{\"latitude\":50.644358,\"longitude\":3.345453,\"altitude\":null,\"accuracy\":2.53,\"altitudeAccuracy\":null,\"heading\":null,\"speed\":null,\"floorLevel\":null},\"timestamp\":0}", result);
+        doneEvaluatingJavaScript = true;
+    }];
+    TestWebKitAPI::Util::run(&doneEvaluatingJavaScript);
+    EXPECT_FALSE(didReceiveMessage);
+    EXPECT_TRUE(done);
+#endif
 }
 
 static constexpr auto notAllowingMainFrameText = R"DOCDOCDOC(
@@ -1720,7 +1832,13 @@ TEST_F(PointerLockTests, MouseDeviceMove)
     float deltaX = 10.0f;
     float deltaY = 5.0f;
     RetainPtr mouseInput = [fakeMouse() mouseInput];
-    [mouseInput handleMouseMovementEventWithDelta:CGPointMake(deltaX, deltaY)];
+    if (GCMouseMoved handler = [mouseInput mouseMovedHandler]) {
+        RetainPtr profile = dynamic_objc_cast<GCPhysicalInputProfile>(mouseInput);
+        dispatch_async([profile handlerQueue], ^{
+            // Positive cursor movement is a move up, not down.
+            handler(mouseInput.get(), deltaX, -deltaY);
+        });
+    }
 
     [pointerLockDelegate() waitForMouseMoveEvents];
     CGPoint capturedDelta = [[pointerLockDelegate() mouseMoveEvents].firstObject CGPointValue];

@@ -128,7 +128,7 @@ const MatchResult& ElementRuleCollector::matchResult() const
 
 Ref<MatchResult> ElementRuleCollector::releaseMatchResult()
 {
-    return WTFMove(m_result);
+    return WTF::move(m_result);
 }
 
 const Vector<RefPtr<const StyleRule>>& ElementRuleCollector::matchedRuleList() const
@@ -158,7 +158,7 @@ inline void ElementRuleCollector::addElementStyleProperties(const StylePropertie
     matchedProperty.cascadeLayerPriority = priority;
     matchedProperty.fromStyleAttribute = fromStyleAttribute;
     matchedProperty.isCacheable = isCacheable;
-    addMatchedProperties(WTFMove(matchedProperty), DeclarationOrigin::Author);
+    addMatchedProperties(WTF::move(matchedProperty), DeclarationOrigin::Author);
 }
 
 bool ElementRuleCollector::isFirstMatchModeAndHasMatchedAnyRules() const
@@ -601,7 +601,7 @@ void ElementRuleCollector::collectMatchingRulesForList(const RuleSet::RuleDataVe
             auto [result, roots] = scopeRulesMatch(ruleData, matchRequest);
             if (!result)
                 continue;
-            scopingRoots = WTFMove(roots);
+            scopingRoots = WTF::move(roots);
         }
 
         auto& rule = ruleData.styleRule();
@@ -668,7 +668,7 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
 
     Vector<ScopingRootWithDistance> scopingRoots;
     auto isWithinScope = [&](auto& rule) {
-        auto previousScopingRoots = WTFMove(scopingRoots);
+        auto previousScopingRoots = WTF::move(scopingRoots);
         // The last rule (=innermost @scope rule) determines the scoping roots
         scopingRoots.clear();
 
@@ -804,7 +804,7 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
             auto scopingRootsWithinScope = isWithinScopingRootsAndScopeEnd(scopeEnd);
             if (scopingRootsWithinScope.isEmpty())
                 return false;
-            scopingRoots = WTFMove(scopingRootsWithinScope);
+            scopingRoots = WTF::move(scopingRootsWithinScope);
         }
         // element is in the @scope donut
         return true;
@@ -816,7 +816,7 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
             return { false, { } };
     }
 
-    return { true, WTFMove(scopingRoots) };
+    return { true, WTF::move(scopingRoots) };
 }
 
 static inline bool compareRules(MatchedRule r1, MatchedRule r2)
@@ -931,7 +931,7 @@ void ElementRuleCollector::addMatchedProperties(MatchedProperties&& matchedPrope
         m_result->nonCacheablePropertyIds.clear();
     }
 
-    declarations.append(WTFMove(matchedProperties));
+    declarations.append(WTF::move(matchedProperties));
 }
 
 void ElementRuleCollector::addAuthorKeyframeRules(const StyleRuleKeyframe& keyframe)

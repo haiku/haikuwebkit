@@ -105,7 +105,7 @@ static std::pair<simd_float4, simd_float4> computeMinAndMaxCorners(const Vector<
 RemoteDDMeshProxy::RemoteDDMeshProxy(Ref<RemoteGPUProxy>&& root, ConvertToBackingContext& convertToBackingContext, DDModelIdentifier identifier)
     : m_backing(identifier)
     , m_convertToBackingContext(convertToBackingContext)
-    , m_root(WTFMove(root))
+    , m_root(WTF::move(root))
 #if PLATFORM(COCOA)
     , m_minCorner(simd_make_float4(FLT_MAX, FLT_MAX, FLT_MAX, 1.f))
     , m_maxCorner(simd_make_float4(-FLT_MAX, -FLT_MAX, -FLT_MAX, 1.f))

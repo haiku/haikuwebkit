@@ -56,8 +56,8 @@ public:
             if (pair->key == key)
                 return pair->value;
             Map map;
-            map.add(WTFMove(pair->key), WTFMove(pair->value));
-            m_storage = WTFMove(map);
+            map.add(WTF::move(pair->key), WTF::move(pair->value));
+            m_storage = WTF::move(map);
             return std::get<Map>(m_storage).add(key, functor()).iterator->value;
         }
         return std::get<Map>(m_storage).ensure(key, functor).iterator->value;

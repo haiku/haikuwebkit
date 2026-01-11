@@ -1594,12 +1594,14 @@ static JSAsyncGenerator::Field asyncGeneratorInternalFieldIndex(BytecodeIntrinsi
         return JSAsyncGenerator::Field::This;
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_generatorFieldFrame)
         return JSAsyncGenerator::Field::Frame;
-    if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_asyncGeneratorFieldSuspendReason)
-        return JSAsyncGenerator::Field::SuspendReason;
-    if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_asyncGeneratorFieldQueueFirst)
-        return JSAsyncGenerator::Field::QueueFirst;
-    if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_asyncGeneratorFieldQueueLast)
-        return JSAsyncGenerator::Field::QueueLast;
+    if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_asyncGeneratorFieldQueue)
+        return JSAsyncGenerator::Field::Queue;
+    if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_asyncGeneratorFieldResumeValue)
+        return JSAsyncGenerator::Field::ResumeValue;
+    if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_asyncGeneratorFieldResumeMode)
+        return JSAsyncGenerator::Field::ResumeMode;
+    if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_asyncGeneratorFieldResumePromise)
+        return JSAsyncGenerator::Field::ResumePromise;
     RELEASE_ASSERT_NOT_REACHED();
     return JSAsyncGenerator::Field::State;
 }
@@ -4962,7 +4964,12 @@ void ReturnNode::emitBytecode(BytecodeGenerator& generator, RegisterID* dst)
 
     RefPtr<RegisterID> returnRegister = nullptr;
     if (m_value) {
-        returnRegister = generator.emitNodeInTailPositionFromReturnNode(dst, m_value);
+        // When in a finally scope, we must not use tail call optimization because
+        // the finally block must execute before actually returning.
+        if (generator.hasFinallyScopes())
+            returnRegister = generator.emitNode(dst, m_value);
+        else
+            returnRegister = generator.emitNodeInTailPositionFromReturnNode(dst, m_value);
         if (generator.parseMode() == SourceParseMode::AsyncGeneratorBodyMode)
             returnRegister = generator.emitAwait(generator.newTemporary(), returnRegister.get(), position());
     } else
@@ -4977,7 +4984,7 @@ void ReturnNode::emitBytecode(BytecodeGenerator& generator, RegisterID* dst)
     }
 
     generator.emitProfileControlFlow(endOffset());
-    // Emitting an unreachable return here is needed in case this op_profile_control_flow is the 
+    // Emitting an unreachable return here is needed in case this op_profile_control_flow is the
     // last opcode in a CodeBlock because a CodeBlock's instructions must end with a terminal opcode.
     if (generator.shouldEmitControlFlowProfilerHooks())
         generator.emitReturn(generator.emitLoad(nullptr, jsUndefined()));
@@ -5440,6 +5447,87 @@ void FunctionNode::emitBytecode(BytecodeGenerator& generator, RegisterID*)
     case SourceParseMode::AsyncFunctionMode:
     case SourceParseMode::AsyncMethodMode:
     case SourceParseMode::AsyncArrowFunctionMode: {
+        ASSERT(startOffset() >= lineStartOffset());
+        JSTextPosition divot(firstLine(), startOffset(), lineStartOffset());
+
+        if (generator.isAsyncFunctionWithoutAwait()) {
+            // async function without await. In this case, we fully inline entire body into wrapper function since there is no need to resume.
+            // This mode optimizes async function in several ways.
+            //
+            // 1. Do not allocate body function.
+            // 2. Due to (2), arguments are not specially captured.
+            // 3. Generator is not created because we do not need suspend and resume.
+            //
+            // We use try-catch-finally to handle the async function semantics:
+            // - try: Execute body statements
+            // - catch: Reject promise with the exception
+            // - finally: Resolve promise with completion value and return promise
+            //
+            // The finally block always resolves and returns the promise. Since promise
+            // resolution only takes effect on the first call, calling resolve after
+            // reject (from the catch block) is a no-op.
+
+            if (generator.parseMode() == SourceParseMode::AsyncArrowFunctionMode && generator.isThisUsedInInnerArrowFunction())
+                generator.emitLoadThisFromArrowFunctionLexicalEnvironment();
+
+            // Set up finally context to capture return values from the body.
+            // When a return statement is hit, it stores the value in completionValueRegister
+            // and jumps to the finally block.
+            Ref<Label> finallyLabel = generator.newLabel();
+            FinallyContext finallyContext(generator, finallyLabel.get());
+            generator.pushFinallyControlFlowScope(finallyContext);
+            generator.emitLoad(finallyContext.completionValueRegister(), jsUndefined());
+
+            // Try block. Finally handler puts return value to completionValueRegister.
+            Ref<Label> catchLabel = generator.newLabel();
+            Ref<Label> tryStartLabel = generator.newEmittedLabel();
+            TryData* tryData = generator.pushTry(tryStartLabel.get(), catchLabel.get(), HandlerType::Catch);
+            emitStatementsBytecode(generator, generator.ignoredResult());
+            generator.emitJump(finallyLabel.get());
+            Ref<Label> tryEndLabel = generator.newEmittedLabel();
+            generator.popTry(tryData, tryEndLabel.get());
+
+            // Catch block. Reject promise with the exception.
+            generator.emitLabel(catchLabel.get());
+            RefPtr<RegisterID> thrownValue = generator.newTemporary();
+            generator.emitOutOfLineCatchHandler(thrownValue.get(), finallyContext.completionTypeRegister(), tryData);
+
+            // Push try for catch block pointing to finally (for exceptions in catch).
+            TryData* catchTryData = generator.pushTry(catchLabel.get(), finallyLabel.get(), HandlerType::Finally);
+            {
+                RefPtr<RegisterID> rejectPromise = generator.moveLinkTimeConstant(nullptr, LinkTimeConstant::rejectPromiseWithFirstResolvingFunctionCallCheck);
+                CallArguments rejectArgs(generator, nullptr, 2);
+                generator.emitLoad(rejectArgs.thisRegister(), jsUndefined());
+                generator.move(rejectArgs.argumentRegister(0), generator.promiseRegister());
+                generator.move(rejectArgs.argumentRegister(1), thrownValue.get());
+                generator.emitCallIgnoreResult(generator.newTemporary(), rejectPromise.get(), NoExpectedFunction, rejectArgs, divot, divot, divot, DebuggableCall::No);
+            }
+
+            // Catch handled the exception, set completion type to Normal.
+            generator.emitLoad(finallyContext.completionTypeRegister(), CompletionType::Normal);
+            generator.popTry(catchTryData, finallyLabel.get());
+
+            generator.popFinallyControlFlowScope();
+
+            // Emit out-of-line finally handler for exceptions thrown in catch block.
+            generator.emitOutOfLineFinallyHandler(finallyContext.completionValueRegister(), finallyContext.completionTypeRegister(), catchTryData);
+
+            // Finally block. Resolve promise with completion value and return promise.
+            generator.emitLabel(finallyLabel.get());
+            {
+                RefPtr<RegisterID> resolvePromise = generator.moveLinkTimeConstant(nullptr, LinkTimeConstant::resolvePromiseWithFirstResolvingFunctionCallCheck);
+                CallArguments resolveArgs(generator, nullptr, 2);
+                generator.emitLoad(resolveArgs.thisRegister(), jsUndefined());
+                generator.move(resolveArgs.argumentRegister(0), generator.promiseRegister());
+                generator.move(resolveArgs.argumentRegister(1), finallyContext.completionValueRegister());
+                generator.emitCallIgnoreResult(generator.newTemporary(), resolvePromise.get(), NoExpectedFunction, resolveArgs, divot, divot, divot, DebuggableCall::No);
+            }
+            generator.emitDebugHook(WillLeaveCallFrame, JSTextPosition(lastLine(), startOffset(), lineStartOffset()));
+            generator.emitReturn(generator.promiseRegister());
+            break;
+        }
+
+        // Full async function path with body function and generator infrastructure.
         StatementNode* singleStatement = this->singleStatement();
         ASSERT(singleStatement->isExprStatement());
         ExprStatementNode* exprStatement = static_cast<ExprStatementNode*>(singleStatement);
@@ -5454,11 +5542,9 @@ void FunctionNode::emitBytecode(BytecodeGenerator& generator, RegisterID*)
             RefPtr<RegisterID> homeObject = emitHomeObjectForCallee(generator);
             emitPutHomeObject(generator, next.get(), homeObject.get());
         }
-        
+
         if (generator.parseMode() == SourceParseMode::AsyncArrowFunctionMode && generator.isThisUsedInInnerArrowFunction())
             generator.emitLoadThisFromArrowFunctionLexicalEnvironment();
-
-        generator.emitPutInternalField(generator.generatorRegister(), static_cast<unsigned>(JSGenerator::Field::State), generator.emitLoad(nullptr, jsNumber(static_cast<int32_t>(JSGenerator::State::Executing))));
 
         // We do not store 'this' in arrow function within constructor,
         // because it might be not initialized, if super is called later.
@@ -5470,14 +5556,13 @@ void FunctionNode::emitBytecode(BytecodeGenerator& generator, RegisterID*)
             generatorThis = generator.emitLoad(generatorThis.get(), jsUndefined());
 
         generator.emitPutInternalField(generator.generatorRegister(), static_cast<unsigned>(JSGenerator::Field::Next), next.get());
+        generator.emitPutInternalField(generator.generatorRegister(), static_cast<unsigned>(JSGenerator::Field::State), generator.emitLoad(nullptr, jsNumber(static_cast<int32_t>(JSGenerator::State::Executing))));
 
-        ASSERT(startOffset() >= lineStartOffset());
         Ref<Label> tryStartLabel = generator.newEmittedLabel();
         Ref<Label> catchLabel = generator.newLabel();
         Ref<Label> successLabel = generator.newLabel();
         Ref<Label> driveLabel = generator.newLabel();
 
-        JSTextPosition divot(firstLine(), startOffset(), lineStartOffset());
         TryData* tryData = generator.pushTry(tryStartLabel.get(), catchLabel.get(), HandlerType::SynthesizedCatch);
 
         RefPtr<RegisterID> nextResult = generator.newTemporary();
@@ -5810,7 +5895,7 @@ RegisterID* ClassExprNode::emitBytecode(BytecodeGenerator& generator, RegisterID
         Vector<UnlinkedFunctionExecutable::ClassElementDefinition> instanceElementDefinitions;
         generator.emitDefineClassElements(m_classElements, constructor.get(), prototype.get(), instanceElementDefinitions, staticElementDefinitions);
         if (!instanceElementDefinitions.isEmpty()) {
-            RefPtr<RegisterID> instanceFieldInitializer = generator.emitNewClassFieldInitializerFunction(generator.newTemporary(), WTFMove(instanceElementDefinitions), m_classHeritage);
+            RefPtr<RegisterID> instanceFieldInitializer = generator.emitNewClassFieldInitializerFunction(generator.newTemporary(), WTF::move(instanceElementDefinitions), m_classHeritage);
 
             // FIXME: Skip this if the initializer function isn't going to need a home object (no eval or super properties)
             // https://bugs.webkit.org/show_bug.cgi?id=196867
@@ -5831,7 +5916,7 @@ RegisterID* ClassExprNode::emitBytecode(BytecodeGenerator& generator, RegisterID
         generator.emitInstallPrivateClassBrand(constructor.get());
 
     if (!staticElementDefinitions.isEmpty()) {
-        RefPtr<RegisterID> staticFieldInitializer = generator.emitNewClassFieldInitializerFunction(generator.newTemporary(), WTFMove(staticElementDefinitions), m_classHeritage);
+        RefPtr<RegisterID> staticFieldInitializer = generator.emitNewClassFieldInitializerFunction(generator.newTemporary(), WTF::move(staticElementDefinitions), m_classHeritage);
         // FIXME: Skip this if the initializer function isn't going to need a home object (no eval or super properties)
         // https://bugs.webkit.org/show_bug.cgi?id=196867
         emitPutHomeObject(generator, staticFieldInitializer.get(), constructor.get());
@@ -6225,7 +6310,7 @@ void ObjectPatternNode::bindValue(BytecodeGenerator& generator, RegisterID* rhs)
                 // This must be non-tail-call because @copyDataProperties accesses caller-frame.
                 generator.move(args->thisRegister(), newObject.get());
                 generator.move(args->argumentRegister(0), rhs);
-                generator.emitLoad(args->argumentRegister(1), WTFMove(excludedSet));
+                generator.emitLoad(args->argumentRegister(1), WTF::move(excludedSet));
                 generator.emitCallIgnoreResult(generator.newTemporary(), copyDataProperties.get(), NoExpectedFunction, args.value(), divot(), divotStart(), divotEnd(), DebuggableCall::No);
 
                 if (targetBaseAndPropertyName)

@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: (rdar://165540771) Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 DECLARE_SYSTEM_HEADER
 
 #import <wtf/Platform.h>
@@ -35,8 +38,6 @@ DECLARE_SYSTEM_HEADER
 #import <UIKit/UIKit.h>
 
 #if USE(APPLE_INTERNAL_SDK)
-
-// FIXME: (rdar://165540771) This file is invalid in a module because MediaPlayer has incorrect extern_c attributes in its dependencies.
 
 #import <MediaPlayer/MPAVRoutingController.h>
 
@@ -78,3 +79,5 @@ NS_ASSUME_NONNULL_END
 #endif
 
 #endif // PLATFORM(IOS_FAMILY)
+
+#endif // !__has_feature(modules)

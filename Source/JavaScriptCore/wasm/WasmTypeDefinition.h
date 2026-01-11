@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
+
 #if ENABLE(WEBASSEMBLY)
 
 #include <JavaScriptCore/JITCompilation.h>
@@ -895,7 +897,7 @@ struct TypeHash {
     RefPtr<TypeDefinition> key { nullptr };
     TypeHash() = default;
     explicit TypeHash(Ref<TypeDefinition>&& key)
-        : key(WTFMove(key))
+        : key(WTF::move(key))
     { }
     explicit TypeHash(WTF::HashTableDeletedValueType)
         : key(WTF::HashTableDeletedValue)

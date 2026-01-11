@@ -37,20 +37,20 @@ using namespace WebCore;
 
 Ref<WebBackForwardListFrameItem> WebBackForwardListFrameItem::create(WebBackForwardListItem& item, WebBackForwardListFrameItem* parentItem, Ref<FrameState>&& frameState)
 {
-    return adoptRef(*new WebBackForwardListFrameItem(item, parentItem, WTFMove(frameState)));
+    return adoptRef(*new WebBackForwardListFrameItem(item, parentItem, WTF::move(frameState)));
 }
 
 WebBackForwardListFrameItem::WebBackForwardListFrameItem(WebBackForwardListItem& item, WebBackForwardListFrameItem* parentItem, Ref<FrameState>&& frameState)
     : m_backForwardListItem(item)
     , m_identifier(*frameState->frameItemID)
-    , m_frameState(WTFMove(frameState))
+    , m_frameState(WTF::move(frameState))
     , m_parent(parentItem)
 {
     m_frameState->itemID = item.identifier();
     auto result = allItems().add({ *m_frameState->frameItemID, *m_frameState->itemID }, *this);
     ASSERT_UNUSED(result, result.isNewEntry);
     for (auto& child : std::exchange(m_frameState->children, { }))
-        m_children.append(WebBackForwardListFrameItem::create(item, this, WTFMove(child)));
+        m_children.append(WebBackForwardListFrameItem::create(item, this, WTF::move(child)));
 }
 
 WebBackForwardListFrameItem::~WebBackForwardListFrameItem()
@@ -109,14 +109,14 @@ RefPtr<WebBackForwardListItem> WebBackForwardListFrameItem::protectedBackForward
 void WebBackForwardListFrameItem::setChild(Ref<FrameState>&& frameState)
 {
     ASSERT(m_backForwardListItem);
-    Ref childItem = WebBackForwardListFrameItem::create(*protectedBackForwardListItem(), this, WTFMove(frameState));
+    Ref childItem = WebBackForwardListFrameItem::create(*protectedBackForwardListItem(), this, WTF::move(frameState));
     for (size_t i = 0; i < m_children.size(); i++) {
         if (m_children[i]->frameID() == childItem->m_frameState->frameID) {
-            m_children[i] = WTFMove(childItem);
+            m_children[i] = WTF::move(childItem);
             return;
         }
     }
-    m_children.append(WTFMove(childItem));
+    m_children.append(WTF::move(childItem));
 }
 
 Ref<WebBackForwardListFrameItem> WebBackForwardListFrameItem::rootFrame()
@@ -149,7 +149,7 @@ void WebBackForwardListFrameItem::setWasRestoredFromSession()
 
 void WebBackForwardListFrameItem::setFrameState(Ref<FrameState>&& frameState)
 {
-    m_frameState = WTFMove(frameState);
+    m_frameState = WTF::move(frameState);
     m_frameState->children.clear();
 }
 

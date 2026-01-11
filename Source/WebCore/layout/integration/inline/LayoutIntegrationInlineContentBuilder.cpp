@@ -33,7 +33,7 @@
 #include "LayoutState.h"
 #include "RenderBlockFlowInlines.h"
 #include "RenderBoxInlines.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "StringTruncator.h"
 
 namespace WebCore {
@@ -106,13 +106,13 @@ FloatRect InlineContentBuilder::build(Layout::InlineLayoutResult&& layoutResult,
         for (auto& line : inlineContent.displayContent().lines)
             damageRect.unite(line.inkOverflow());
 
-        inlineContent.displayContent().set(WTFMove(layoutResult.displayContent));
+        inlineContent.displayContent().set(WTF::move(layoutResult.displayContent));
         adjustDisplayLines(inlineContent, 0);
 
         for (auto& line : inlineContent.displayContent().lines)
             damageRect.unite(line.inkOverflow());
     } else
-        damageRect = handlePartialDisplayContentUpdate(WTFMove(layoutResult), inlineContent, lineDamage);
+        damageRect = handlePartialDisplayContentUpdate(WTF::move(layoutResult), inlineContent, lineDamage);
 
     computeIsFirstIsLastBoxAndBidiReorderingForInlineContent(inlineContent.displayContent().boxes);
     return damageRect;
@@ -163,6 +163,9 @@ void InlineContentBuilder::adjustDisplayLines(InlineContent& inlineContent, size
         };
         adjustOverflowLogicalWidthWithBlockFlowQuirk();
 
+        if (line.hasContentfulInFlowBox() && !line.hasBlockLevelBox())
+            inlineContent.setHasPaintedInlineLevelBoxes();
+
         auto firstBoxIndex = boxIndex;
         auto lineInkOverflowRect = lineScrollableOverflowRect;
         // Collect overflow from boxes.
@@ -207,8 +210,16 @@ void InlineContentBuilder::adjustDisplayLines(InlineContent& inlineContent, size
             }
 
             if (box.isInlineBox()) {
-                if (!downcast<RenderElement>(*box.layoutBox().rendererForIntegration()).hasSelfPaintingLayer())
+                bool hasSelfPaintingLayer = downcast<RenderElement>(*box.layoutBox().rendererForIntegration()).hasSelfPaintingLayer();
+                if (!hasSelfPaintingLayer)
                     lineInkOverflowRect.unite(box.inkOverflow());
+
+                if (line.hasBlockLevelBox()) {
+                    if (hasSelfPaintingLayer || box.layoutBox().style().hasOpacity() || box.layoutBox().style().hasOutline()) {
+                        // See if the inline box has properties that affect block-in-inline painting.
+                        inlineContent.setHasPaintedInlineLevelBoxes();
+                    }
+                }
                 continue;
             }
         }
@@ -345,13 +356,13 @@ FloatRect InlineContentBuilder::handlePartialDisplayContentUpdate(Layout::Inline
     case Layout::InlineLayoutResult::Range::FullFromDamage: {
         auto& displayContent = inlineContent.displayContent();
         displayContent.remove(*firstDamagedLineIndex, *numberOfDamagedLines, *firstDamagedBoxIndex, *numberOfDamagedBoxes);
-        displayContent.append(WTFMove(layoutResult.displayContent));
+        displayContent.append(WTF::move(layoutResult.displayContent));
         break;
     }
     case Layout::InlineLayoutResult::Range::PartialFromDamage: {
         auto& displayContent = inlineContent.displayContent();
         displayContent.remove(*firstDamagedLineIndex, *numberOfDamagedLines, *firstDamagedBoxIndex, *numberOfDamagedBoxes);
-        displayContent.insert(WTFMove(layoutResult.displayContent), *firstDamagedLineIndex, *firstDamagedBoxIndex);
+        displayContent.insert(WTF::move(layoutResult.displayContent), *firstDamagedLineIndex, *firstDamagedBoxIndex);
 
         auto adjustCachedBoxIndexesIfNeeded = [&] {
             if (numberOfNewBoxes == *numberOfDamagedBoxes)

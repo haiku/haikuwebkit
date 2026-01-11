@@ -49,8 +49,8 @@ bool canLookUp(const URL& url)
 
 void lookUp(const URL& url, NavigationType navigationType, SSBLookupResult *cachedResult, CompletionHandler<void(SSBLookupResult *, NSError *)>&& completion)
 {
-    BlockPtr mainRunLoopCompletion = makeBlockPtr([completion = WTFMove(completion)](SSBLookupResult *result, NSError *error) mutable {
-        RunLoop::mainSingleton().dispatch([completion = WTFMove(completion), result = retainPtr(result), error = retainPtr(error)] mutable {
+    BlockPtr mainRunLoopCompletion = makeBlockPtr([completion = WTF::move(completion)](SSBLookupResult *result, NSError *error) mutable {
+        RunLoop::mainSingleton().dispatch([completion = WTF::move(completion), result = retainPtr(result), error = retainPtr(error)] mutable {
             completion(result.get(), error.get());
         });
     });
@@ -65,19 +65,33 @@ void lookUp(const URL& url, NavigationType navigationType, SSBLookupResult *cach
         [context lookUpURL:url.createNSURL().get() completionHandler:mainRunLoopCompletion.get()];
 }
 
-void listsForNamespace(const String& listNamespace, CompletionHandler<void(NamespacedLists *, NSError *)>&& completion)
+void listsForNamespace(NamespacedCollection&& namespacedCollection, CompletionHandler<void(NamespacedLists *, NSError *)>&& completion)
 {
     RetainPtr context = [getSSBLookupContextClassSingleton() sharedLookupContext];
-    if (![context respondsToSelector:@selector(getListsForNamespace:completionHandler:)])
+    if (![context respondsToSelector:@selector(_getListsForNamespace:collectionId:completionHandler:)])
         return completion(nil, [NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]);
 
-    BlockPtr mainRunLoopCompletion = makeBlockPtr([completion = WTFMove(completion)](NamespacedLists *result, NSError *error) mutable {
-        RunLoop::mainSingleton().dispatch([completion = WTFMove(completion), result = retainPtr(result), error = retainPtr(error)] mutable {
+    auto&& [listNamespace, collectionID] = WTF::move(namespacedCollection);
+    if (listNamespace.isEmpty() || collectionID.isEmpty())
+        return completion(nil, [NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]);
+
+    BlockPtr mainRunLoopCompletion = makeBlockPtr([completion = WTF::move(completion)](NamespacedLists *result, NSError *error) mutable {
+        RunLoop::mainSingleton().dispatch([completion = WTF::move(completion), result = retainPtr(result), error = retainPtr(error)] mutable {
             completion(result.get(), error.get());
         });
     });
-    [context getListsForNamespace:listNamespace.createNSString().get() completionHandler:mainRunLoopCompletion.get()];
+
+    [context _getListsForNamespace:listNamespace.createNSString().get() collectionId:collectionID.createNSString().get() completionHandler:mainRunLoopCompletion.get()];
 }
+
+#if __has_include(<WebKitAdditions/SafeBrowsingUtilitiesAdditions.mm>)
+#import <WebKitAdditions/SafeBrowsingUtilitiesAdditions.mm>
+#else
+NamespacedCollection namespacedCollectionForTextExtraction()
+{
+    return { { }, { } };
+}
+#endif
 
 } // namespace WebKit::SafeBrowsingUtilities
 

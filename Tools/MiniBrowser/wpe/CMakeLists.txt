@@ -12,9 +12,12 @@ set(MiniBrowser_PRIVATE_INCLUDE_DIRECTORIES
 
 set(MiniBrowser_PRIVATE_LIBRARIES
     ${JavaScriptCore_LIBRARY_NAME}
-    WebKit::WPEToolingBackends
     WebKit::WebKit
 )
+
+if (ENABLE_WPE_LEGACY_API)
+    list(APPEND MiniBrowser_PRIVATE_LIBRARIES WebKit::WPEToolingBackends)
+endif ()
 
 if (USE_ATK)
     list(APPEND MiniBrowser_SYSTEM_INCLUDE_DIRECTORIES

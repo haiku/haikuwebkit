@@ -48,7 +48,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLTableElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLTableElement);
 
 using namespace HTMLNames;
 
@@ -107,7 +107,7 @@ ExceptionOr<void> HTMLTableElement::setTHead(RefPtr<HTMLTableSectionElement>&& n
             break;
     }
 
-    return insertBefore(*newHead, WTFMove(child));
+    return insertBefore(*newHead, WTF::move(child));
 }
 
 RefPtr<HTMLTableSectionElement> HTMLTableElement::tFoot() const
@@ -163,7 +163,7 @@ Ref<HTMLTableSectionElement> HTMLTableElement::createTBody()
 {
     Ref body = HTMLTableSectionElement::create(tbodyTag, protectedDocument());
     RefPtr referenceElement = lastBody() ? lastBody()->nextSibling() : nullptr;
-    insertBefore(body, WTFMove(referenceElement));
+    insertBefore(body, WTF::move(referenceElement));
     return body;
 }
 
@@ -228,15 +228,15 @@ ExceptionOr<Ref<HTMLElement>> HTMLTableElement::insertRow(int index)
             auto result = appendChild(newBody);
             if (result.hasException())
                 return result.releaseException();
-            return Ref<HTMLElement> { WTFMove(newRow) };
+            return Ref<HTMLElement> { WTF::move(newRow) };
         }
     }
 
     Ref newRow = HTMLTableRowElement::create(document);
-    auto result = parent->insertBefore(newRow, WTFMove(row));
+    auto result = parent->insertBefore(newRow, WTF::move(row));
     if (result.hasException())
         return result.releaseException();
-    return Ref<HTMLElement> { WTFMove(newRow) };
+    return Ref<HTMLElement> { WTF::move(newRow) };
 }
 
 ExceptionOr<void> HTMLTableElement::deleteRow(int index)

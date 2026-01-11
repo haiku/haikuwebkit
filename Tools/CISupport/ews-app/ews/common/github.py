@@ -25,7 +25,6 @@ import json
 import logging
 import re
 import requests
-from requests.auth import HTTPBasicAuth
 
 from ews.common.buildbot import Buildbot
 from ews.models.patch import Change
@@ -108,11 +107,13 @@ class GitHub(object):
     def fetch_data_from_url_with_authentication_github(cls, url):
         response = None
         try:
-            username, access_token = GitHub.credentials()
-            auth = HTTPBasicAuth(username, access_token) if username and access_token else None
+            _, access_token = GitHub.credentials()
             response = requests.get(
-                url, timeout=60, auth=auth,
-                headers=dict(Accept='application/vnd.github.v3+json'),
+                url, timeout=60,
+                headers=dict(
+                    Accept='application/vnd.github.v3+json',
+                    Authorization=f'Bearer {access_token}',
+                ),
             )
             if response.status_code // 100 != 2:
                 _log.error(f'Accessed {url} with unexpected status code {response.status_code}.\n')
@@ -136,12 +137,13 @@ class GitHub(object):
         else:
             comment_url = '{api_url}/issues/{pr_number}/comments'.format(api_url=api_url, pr_number=pr_number)
         try:
-            username, access_token = GitHub.credentials()
-            auth = HTTPBasicAuth(username, access_token) if username and access_token else None
+            _, access_token = GitHub.credentials()
             response = requests.request(
-                'POST', comment_url, timeout=60, auth=auth,
-                headers=dict(Accept='application/vnd.github.v3+json'),
-                json=dict(body=ews_comment),
+                'POST', comment_url, timeout=60,
+                headers=dict(
+                    Accept='application/vnd.github.v3+json',
+                    Authorization=f'Bearer {access_token}',
+                ), json=dict(body=ews_comment),
             )
             if response.status_code // 100 != 2:
                 _log.error('Failed to post comment to PR {}. Unexpected response code from GitHub: {}, url: {}\n'.format(pr_number, response.status_code, comment_url))
@@ -165,12 +167,14 @@ class GitHub(object):
 
         description_url = '{api_url}/issues/{pr_number}'.format(api_url=api_url, pr_number=pr_number)
         try:
-            username, access_token = GitHub.credentials()
-            auth = HTTPBasicAuth(username, access_token) if username and access_token else None
+            _, access_token = GitHub.credentials()
 
             response = requests.request(
-                'GET', description_url, timeout=60, auth=auth,
-                headers=dict(Accept='application/vnd.github.v3+json'),
+                'GET', description_url, timeout=60,
+                headers=dict(
+                    Accept='application/vnd.github.v3+json',
+                    Authorization=f'Bearer {access_token}',
+                ),
             )
             if response.status_code // 100 != 2:
                 _log.error('Failed to get PR {} description. Unexpected response code from GitHub: {}\n'.format(pr_number, response.status_code))
@@ -180,8 +184,11 @@ class GitHub(object):
             description = GitHubEWS.generate_updated_pr_description(description, ews_comment)
 
             response = requests.request(
-                'POST', description_url, timeout=60, auth=auth,
-                headers=dict(Accept='application/vnd.github.v3+json'),
+                'POST', description_url, timeout=60,
+                headers=dict(
+                    Accept='application/vnd.github.v3+json',
+                    Authorization=f'Bearer {access_token}',
+                ),
                 json=dict(body=description),
             )
 

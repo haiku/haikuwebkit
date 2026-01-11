@@ -45,7 +45,7 @@ class VoidCallback;
 enum class CreatePlugins : bool { No, Yes };
 
 class HTMLPlugInElement : public HTMLFrameOwnerElement {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLPlugInElement);
+    WTF_MAKE_TZONE_ALLOCATED(HTMLPlugInElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HTMLPlugInElement);
 public:
     virtual ~HTMLPlugInElement();

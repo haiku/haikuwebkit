@@ -42,7 +42,7 @@
 #include "Quirks.h"
 #include "RenderDescendantIterator.h"
 #include "RenderElementInlines.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 

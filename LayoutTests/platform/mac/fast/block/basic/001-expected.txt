@@ -10,13 +10,12 @@ layer at (0,0) size 800x600
           RenderInline {FONT} at (2,2) size 780x163 [color=#FF0000]
             RenderText {#text} at (97,2) size 140x18
               text run at (97,2) width 140: "More red on this line:"
-            RenderBlock (anonymous) at (2,38) size 780x71 [color=#000000]
-              RenderBlock {H3} at (0,0) size 780x22 [color=#FF0000]
-                RenderText {#text} at (0,0) size 205x22
-                  text run at (0,0) width 205: "Suddenly a block appears!"
-              RenderBlock {H2} at (0,41) size 780x29 [color=#FF0000]
-                RenderText {#text} at (0,0) size 194x28
-                  text run at (0,0) width 194: "And another block!"
+            RenderBlock {H3} at (2,38) size 780x23
+              RenderText {#text} at (0,0) size 205x22
+                text run at (0,0) width 205: "Suddenly a block appears!"
+            RenderBlock {H2} at (2,80) size 780x29
+              RenderText {#text} at (0,0) size 194x28
+                text run at (0,0) width 194: "And another block!"
             RenderText {#text} at (2,128) size 97x19
               text run at (2,128) width 97: "Now more text."
             RenderBR {BR} at (98,128) size 1x19

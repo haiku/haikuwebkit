@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2023 Apple Inc. All rights reserved.
+# Copyright (C) 2021-2025 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -120,8 +120,8 @@ class PullRequest(Command):
         )
         parser.add_argument(
             '--ews', '--skip-ews', '--no-ews',
-            dest='ews', default=None,
-            help='Explicitly enable or disable EWS on the PR',
+            dest='ews', default=True,
+            help='Enable or disable EWS on the PR',
             action=arguments.NoAction,
         )
         parser.add_argument(
@@ -324,10 +324,11 @@ class PullRequest(Command):
         existing_pr = None
         user, _ = remote.credentials(required=False)
         for pr in remote.pull_requests.find(opened=None, head=branch):
+            # GitHub's search apparently uses substring matching, so check for an exact match.
+            if branch != pr.head:
+                continue
             existing_pr = pr
             if not existing_pr.opened:
-                continue
-            if branch != pr.head:
                 continue
             if user and existing_pr.author == user:
                 break
@@ -604,18 +605,27 @@ class PullRequest(Command):
             log.info("Checking PR labels for active labels...")
             pr_issue = existing_pr._metadata['issue']
             labels = pr_issue.labels
-            did_remove = False
-            labels_to_remove = cls.MERGE_LABELS + cls.UNSAFE_MERGE_LABELS + ([cls.BLOCKED_LABEL] if unblock else [])
-            if args.ews is not False:
-                # if --no-ews argument is not passed then remove any existing SKIP_EWS_LABEL
-                labels_to_remove += [cls.SKIP_EWS_LABEL]
+            did_change = False
+            labels_to_add = []
+            labels_to_remove = cls.MERGE_LABELS + cls.UNSAFE_MERGE_LABELS
+            if unblock:
+                labels_to_remove.append(cls.BLOCKED_LABEL)
+            if args.ews:
+                labels_to_remove.append(cls.SKIP_EWS_LABEL)
+            else:
+                labels_to_add.append(cls.SKIP_EWS_LABEL)
 
+            for to_add in labels_to_add:
+                if to_add not in labels:
+                    log.info("Adding '{}' to PR #{}...".format(to_add, existing_pr.number))
+                    labels.append(to_add)
+                    did_change = True
             for to_remove in labels_to_remove:
                 if to_remove in labels:
                     log.info("Removing '{}' from PR #{}...".format(to_remove, existing_pr.number))
                     labels.remove(to_remove)
-                    did_remove = True
-            if did_remove:
+                    did_change = True
+            if did_change:
                 pr_issue.set_labels(labels)
 
         set_upstream = (
@@ -739,7 +749,7 @@ class PullRequest(Command):
                 log.info('Synced PR labels with issue component!')
             else:
                 log.info('No label syncing required')
-            if args.ews is False:
+            if not args.ews:
                 # Add SKIP_EWS_LABEL if --no-ews argument was passed
                 labels = pr_issue.labels
                 labels.append(cls.SKIP_EWS_LABEL)

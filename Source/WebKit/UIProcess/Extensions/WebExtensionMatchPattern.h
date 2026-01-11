@@ -50,7 +50,7 @@ public:
     static RefPtr<WebExtensionMatchPattern> create(Args&&... args)
     {
         auto result = adoptRef(new WebExtensionMatchPattern(std::forward<Args>(args)...));
-        return result && result->isValid() ? WTFMove(result) : nullptr;
+        return result && result->isValid() ? WTF::move(result) : nullptr;
     }
 
     using URLSchemeSet = HashSet<String>;

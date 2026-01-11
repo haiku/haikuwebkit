@@ -2810,7 +2810,7 @@ TEST(WritingTools, APIWithBehaviorComplete)
 
     _observable = observable;
     _keyPath = keyPath;
-    _callback = WTFMove(callback);
+    _callback = WTF::move(callback);
 
     [_observable addObserver:self forKeyPath:_keyPath.get() options:0 context:nil];
 

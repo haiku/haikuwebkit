@@ -82,7 +82,7 @@ void RemoteMediaSessionHelper::activeVideoRouteDidChange(SupportsAirPlayVideo su
     switch (targetContext.targetType()) {
     case WebCore::MediaPlaybackTargetType::AVOutputContext:
     case WebCore::MediaPlaybackTargetType::WirelessPlayback:
-        WebCore::MediaSessionHelper::activeVideoRouteDidChange(supportsAirPlayVideo, MediaPlaybackTargetSerialized::create(WTFMove(targetContext)));
+        WebCore::MediaSessionHelper::activeVideoRouteDidChange(supportsAirPlayVideo, MediaPlaybackTargetSerialized::create(WTF::move(targetContext)));
         break;
     case WebCore::MediaPlaybackTargetType::Mock:
     case WebCore::MediaPlaybackTargetType::Serialized:

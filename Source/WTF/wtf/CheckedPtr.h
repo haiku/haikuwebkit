@@ -160,14 +160,14 @@ public:
 
     CheckedPtr& operator=(CheckedPtr&& other)
     {
-        CheckedPtr moved { WTFMove(other) };
+        CheckedPtr moved { WTF::move(other) };
         PtrTraits::swap(m_ptr, moved.m_ptr);
         return *this;
     }
 
     template<typename OtherType, typename OtherPtrTraits> CheckedPtr& operator=(CheckedPtr<OtherType, OtherPtrTraits>&& other)
     {
-        CheckedPtr moved { WTFMove(other) };
+        CheckedPtr moved { WTF::move(other) };
         PtrTraits::swap(m_ptr, moved.m_ptr);
         return *this;
     }
@@ -227,7 +227,7 @@ template<typename P> struct HashTraits<CheckedPtr<P>> : SimpleClassHashTraits<Ch
     {
         // See unique_ptr's customDeleteBucket() for an explanation.
         ASSERT(!SimpleClassHashTraits<CheckedPtr<P>>::isDeletedValue(value));
-        auto valueToBeDestroyed = WTFMove(value);
+        auto valueToBeDestroyed = WTF::move(value);
         SimpleClassHashTraits<CheckedPtr<P>>::constructDeletedValue(value);
     }
 };

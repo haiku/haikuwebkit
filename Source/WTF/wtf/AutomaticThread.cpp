@@ -104,13 +104,13 @@ bool AutomaticThreadCondition::contains(const AbstractLocker&, AutomaticThread* 
 }
 
 AutomaticThread::AutomaticThread(const AbstractLocker& locker, Box<Lock> lock, Ref<AutomaticThreadCondition>&& condition, Seconds timeout)
-    : AutomaticThread(locker, lock, WTFMove(condition), ThreadType::Unknown, timeout)
+    : AutomaticThread(locker, lock, WTF::move(condition), ThreadType::Unknown, timeout)
 {
 }
 
 AutomaticThread::AutomaticThread(const AbstractLocker& locker, Box<Lock> lock, Ref<AutomaticThreadCondition>&& condition, ThreadType type, Seconds timeout)
     : m_lock(lock)
-    , m_condition(WTFMove(condition))
+    , m_condition(WTF::move(condition))
     , m_timeout(timeout)
     , m_threadType(type)
 {

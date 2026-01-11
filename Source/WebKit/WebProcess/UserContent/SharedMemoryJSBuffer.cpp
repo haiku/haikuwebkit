@@ -34,11 +34,11 @@ namespace WebKit {
 
 Ref<SharedMemoryJSBuffer> SharedMemoryJSBuffer::create(Ref<WebCore::SharedMemory>&& data)
 {
-    return adoptRef(*new SharedMemoryJSBuffer(WTFMove(data)));
+    return adoptRef(*new SharedMemoryJSBuffer(WTF::move(data)));
 }
 
 SharedMemoryJSBuffer::SharedMemoryJSBuffer(Ref<WebCore::SharedMemory>&& sharedMemory)
-    : m_sharedMemory(WTFMove(sharedMemory))
+    : m_sharedMemory(WTF::move(sharedMemory))
 {
 }
 
@@ -47,13 +47,13 @@ WebCore::ExceptionOr<String> SharedMemoryJSBuffer::asUTF16String() const
     if (m_sharedMemory->size() % sizeof(char16_t))
         return WebCore::Exception { WebCore::ExceptionCode::RangeError };
     Ref<StringImpl> impl = ExternalStringImpl::create(spanReinterpretCast<const char16_t>(m_sharedMemory->span()), [protectedMemory = Ref { m_sharedMemory }] (auto...) mutable { });
-    return String(WTFMove(impl));
+    return String(WTF::move(impl));
 }
 
 String SharedMemoryJSBuffer::asLatin1String() const
 {
     Ref<StringImpl> impl = ExternalStringImpl::create(spanReinterpretCast<const Latin1Character>(m_sharedMemory->span()), [protectedMemory = Ref { m_sharedMemory }] (auto...) mutable { });
-    return String(WTFMove(impl));
+    return String(WTF::move(impl));
 }
 
 }

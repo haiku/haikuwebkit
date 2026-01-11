@@ -30,7 +30,7 @@
 namespace WebCore {
 
 class SVGFEImageElement final : public SVGFilterPrimitiveStandardAttributes, public SVGURIReference, private CachedImageClient {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(SVGFEImageElement);
+    WTF_MAKE_TZONE_ALLOCATED(SVGFEImageElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(SVGFEImageElement);
 public:
     static Ref<SVGFEImageElement> create(const QualifiedName&, Document&);

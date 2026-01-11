@@ -57,7 +57,7 @@ void InspectorMemoryAgent::didCreateFrontendAndBackend()
 
 void InspectorMemoryAgent::willDestroyFrontendAndBackend(DisconnectReason)
 {
-    disable();
+    std::ignore = disable();
 
     Ref { m_instrumentingAgents.get() }->setPersistentMemoryAgent(nullptr);
 }
@@ -157,19 +157,19 @@ void InspectorMemoryAgent::collectSample(const ResourceUsageData& data)
         .release();
 
     auto categories = JSON::ArrayOf<Inspector::Protocol::Memory::CategoryData>::create();
-    categories->addItem(WTFMove(javascriptCategory));
-    categories->addItem(WTFMove(jitCategory));
-    categories->addItem(WTFMove(imagesCategory));
-    categories->addItem(WTFMove(layersCategory));
-    categories->addItem(WTFMove(pageCategory));
-    categories->addItem(WTFMove(otherCategory));
+    categories->addItem(WTF::move(javascriptCategory));
+    categories->addItem(WTF::move(jitCategory));
+    categories->addItem(WTF::move(imagesCategory));
+    categories->addItem(WTF::move(layersCategory));
+    categories->addItem(WTF::move(pageCategory));
+    categories->addItem(WTF::move(otherCategory));
 
     auto event = Inspector::Protocol::Memory::Event::create()
         .setTimestamp(checkedEnvironment()->executionStopwatch().elapsedTimeSince(data.timestamp).seconds())
-        .setCategories(WTFMove(categories))
+        .setCategories(WTF::move(categories))
         .release();
 
-    m_frontendDispatcher->trackingUpdate(WTFMove(event));
+    m_frontendDispatcher->trackingUpdate(WTF::move(event));
 }
 
 } // namespace WebCore

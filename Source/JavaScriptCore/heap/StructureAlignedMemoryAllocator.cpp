@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,10 +28,11 @@
 
 #include "JSCConfig.h"
 #include "MarkedBlock.h"
+#include "Options.h"
 #include "StructureID.h"
 #include <wtf/BitVector.h>
 
-#if CPU(ADDRESS64) && !ENABLE(STRUCTURE_ID_WITH_SHIFT)
+#if CPU(ADDRESS64)
 #include <wtf/NeverDestroyed.h>
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #if !USE(SYSTEM_MALLOC)
@@ -82,7 +83,7 @@ void* StructureAlignedMemoryAllocator::tryReallocateMemory(void*, size_t)
     RELEASE_ASSERT_NOT_REACHED();
 }
 
-#if CPU(ADDRESS64) && !ENABLE(STRUCTURE_ID_WITH_SHIFT)
+#if CPU(ADDRESS64)
 #if !USE(SYSTEM_MALLOC)
 
 static const bmalloc_type structureHeapType { BMALLOC_TYPE_INITIALIZER(MarkedBlock::blockSize, MarkedBlock::blockSize, "Structure Heap") };
@@ -94,16 +95,28 @@ class StructureMemoryManager {
 public:
     StructureMemoryManager()
     {
-        static_assert(hasOneBitSet(structureHeapAddressSize));
-        uintptr_t mappedHeapSize = structureHeapAddressSize;
+        uintptr_t preferredStructureHeapSize = structureHeapAddressSize;
+        if (Options::structureHeapSizeInKB())
+            preferredStructureHeapSize = static_cast<uintptr_t>(Options::structureHeapSizeInKB()) * KB;
+        RELEASE_ASSERT(hasOneBitSet(preferredStructureHeapSize));
+
+        uintptr_t mappedHeapSize = preferredStructureHeapSize;
         for (unsigned i = 0; i < 8; ++i) {
-            g_jscConfig.startOfStructureHeap = reinterpret_cast<uintptr_t>(OSAllocator::tryReserveUncommittedAligned(mappedHeapSize, structureHeapAddressSize, OSAllocator::FastMallocPages));
+            // We need to align the address range to mappedHeapSize to ensure that the range does not span
+            // across 4GB granules. Otherwise, the top 32 bits of the address may not be constant for all
+            // addresses in the range. The top 32 bits being constant is an invariant that we rely on in
+            // order to encode StructureIDs.
+            g_jscConfig.startOfStructureHeap = reinterpret_cast<uintptr_t>(OSAllocator::tryReserveUncommittedAligned(mappedHeapSize, mappedHeapSize, OSAllocator::FastMallocPages));
             if (g_jscConfig.startOfStructureHeap)
                 break;
             mappedHeapSize /= 2;
         }
+        RELEASE_ASSERT(g_jscConfig.startOfStructureHeap, g_jscConfig.startOfStructureHeap, preferredStructureHeapSize, mappedHeapSize);
+        RELEASE_ASSERT(hasOneBitSet(mappedHeapSize), mappedHeapSize);
+        uintptr_t alignmentMask = mappedHeapSize - 1;
+        RELEASE_ASSERT(g_jscConfig.startOfStructureHeap & ~alignmentMask, g_jscConfig.startOfStructureHeap, mappedHeapSize, alignmentMask);
         g_jscConfig.sizeOfStructureHeap = mappedHeapSize;
-        RELEASE_ASSERT(g_jscConfig.startOfStructureHeap && ((g_jscConfig.startOfStructureHeap & ~StructureID::structureIDMask) == g_jscConfig.startOfStructureHeap));
+        g_jscConfig.structureIDBase = g_jscConfig.startOfStructureHeap & ~StructureID::structureIDMask;
 
         // Don't use the first page because zero is used as the empty StructureID and the first allocation will conflict.
 #if !USE(SYSTEM_MALLOC)
@@ -232,6 +245,7 @@ void StructureAlignedMemoryAllocator::initializeStructureAddressSpace()
 void StructureAlignedMemoryAllocator::initializeStructureAddressSpace()
 {
     g_jscConfig.startOfStructureHeap = 0;
+    g_jscConfig.structureIDBase = 0;
     g_jscConfig.sizeOfStructureHeap = UINTPTR_MAX;
 }
 

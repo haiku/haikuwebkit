@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016-2022 Apple Inc. All rights reserved.
- * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
+ * Copyright (C) 2025-2026 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,6 +55,7 @@
 #import "RenderMeter.h"
 #import "RenderProgress.h"
 #import "RenderSlider.h"
+#import "RenderStyle+SettersInlines.h"
 #import "RenderText.h"
 #import "Settings.h"
 #import "StylePrimitiveNumericTypes+Evaluation.h"
@@ -130,7 +131,7 @@ static void drawFocusRingForPathForVectorBasedControls(const RenderObject& box, 
     // macOS controls have never honored outline offset.
 #if PLATFORM(IOS_FAMILY)
     auto deviceScaleFactor = box.document().deviceScaleFactor();
-    auto outlineOffset = floorToDevicePixel(Style::evaluate<float>(box.style().outlineOffset(), Style::ZoomNeeded { }), deviceScaleFactor);
+    auto outlineOffset = floorToDevicePixel(Style::evaluate<float>(box.style().usedOutlineOffset(), Style::ZoomNeeded { }), deviceScaleFactor);
 
     if (outlineOffset > 0) {
         const auto center = rect.center();
@@ -297,7 +298,7 @@ void RenderThemeCocoa::paintFileUploadIconDecorations(const RenderElement&, cons
         thumbnailRect.contract(kMultipleThumbnailShrinkSize, kMultipleThumbnailShrinkSize);
 
         // Background picture frame and simple background icon with a gradient matching the button.
-        auto backgroundImageColor = buttonRenderer.checkedStyle()->visitedDependentColor(CSSPropertyBackgroundColor);
+        auto backgroundImageColor = buttonRenderer.checkedStyle()->visitedDependentBackgroundColor();
         paintInfo.context().fillRoundedRect(FloatRoundedRect(thumbnailPictureFrameRect, cornerSize, cornerSize, cornerSize, cornerSize), pictureFrameColor);
         paintInfo.context().fillRect(thumbnailRect, backgroundImageColor);
 
@@ -466,35 +467,26 @@ static const String& macOSInlineMediaControlsStyleSheet()
         "    padding-inline: var(--inline-controls-inside-margin);"
         "    margin-bottom: var(--inline-controls-inside-margin);"
         "}"
-        ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .left-cluster,"
+        ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .buttons-container.left,"
         ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .time-control,"
-        ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .right-cluster {"
+        ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .buttons-container.right {"
         "    display: flex;"
         "    align-items: center;"
         "    position: relative;"
         "}"
-        ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .left-cluster {"
+        ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .buttons-container.left {"
         "    flex: 0 0 auto;"
         "    justify-content: flex-start;"
         "    min-width: fit-content;"
         "}"
         ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .time-control {"
+        "    left: auto !important;"
         "    max-width: 540px;"
         "}"
-        ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .right-cluster {"
+        ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .buttons-container.right {"
         "    flex: 0 0 auto;"
         "    justify-content: flex-end;"
         "    min-width: fit-content;"
-        "}"
-        ".media-controls.mac.inline:not(.audio) .buttons-container.right {"
-        "    position: relative !important;"
-        "    right: auto !important;"
-        "    left: 30px !important;"
-        "    top: auto !important;"
-        "    bottom: auto !important;"
-        "    display: flex !important;"
-        "    align-items: center;"
-        "    gap: 8px;"
         "}"
         ".media-controls.mac.inline:not(.audio) .controls-bar.bottom .time-control .slider,"
         ".media-controls.mac.inline:not(.audio) .controls-bar.bottom .time-control .scrubber{"
@@ -512,11 +504,6 @@ static const String& macOSInlineMediaControlsStyleSheet()
         "    top: 50%;"
         "    transform: translateY(-50%);"
         "    height: 7.5px;"
-        "}"
-        ".media-controls.mac.inline:not(.audio) .buttons-container.right > * {"
-        "    display: flex;"
-        "    position: relative !important;"
-        "    left: -8px !important;"
         "}"
         ".media-controls.mac.inline:not(.audio) .slider.default > .appearance > .fill > .primary {"
         "    left: 0;"
@@ -1169,7 +1156,7 @@ static RoundedShape continuousRoundedShape(const FloatRect& rect, const float co
 
     Path path;
     path.addContinuousRoundedRect(rect, cornerRadius);
-    return { WTFMove(path), rect, cornerRadius, CornerType::Continuous };
+    return { WTF::move(path), rect, cornerRadius, CornerType::Continuous };
 }
 
 static RoundedShape roundedShape(const FloatRect& rect, const float cornerRadius, ShouldComputePath computePath)
@@ -1179,7 +1166,7 @@ static RoundedShape roundedShape(const FloatRect& rect, const float cornerRadius
 
     Path path;
     path.addRoundedRect(FloatRoundedRect { rect, FloatRoundedRect::Radii { cornerRadius, cornerRadius } });
-    return { WTFMove(path), rect, cornerRadius, CornerType::Noncontinuous };
+    return { WTF::move(path), rect, cornerRadius, CornerType::Noncontinuous };
 }
 
 static bool nodeIsDateOrTimeRelatedInput(Node* node)
@@ -1742,13 +1729,13 @@ bool RenderThemeCocoa::adjustColorWellSwatchStyleForVectorBasedControls(RenderSt
 static void applyPaddingIfNotExplicitlySet(RenderStyle& style, Style::PaddingBox paddingBox)
 {
     if (!style.hasExplicitlySetPaddingLeft())
-        style.setPaddingLeft(WTFMove(paddingBox.left()));
+        style.setPaddingLeft(WTF::move(paddingBox.left()));
     if (!style.hasExplicitlySetPaddingTop())
-        style.setPaddingTop(WTFMove(paddingBox.top()));
+        style.setPaddingTop(WTF::move(paddingBox.top()));
     if (!style.hasExplicitlySetPaddingRight())
-        style.setPaddingRight(WTFMove(paddingBox.right()));
+        style.setPaddingRight(WTF::move(paddingBox.right()));
     if (!style.hasExplicitlySetPaddingBottom())
-        style.setPaddingBottom(WTFMove(paddingBox.bottom()));
+        style.setPaddingBottom(WTF::move(paddingBox.bottom()));
 }
 
 bool RenderThemeCocoa::adjustColorWellSwatchWrapperStyleForVectorBasedControls(RenderStyle& style, const Element* element) const
@@ -1821,7 +1808,7 @@ bool RenderThemeCocoa::paintColorWellDecorationsForVectorBasedControls(const Ren
 
     context.setStrokeThickness(strokeThickness);
     context.setStrokeStyle(StrokeStyle::SolidStroke);
-    context.setStrokeGradient(WTFMove(gradient));
+    context.setStrokeGradient(WTF::move(gradient));
 
     context.translate(rect.center());
     context.rotate(piOverTwoFloat);
@@ -2475,7 +2462,7 @@ static bool paintTextAreaOrTextField(const RenderElement& box, const PaintInfo& 
 #endif
 
     const auto styleColorOptions = box.styleColorOptions();
-    auto backgroundColor = style->visitedDependentColor(CSSPropertyBackgroundColor);
+    auto backgroundColor = style->visitedDependentBackgroundColor();
 #if PLATFORM(MAC)
     const auto prefersContrast = Theme::singleton().userPrefersContrast();
     auto borderColor = prefersContrast ? highContrastOutlineColor(styleColorOptions) : RenderTheme::singleton().systemColor(CSSValueAppleSystemContainerBorder, styleColorOptions);
@@ -2725,7 +2712,7 @@ bool RenderThemeCocoa::adjustButtonStyleForVectorBasedControls(RenderStyle& styl
     if (!style.logicalWidth().isSpecified() || style.logicalHeight().isAuto()) {
         auto minimumHeight = controlBaseHeight / controlBaseFontSize * style.fontDescription().computedSizeForRangeZoomOption(CSS::RangeZoomOptions::Unzoomed);
         if (auto fixedValue = style.logicalMinHeight().tryFixed())
-            minimumHeight = std::max(minimumHeight, fixedValue->resolveZoom(Style::ZoomFactor { 1.0f, 1.0f }));
+            minimumHeight = std::max(minimumHeight, fixedValue->resolveZoom(Style::ZoomFactor { 1.0f }));
         // FIXME: This may need to be a layout time adjustment to support various
         // values like fit-content etc.
         style.setLogicalMinHeight(Style::MinimumSize::Fixed { minimumHeight });
@@ -2872,9 +2859,9 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
     }
 
     if (!style->writingMode().isInlineFlipped())
-        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) - glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().usedBorderWidthEnd(), Style::ZoomNeeded { }) - glyphPaddingEnd);
     else
-        glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) + glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().usedBorderWidthEnd(), Style::ZoomNeeded { }) + glyphPaddingEnd);
 
     if (!isHorizontalWritingMode)
         glyphOrigin = glyphOrigin.transposedPoint();
@@ -2985,13 +2972,14 @@ bool RenderThemeCocoa::adjustListButtonStyleForVectorBasedControls(RenderStyle& 
         return false;
 
 #if PLATFORM(IOS_FAMILY)
-    if (style.hasContent() || style.hasUsedContentNone())
+    if (style.hasContent() || style.hasUsedContentNone()) {
+        style.setLogicalWidth(11_css_px);
         return true;
+    }
 #endif
 
     // FIXME: rdar://150914436 The width to height ratio of the button needs to
     // dynamically change according to the overall control size.
-
     style.setLogicalWidth(15.4_css_percentage);
     style.setLogicalHeight(CSS::Keyword::Auto { });
 

@@ -86,7 +86,7 @@ void JSGlobalObjectDebuggable::dispatchMessageFromRemote(String&& message)
 
     JSLockHolder locker(&m_globalObject->vm());
 
-    m_globalObject->checkedInspectorController()->dispatchMessageFromFrontend(WTFMove(message));
+    m_globalObject->checkedInspectorController()->dispatchMessageFromFrontend(WTF::move(message));
 }
 
 void JSGlobalObjectDebuggable::pauseWaitingForAutomaticInspection()

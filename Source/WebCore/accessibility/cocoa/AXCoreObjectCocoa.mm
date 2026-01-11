@@ -514,7 +514,7 @@ PlatformRoleMap createPlatformRoleMap()
         AccessibilityRole value;
         NSString *string;
     };
-    static const RoleEntry roles[] = {
+    static const auto roles = std::to_array<RoleEntry>({
         { AccessibilityRole::Unknown, NSAccessibilityUnknownRole },
         { AccessibilityRole::Button, NSAccessibilityButtonRole },
         { AccessibilityRole::RadioButton, NSAccessibilityRadioButtonRole },
@@ -645,7 +645,7 @@ PlatformRoleMap createPlatformRoleMap()
         { AccessibilityRole::RemoteFrame, NSAccessibilityGroupRole },
         { AccessibilityRole::LocalFrame, NSAccessibilityGroupRole },
         { AccessibilityRole::FrameHost, NSAccessibilityGroupRole },
-    };
+    });
     PlatformRoleMap roleMap;
     for (auto& role : roles)
         roleMap.add(static_cast<unsigned>(role.value), role.string);
@@ -663,7 +663,7 @@ std::optional<AXTextMarkerRange> markerRangeFrom(NSRange range, const AXCoreObje
     auto markerToRangeEnd = markerToLocation.nextMarkerFromOffset(range.length, ForceSingleOffsetMovement::Yes, stopAtID);
     if (!markerToRangeEnd.isValid())
         return std::nullopt;
-    return std::optional(AXTextMarkerRange { WTFMove(markerToLocation), WTFMove(markerToRangeEnd) });
+    return std::optional(AXTextMarkerRange { WTF::move(markerToLocation), WTF::move(markerToRangeEnd) });
 }
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 

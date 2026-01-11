@@ -168,19 +168,30 @@
     _outputFormat = outputFormat;
 }
 
+- (void)setShortenURLs:(BOOL)value
+{
+    ENSURE_VALID_TEXT_ONLY_CONFIGURATION(value);
+
+    _shortenURLs = value;
+}
+
 #undef ENSURE_VALID_TEXT_ONLY_CONFIGURATION
 
 @end
 
 @implementation _WKTextExtractionResult {
     RetainPtr<NSString> _textContent;
+    RetainPtr<NSDictionary<NSString *, NSURL *>> _shortenedURLs;
+    __weak WKWebView *_webView;
 }
 
-- (instancetype)initWithTextContent:(NSString *)textContent filteredOutAnyText:(BOOL)filteredOutAnyText
+- (instancetype)initWithWebView:(WKWebView *)webView textContent:(NSString *)textContent filteredOutAnyText:(BOOL)filteredOutAnyText shortenedURLs:(NSDictionary<NSString *, NSURL *> *)shortenedURLs
 {
     if (self = [super init]) {
         _textContent = textContent;
         _filteredOutAnyText = filteredOutAnyText;
+        _shortenedURLs = shortenedURLs;
+        _webView = webView;
     }
     return self;
 }
@@ -188,6 +199,20 @@
 - (NSString *)textContent
 {
     return _textContent.get();
+}
+
+- (NSDictionary<NSString *, NSURL *> *)shortenedURLs
+{
+    return _shortenedURLs.get();
+}
+
+- (void)requestJSHandleForNodeIdentifier:(NSString *)nodeIdentifier searchText:(NSString *)searchText completionHandler:(void (^)(_WKJSHandle *))completionHandler
+{
+    RetainPtr webView = _webView;
+    if (!webView)
+        return completionHandler(nil);
+
+    [webView _requestJSHandleForNodeIdentifier:nodeIdentifier searchText:searchText completionHandler:completionHandler];
 }
 
 @end

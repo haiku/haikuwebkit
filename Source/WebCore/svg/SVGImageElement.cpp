@@ -43,7 +43,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGImageElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGImageElement);
 
 inline SVGImageElement::SVGImageElement(const QualifiedName& tagName, Document& document)
     : SVGGraphicsElement(tagName, document, makeUniqueRef<PropertyRegistry>(*this), TypeFlag::HasDidMoveToNewDocument)
@@ -161,8 +161,8 @@ void SVGImageElement::svgAttributeChanged(const QualifiedName& attrName)
 RenderPtr<RenderElement> SVGImageElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
     if (document().settings().layerBasedSVGEngineEnabled())
-        return createRenderer<RenderSVGImage>(*this, WTFMove(style));
-    return createRenderer<LegacyRenderSVGImage>(*this, WTFMove(style));
+        return createRenderer<RenderSVGImage>(*this, WTF::move(style));
+    return createRenderer<LegacyRenderSVGImage>(*this, WTF::move(style));
 }
 
 bool SVGImageElement::haveLoadedRequiredResources()
@@ -226,7 +226,7 @@ void SVGImageElement::didMoveToNewDocument(Document& oldDocument, Document& newD
 
 void SVGImageElement::decode(Ref<DeferredPromise>&& promise)
 {
-    return m_imageLoader->decode(WTFMove(promise));
+    return m_imageLoader->decode(WTF::move(promise));
 }
 
 }

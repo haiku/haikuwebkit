@@ -249,7 +249,7 @@ public:
 
     void setQuirkState(const GStreamerQuirk* owner, std::unique_ptr<GStreamerQuirkBase::GStreamerQuirkState>&& state)
     {
-        m_quirkStates.set(owner, WTFMove(state));
+        m_quirkStates.set(owner, WTF::move(state));
     }
 
     GStreamerQuirkBase::GStreamerQuirkState* quirkState(const GStreamerQuirk* owner)
@@ -466,6 +466,9 @@ protected:
 
     bool updateVideoSinkStatistics();
 
+    uint64_t m_framesReceived { 0 };
+    uint64_t m_decodedKeyFrames { 0 };
+
 private:
     class TaskAtMediaTimeScheduler {
     public:
@@ -476,7 +479,7 @@ private:
         void setTask(Function<void()>&& task, const MediaTime& targetTime, PlaybackDirection playbackDirection)
         {
             m_targetTime = targetTime;
-            m_task = WTFMove(task);
+            m_task = WTF::move(task);
             m_playbackDirection = playbackDirection;
         }
         std::optional<Function<void()>> checkTaskForScheduling(const MediaTime& currentTime)
@@ -486,7 +489,7 @@ private:
                 || (m_playbackDirection == Backward && currentTime > m_targetTime))
                 return std::optional<Function<void()>>();
             m_targetTime = MediaTime::invalidTime();
-            return WTFMove(m_task);
+            return WTF::move(m_task);
         }
     private:
         MediaTime m_targetTime = MediaTime::invalidTime();

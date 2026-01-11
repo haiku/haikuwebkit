@@ -463,6 +463,7 @@ void ComputePassEncoder::setBindGroup(uint32_t groupIndex, const BindGroup* grou
         m_bindGroupResources.remove(groupIndex);
         m_bindGroupDynamicOffsets.remove(groupIndex);
         m_maxDynamicOffsetAtIndex[groupIndex] = 0;
+        return;
     }
 
     auto& group = *groupPtr;
@@ -482,7 +483,7 @@ void ComputePassEncoder::setBindGroup(uint32_t groupIndex, const BindGroup* grou
     }
 
     if (dynamicOffsets && dynamicOffsets->size()) {
-        m_bindGroupDynamicOffsets.set(groupIndex, WTFMove(*dynamicOffsets));
+        m_bindGroupDynamicOffsets.set(groupIndex, WTF::move(*dynamicOffsets));
         m_maxDynamicOffsetAtIndex[groupIndex] = 0;
     } else if (m_bindGroupDynamicOffsets.remove(groupIndex))
         m_maxDynamicOffsetAtIndex[groupIndex] = 0;
@@ -584,7 +585,7 @@ void wgpuComputePassEncoderPushDebugGroup(WGPUComputePassEncoder computePassEnco
 
 void wgpuComputePassEncoderSetBindGroup(WGPUComputePassEncoder computePassEncoder, uint32_t groupIndex, WGPUBindGroup group, std::optional<Vector<uint32_t>>&& dynamicOffsets)
 {
-    WebGPU::protectedFromAPI(computePassEncoder)->setBindGroup(groupIndex, group ? WebGPU::protectedFromAPI(group).ptr() : nullptr, WTFMove(dynamicOffsets));
+    WebGPU::protectedFromAPI(computePassEncoder)->setBindGroup(groupIndex, group ? WebGPU::protectedFromAPI(group).ptr() : nullptr, WTF::move(dynamicOffsets));
 }
 
 void wgpuComputePassEncoderSetPipeline(WGPUComputePassEncoder computePassEncoder, WGPUComputePipeline pipeline)

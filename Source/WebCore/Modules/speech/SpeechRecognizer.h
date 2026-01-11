@@ -28,6 +28,7 @@
 #include <WebCore/SpeechRecognitionCaptureSource.h>
 #include <WebCore/SpeechRecognitionConnectionClientIdentifier.h>
 #include <WebCore/SpeechRecognitionError.h>
+#include <wtf/CanMakeWeakPtr.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UniqueRef.h>

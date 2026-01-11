@@ -40,7 +40,7 @@ namespace WebCore {
 AudioWorkletThread::AudioWorkletThread(AudioWorkletMessagingProxy& messagingProxy, WorkletParameters&& parameters)
     : WorkerOrWorkletThread(parameters.identifier.isolatedCopy())
     , m_messagingProxy(&messagingProxy)
-    , m_parameters(WTFMove(parameters).isolatedCopy())
+    , m_parameters(WTF::move(parameters).isolatedCopy())
 {
 }
 

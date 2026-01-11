@@ -73,9 +73,9 @@ template<typename T> class RetainPtr;
 template<typename T> constexpr bool IsNSType = std::is_convertible_v<T, id>;
 template<typename T> using RetainPtrType = std::conditional_t<IsNSType<T> && !std::is_same_v<T, id>, std::remove_pointer_t<T>, T>;
 
-template<typename T> constexpr RetainPtr<RetainPtrType<T>> adoptCF(T CF_RELEASES_ARGUMENT) WARN_UNUSED_RETURN;
+template<typename T> WARN_UNUSED_RETURN constexpr RetainPtr<RetainPtrType<T>> adoptCF(T CF_RELEASES_ARGUMENT);
 
-template<typename T> constexpr RetainPtr<RetainPtrType<T>> adoptNS(T NS_RELEASES_ARGUMENT) WARN_UNUSED_RETURN;
+template<typename T> WARN_UNUSED_RETURN constexpr RetainPtr<RetainPtrType<T>> adoptNS(T NS_RELEASES_ARGUMENT);
 
 template<typename T> class RetainPtr {
 public:
@@ -108,12 +108,12 @@ public:
     void clear();
 
     template<typename U = StorageType>
-    std::enable_if_t<IsNSType<U> && std::is_same_v<U, StorageType>, StorageType> leakRef() NS_RETURNS_RETAINED WARN_UNUSED_RETURN {
+    WARN_UNUSED_RETURN std::enable_if_t<IsNSType<U> && std::is_same_v<U, StorageType>, StorageType> leakRef() NS_RETURNS_RETAINED {
         return std::exchange(m_ptr, nullptr);
     }
 
     template<typename U = StorageType>
-    std::enable_if_t<!IsNSType<U> && std::is_same_v<U, StorageType>, StorageType> leakRef() CF_RETURNS_RETAINED WARN_UNUSED_RETURN {
+    WARN_UNUSED_RETURN std::enable_if_t<!IsNSType<U> && std::is_same_v<U, StorageType>, StorageType> leakRef() CF_RETURNS_RETAINED {
         return std::exchange(m_ptr, nullptr);
     }
 
@@ -142,9 +142,9 @@ public:
 
     void swap(RetainPtr&);
 
-    template<typename U> friend constexpr RetainPtr<RetainPtrType<U>> adoptCF(U CF_RELEASES_ARGUMENT) WARN_UNUSED_RETURN;
+    template<typename U> friend constexpr RetainPtr<RetainPtrType<U>> adoptCF(U CF_RELEASES_ARGUMENT);
 
-    template<typename U> friend constexpr RetainPtr<RetainPtrType<U>> adoptNS(U NS_RELEASES_ARGUMENT) WARN_UNUSED_RETURN;
+    template<typename U> friend constexpr RetainPtr<RetainPtrType<U>> adoptNS(U NS_RELEASES_ARGUMENT);
 
 private:
     enum AdoptTag { Adopt };
@@ -183,7 +183,7 @@ private:
 template<typename T> RetainPtr(T) -> RetainPtr<RetainPtrType<T>>;
 
 // Helper function for creating a RetainPtr using template argument deduction.
-template<typename T> RetainPtr<RetainPtrType<T>> retainPtr(T) WARN_UNUSED_RETURN;
+template<typename T> WARN_UNUSED_RETURN RetainPtr<RetainPtrType<T>> retainPtr(T);
 
 template<typename T> inline RetainPtr<T>::~RetainPtr()
 {
@@ -269,14 +269,14 @@ template<typename T> template<typename U> inline RetainPtr<T>& RetainPtr<T>::ope
 
 template<typename T> inline RetainPtr<T>& RetainPtr<T>::operator=(RetainPtr&& o)
 {
-    RetainPtr ptr = WTFMove(o);
+    RetainPtr ptr = WTF::move(o);
     swap(ptr);
     return *this;
 }
 
 template<typename T> template<typename U> inline RetainPtr<T>& RetainPtr<T>::operator=(RetainPtr<U>&& o)
 {
-    RetainPtr ptr = WTFMove(o);
+    RetainPtr ptr = WTF::move(o);
     swap(ptr);
     return *this;
 }

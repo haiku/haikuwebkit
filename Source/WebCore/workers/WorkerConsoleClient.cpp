@@ -76,8 +76,8 @@ void WorkerConsoleClient::messageWithTypeAndLevel(MessageType type, MessageLevel
 {
     String messageText;
     arguments->getFirstArgumentAsString(messageText);
-    auto message = makeUnique<Inspector::ConsoleMessage>(MessageSource::ConsoleAPI, type, level, messageText, WTFMove(arguments), exec);
-    Ref { m_globalScope.get() }->addConsoleMessage(WTFMove(message));
+    auto message = makeUnique<Inspector::ConsoleMessage>(MessageSource::ConsoleAPI, type, level, messageText, WTF::move(arguments), exec);
+    Ref { m_globalScope.get() }->addConsoleMessage(WTF::move(message));
 }
 
 void WorkerConsoleClient::count(JSC::JSGlobalObject* exec, const String& label)
@@ -105,7 +105,7 @@ void WorkerConsoleClient::timeLog(JSC::JSGlobalObject* exec, const String& label
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
     if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope.get()))
-        InspectorInstrumentation::logConsoleTiming(*worker, exec, label, WTFMove(arguments));
+        InspectorInstrumentation::logConsoleTiming(*worker, exec, label, WTF::move(arguments));
 }
 
 void WorkerConsoleClient::timeEnd(JSC::JSGlobalObject* exec, const String& label)
@@ -140,7 +140,7 @@ void WorkerConsoleClient::timeStamp(JSC::JSGlobalObject*, Ref<ScriptArguments>&&
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
     if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope.get()))
-        InspectorInstrumentation::consoleTimeStamp(*worker, WTFMove(arguments));
+        InspectorInstrumentation::consoleTimeStamp(*worker, WTF::move(arguments));
 }
 
 static JSC::JSObject* objectArgumentAt(ScriptArguments& arguments, unsigned index)
@@ -235,7 +235,7 @@ void WorkerConsoleClient::screenshot(JSC::JSGlobalObject* lexicalGlobalObject, R
 
     if (InspectorInstrumentation::hasFrontends()) [[unlikely]] {
         if (dataURL.isEmpty()) {
-            InspectorInstrumentation::addMessageToConsole(protectedGlobalScope(), makeUnique<Inspector::ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Image, MessageLevel::Error, "Could not capture screenshot"_s, WTFMove(arguments)));
+            InspectorInstrumentation::addMessageToConsole(protectedGlobalScope(), makeUnique<Inspector::ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Image, MessageLevel::Error, "Could not capture screenshot"_s, WTF::move(arguments)));
             return;
         }
     }
@@ -245,7 +245,7 @@ void WorkerConsoleClient::screenshot(JSC::JSGlobalObject* lexicalGlobalObject, R
     adjustedArguments.append({ vm, target ? target : JSC::jsNontrivialString(vm, "Viewport"_s) });
     for (size_t i = (!target ? 0 : 1); i < arguments->argumentCount(); ++i)
         adjustedArguments.append({ vm, arguments->argumentAt(i) });
-    InspectorInstrumentation::addMessageToConsole(protectedGlobalScope(), makeUnique<Inspector::ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Image, MessageLevel::Log, dataURL, ScriptArguments::create(lexicalGlobalObject, WTFMove(adjustedArguments)), lexicalGlobalObject, /* requestIdentifier */ 0, timestamp));
+    InspectorInstrumentation::addMessageToConsole(protectedGlobalScope(), makeUnique<Inspector::ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Image, MessageLevel::Log, dataURL, ScriptArguments::create(lexicalGlobalObject, WTF::move(adjustedArguments)), lexicalGlobalObject, /* requestIdentifier */ 0, timestamp));
 }
 
 Ref<WorkerOrWorkletGlobalScope> WorkerConsoleClient::protectedGlobalScope()

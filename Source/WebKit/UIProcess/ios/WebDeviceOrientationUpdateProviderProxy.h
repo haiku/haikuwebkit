@@ -67,10 +67,9 @@ public:
     void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
     void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
-    void addAsMessageReceiverForProcess(WebProcessProxy&, WebCore::PageIdentifier);
-    void removeAsMessageReceiverForProcess(WebProcessProxy&, WebCore::PageIdentifier);
-
 private:
+    friend class RemotePageWebDeviceOrientationUpdateProviderProxy;
+
     explicit WebDeviceOrientationUpdateProviderProxy(WebPageProxy&);
 
     // WebCore::WebCoreMotionManagerClient
@@ -80,9 +79,15 @@ private:
     // IPC::MessageReceiver
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) override;
 
+    bool isWebDeviceOrientationUpdateProviderProxy() const final { return true; }
+
     WeakPtr<WebPageProxy> m_page;
 };
 
 } // namespace WebKit
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebDeviceOrientationUpdateProviderProxy)
+    static bool isType(const WebCore::MotionManagerClient& client) { return client.isWebDeviceOrientationUpdateProviderProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)

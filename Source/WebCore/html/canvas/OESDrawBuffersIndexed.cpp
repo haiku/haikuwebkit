@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(OESDrawBuffersIndexed);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(OESDrawBuffersIndexed);
 
 OESDrawBuffersIndexed::OESDrawBuffersIndexed(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::OESDrawBuffersIndexed)

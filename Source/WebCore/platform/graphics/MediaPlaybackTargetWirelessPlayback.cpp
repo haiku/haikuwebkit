@@ -39,7 +39,7 @@ Ref<MediaPlaybackTargetWirelessPlayback> MediaPlaybackTargetWirelessPlayback::cr
 #if HAVE(AVROUTING_FRAMEWORK)
     return adoptRef(*new MediaPlaybackTargetWirelessPlayback(MediaDeviceRouteController::singleton().routeForIdentifier(identifier)));
 #else
-    return adoptRef(*new MediaPlaybackTargetWirelessPlayback(WTFMove(identifier)));
+    return adoptRef(*new MediaPlaybackTargetWirelessPlayback(WTF::move(identifier)));
 #endif
 }
 
@@ -52,7 +52,7 @@ Ref<MediaPlaybackTargetWirelessPlayback> MediaPlaybackTargetWirelessPlayback::cr
 
 MediaPlaybackTargetWirelessPlayback::MediaPlaybackTargetWirelessPlayback(RefPtr<MediaDeviceRoute>&& route)
     : MediaPlaybackTarget { Type::WirelessPlayback }
-    , m_route { WTFMove(route) }
+    , m_route { WTF::move(route) }
 {
 }
 
@@ -60,7 +60,7 @@ MediaPlaybackTargetWirelessPlayback::MediaPlaybackTargetWirelessPlayback(RefPtr<
 
 MediaPlaybackTargetWirelessPlayback::MediaPlaybackTargetWirelessPlayback(std::optional<WTF::UUID> identifier)
     : MediaPlaybackTarget { Type::WirelessPlayback }
-    , m_identifier { WTFMove(identifier) }
+    , m_identifier { WTF::move(identifier) }
 {
 }
 

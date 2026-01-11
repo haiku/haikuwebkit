@@ -497,8 +497,8 @@ void waitUntilTwoServersConnected(const unsigned& serversConnected, CompletionHa
         completionHandler();
         return;
     }
-    dispatch_async(mainDispatchQueueSingleton(), makeBlockPtr([&serversConnected, completionHandler = WTFMove(completionHandler)] () mutable {
-        waitUntilTwoServersConnected(serversConnected, WTFMove(completionHandler));
+    dispatch_async(mainDispatchQueueSingleton(), makeBlockPtr([&serversConnected, completionHandler = WTF::move(completionHandler)] () mutable {
+        waitUntilTwoServersConnected(serversConnected, WTF::move(completionHandler));
     }).get());
 }
 

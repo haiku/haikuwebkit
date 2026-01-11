@@ -27,6 +27,7 @@
 #import <dlfcn.h>
 #import <objc/runtime.h>
 #import <wtf/Assertions.h>
+#import <wtf/Platform.h>
 
 #ifndef NS_RETURNS_RETAINED
 #if __has_feature(attribute_ns_returns_retained)

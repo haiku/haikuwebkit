@@ -43,7 +43,7 @@ struct MIMETypeRegistryThreadGlobalData {
     WTF_MAKE_NONCOPYABLE(MIMETypeRegistryThreadGlobalData);
 public:
     MIMETypeRegistryThreadGlobalData(HashSet<String, ASCIICaseInsensitiveHash>&& supportedImageMIMETypesForEncoding)
-        : m_supportedImageMIMETypesForEncoding(WTFMove(supportedImageMIMETypesForEncoding))
+        : m_supportedImageMIMETypesForEncoding(WTF::move(supportedImageMIMETypesForEncoding))
     { }
 
     const HashSet<String, ASCIICaseInsensitiveHash>& supportedImageMIMETypesForEncoding() const { return m_supportedImageMIMETypesForEncoding; }

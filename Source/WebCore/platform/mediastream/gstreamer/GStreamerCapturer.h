@@ -72,7 +72,7 @@ public:
     GstElement* makeElement(ASCIILiteral factoryName);
     virtual GstElement* createSource();
     GstElement* source() { return m_src.get();  }
-    virtual const char* name() = 0;
+    virtual ASCIILiteral name() = 0;
 
     GstElement* sink() const { return m_sink.get(); }
 

@@ -230,7 +230,7 @@ void PDFScrollingPresentationController::updatePageBackgroundLayers()
             m_pageBackgroundLayers.add(pageBackgroundLayer, pageIndex);
 
             auto containerLayer = pageContainerLayer.releaseNonNull();
-            pageContainerLayers.append(WTFMove(containerLayer));
+            pageContainerLayers.append(WTF::move(containerLayer));
 
             return pageContainerLayers[pageIndex];
         }(i);
@@ -246,7 +246,7 @@ void PDFScrollingPresentationController::updatePageBackgroundLayers()
         pageBackgroundLayer->setTransform(documentScaleTransform);
     }
 
-    pageBackgroundsContainerLayer->setChildren(WTFMove(pageContainerLayers));
+    pageBackgroundsContainerLayer->setChildren(WTF::move(pageContainerLayers));
 }
 
 GraphicsLayer* PDFScrollingPresentationController::backgroundLayerForPage(PDFDocumentLayout::PageIndex pageIndex) const
@@ -460,7 +460,7 @@ void PDFScrollingPresentationController::setSelectionLayerEnabled(bool enabled)
     if (!enabled)
         selectionLayer->removeFromParent();
     else
-        m_contentsLayer->protectedParent()->addChild(WTFMove(selectionLayer));
+        m_contentsLayer->protectedParent()->addChild(WTF::move(selectionLayer));
 #endif
 }
 

@@ -143,7 +143,7 @@ static Ref<API::TargetedElementInfo> protectedInfo(_WKTargetedElementInfo *info)
 - (void)getChildFrames:(void(^)(NSArray<_WKFrameTreeNode *> *))completion
 {
     return protectedInfo(self)->childFrames([completion = makeBlockPtr(completion)](auto&& nodes) {
-        completion(createNSArray(WTFMove(nodes), [](API::FrameTreeNode& node) {
+        completion(createNSArray(WTF::move(nodes), [](API::FrameTreeNode& node) {
             return wrapper(node);
         }).autorelease());
     });
@@ -200,7 +200,7 @@ static Ref<API::TargetedElementInfo> protectedInfo(_WKTargetedElementInfo *info)
         if (!imageHandle)
             return completion(nullptr);
 
-        if (RefPtr bitmap = WebCore::ShareableBitmap::create(WTFMove(*imageHandle), WebCore::SharedMemory::Protection::ReadOnly))
+        if (RefPtr bitmap = WebCore::ShareableBitmap::create(WTF::move(*imageHandle), WebCore::SharedMemory::Protection::ReadOnly))
             return completion(bitmap->createPlatformImage(WebCore::DontCopyBackingStore).get());
 
         completion(nullptr);

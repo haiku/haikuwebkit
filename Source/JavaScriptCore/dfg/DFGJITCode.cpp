@@ -38,7 +38,7 @@ namespace JSC { namespace DFG {
 JITData::JITData(unsigned stubInfoSize, unsigned poolSize, const JITCode& jitCode, ExitVector&& exits)
     : Base(stubInfoSize, poolSize)
     , m_callLinkInfos(jitCode.m_unlinkedCallLinkInfos.size())
-    , m_exits(WTFMove(exits))
+    , m_exits(WTF::move(exits))
 {
     unsigned numberOfWatchpoints = 0;
     for (unsigned i = 0; i < jitCode.m_linkerIR.size(); ++i) {
@@ -432,7 +432,7 @@ void JITCode::finalizeOSREntrypoints(Vector<OSREntryData>&& osrEntry)
     };
     verifyIsSorted(osrEntry);
 #endif
-    m_osrEntry = WTFMove(osrEntry);
+    m_osrEntry = WTF::move(osrEntry);
 }
 
 } } // namespace JSC::DFG

@@ -231,7 +231,7 @@ auto Blending<Filter>::blend(const Filter& from, const Filter& to, const Blendin
     if (blendedFilterList.isEmpty())
         return CSS::Keyword::None { };
 
-    return Filter { WTFMove(blendedFilterList) };
+    return Filter { WTF::move(blendedFilterList) };
 }
 
 // MARK: - Platform

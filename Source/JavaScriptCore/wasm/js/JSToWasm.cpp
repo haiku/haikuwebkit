@@ -850,9 +850,9 @@ CodePtr<JSEntryPtrTag> FunctionSignature::jsToWasmICEntrypoint() const
         return nullptr;
 
     auto code = FINALIZE_WASM_CODE(linkBuffer, JSEntryPtrTag, nullptr, "JS->Wasm IC %s", WTF::toCString(*this).data());
-    jsToWasmICCallee->setEntrypoint(WTFMove(code));
+    jsToWasmICCallee->setEntrypoint(WTF::move(code));
     WTF::storeStoreFence();
-    m_jsToWasmICCallee = WTFMove(jsToWasmICCallee);
+    m_jsToWasmICCallee = WTF::move(jsToWasmICCallee);
 
     return m_jsToWasmICCallee->jsToWasm();
 }

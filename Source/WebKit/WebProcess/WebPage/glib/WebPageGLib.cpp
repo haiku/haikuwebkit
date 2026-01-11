@@ -112,12 +112,12 @@ void WebPage::sendMessageToWebProcessExtensionWithReply(UserMessage&& message, C
         return;
     }
 
-    webkitWebPageDidReceiveUserMessage(page, WTFMove(message), WTFMove(completionHandler));
+    webkitWebPageDidReceiveUserMessage(page, WTF::move(message), WTF::move(completionHandler));
 }
 
 void WebPage::sendMessageToWebProcessExtension(UserMessage&& message)
 {
-    sendMessageToWebProcessExtensionWithReply(WTFMove(message), [](UserMessage&&) { });
+    sendMessageToWebProcessExtensionWithReply(WTF::move(message), [](UserMessage&&) { });
 }
 
 void WebPage::getPlatformEditorState(LocalFrame& frame, EditorState& result) const
@@ -257,7 +257,7 @@ void WebPage::getRenderProcessInfo(CompletionHandler<void(RenderProcessInfo&&)>&
 
     auto* display = PlatformDisplay::sharedDisplayIfExists();
     if (!display) {
-        completionHandler(WTFMove(info));
+        completionHandler(WTF::move(info));
         return;
     }
 
@@ -307,7 +307,7 @@ void WebPage::getRenderProcessInfo(CompletionHandler<void(RenderProcessInfo&&)>&
     }
 #endif // USE(GBM)
 
-    static_cast<DrawingAreaCoordinatedGraphics*>(m_drawingArea.get())->fillGLInformation(WTFMove(info), WTFMove(completionHandler));
+    static_cast<DrawingAreaCoordinatedGraphics*>(m_drawingArea.get())->fillGLInformation(WTF::move(info), WTF::move(completionHandler));
 }
 
 } // namespace WebKit

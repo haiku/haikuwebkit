@@ -370,6 +370,7 @@ namespace JSC {
         bool usesThis() const { return m_scopeNode->usesThis(); }
         bool isFunctionNode() const { return m_scopeNode->isFunctionNode(); }
         bool hasShadowsArgumentsCodeFeature() const { return m_scopeNode->hasShadowsArgumentsFeature(); }
+        bool isAsyncFunctionWithoutAwait() const { return m_scopeNode->isAsyncFunctionWithoutAwait(); }
         LexicallyScopedFeatures lexicallyScopedFeatures() const { return m_scopeNode->lexicallyScopedFeatures(); }
         PrivateBrandRequirement privateBrandRequirement() const { return m_codeBlock->privateBrandRequirement(); }
         ConstructorKind constructorKind() const { return m_codeBlock->constructorKind(); }
@@ -1046,6 +1047,8 @@ namespace JSC {
         void pushFinallyControlFlowScope(FinallyContext&);
         void popFinallyControlFlowScope();
 
+        bool hasFinallyScopes() const { return m_currentFinallyContext; }
+
         void pushOptionalChainTarget();
         void popOptionalChainTarget();
         void popOptionalChainTarget(RegisterID* dst, bool isDelete);
@@ -1219,7 +1222,7 @@ namespace JSC {
             if (isGeneratorOrAsyncFunctionWrapperParseMode(m_codeBlock->parseMode()) && isGeneratorOrAsyncFunctionBodyParseMode(parseMode))
                 generatorOrAsyncWrapperFunctionParameterNames = getParameterNames();
 
-            return UnlinkedFunctionExecutable::create(m_vm, m_scopeNode->source(), metadata, isBuiltinFunction() ? UnlinkedBuiltinFunction : UnlinkedNormalFunction, constructAbility, InlineAttribute::None, scriptMode(), WTFMove(optionalVariablesUnderTDZ), WTFMove(generatorOrAsyncWrapperFunctionParameterNames), WTFMove(parentPrivateNameEnvironment), newDerivedContextType, needsClassFieldInitializer, privateBrandRequirement);
+            return UnlinkedFunctionExecutable::create(m_vm, m_scopeNode->source(), metadata, isBuiltinFunction() ? UnlinkedBuiltinFunction : UnlinkedNormalFunction, constructAbility, InlineAttribute::None, scriptMode(), WTF::move(optionalVariablesUnderTDZ), WTF::move(generatorOrAsyncWrapperFunctionParameterNames), WTF::move(parentPrivateNameEnvironment), newDerivedContextType, needsClassFieldInitializer, privateBrandRequirement);
         }
 
         RefPtr<TDZEnvironmentLink> getVariablesUnderTDZ();

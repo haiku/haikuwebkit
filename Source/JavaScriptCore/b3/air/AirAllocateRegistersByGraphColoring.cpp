@@ -377,7 +377,7 @@ protected:
                 auto addResult = m_biases.add(getAlias(key), IndexTypeSet());
                 if (addResult.isNewEntry) {
                     ASSERT(!addResult.iterator->value.size());
-                    addResult.iterator->value = WTFMove(keysBiases);
+                    addResult.iterator->value = WTF::move(keysBiases);
                 } else {
                     IndexTypeSet& setToAddTo = addResult.iterator->value;
                     for (IndexType tmp : keysBiases)
@@ -1442,7 +1442,7 @@ public:
     class IndexToTmpIteratorAdaptor {
     public:
         IndexToTmpIteratorAdaptor(IndexIterator&& indexIterator)
-            : m_indexIterator(WTFMove(indexIterator))
+            : m_indexIterator(WTF::move(indexIterator))
         {
         }
 

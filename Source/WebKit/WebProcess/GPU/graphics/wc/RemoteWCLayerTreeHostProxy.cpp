@@ -89,7 +89,7 @@ uint64_t RemoteWCLayerTreeHostProxy::messageSenderDestinationID() const
 
 void RemoteWCLayerTreeHostProxy::update(WCUpdateInfo&& updateInfo, CompletionHandler<void(std::optional<WebKit::UpdateInfo>)>&& completionHandler)
 {
-    sendWithAsyncReply(Messages::RemoteWCLayerTreeHost::Update(updateInfo), WTFMove(completionHandler));
+    sendWithAsyncReply(Messages::RemoteWCLayerTreeHost::Update(updateInfo), WTF::move(completionHandler));
 }
 
 } // namespace WebKit

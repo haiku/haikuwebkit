@@ -45,7 +45,7 @@ class ReadableStreamToSharedBufferSink final : public RefCountedAndCanMakeWeakPt
 public:
     using Result = Variant<std::nullptr_t, std::span<const uint8_t>, JSC::JSValue, Exception>;
     using Callback = Function<void(Result&&)>;
-    static Ref<ReadableStreamToSharedBufferSink> create(Callback&& callback) { return adoptRef(*new ReadableStreamToSharedBufferSink(WTFMove(callback))); }
+    static Ref<ReadableStreamToSharedBufferSink> create(Callback&& callback) { return adoptRef(*new ReadableStreamToSharedBufferSink(WTF::move(callback))); }
     ~ReadableStreamToSharedBufferSink();
 
     void pipeFrom(ReadableStream&);

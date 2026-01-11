@@ -41,7 +41,7 @@ class WebXRPose;
 class WebXRSpace;
 
 class WebXRHitTestResult : public RefCounted<WebXRHitTestResult> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebXRHitTestResult);
+    WTF_MAKE_TZONE_ALLOCATED(WebXRHitTestResult);
 public:
     static Ref<WebXRHitTestResult> create(WebXRFrame&, const PlatformXR::FrameData::HitTestResult&);
     ~WebXRHitTestResult();

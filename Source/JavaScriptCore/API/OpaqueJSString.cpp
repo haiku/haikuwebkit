@@ -46,7 +46,7 @@ RefPtr<OpaqueJSString> OpaqueJSString::tryCreate(String&& string)
     if (string.isNull())
         return nullptr;
 
-    return adoptRef(new OpaqueJSString(WTFMove(string)));
+    return adoptRef(new OpaqueJSString(WTF::move(string)));
 }
 
 OpaqueJSString::~OpaqueJSString()

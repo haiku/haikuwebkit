@@ -341,7 +341,7 @@ void VideoPresentationModelContext::requestCloseAllMediaPresentations(bool finis
     }
 
     ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER);
-    manager->requestCloseAllMediaPresentations(m_contextId, finishedWithMedia, WTFMove(completionHandler));
+    manager->requestCloseAllMediaPresentations(m_contextId, finishedWithMedia, WTF::move(completionHandler));
 }
 
 void VideoPresentationModelContext::requestFullscreenMode(HTMLMediaElementEnums::VideoFullscreenMode mode, bool finishedWithMedia)
@@ -496,7 +496,7 @@ void VideoPresentationModelContext::requestRouteSharingPolicyAndContextUID(Compl
 {
     ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER);
     if (RefPtr manager = m_manager.get())
-        manager->requestRouteSharingPolicyAndContextUID(m_contextId, WTFMove(completionHandler));
+        manager->requestRouteSharingPolicyAndContextUID(m_contextId, WTF::move(completionHandler));
     else
         completionHandler(WebCore::RouteSharingPolicy::Default, emptyString());
 }
@@ -710,7 +710,7 @@ void VideoPresentationManagerProxy::requestRouteSharingPolicyAndContextUID(Playb
     RefPtr process = WebProcessProxy::processForIdentifier(contextId.processIdentifier());
     if (!process)
         return callback({ }, { });
-    process->sendWithAsyncReply(Messages::VideoPresentationManager::RequestRouteSharingPolicyAndContextUID(contextId.object()), WTFMove(callback), page->webPageIDInProcess(*process));
+    process->sendWithAsyncReply(Messages::VideoPresentationManager::RequestRouteSharingPolicyAndContextUID(contextId.object()), WTF::move(callback), page->webPageIDInProcess(*process));
 }
 
 static Ref<PlatformVideoPresentationInterface> videoPresentationInterface(WebPageProxy& page, PlatformPlaybackSessionInterface& playbackSessionInterface)
@@ -755,7 +755,7 @@ VideoPresentationManagerProxy::ModelInterfacePair VideoPresentationManagerProxy:
 
     interface->setVideoPresentationModel(model.ptr());
 
-    return std::make_pair(WTFMove(model), WTFMove(interface));
+    return std::make_pair(WTF::move(model), WTF::move(interface));
 }
 
 const VideoPresentationManagerProxy::ModelInterfacePair& VideoPresentationManagerProxy::ensureModelAndInterface(PlaybackSessionContextIdentifier contextId)
@@ -865,7 +865,7 @@ void VideoPresentationManagerProxy::requestBitmapImageForCurrentTime(PlaybackSes
         return;
     }
 
-    gpuProcess->requestBitmapImageForCurrentTime(page->protectedLegacyMainFrameProcess()->coreProcessIdentifier(), *playerIdentifier, WTFMove(completionHandler));
+    gpuProcess->requestBitmapImageForCurrentTime(page->protectedLegacyMainFrameProcess()->coreProcessIdentifier(), *playerIdentifier, WTF::move(completionHandler));
 }
 
 void VideoPresentationManagerProxy::addVideoInPictureInPictureDidChangeObserver(const VideoInPictureInPictureDidChangeObserver& observer)
@@ -991,7 +991,7 @@ RefPtr<PlatformVideoPresentationInterface> VideoPresentationManagerProxy::return
         return nullptr;
 
     for (auto& value : copyToVector(m_contextMap.values())) {
-        Ref interface = WTFMove(value.second);
+        Ref interface = WTF::move(value.second);
         if (interface->returningToStandby())
             return interface;
     }
@@ -1029,7 +1029,7 @@ RetainPtr<WKVideoView> VideoPresentationManagerProxy::createViewWithID(PlaybackS
 
         auto videoView = adoptNS([[WKVideoView alloc] initWithFrame:initialFrame playerView:playerView.get()]);
 
-        interface->setPlayerLayer(WTFMove(playerLayer));
+        interface->setPlayerLayer(WTF::move(playerLayer));
         interface->setPlayerLayerView(playerView.get());
         interface->setVideoView(videoView.get());
     }
@@ -1389,7 +1389,7 @@ void VideoPresentationManagerProxy::performCaptionDisplaySettingsAction(Playback
 
     WebCore::HTMLMediaElementIdentifier htmlMediaElementIdentifier { contextId.object() };
 
-    mainFrame->getFrameInfo([protectedPage = RefPtr { page }, action = WTFMove(action), htmlMediaElementIdentifier](std::optional<FrameInfoData>&& frameInfo) {
+    mainFrame->getFrameInfo([protectedPage = RefPtr { page }, action = WTF::move(action), htmlMediaElementIdentifier](std::optional<FrameInfoData>&& frameInfo) {
         if (!frameInfo || !protectedPage)
             return;
 
@@ -1414,7 +1414,7 @@ void VideoPresentationManagerProxy::requestHideCaptionDisplaySettingsPreview(Pla
 
 void VideoPresentationManagerProxy::textTrackRepresentationUpdate(PlaybackSessionContextIdentifier contextId, ShareableBitmap::Handle&& textTrack)
 {
-    auto bitmap = ShareableBitmap::create(WTFMove(textTrack));
+    auto bitmap = ShareableBitmap::create(WTF::move(textTrack));
     if (!bitmap)
         return;
     
@@ -1436,7 +1436,7 @@ void VideoPresentationManagerProxy::textTrackRepresentationSetHidden(PlaybackSes
 
 void VideoPresentationManagerProxy::callCloseCompletionHandlers()
 {
-    auto closeMediaCallbacks = WTFMove(m_closeCompletionHandlers);
+    auto closeMediaCallbacks = WTF::move(m_closeCompletionHandlers);
     for (auto& callback : closeMediaCallbacks)
         callback();
 }
@@ -1449,7 +1449,7 @@ void VideoPresentationManagerProxy::requestCloseAllMediaPresentations(PlaybackSe
         return;
     }
 
-    m_closeCompletionHandlers.append(WTFMove(completionHandler));
+    m_closeCompletionHandlers.append(WTF::move(completionHandler));
     requestFullscreenMode(contextId, WebCore::HTMLMediaElementEnums::VideoFullscreenModeNone, finishedWithMedia);
 }
 
@@ -1612,7 +1612,7 @@ void VideoPresentationManagerProxy::setVideoLayerFrame(PlaybackSessionContextIde
         sendRightAnnotated.sendRight = MachSendRight::adopt(xpc_dictionary_copy_mach_send(xpcRepresentationHostingCoordinator.get(), machPortKey));
 #endif
         RELEASE_LOG(Media, "VideoPresentationManagerProxy::setVideoLayerFrame: x=%f y=%f w=%f h=%f send right %d, fence data size %lu", frame.x(), frame.y(), frame.width(), frame.height(), sendRightAnnotated.sendRight.sendRight(), sendRightAnnotated.data.size());
-        sendToWebProcess(contextId, Messages::VideoPresentationManager::SetVideoLayerFrameFenced(contextId.object(), frame, WTFMove(sendRightAnnotated)));
+        sendToWebProcess(contextId, Messages::VideoPresentationManager::SetVideoLayerFrameFenced(contextId.object(), frame, WTF::move(sendRightAnnotated)));
         [hostingUpdateCoordinator commit];
         return;
     }
@@ -1624,7 +1624,7 @@ void VideoPresentationManagerProxy::setVideoLayerFrame(PlaybackSessionContextIde
         sendRightAnnotated.sendRight = drawingArea->createFence();
 #endif
 
-    sendToWebProcess(contextId, Messages::VideoPresentationManager::SetVideoLayerFrameFenced(contextId.object(), frame, WTFMove(sendRightAnnotated)));
+    sendToWebProcess(contextId, Messages::VideoPresentationManager::SetVideoLayerFrameFenced(contextId.object(), frame, WTF::move(sendRightAnnotated)));
 }
 
 void VideoPresentationManagerProxy::setVideoLayerGravity(PlaybackSessionContextIdentifier contextId, WebCore::MediaPlayerEnums::VideoGravity gravity)

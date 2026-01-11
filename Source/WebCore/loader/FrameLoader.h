@@ -317,8 +317,10 @@ public:
 
     const URL& previousURL() const { return m_previousURL; }
 
-    bool isHTTPFallbackInProgress() const { return m_isHTTPFallbackInProgress; }
-    void setHTTPFallbackInProgress(bool value) { m_isHTTPFallbackInProgress = value; }
+    bool isHTTPFallbackInProgress() const { return m_navigationUpgradeToHTTPSBehavior == NavigationUpgradeToHTTPSBehavior::HTTPFallback; }
+    void resetHTTPFallbackInProgress() { m_navigationUpgradeToHTTPSBehavior = NavigationUpgradeToHTTPSBehavior::BasedOnPolicy; }
+    NavigationUpgradeToHTTPSBehavior navigationUpgradeToHTTPSBehavior() const { return m_navigationUpgradeToHTTPSBehavior; }
+    void setNavigationUpgradeToHTTPSBehavior(NavigationUpgradeToHTTPSBehavior behavior) { m_navigationUpgradeToHTTPSBehavior = behavior; }
 
     bool shouldSkipHTTPSUpgradeForSameSiteNavigation() const { return m_shouldSkipHTTPSUpgradeForSameSiteNavigation; }
 
@@ -548,7 +550,7 @@ private:
     bool m_alwaysAllowLocalWebarchive { false };
 
     bool m_inStopForBackForwardCache { false };
-    bool m_isHTTPFallbackInProgress { false };
+    NavigationUpgradeToHTTPSBehavior m_navigationUpgradeToHTTPSBehavior { NavigationUpgradeToHTTPSBehavior::BasedOnPolicy };
     bool m_shouldSkipHTTPSUpgradeForSameSiteNavigation { false };
     bool m_shouldRestoreScrollPositionAndViewState { false };
 

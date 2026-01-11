@@ -47,7 +47,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return Exception { ExceptionCode::OperationError };
     memcpySpan(cipherText.mutableSpan().subspan(plainText.size()), tag.span());
 
-    return WTFMove(cipherText);
+    return WTF::move(cipherText);
 }
 
 static ExceptionOr<Vector<uint8_t>> encryptCryptoKitAESGCM(const Vector<uint8_t>& iv, const Vector<uint8_t>& key, const Vector<uint8_t>& plainText, const Vector<uint8_t>& additionalData, size_t desiredTagLengthInBytes)
@@ -56,7 +56,7 @@ static ExceptionOr<Vector<uint8_t>> encryptCryptoKitAESGCM(const Vector<uint8_t>
     auto rv = PAL::AesGcm::encrypt(key.span(), iv.span(), additionalData.span(), plainText.span(), desiredTagLengthInBytes);
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return Exception { ExceptionCode::OperationError };
-    return WTFMove(rv.result);
+    return WTF::move(rv.result);
 #else
     UNUSED_PARAM(iv);
     UNUSED_PARAM(key);
@@ -84,7 +84,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return Exception { ExceptionCode::OperationError };
 
     plainText.shrink(offset);
-    return WTFMove(plainText);
+    return WTF::move(plainText);
 }
 
 ExceptionOr<Vector<uint8_t>> CryptoAlgorithmAESGCM::platformEncrypt(const CryptoAlgorithmAesGcmParams& parameters, const CryptoKeyAES& key, const Vector<uint8_t>& plainText)

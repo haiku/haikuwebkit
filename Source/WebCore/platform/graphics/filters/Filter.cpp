@@ -42,6 +42,9 @@ Filter::Filter(Filter::Type filterType, std::optional<RenderingResourceIdentifie
 Filter::Filter(Filter::Type filterType, const FilterGeometry& geometry, std::optional<RenderingResourceIdentifier> renderingResourceIdentifier)
     : FilterFunction(filterType, renderingResourceIdentifier)
     , m_geometry(geometry)
+#if USE(CORE_IMAGE)
+    , m_enclosingFilterRegion(geometry.filterRegion)
+#endif
 {
 }
 
@@ -72,6 +75,19 @@ FloatRect Filter::clipToMaxEffectRect(const FloatRect& imageRect, const FloatRec
     auto maxEffectRect = this->maxEffectRect(primitiveSubregion);
     return intersection(imageRect, maxEffectRect);
 }
+
+#if USE(CORE_IMAGE)
+FloatRect Filter::absoluteEnclosingFilterRegion() const
+{
+    return scaledByFilterScale(m_enclosingFilterRegion);
+}
+
+FloatRect Filter::flippedRectRelativeToAbsoluteEnclosingFilterRegion(const FloatRect& absoluteRect) const
+{
+    auto absoluteFilterRegion = absoluteEnclosingFilterRegion();
+    return FloatRect(absoluteRect.x() - absoluteFilterRegion.x(), absoluteFilterRegion.maxY() - absoluteRect.maxY(), absoluteRect.width(), absoluteRect.height());
+}
+#endif
 
 bool Filter::clampFilterRegionIfNeeded()
 {
@@ -130,6 +146,15 @@ FilterStyleVector Filter::createFilterStyles(GraphicsContext& context, const Flo
     result.reverse();
     result.shrinkToFit();
     return result;
+}
+
+ImageBuffer* Filter::filterResultBuffer(FilterImage& filterImage) const
+{
+#if USE(CORE_IMAGE)
+    return filterImage.filterResultImageBuffer(*this);
+#endif
+
+    return filterImage.imageBuffer();
 }
 
 } // namespace WebCore

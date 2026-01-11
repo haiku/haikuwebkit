@@ -29,6 +29,7 @@
 
 #import <wtf/Assertions.h>
 #import <wtf/RetainPtr.h>
+#import <wtf/cf/TypeCastsCF.h>
 #import <wtf/cocoa/TollFreeBridging.h>
 
 namespace WTF {
@@ -64,11 +65,7 @@ template<typename T> inline RetainPtr<std::remove_pointer_t<typename CFTollFreeB
 }
 
 // Use bridge_id_cast to convert from CF -> id without ref churn.
-
-inline id bridge_id_cast(CFTypeRef object)
-{
-    return (__bridge id)object;
-}
+// See also <wtf/cf/TypeCastsCF.h>.
 
 inline RetainPtr<id> bridge_id_cast(RetainPtr<CFTypeRef>&& object)
 {
@@ -190,7 +187,6 @@ template<typename T> T *dynamic_objc_cast(id object)
 } // namespace WTF
 
 using WTF::bridge_cast;
-using WTF::bridge_id_cast;
 using WTF::checked_objc_cast;
 using WTF::dynamic_objc_cast;
 using WTF::is_objc;

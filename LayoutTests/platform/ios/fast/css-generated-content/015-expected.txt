@@ -9,10 +9,9 @@ layer at (0,0) size 800x600
             RenderTableCell (anonymous) at (0,0) size 299x62 [r=0 c=0 rs=1 cs=1]
               RenderInline {FORM} at (0,0) size 299x61
                 RenderText {#text} at (0,0) size 0x0
-                RenderBlock (anonymous) at (0,0) size 299x23
-                  RenderBlock {H3} at (0,0) size 299x23
-                    RenderText {#text} at (0,0) size 299x22
-                      text run at (0,0) width 299: "There should be a fourth dot bellow..."
+                RenderBlock {H3} at (0,0) size 299x23
+                  RenderText {#text} at (0,0) size 299x22
+                    text run at (0,0) width 299: "There should be a fourth dot bellow..."
               RenderInline (generated) at (0,41) size 4x20
                 RenderText at (0,41) size 4x20
                   text run at (0,41) width 4: "."

@@ -104,6 +104,14 @@
                                     <action selector="newEditorWindow:" target="-1" id="kk6-R4-iec"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="mbt-ab-Cdt">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="New Tab" keyEquivalent="t" id="nTb-mn-ItM">
+                                <connections>
+                                    <action selector="newTab:" target="-1" id="nTb-ac-Tion"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Open…" keyEquivalent="o" id="72">
                                 <connections>
                                     <action selector="openDocument:" target="-1" id="374"/>

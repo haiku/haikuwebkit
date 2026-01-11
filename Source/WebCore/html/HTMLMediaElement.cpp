@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2007-2026 Apple Inc. All rights reserved.
  * Copyright (C) 2014-2016 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,6 +76,7 @@
 #include "HTMLVideoElement.h"
 #include "HostingContext.h"
 #include "ImageOverlay.h"
+#include "ImmersiveVideoMetadata.h"
 #include "InbandGenericTextTrack.h"
 #include "InbandTextTrackPrivate.h"
 #include "InbandWebVTTTextTrack.h"
@@ -133,7 +134,6 @@
 #include "Settings.h"
 #include "ShadowRoot.h"
 #include "SleepDisabler.h"
-#include "SpatialVideoMetadata.h"
 #include "SpeechSynthesis.h"
 #include "TextTrackCueList.h"
 #include "TextTrackList.h"
@@ -229,16 +229,16 @@
 #endif
 
 #if RELEASE_LOG_DISABLED
-#define HTMLMEDIAELEMENT_RELEASE_LOG_WITH_THIS(thisPtr, formatString, ...)
+#define HTMLMEDIAELEMENT_RELEASE_LOG_WITH_THIS(thisPtr, formatString, ...) do { } while (0)
 #else
 #define HTMLMEDIAELEMENT_RELEASE_LOG_WITH_THIS(thisPtr, formatString, ...) \
 do { \
     if ((thisPtr)->willLog(WTFLogLevel::Always)) { \
         RELEASE_LOG_FORWARDABLE(Media, HTMLMEDIAELEMENT_##formatString, (thisPtr)->logIdentifier(), ##__VA_ARGS__); \
         if ((thisPtr)->logger().hasEnabledInspector()) { \
-            char buffer[1024] = { 0 }; \
+            std::array<char, 1024> buffer { }; \
             SAFE_SPRINTF(std::span { buffer }, MESSAGE_HTMLMEDIAELEMENT_##formatString, (thisPtr)->logIdentifier(), ##__VA_ARGS__); \
-            (thisPtr)->logger().toObservers((thisPtr)->logChannel(), WTFLogLevel::Always, String::fromUTF8(buffer)); \
+            (thisPtr)->logger().toObservers((thisPtr)->logChannel(), WTFLogLevel::Always, String::fromUTF8(buffer.data())); \
         } \
     } \
 } while (0)
@@ -270,7 +270,7 @@ namespace WebCore {
 
 typedef PODIntervalTree<MediaTime, TextTrackCue*> TextTrackCueIntervalTree;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLMediaElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLMediaElement);
 
 static const Seconds SeekRepeatDelay { 100_ms };
 static const double SeekTime = 0.2;
@@ -407,7 +407,7 @@ struct HTMLMediaElement::TrackGroup {
     {
     }
 
-    Vector<RefPtr<TextTrack>> tracks;
+    Vector<Ref<TextTrack>> tracks;
     RefPtr<TextTrack> visibleTrack;
     RefPtr<TextTrack> defaultTrack;
     GroupKind kind;
@@ -509,17 +509,19 @@ static bool isInWindowOrStandardFullscreen(HTMLMediaElementEnums::VideoFullscree
 }
 
 struct HTMLMediaElement::CueData {
-    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(HTMLMediaElement);
+    WTF_MAKE_STRUCT_TZONE_ALLOCATED(CueData);
     TextTrackCueIntervalTree cueTree;
     CueList currentlyActiveCues;
 };
+
+WTF_MAKE_STRUCT_TZONE_ALLOCATED_IMPL(HTMLMediaElement::CueData);
 
 class PausableIntervalTimer final : public TimerBase {
     WTF_MAKE_TZONE_ALLOCATED(PausableIntervalTimer);
 public:
     PausableIntervalTimer(Seconds interval, Function<void()>&& function)
         : m_interval { interval }
-        , m_function { WTFMove(function) }
+        , m_function { WTF::move(function) }
         , m_remainingInterval { interval }
     {
     }
@@ -775,14 +777,14 @@ HTMLMediaElement::~HTMLMediaElement()
 
     if (m_audioTracks) {
         for (unsigned i = 0; i < m_audioTracks->length(); ++i) {
-            RefPtr track = m_audioTracks->item(i);
+            Ref track = m_audioTracks->item(i);
             track->clearClient(*this);
         }
     }
 
     if (m_videoTracks) {
         for (unsigned i = 0; i < m_videoTracks->length(); ++i) {
-            RefPtr track = m_videoTracks->item(i);
+            Ref track = m_videoTracks->item(i);
             track->clearClient(*this);
         }
     }
@@ -810,6 +812,8 @@ HTMLMediaElement::~HTMLMediaElement()
     }
 
 #if ENABLE(MEDIA_SOURCE)
+    if (auto mediaProvider = std::exchange(m_mediaProvider, { }); mediaProvider && std::holds_alternative<RefPtr<MediaSource>>(*mediaProvider))
+        std::get<RefPtr<MediaSource>>(*mediaProvider)->elementIsShuttingDown();
     if (RefPtr mediaSource = std::exchange(m_mediaSource, { }))
         mediaSource->elementIsShuttingDown();
 #endif
@@ -1091,7 +1095,7 @@ bool HTMLMediaElement::rendererIsNeeded(const RenderStyle& style)
 
 RenderPtr<RenderElement> HTMLMediaElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
-    return createRenderer<RenderMedia>(RenderObject::Type::Media, *this, WTFMove(style));
+    return createRenderer<RenderMedia>(RenderObject::Type::Media, *this, WTF::move(style));
 }
 
 bool HTMLMediaElement::childShouldCreateRenderer(const Node& child) const
@@ -1126,7 +1130,7 @@ void HTMLMediaElement::didFinishInsertingNode()
     if (!m_explicitlyMuted) {
         m_explicitlyMuted = true;
         m_muted = hasAttributeWithoutSynchronization(mutedAttr);
-        protectedMediaSession()->canProduceAudioChanged();
+        canProduceAudioChanged();
     }
 
     configureMediaControls();
@@ -1286,7 +1290,7 @@ void HTMLMediaElement::scheduleEvent(const AtomString& eventName)
 
 void HTMLMediaElement::scheduleEvent(Ref<Event>&& event)
 {
-    queueCancellableTaskToDispatchEvent(*this, TaskSource::MediaElement, m_asyncEventsCancellationGroup, WTFMove(event));
+    queueCancellableTaskToDispatchEvent(*this, TaskSource::MediaElement, m_asyncEventsCancellationGroup, WTF::move(event));
 }
 
 void HTMLMediaElement::scheduleResolvePendingPlayPromises()
@@ -1294,9 +1298,9 @@ void HTMLMediaElement::scheduleResolvePendingPlayPromises()
     if (m_pendingPlayPromises.isEmpty())
         return;
 
-    queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [pendingPlayPromises = WTFMove(m_pendingPlayPromises)](auto& element) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [pendingPlayPromises = WTF::move(m_pendingPlayPromises)](auto& element) mutable {
         if (!element.isContextStopped())
-            element.resolvePendingPlayPromises(WTFMove(pendingPlayPromises));
+            element.resolvePendingPlayPromises(WTF::move(pendingPlayPromises));
     });
 }
 
@@ -1305,9 +1309,9 @@ void HTMLMediaElement::scheduleRejectPendingPlayPromises(Ref<DOMException>&& err
     if (m_pendingPlayPromises.isEmpty())
         return;
 
-    queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [error = WTFMove(error), pendingPlayPromises = WTFMove(m_pendingPlayPromises)](auto& element) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [error = WTF::move(error), pendingPlayPromises = WTF::move(m_pendingPlayPromises)](auto& element) mutable {
         if (!element.isContextStopped())
-            element.rejectPendingPlayPromises(WTFMove(pendingPlayPromises), WTFMove(error));
+            element.rejectPendingPlayPromises(WTF::move(pendingPlayPromises), WTF::move(error));
     });
 }
 
@@ -1325,9 +1329,9 @@ void HTMLMediaElement::resolvePendingPlayPromises(PlayPromiseVector&& pendingPla
 
 void HTMLMediaElement::scheduleNotifyAboutPlaying()
 {
-    queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [pendingPlayPromises = WTFMove(m_pendingPlayPromises)](auto& element) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [pendingPlayPromises = WTF::move(m_pendingPlayPromises)](auto& element) mutable {
         if (!element.isContextStopped())
-            element.notifyAboutPlaying(WTFMove(pendingPlayPromises));
+            element.notifyAboutPlaying(WTF::move(pendingPlayPromises));
     });
 }
 
@@ -1337,7 +1341,7 @@ void HTMLMediaElement::notifyAboutPlaying(PlayPromiseVector&& pendingPlayPromise
     m_playbackStartedTime = currentMediaTime().toDouble();
     m_hasEverNotifiedAboutPlaying = true;
     dispatchEvent(Event::create(eventNames().playingEvent, Event::CanBubble::No, Event::IsCancelable::Yes));
-    resolvePendingPlayPromises(WTFMove(pendingPlayPromises));
+    resolvePendingPlayPromises(WTF::move(pendingPlayPromises));
 
     schedulePlaybackControlsManagerUpdate();
 }
@@ -1395,7 +1399,7 @@ void HTMLMediaElement::setSrcObject(MediaProvider&& mediaProvider)
     // srcObject: On setting, it must set the element’s assigned media provider object to the new
     // value, and then invoke the element’s media element load algorithm.
     INFO_LOG(LOGIDENTIFIER);
-    m_mediaProvider = WTFMove(mediaProvider);
+    m_mediaProvider = WTF::move(mediaProvider);
 #if ENABLE(MEDIA_STREAM)
     m_mediaStreamSrcObject = nullptr;
 #endif
@@ -1662,9 +1666,9 @@ void HTMLMediaElement::selectMediaResource()
         element.m_textTracksWhenResourceSelectionBegan.clear();
         if (RefPtr textTracks = element.m_textTracks) {
             for (unsigned i = 0; i < textTracks->length(); ++i) {
-                RefPtr<TextTrack> track = textTracks->item(i);
+                Ref track = *textTracks->item(i);
                 if (track->mode() != TextTrack::Mode::Disabled)
-                    element.m_textTracksWhenResourceSelectionBegan.append(track);
+                    element.m_textTracksWhenResourceSelectionBegan.append(WTF::move(track));
             }
         }
 
@@ -1933,7 +1937,7 @@ void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& in
     if (!m_explicitlyMuted) {
         m_explicitlyMuted = true;
         m_muted = hasAttributeWithoutSynchronization(mutedAttr);
-        protectedMediaSession()->canProduceAudioChanged();
+        canProduceAudioChanged();
     }
 
     updateVolume();
@@ -2045,7 +2049,7 @@ void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& in
         m_lastContentTypeUsed = contentType;
     }
 
-    completionHandler(WTFMove(contentType));
+    completionHandler(WTF::move(contentType));
 }
 
 bool HTMLMediaElement::needsContentTypeToPlay() const
@@ -2066,7 +2070,7 @@ Ref<HTMLMediaElement::SnifferPromise> HTMLMediaElement::sniffForContentType(cons
     ResourceRequest request(URL { url });
     request.setAllowCookies(true);
     // https://mimesniff.spec.whatwg.org/#reading-the-resource-header defines a maximum size of 1445 bytes fetch.
-    m_sniffer = MediaResourceSniffer::create(mediaPlayerCreateResourceLoader(), WTFMove(request), 1445);
+    m_sniffer = MediaResourceSniffer::create(mediaPlayerCreateResourceLoader(), WTF::move(request), 1445);
     return Ref { *m_sniffer }->promise();
 }
 
@@ -2077,7 +2081,7 @@ void HTMLMediaElement::mediaSourceWasDetached()
     userCancelledLoad();
 }
 
-static bool trackIndexCompare(const RefPtr<TextTrack>& a, const RefPtr<TextTrack>& b)
+static bool trackIndexCompare(const Ref<TextTrack>& a, const Ref<TextTrack>& b)
 {
     return a->trackIndex() - b->trackIndex() < 0;
 }
@@ -2093,7 +2097,7 @@ static bool eventTimeCueCompare(const std::pair<MediaTime, RefPtr<TextTrackCue>>
     // compare the two tracks by the relative cue order, so return the relative
     // track order.
     if (a.second->track() != b.second->track())
-        return trackIndexCompare(a.second->protectedTrack().get(), b.second->protectedTrack().get());
+        return trackIndexCompare(*a.second->protectedTrack(), *b.second->protectedTrack());
 
     // 12 - Further sort tasks in events that have the same time by the
     // relative text track cue order of the text track cues associated
@@ -2257,7 +2261,7 @@ void HTMLMediaElement::updateActiveTextTrackCues(const MediaTime& movieTime)
     Vector<std::pair<MediaTime, RefPtr<TextTrackCue>>> eventTasks;
 
     // 8 - Let affected tracks be a list of text tracks, initially empty.
-    Vector<RefPtr<TextTrack>> affectedTracks;
+    Vector<Ref<TextTrack>> affectedTracks;
 
     for (size_t i = 0; i < missedCuesSize; ++i) {
         // 9 - For each text track cue in missed cues, prepare an event named enter
@@ -2300,8 +2304,8 @@ void HTMLMediaElement::updateActiveTextTrackCues(const MediaTime& movieTime)
     for (auto& eventTask : eventTasks) {
         auto& [eventTime, eventCue] = eventTask;
 
-        if (!affectedTracks.contains(eventCue->track()))
-            affectedTracks.append(eventCue->track());
+        if (RefPtr track = eventCue->track(); track && !affectedTracks.contains(track.get()))
+            affectedTracks.append(track.releaseNonNull());
 
         // 13 - Queue each task in events, in list order.
 
@@ -2326,15 +2330,15 @@ void HTMLMediaElement::updateActiveTextTrackCues(const MediaTime& movieTime)
     // task to fire a simple event named cuechange at the TextTrack object, and, ...
     for (auto& affectedTrack : affectedTracks) {
         Ref event = Event::create(eventNames().cuechangeEvent, Event::CanBubble::No, Event::IsCancelable::No);
-        scheduleEventOn(*affectedTrack, WTFMove(event));
+        scheduleEventOn(affectedTrack.get(), WTF::move(event));
 
         // ... if the text track has a corresponding track element, to then fire a
         // simple event named cuechange at the track element as well.
-        if (RefPtr loadableTextTrack = dynamicDowncast<LoadableTextTrack>(*affectedTrack)) {
+        if (RefPtr loadableTextTrack = dynamicDowncast<LoadableTextTrack>(affectedTrack)) {
             Ref event = Event::create(eventNames().cuechangeEvent, Event::CanBubble::No, Event::IsCancelable::No);
             RefPtr trackElement = loadableTextTrack->trackElement();
             ASSERT(trackElement);
-            scheduleEventOn(*trackElement, WTFMove(event));
+            scheduleEventOn(*trackElement, WTF::move(event));
         }
     }
 
@@ -2536,7 +2540,7 @@ void HTMLMediaElement::executeCueEnterOrExitActionForTime(TextTrackCue& cue, Cue
     }
 
     Ref event = Event::create(type == CueAction::Enter ? eventNames().enterEvent : eventNames().exitEvent, Event::CanBubble::No, Event::IsCancelable::No);
-    scheduleEventOn(cue, WTFMove(event));
+    scheduleEventOn(cue, WTF::move(event));
 }
 
 void HTMLMediaElement::audioTrackEnabledChanged(AudioTrack& track)
@@ -2880,7 +2884,7 @@ void HTMLMediaElement::noneSupported()
     // 7 - Queue a task to fire a simple event named error at the media element.
     scheduleEvent(eventNames().errorEvent);
 
-    rejectPendingPlayPromises(WTFMove(m_pendingPlayPromises), DOMException::create(ExceptionCode::NotSupportedError));
+    rejectPendingPlayPromises(WTF::move(m_pendingPlayPromises), DOMException::create(ExceptionCode::NotSupportedError));
 
 #if ENABLE(MEDIA_SOURCE)
     detachMediaSource();
@@ -2905,7 +2909,7 @@ void HTMLMediaElement::mediaLoadingFailedFatally(MediaPlayer::NetworkState error
     m_loadState = WaitingForSource;
 
     const auto getErrorMessage = [&] (String&& defaultMessage) {
-        String message = WTFMove(defaultMessage);
+        String message = WTF::move(defaultMessage);
         RefPtr player = m_player;
         if (!player)
             return message;
@@ -2951,7 +2955,7 @@ void HTMLMediaElement::cancelPendingEventsAndCallbacks()
     for (Ref source : childrenOfType<HTMLSourceElement>(*this))
         source->cancelPendingErrorEvent();
 
-    rejectPendingPlayPromises(WTFMove(m_pendingPlayPromises), DOMException::create(ExceptionCode::AbortError));
+    rejectPendingPlayPromises(WTF::move(m_pendingPlayPromises), DOMException::create(ExceptionCode::AbortError));
 }
 
 void HTMLMediaElement::mediaPlayerNetworkStateChanged()
@@ -3453,7 +3457,7 @@ void HTMLMediaElement::mediaPlayerKeyNeeded(const SharedBuffer& initData)
         init.initData = Uint8Array::create(initDataBuffer.releaseNonNull());
 
     Ref event = WebKitMediaKeyNeededEvent::create(eventNames().webkitneedkeyEvent, init);
-    scheduleEvent(WTFMove(event));
+    scheduleEvent(WTF::move(event));
 }
 
 String HTMLMediaElement::mediaPlayerMediaKeysStorageDirectory() const
@@ -3516,7 +3520,7 @@ void HTMLMediaElement::setMediaKeys(MediaKeys* mediaKeys, Ref<DeferredPromise>&&
 
     // 4. Let promise be a new promise.
     // 5. Run the following steps in parallel:
-    queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [mediaKeys = RefPtr { mediaKeys }, promise = WTFMove(promise)](auto& element) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [mediaKeys = RefPtr { mediaKeys }, promise = WTF::move(promise)](auto& element) mutable {
         if (element.isContextStopped())
             return;
 
@@ -3563,7 +3567,7 @@ void HTMLMediaElement::setMediaKeys(MediaKeys* mediaKeys, Ref<DeferredPromise>&&
         // 5.4. Set the mediaKeys attribute to mediaKeys.
         // 5.5. Let this object's attaching media keys value be false.
         // 5.6. Resolve promise.
-        element.m_mediaKeys = WTFMove(mediaKeys);
+        element.m_mediaKeys = WTF::move(mediaKeys);
         element.m_attachingMediaKeys = false;
         promise->resolve();
     });
@@ -3593,7 +3597,7 @@ void HTMLMediaElement::mediaPlayerInitializationDataEncountered(const String& in
     //    The event interface MediaEncryptedEvent has:
     //      initDataType = initDataType
     //      initData = initData
-    MediaEncryptedEventInit initializer { initDataType, WTFMove(initData) };
+    MediaEncryptedEventInit initializer { initDataType, WTF::move(initData) };
     scheduleEvent(MediaEncryptedEvent::create(eventNames().encryptedEvent, initializer, Event::IsTrusted::Yes));
 }
 
@@ -3861,12 +3865,12 @@ void HTMLMediaElement::setAudioOutputDevice(String&& deviceId, DOMPromiseDeferre
         }
     }
 
-    m_audioOutputPersistentDeviceId = WTFMove(persistentId);
+    m_audioOutputPersistentDeviceId = WTF::move(persistentId);
     if (RefPtr player = m_player)
         player->audioOutputDeviceChanged();
 
-    protectedScriptExecutionContext()->checkedEventLoop()->queueTask(TaskSource::MediaElement, [this, protectedThis = Ref { *this }, deviceId = WTFMove(deviceId), promise = WTFMove(promise)]() mutable {
-        m_audioOutputHashedDeviceId = WTFMove(deviceId);
+    protectedScriptExecutionContext()->checkedEventLoop()->queueTask(TaskSource::MediaElement, [this, protectedThis = Ref { *this }, deviceId = WTF::move(deviceId), promise = WTF::move(promise)]() mutable {
+        m_audioOutputHashedDeviceId = WTF::move(deviceId);
         promise.resolve();
     });
 }
@@ -4446,7 +4450,7 @@ void HTMLMediaElement::play(DOMPromiseDeferred<void>&& promise)
         mediaSession->removeBehaviorRestriction(MediaElementSession::InvisibleAutoplayNotPermitted);
     }
 
-    m_pendingPlayPromises.append(WTFMove(promise));
+    m_pendingPlayPromises.append(WTF::move(promise));
     playInternal();
 }
 
@@ -4535,7 +4539,7 @@ void HTMLMediaElement::playInternal()
     Ref mediaSession = this->mediaSession();
     mediaSession->setActive(true);
 
-    CompletionHandler<void (bool)> canBeginPlaybackCompletion = [weakThis = WeakPtr { *this }, logSiteIdentifier = WTFMove(logSiteIdentifier)](bool canBegin) {
+    CompletionHandler<void (bool)> canBeginPlaybackCompletion = [weakThis = WeakPtr { *this }, logSiteIdentifier = WTF::move(logSiteIdentifier)](bool canBegin) {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -4548,7 +4552,7 @@ void HTMLMediaElement::playInternal()
         protectedThis->completePlayInternal();
     };
 
-    mediaSession->clientWillBeginPlayback(WTFMove(canBeginPlaybackCompletion));
+    mediaSession->clientWillBeginPlayback(WTF::move(canBeginPlaybackCompletion));
 }
 
 void HTMLMediaElement::pause()
@@ -4735,17 +4739,23 @@ ExceptionOr<void> HTMLMediaElement::setVolume(double volume)
             pauseInternal();
             setAutoplayEventPlaybackState(AutoplayEventPlaybackState::PreventedAutoplay);
         }
+
+        canProduceAudioChanged();
+
         return { };
     }
 
     auto oldVolume = m_volume;
     m_volume = volume;
 
+    canProduceAudioChanged();
+
     if (m_volumeRevertTaskCancellationGroup.hasPendingTask())
         return { };
 
     queueCancellableTaskKeepingObjectAlive(*this, TaskSource::MediaElement, m_volumeRevertTaskCancellationGroup, [oldVolume](auto& element) {
         element.m_volume = oldVolume;
+        element.canProduceAudioChanged();
     });
 
     return { };
@@ -4805,8 +4815,7 @@ void HTMLMediaElement::setMutedInternal(bool muted, ForceMuteChange forceChange)
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
         scheduleUpdateMediaState();
 #endif
-        protectedMediaSession()->canProduceAudioChanged();
-        updateSleepDisabling();
+        canProduceAudioChanged();
     }
 
     schedulePlaybackControlsManagerUpdate();
@@ -5099,7 +5108,7 @@ void HTMLMediaElement::mediaPlayerDidAddTextTrack(InbandTextTrackPrivate& track)
     // 9. Fire an event with the name addtrack, that does not bubble and is not cancelable, and that uses the TrackEvent
     // interface, with the track attribute initialized to the text track's TextTrack object, at the media element's
     // textTracks attribute's TextTrackList object.
-    addTextTrack(WTFMove(textTrack));
+    addTextTrack(WTF::move(textTrack));
 }
 
 void HTMLMediaElement::mediaPlayerDidAddVideoTrack(VideoTrackPrivate& track)
@@ -5137,7 +5146,7 @@ void HTMLMediaElement::addAudioTrack(Ref<AudioTrack>&& track)
 #endif
     track->addClient(*this);
     HTMLMEDIAELEMENT_RELEASE_LOG(ADDAUDIOTRACK, track->id().string().utf8(), MediaElementSession::descriptionForTrack(track).utf8());
-    ensureAudioTracks().append(WTFMove(track));
+    ensureAudioTracks().append(WTF::move(track));
 }
 
 void HTMLMediaElement::addTextTrack(Ref<TextTrack>&& track)
@@ -5159,7 +5168,7 @@ void HTMLMediaElement::addTextTrack(Ref<TextTrack>&& track)
     }
 
     track->addClient(*this);
-    ensureTextTracks().append(WTFMove(track));
+    ensureTextTracks().append(WTF::move(track));
 }
 
 void HTMLMediaElement::addVideoTrack(Ref<VideoTrack>&& track)
@@ -5169,16 +5178,16 @@ void HTMLMediaElement::addVideoTrack(Ref<VideoTrack>&& track)
 #endif
     track->addClient(*this);
     HTMLMEDIAELEMENT_RELEASE_LOG(ADDVIDEOTRACK, track->id().string().utf8(), MediaElementSession::descriptionForTrack(track).utf8());
-    ensureVideoTracks().append(WTFMove(track));
+    ensureVideoTracks().append(WTF::move(track));
 }
 
-void HTMLMediaElement::removeAudioTrack(Ref<AudioTrack>&& track)
+void HTMLMediaElement::removeAudioTrack(AudioTrack& track)
 {
     if (!m_audioTracks || !m_audioTracks->contains(track))
         return;
-    track->clearClient(*this);
-    HTMLMEDIAELEMENT_RELEASE_LOG(REMOVEAUDIOTRACK, track->id().string().utf8(), MediaElementSession::descriptionForTrack(track).utf8());
-    m_audioTracks->remove(track.get());
+    track.clearClient(*this);
+    HTMLMEDIAELEMENT_RELEASE_LOG(REMOVEAUDIOTRACK, track.id().string().utf8(), MediaElementSession::descriptionForTrack(track).utf8());
+    m_audioTracks->remove(track);
 }
 
 void HTMLMediaElement::removeAudioTrack(TrackID trackID)
@@ -5210,12 +5219,12 @@ void HTMLMediaElement::removeTextTrack(TrackID trackID, bool scheduleEvent)
         removeTextTrack(downcast<TextTrack>(*track), scheduleEvent);
 }
 
-void HTMLMediaElement::removeVideoTrack(Ref<VideoTrack>&& track)
+void HTMLMediaElement::removeVideoTrack(VideoTrack& track)
 {
     if (!m_videoTracks || !m_videoTracks->contains(track))
         return;
-    track->clearClient(*this);
-    ALWAYS_LOG(LOGIDENTIFIER, "id: "_s, track->id(), ", "_s, MediaElementSession::descriptionForTrack(track));
+    track.clearClient(*this);
+    ALWAYS_LOG(LOGIDENTIFIER, "id: "_s, track.id(), ", "_s, MediaElementSession::descriptionForTrack(track));
     m_videoTracks->remove(track);
 }
 
@@ -5230,7 +5239,7 @@ void HTMLMediaElement::removeVideoTrack(TrackID trackID)
 void HTMLMediaElement::forgetResourceSpecificTracks()
 {
     while (m_audioTracks && m_audioTracks->length())
-        removeAudioTrack(Ref { *m_audioTracks->lastItem() }.get());
+        removeAudioTrack(Ref { m_audioTracks->lastItem() }.get());
 
     if (m_textTracks) {
         TrackDisplayUpdateScope scope { *this };
@@ -5242,7 +5251,7 @@ void HTMLMediaElement::forgetResourceSpecificTracks()
     }
 
     while (m_videoTracks &&  m_videoTracks->length())
-        removeVideoTrack(Ref { *m_videoTracks->lastItem() }.get());
+        removeVideoTrack(Ref { m_videoTracks->lastItem() }.get());
 }
 
 #if ENABLE(WEB_AUDIO)
@@ -5379,7 +5388,7 @@ void HTMLMediaElement::configureTextTrackGroup(const TrackGroup& group)
     CaptionUserPreferences::CaptionDisplayMode displayMode = captionPreferences ? captionPreferences->captionDisplayMode() : CaptionUserPreferences::CaptionDisplayMode::Automatic;
 
     // First, find the track in the group that should be enabled (if any).
-    Vector<RefPtr<TextTrack>> currentlyEnabledTracks;
+    Vector<Ref<TextTrack>> currentlyEnabledTracks;
     RefPtr<TextTrack> trackToEnable;
     RefPtr<TextTrack> defaultTrack;
     RefPtr<TextTrack> fallbackTrack;
@@ -5391,17 +5400,17 @@ void HTMLMediaElement::configureTextTrackGroup(const TrackGroup& group)
     // track if it is less suitable, and we do want to disable it if another track is more suitable.
     int alreadyVisibleTrackScore = 0;
     if (group.visibleTrack && captionPreferences) {
-        alreadyVisibleTrackScore = captionPreferences->textTrackSelectionScore(group.visibleTrack.get(), this);
-        currentlyEnabledTracks.append(group.visibleTrack);
+        alreadyVisibleTrackScore = captionPreferences->textTrackSelectionScore(*group.visibleTrack, *this);
+        currentlyEnabledTracks.append(*group.visibleTrack);
     }
 
     for (size_t i = 0; i < group.tracks.size(); ++i) {
-        RefPtr textTrack = group.tracks[i];
+        Ref textTrack = group.tracks[i];
 
         if (m_processingPreferenceChange && textTrack->mode() == TextTrack::Mode::Showing)
             currentlyEnabledTracks.append(textTrack);
 
-        int trackScore = captionPreferences ? captionPreferences->textTrackSelectionScore(textTrack.get(), this) : 0;
+        int trackScore = captionPreferences ? captionPreferences->textTrackSelectionScore(textTrack, *this) : 0;
         HTMLMEDIAELEMENT_RELEASE_LOG(CONFIGURETEXTTRACKGROUP, textTrack->kindKeyword().string().utf8(), textTrack->language().string().utf8(), textTrack->validBCP47Language().string().utf8(), trackScore);
 
         if (trackScore) {
@@ -5417,15 +5426,15 @@ void HTMLMediaElement::configureTextTrackGroup(const TrackGroup& group)
             //    Let the text track mode be showing.
             if (trackScore > highestTrackScore && trackScore > alreadyVisibleTrackScore) {
                 highestTrackScore = trackScore;
-                trackToEnable = textTrack;
+                trackToEnable = textTrack.ptr();
             }
 
             if (!defaultTrack && textTrack->isDefault())
-                defaultTrack = textTrack;
+                defaultTrack = textTrack.ptr();
             if (!defaultTrack && !fallbackTrack)
-                fallbackTrack = textTrack;
+                fallbackTrack = textTrack.ptr();
             if (textTrack->containsOnlyForcedSubtitles() && trackScore > highestForcedScore) {
-                forcedSubitleTrack = textTrack;
+                forcedSubitleTrack = textTrack.ptr();
                 highestForcedScore = trackScore;
             }
         } else if (!group.visibleTrack && !defaultTrack && textTrack->isDefault()) {
@@ -5433,10 +5442,10 @@ void HTMLMediaElement::configureTextTrackGroup(const TrackGroup& group)
             // element's list of text tracks whose text track mode is showing or showing by default
             //    Let the text track mode be showing by default.
             if (group.kind != TrackGroup::CaptionsAndSubtitles || displayMode != CaptionUserPreferences::CaptionDisplayMode::ForcedOnly)
-                defaultTrack = textTrack;
+                defaultTrack = textTrack.ptr();
         } else if (group.kind == TrackGroup::Description) {
             if (!defaultTrack && !fallbackTrack && m_userPrefersTextDescriptions)
-                fallbackTrack = textTrack;
+                fallbackTrack = textTrack.ptr();
         }
     }
 
@@ -5468,8 +5477,8 @@ void HTMLMediaElement::configureTextTrackGroup(const TrackGroup& group)
 
     if (currentlyEnabledTracks.size()) {
         for (size_t i = 0; i < currentlyEnabledTracks.size(); ++i) {
-            RefPtr<TextTrack> textTrack = currentlyEnabledTracks[i];
-            if (textTrack != trackToEnable)
+            Ref textTrack = currentlyEnabledTracks[i];
+            if (textTrack.ptr() != trackToEnable)
                 textTrack->setMode(TextTrack::Mode::Disabled);
         }
     }
@@ -5516,14 +5525,17 @@ void HTMLMediaElement::setSelectedTextTrack(TextTrack* trackToSelect)
     if (!trackList || !trackList->length())
         return;
 
-    if (trackToSelect == &TextTrack::captionMenuAutomaticItem()) {
+    if (trackToSelect == &TextTrack::captionMenuAutomaticItemSingleton()) {
         if (captionDisplayMode() != CaptionUserPreferences::CaptionDisplayMode::Automatic)
             m_textTracks->scheduleChangeEvent();
-    } else if (trackToSelect == &TextTrack::captionMenuOffItem()) {
+    } else if (trackToSelect == &TextTrack::captionMenuOffItemSingleton()) {
         for (int i = 0, length = trackList->length(); i < length; ++i)
             RefPtr { trackList->item(i) }->setMode(TextTrack::Mode::Disabled);
 
         if (captionDisplayMode() != CaptionUserPreferences::CaptionDisplayMode::ForcedOnly && !trackList->isChangeEventScheduled())
+            m_textTracks->scheduleChangeEvent();
+    } else if (trackToSelect == &TextTrack::captionMenuOnItemSingleton()) {
+        if (captionDisplayMode() != CaptionUserPreferences::CaptionDisplayMode::AlwaysOn)
             m_textTracks->scheduleChangeEvent();
     } else {
         if (!trackToSelect || !trackList->contains(*trackToSelect))
@@ -5544,10 +5556,12 @@ void HTMLMediaElement::setSelectedTextTrack(TextTrack* trackToSelect)
 
     auto& captionPreferences = page->checkedGroup()->ensureCaptionPreferences();
     CaptionUserPreferences::CaptionDisplayMode displayMode;
-    if (trackToSelect == &TextTrack::captionMenuOffItem())
+    if (trackToSelect == &TextTrack::captionMenuOffItemSingleton())
         displayMode = CaptionUserPreferences::CaptionDisplayMode::ForcedOnly;
-    else if (trackToSelect == &TextTrack::captionMenuAutomaticItem())
+    else if (trackToSelect == &TextTrack::captionMenuAutomaticItemSingleton())
         displayMode = CaptionUserPreferences::CaptionDisplayMode::Automatic;
+    else if (trackToSelect == &TextTrack::captionMenuOnItemSingleton())
+        displayMode = CaptionUserPreferences::CaptionDisplayMode::AlwaysOn;
     else {
         displayMode = CaptionUserPreferences::CaptionDisplayMode::AlwaysOn;
         if (trackToSelect->validBCP47Language().length())
@@ -5581,9 +5595,7 @@ void HTMLMediaElement::configureTextTracks()
         return;
 
     for (size_t i = 0; i < m_textTracks->length(); ++i) {
-        RefPtr textTrack = m_textTracks->item(i);
-        if (!textTrack)
-            continue;
+        Ref textTrack = *m_textTracks->item(i);
 
         auto kind = textTrack->kind();
         TrackGroup* currentGroup;
@@ -5599,9 +5611,9 @@ void HTMLMediaElement::configureTextTracks()
             currentGroup = &otherTracks;
 
         if (!currentGroup->visibleTrack && textTrack->mode() == TextTrack::Mode::Showing)
-            currentGroup->visibleTrack = textTrack;
+            currentGroup->visibleTrack = textTrack.ptr();
         if (!currentGroup->defaultTrack && textTrack->isDefault())
-            currentGroup->defaultTrack = textTrack;
+            currentGroup->defaultTrack = textTrack.ptr();
 
         // Do not add this track to the group if it has already been automatically configured
         // as we only want to call configureTextTrack once per track so that adding another
@@ -5614,7 +5626,7 @@ void HTMLMediaElement::configureTextTracks()
 
         if (textTrack->language().length())
             currentGroup->hasSrcLang = true;
-        currentGroup->tracks.append(textTrack);
+        currentGroup->tracks.append(WTF::move(textTrack));
     }
 
     if (captionAndSubtitleTracks.tracks.size())
@@ -5737,7 +5749,7 @@ URL HTMLMediaElement::selectNextSourceChild(ContentType* contentType, InvalidURL
         if (contentType)
             *contentType = ContentType(type);
         m_nextChildNodeToConsider = Traversal<HTMLSourceElement>::nextSkippingChildren(source);
-        m_currentSourceNode = WTFMove(source);
+        m_currentSourceNode = WTF::move(source);
 
         if (shouldLog)
             INFO_LOG(LOGIDENTIFIER, " = ", mediaURL);
@@ -5865,6 +5877,9 @@ void HTMLMediaElement::mediaPlayerTimeChanged()
 
     // When the current playback position reaches the end of the media resource then the user agent must follow these steps:
     if ((dur || (!dur && !now)) && dur.isValid() && !dur.isPositiveInfinite() && !dur.isNegativeInfinite()) {
+
+        protectedMediaSession()->clientCharacteristicsChanged(true);
+
         // If the media element has a loop attribute specified and does not have a current media controller,
         if (loop() && !m_mediaController && playbackRate > 0) {
             m_sentEndEvent = false;
@@ -6576,7 +6591,7 @@ void HTMLMediaElement::checkForAudioAndVideo()
 {
     m_hasEverHadAudio |= hasAudio();
     m_hasEverHadVideo |= hasVideo();
-    protectedMediaSession()->canProduceAudioChanged();
+    canProduceAudioChanged();
 }
 
 void HTMLMediaElement::setPlaying(bool playing)
@@ -7097,9 +7112,8 @@ void HTMLMediaElement::setIsPlayingToWirelessTarget(bool isPlayingToWirelessTarg
         ALWAYS_LOG_WITH_THIS(&element, logSiteIdentifier, element.m_isPlayingToWirelessTarget);
         element.configureMediaControls();
         element.mediaSession().isPlayingToWirelessPlaybackTargetChanged(element.m_isPlayingToWirelessTarget);
-        element.mediaSession().canProduceAudioChanged();
+        element.canProduceAudioChanged();
         element.scheduleUpdateMediaState();
-        element.updateSleepDisabling();
 
         element.m_failedToPlayToWirelessTarget = false;
         element.m_checkPlaybackTargetCompatibilityTimer.startOneShot(500_ms);
@@ -7119,7 +7133,7 @@ void HTMLMediaElement::enqueuePlaybackTargetAvailabilityChangedEvent(EnqueueBeha
     m_lastTargetAvailabilityEventState = hasTargets;
 #if ENABLE(WIRELESS_PLAYBACK_TARGET_AVAILABILITY_API)
     Ref event = WebKitPlaybackTargetAvailabilityEvent::create(eventNames().webkitplaybacktargetavailabilitychangedEvent, hasTargets);
-    scheduleEvent(WTFMove(event));
+    scheduleEvent(WTF::move(event));
 #endif
     scheduleUpdateMediaState();
 }
@@ -7132,7 +7146,7 @@ void HTMLMediaElement::setWirelessPlaybackTarget(Ref<MediaPlaybackTarget>&& devi
     fireAndRestartWatchtimeTimer();
 
     if (RefPtr player = m_player)
-        player->setWirelessPlaybackTarget(WTFMove(device));
+        player->setWirelessPlaybackTarget(WTF::move(device));
     Ref { m_remote }->shouldPlayToRemoteTargetChanged(hasActiveRoute);
 }
 
@@ -7268,11 +7282,11 @@ bool HTMLMediaElement::addEventListener(const AtomString& eventType, Ref<EventLi
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
     if (eventType != eventNames().webkitplaybacktargetavailabilitychangedEvent)
-        return Node::addEventListener(eventType, WTFMove(listener), options);
+        return Node::addEventListener(eventType, WTF::move(listener), options);
 
     bool isFirstAvailabilityChangedListener = !hasTargetAvailabilityListeners();
 
-    if (!Node::addEventListener(eventType, WTFMove(listener), options))
+    if (!Node::addEventListener(eventType, WTF::move(listener), options))
         return false;
 
     if (isWirelessPlaybackTargetDisabled())
@@ -7290,7 +7304,7 @@ bool HTMLMediaElement::addEventListener(const AtomString& eventType, Ref<EventLi
     enqueuePlaybackTargetAvailabilityChangedEvent(EnqueueBehavior::Always); // Ensure the event listener gets at least one event.
     return true;
 #else
-    return Node::addEventListener(eventType, WTFMove(listener), options);
+    return Node::addEventListener(eventType, WTF::move(listener), options);
 #endif // ENABLE(WIRELESS_PLAYBACK_TARGET)
 }
 
@@ -7684,7 +7698,7 @@ void HTMLMediaElement::waitForPreparedForInlineThen(Function<void()>&& completio
         return;
     }
 
-    m_preparedForInlineCompletionHandler = WTFMove(completionHandler);
+    m_preparedForInlineCompletionHandler = WTF::move(completionHandler);
 }
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)
@@ -7716,7 +7730,7 @@ void HTMLMediaElement::setVideoFullscreenLayer(PlatformLayer* platformLayer, Fun
         return;
     }
 
-    RefPtr { m_player }->setVideoFullscreenLayer(platformLayer, WTFMove(completionHandler));
+    RefPtr { m_player }->setVideoFullscreenLayer(platformLayer, WTF::move(completionHandler));
     invalidateStyleAndLayerComposition();
     updateTextTrackDisplay();
 }
@@ -8249,7 +8263,7 @@ void HTMLMediaElement::setController(RefPtr<MediaController>&& controller)
     if (RefPtr mediaController = m_mediaController)
         mediaController->removeMediaElement(*this);
 
-    m_mediaController = WTFMove(controller);
+    m_mediaController = WTF::move(controller);
 
     if (RefPtr mediaController = m_mediaController)
         mediaController->addMediaElement(*this);
@@ -8449,9 +8463,9 @@ static inline PlatformTextTrackData::TrackMode toPlatform(TextTrack::Mode mode)
     return PlatformTextTrackData::TrackMode::Disabled;
 }
 
-Vector<RefPtr<PlatformTextTrack>> HTMLMediaElement::outOfBandTrackSources()
+Vector<Ref<PlatformTextTrack>> HTMLMediaElement::outOfBandTrackSources()
 {
-    Vector<RefPtr<PlatformTextTrack>> outOfBandTrackSources;
+    Vector<Ref<PlatformTextTrack>> outOfBandTrackSources;
     for (Ref trackElement : childrenOfType<HTMLTrackElement>(*this)) {
         URL url = trackElement->getNonEmptyURLAttribute(srcAttr);
         if (url.isEmpty())
@@ -8523,7 +8537,7 @@ bool HTMLMediaElement::mediaPlayerIsLooping() const
     return loop();
 }
 
-CachedResourceLoader* HTMLMediaElement::mediaPlayerCachedResourceLoader()
+CachedResourceLoader* HTMLMediaElement::mediaPlayerCachedResourceLoader() const
 {
     return &protectedDocument()->cachedResourceLoader();
 }
@@ -8627,7 +8641,7 @@ void HTMLMediaElement::mediaPlayerGetRawCookies(const URL& url, MediaPlayerClien
 
     Vector<Cookie> cookies;
     page->cookieJar().getRawCookies(document(), url, cookies);
-    completionHandler(WTFMove(cookies));
+    completionHandler(WTF::move(cookies));
 }
 
 #endif
@@ -8852,7 +8866,7 @@ bool HTMLMediaElement::ensureMediaControls()
 
     auto controlsReady = false;
     if (oldControlsState == ControlsState::None) {
-        controlsReady = DocumentMediaElement::from(protectedDocument()).setupAndCallMediaControlsJS([this, mediaControlsScripts = WTFMove(mediaControlsScripts)](JSDOMGlobalObject& globalObject, JSC::JSGlobalObject& lexicalGlobalObject, ScriptController&, DOMWrapperWorld&) {
+        controlsReady = DocumentMediaElement::from(protectedDocument()).setupAndCallMediaControlsJS([this, mediaControlsScripts = WTF::move(mediaControlsScripts)](JSDOMGlobalObject& globalObject, JSC::JSGlobalObject& lexicalGlobalObject, ScriptController&, DOMWrapperWorld&) {
             auto& vm = globalObject.vm();
             auto scope = DECLARE_THROW_SCOPE(vm);
 
@@ -9253,7 +9267,7 @@ bool HTMLMediaElement::shouldOverridePauseDuringRouteChange() const
 void HTMLMediaElement::requestHostingContext(Function<void(HostingContext)>&& completionHandler)
 {
     if (RefPtr player = m_player) {
-        player->requestHostingContext(WTFMove(completionHandler));
+        player->requestHostingContext(WTF::move(completionHandler));
         return;
     }
 
@@ -9286,7 +9300,7 @@ void HTMLMediaElement::setVideoLayerSizeFenced(const FloatSize& size, WTF::MachS
 
     m_videoLayerSize = size;
     if (RefPtr player = m_player)
-        player->setVideoLayerSizeFenced(size, WTFMove(fence));
+        player->setVideoLayerSizeFenced(size, WTF::move(fence));
 }
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
@@ -9846,12 +9860,12 @@ void HTMLMediaElement::updateMediaPlayer(IntSize presentationSize, bool shouldMa
 
 void HTMLMediaElement::mediaPlayerQueueTaskOnEventLoop(Function<void()>&& task)
 {
-    protectedDocument()->checkedEventLoop()->queueTask(TaskSource::MediaElement, WTFMove(task));
+    protectedDocument()->checkedEventLoop()->queueTask(TaskSource::MediaElement, WTF::move(task));
 }
 
 template<typename T> void HTMLMediaElement::scheduleEventOn(T& target, Ref<Event>&& event)
 {
-    target.queueCancellableTaskToDispatchEvent(target, TaskSource::MediaElement, m_asyncEventsCancellationGroup, WTFMove(event));
+    target.queueCancellableTaskToDispatchEvent(target, TaskSource::MediaElement, m_asyncEventsCancellationGroup, WTF::move(event));
 }
 
 void HTMLMediaElement::setShowingStats(bool shouldShowStats)
@@ -10243,6 +10257,12 @@ RefPtr<MediaSessionManagerInterface> HTMLMediaElement::sessionManager() const
         return page->mediaSessionManager();
 
     return nullptr;
+}
+
+void HTMLMediaElement::canProduceAudioChanged()
+{
+    protectedMediaSession()->canProduceAudioChanged();
+    updateSleepDisabling();
 }
 
 } // namespace WebCore

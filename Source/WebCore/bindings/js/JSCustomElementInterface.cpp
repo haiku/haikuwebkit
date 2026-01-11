@@ -363,8 +363,8 @@ void JSCustomElementInterface::setAttributeChangedCallback(JSC::JSObject* callba
 {
     m_attributeChangedCallback = callback;
     m_observedAttributes.clear();
-    for (auto&& name : WTFMove(observedAttributes))
-        m_observedAttributes.add(WTFMove(name));
+    for (auto&& name : WTF::move(observedAttributes))
+        m_observedAttributes.add(WTF::move(name));
 }
 
 void JSCustomElementInterface::invokeAttributeChangedCallback(Element& element, const QualifiedName& attributeName, const AtomString& oldValue, const AtomString& newValue)

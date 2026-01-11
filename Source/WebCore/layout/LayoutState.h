@@ -52,7 +52,7 @@ class TableFormattingState;
 
 class LayoutState : public CanMakeWeakPtr<LayoutState>, public CanMakeThreadSafeCheckedPtr<LayoutState> {
     WTF_MAKE_NONCOPYABLE(LayoutState);
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(LayoutState);
+    WTF_MAKE_TZONE_ALLOCATED(LayoutState);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(LayoutState);
 public:
     // Primary layout state has a direct geometry cache in layout boxes.

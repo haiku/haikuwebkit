@@ -71,6 +71,7 @@
 #include "XMLNSNames.h"
 #include <libxml/parser.h>
 #include <libxml/parserInternals.h>
+#include <limits>
 #include <wtf/MallocSpan.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -175,7 +176,7 @@ public:
             callback->attributes[i * 5 + 4] = unsafeSpanIncludingNullTerminator(callback->attributes[i * 5 + 3]).subspan(len).data();
         }
 
-        m_callbacks.append(WTFMove(callback));
+        m_callbacks.append(WTF::move(callback));
     }
 
     void appendEndElementNSCallback()
@@ -190,7 +191,7 @@ public:
         callback->s = MallocSpan<xmlChar, XMLMalloc>::malloc(s.size());
         memcpySpan(callback->s.mutableSpan(), s);
 
-        m_callbacks.append(WTFMove(callback));
+        m_callbacks.append(WTF::move(callback));
     }
 
     void appendProcessingInstructionCallback(const xmlChar* target, const xmlChar* data)
@@ -200,7 +201,7 @@ public:
         callback->target = xmlStrdup(target);
         callback->data = xmlStrdup(data);
 
-        m_callbacks.append(WTFMove(callback));
+        m_callbacks.append(WTF::move(callback));
     }
 
     void appendCDATABlockCallback(std::span<const xmlChar> s)
@@ -209,7 +210,7 @@ public:
         callback->s = MallocSpan<xmlChar, XMLMalloc>::malloc(s.size());
         memcpySpan(callback->s.mutableSpan(), s);
 
-        m_callbacks.append(WTFMove(callback));
+        m_callbacks.append(WTF::move(callback));
     }
 
     void appendCommentCallback(const xmlChar* s)
@@ -218,7 +219,7 @@ public:
 
         callback->s = xmlStrdup(s);
 
-        m_callbacks.append(WTFMove(callback));
+        m_callbacks.append(WTF::move(callback));
     }
 
     void appendInternalSubsetCallback(const xmlChar* name, const xmlChar* externalID, const xmlChar* systemID)
@@ -229,7 +230,7 @@ public:
         callback->externalID = xmlStrdup(externalID);
         callback->systemID = xmlStrdup(systemID);
 
-        m_callbacks.append(WTFMove(callback));
+        m_callbacks.append(WTF::move(callback));
     }
 
     void appendErrorCallback(XMLErrors::Type type, const xmlChar* message, OrdinalNumber lineNumber, OrdinalNumber columnNumber)
@@ -241,7 +242,7 @@ public:
         callback->lineNumber = lineNumber;
         callback->columnNumber = columnNumber;
 
-        m_callbacks.append(WTFMove(callback));
+        m_callbacks.append(WTF::move(callback));
     }
 
     void callAndRemoveFirstCallback(XMLDocumentParser* parser)
@@ -396,7 +397,7 @@ class OffsetBuffer {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(OffsetBuffer);
 public:
     OffsetBuffer(Vector<uint8_t>&& buffer)
-        : m_buffer(WTFMove(buffer))
+        : m_buffer(WTF::move(buffer))
     {
     }
 
@@ -666,7 +667,7 @@ XMLDocumentParser::XMLDocumentParser(DocumentFragment& fragment, HashMap<AtomStr
     , m_currentNode(&fragment)
     , m_scriptStartPosition(TextPosition::belowRangePosition())
     , m_parsingFragment(true)
-    , m_prefixToNamespaceMap(WTFMove(prefixToNamespaceMap))
+    , m_prefixToNamespaceMap(WTF::move(prefixToNamespaceMap))
     , m_defaultNamespaceURI(defaultNamespaceURI)
 {
     fragment.ref();
@@ -1418,8 +1419,11 @@ xmlDocPtr xmlDocPtrForString(CachedResourceLoader& cachedResourceLoader, const S
     size_t sizeInBytes = source.length() * (is8Bit ? sizeof(Latin1Character) : sizeof(char16_t));
     const char* encoding = is8Bit ? "iso-8859-1" : nativeEndianUTF16Encoding();
 
+    if (sizeInBytes > std::numeric_limits<int>::max())
+        return nullptr;
+
     XMLDocumentParserScope scope(&cachedResourceLoader, errorFunc);
-    return xmlReadMemory(characters.data(), sizeInBytes, url.latin1().data(), encoding, XSLT_PARSE_OPTIONS);
+    return xmlReadMemory(characters.data(), static_cast<int>(sizeInBytes), url.latin1().data(), encoding, XSLT_PARSE_OPTIONS);
 }
 #endif
 

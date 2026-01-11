@@ -105,7 +105,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(BaseAudioContext);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(BaseAudioContext);
 
 bool BaseAudioContext::isSupportedSampleRate(float sampleRate)
 {
@@ -241,7 +241,7 @@ void BaseAudioContext::addReaction(State state, DOMPromiseDeferred<void>&& promi
     if (stateIndex >= m_stateReactions.size())
         m_stateReactions.grow(stateIndex + 1);
 
-    m_stateReactions[stateIndex].append(WTFMove(promise));
+    m_stateReactions[stateIndex].append(WTF::move(promise));
 }
 
 void BaseAudioContext::setState(State state)
@@ -324,18 +324,18 @@ void BaseAudioContext::decodeAudioData(Ref<ArrayBuffer>&& audioData, RefPtr<Audi
     audioData->pin();
 
     auto p = m_audioDecoder->decodeAsync(audioData.copyRef(), sampleRate());
-    p->whenSettled(RunLoop::currentSingleton(), [audioData = WTFMove(audioData), activity = makePendingActivity(*this), successCallback = WTFMove(successCallback), errorCallback = WTFMove(errorCallback), promise = WTFMove(promise)] (DecodingTaskPromise::Result&& result) mutable {
-        activity->object().queueTaskKeepingObjectAlive(activity->object(), TaskSource::InternalAsyncTask, [audioData = WTFMove(audioData), successCallback = WTFMove(successCallback), errorCallback = WTFMove(errorCallback), promise = WTFMove(promise), result = WTFMove(result)](auto&) mutable {
+    p->whenSettled(RunLoop::currentSingleton(), [audioData = WTF::move(audioData), activity = makePendingActivity(*this), successCallback = WTF::move(successCallback), errorCallback = WTF::move(errorCallback), promise = WTF::move(promise)] (DecodingTaskPromise::Result&& result) mutable {
+        activity->object().queueTaskKeepingObjectAlive(activity->object(), TaskSource::InternalAsyncTask, [audioData = WTF::move(audioData), successCallback = WTF::move(successCallback), errorCallback = WTF::move(errorCallback), promise = WTF::move(promise), result = WTF::move(result)](auto&) mutable {
 
             audioData->unpin();
 
             if (!result) {
-                promise->reject(WTFMove(result.error()));
+                promise->reject(WTF::move(result.error()));
                 if (errorCallback)
                     errorCallback->invoke(nullptr);
                 return;
             }
-            auto audioBuffer = WTFMove(result.value());
+            auto audioBuffer = WTF::move(result.value());
             promise->resolve<IDLInterface<AudioBuffer>>(audioBuffer.get());
             if (successCallback)
                 successCallback->invoke(audioBuffer.ptr());
@@ -510,10 +510,10 @@ ExceptionOr<Ref<PeriodicWave>> BaseAudioContext::createPeriodicWave(Vector<float
     ASSERT(isMainThread());
     
     PeriodicWaveOptions options;
-    options.real = WTFMove(real);
-    options.imag = WTFMove(imaginary);
+    options.real = WTF::move(real);
+    options.imag = WTF::move(imaginary);
     options.disableNormalization = constraints.disableNormalization;
-    return PeriodicWave::create(*this, WTFMove(options));
+    return PeriodicWave::create(*this, WTF::move(options));
 }
 
 ExceptionOr<Ref<ConstantSourceNode>> BaseAudioContext::createConstantSource()
@@ -538,9 +538,9 @@ ExceptionOr<Ref<IIRFilterNode>> BaseAudioContext::createIIRFilter(ScriptExecutio
 
     ASSERT(isMainThread());
     IIRFilterOptions options;
-    options.feedforward = WTFMove(feedforward);
-    options.feedback = WTFMove(feedback);
-    return IIRFilterNode::create(scriptExecutionContext, *this, WTFMove(options));
+    options.feedforward = WTF::move(feedforward);
+    options.feedback = WTF::move(feedback);
+    return IIRFilterNode::create(scriptExecutionContext, *this, WTF::move(options));
 }
 
 void BaseAudioContext::derefFinishedSourceNodes()
@@ -679,7 +679,7 @@ void BaseAudioContext::updateTailProcessingNodes()
         // Disabling of outputs should happen on the main thread we add the node to m_finishedTailProcessingNodes
         // for disableOutputsForFinishedTailProcessingNodes() to process later on the main thread.
         ASSERT(!m_finishedTailProcessingNodes.contains(node));
-        m_finishedTailProcessingNodes.append(WTFMove(node));
+        m_finishedTailProcessingNodes.append(WTF::move(node));
         m_tailProcessingNodes.removeAt(i - 1);
     }
 
@@ -865,8 +865,17 @@ void BaseAudioContext::removeAutomaticPullNode(AudioNode& node)
 {
     ASSERT(isGraphOwner());
 
-    if (m_automaticPullNodes.remove(&node))
-        m_automaticPullNodesNeedUpdating = true;
+    if (m_automaticPullNodes.remove(&node)) {
+        if (m_isAudioThreadFinished) {
+            // If the audio thread is finished, update m_renderingAutomaticPullNodes
+            // directly instead of setting m_automaticPullNodesNeedUpdating and waiting
+            // for the next rendering quantum (which will not happen). This is safe
+            // since the audio thread has been terminated and thus cannot be using this
+            // vector anymore.
+            m_renderingAutomaticPullNodes.removeFirst(&node);
+        } else
+            m_automaticPullNodesNeedUpdating = true;
+    }
 }
 
 void BaseAudioContext::updateAutomaticPullNodes()
@@ -907,7 +916,7 @@ void BaseAudioContext::postTask(Function<void()>&& task)
 {
     ASSERT(isMainThread());
     if (!m_isStopScheduled)
-        queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [task = WTFMove(task)](auto&) mutable { task(); });
+        queueTaskKeepingObjectAlive(*this, TaskSource::MediaElement, [task = WTF::move(task)](auto&) mutable { task(); });
 }
 
 const SecurityOrigin* BaseAudioContext::origin() const
@@ -951,7 +960,7 @@ void BaseAudioContext::addAudioParamDescriptors(const String& processorName, Vec
 {
     ASSERT(!m_parameterDescriptorMap.contains(processorName));
     bool wasEmpty = m_parameterDescriptorMap.isEmpty();
-    m_parameterDescriptorMap.add(processorName, WTFMove(descriptors));
+    m_parameterDescriptorMap.add(processorName, WTF::move(descriptors));
     if (wasEmpty)
         workletIsReady();
 }

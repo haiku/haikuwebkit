@@ -55,6 +55,13 @@ bool defaultCaptionDisplaySettingsEnabled()
     return false;
 }
 #endif
+
+#if PLATFORM(MAC)
+bool defaultUseAppKitGestures()
+{
+    return false;
+}
+#endif
 }
 
 #endif

@@ -90,7 +90,7 @@ public:
     bool delegateIsHandlingUnimplementablePolicy() const { return m_delegateIsHandlingUnimplementablePolicy; }
 
 #if ENABLE(CONTENT_FILTERING)
-    void setContentFilterUnblockHandler(ContentFilterUnblockHandler&& unblockHandler) { m_contentFilterUnblockHandler = WTFMove(unblockHandler); }
+    void setContentFilterUnblockHandler(ContentFilterUnblockHandler&& unblockHandler) { m_contentFilterUnblockHandler = WTF::move(unblockHandler); }
 #endif
 
 private:

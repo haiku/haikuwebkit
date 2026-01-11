@@ -104,6 +104,7 @@ bool defaultScrollAnimatorEnabled();
 bool defaultPassiveWheelListenersAsDefaultOnDocument();
 bool defaultWheelEventGesturesBecomeNonBlocking();
 bool defaultAppleMailPaginationQuirkEnabled();
+bool defaultUseAppKitGestures();
 #endif
 
 #if ENABLE(MEDIA_STREAM)
@@ -204,6 +205,7 @@ bool defaultTrustedTypesEnabled();
 
 bool defaultGetBoundingClientRectZoomedEnabled();
 bool defaultFacebookLiveRecordingQuirkEnabled();
+bool defaultFontFaceSetConstructorEnabled();
 
 #if HAVE(MATERIAL_HOSTING)
 bool defaultHostedBlurMaterialInMediaControlsEnabled();

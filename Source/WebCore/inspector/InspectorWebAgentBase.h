@@ -44,7 +44,7 @@ struct WebAgentContext : public Inspector::AgentContext {
     {
     }
 
-    InstrumentingAgents& instrumentingAgents;
+    WeakRef<InstrumentingAgents> instrumentingAgents;
 };
 
 struct PageAgentContext : public WebAgentContext {

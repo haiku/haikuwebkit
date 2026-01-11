@@ -158,10 +158,10 @@ public:
             if (!page.cocoaView())
                 return replyHandler(makeUnexpected("The WKWebView was deallocated before the message was delivered"_s));
 
-            RetainPtr message = wrapper(API::ScriptMessage::create(jsMessage.toID(), page, API::FrameInfo::create(WTFMove(frameInfoData)), RetainPtr { m_name }, world));
+            RetainPtr message = wrapper(API::ScriptMessage::create(jsMessage.toID(), page, API::FrameInfo::create(WTF::move(frameInfoData)), RetainPtr { m_name }, world));
 
             if (m_supportsAsyncReply) {
-                __block auto handler = CompletionHandlerWithFinalizer<void(Expected<WebKit::JavaScriptEvaluationResult, String>&&)>(WTFMove(replyHandler), [](auto& function) {
+                __block auto handler = CompletionHandlerWithFinalizer<void(Expected<WebKit::JavaScriptEvaluationResult, String>&&)>(WTF::move(replyHandler), [](auto& function) {
                     function(makeUnexpected("WKWebView API client did not respond to this postMessage"_s));
                 });
                 [(id<WKScriptMessageHandlerWithReply>)m_handler.get() userContentController:m_controller.get() didReceiveScriptMessage:message.get() replyHandler:^(id result, NSString *errorMessage) {
@@ -174,7 +174,7 @@ public:
                     auto extracted = WebKit::JavaScriptEvaluationResult::extract(result);
                     if (!extracted)
                         return handler(makeUnexpected("The result value passed back from the WKWebView API client was unable to be serialized"_s));
-                    handler(WTFMove(*extracted));
+                    handler(WTF::move(*extracted));
                 }];
                 return;
             }

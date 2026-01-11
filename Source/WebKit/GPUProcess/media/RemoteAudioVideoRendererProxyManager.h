@@ -41,6 +41,7 @@
 #include <WebCore/HTMLMediaElementIdentifier.h>
 #include <WebCore/MediaPlayerEnums.h>
 #include <WebCore/MediaPromiseTypes.h>
+#include <WebCore/MediaSampleConverter.h>
 #include <wtf/Forward.h>
 #include <wtf/Logger.h>
 #include <wtf/MediaTime.h>
@@ -94,6 +95,7 @@ private:
     void addTrack(RemoteAudioVideoRendererIdentifier, WebCore::TrackInfo::TrackType, CompletionHandler<void(Expected<TrackIdentifier, WebCore::PlatformMediaError>)>&&);
     void removeTrack(RemoteAudioVideoRendererIdentifier, TrackIdentifier);
 
+    void newTrackInfoForTrack(RemoteAudioVideoRendererIdentifier, TrackIdentifier, Ref<WebCore::TrackInfo>&&);
     void enqueueSample(RemoteAudioVideoRendererIdentifier, TrackIdentifier, WebCore::MediaSamplesBlock&&, std::optional<MediaTime>, CompletionHandler<void(bool)>&&);
     void requestMediaDataWhenReady(RemoteAudioVideoRendererIdentifier, TrackIdentifier);
 
@@ -163,6 +165,7 @@ private:
 #if PLATFORM(COCOA)
         LayerHostingContextManager layerHostingContextManager;
 #endif
+        HashMap<TrackIdentifier, WebCore::MediaSampleConverter> converters { };
         WebCore::VideoRendererPreferences preferences { };
     };
     RefPtr<WebCore::AudioVideoRenderer> createRenderer();
@@ -172,6 +175,7 @@ private:
     void rendereringModeChanged(RemoteAudioVideoRendererIdentifier);
     using LayerHostingContextCallback = CompletionHandler<void(WebCore::HostingContext)>;
     void requestHostingContext(RemoteAudioVideoRendererIdentifier, LayerHostingContextCallback&&);
+    WebCore::MediaSampleConverter& converterFor(RendererContext&, TrackIdentifier);
 
 #if PLATFORM(COCOA)
     void setVideoLayerSizeFenced(RemoteAudioVideoRendererIdentifier, const WebCore::FloatSize&, WTF::MachSendRightAnnotated&&);

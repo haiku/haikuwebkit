@@ -61,8 +61,6 @@ public:
     ThreadData();
     ~ThreadData();
 
-    Ref<Thread> thread;
-    
     Mutex parkingLock;
     ThreadCondition parkingCondition;
 
@@ -378,7 +376,7 @@ void ensureHashtableSize(unsigned numThreads)
     Vector<RefPtr<ThreadData>> threadDatas;
     for (Bucket* bucket : reusableBuckets) {
         while (RefPtr threadData = bucket->dequeue())
-            threadDatas.append(WTFMove(threadData));
+            threadDatas.append(WTF::move(threadData));
     }
 
     unsigned newSize = numThreads * growthFactor * maxLoadFactor;
@@ -431,7 +429,6 @@ void ensureHashtableSize(unsigned numThreads)
 }
 
 ThreadData::ThreadData()
-    : thread(Thread::currentSingleton())
 {
     unsigned currentNumThreads;
     for (;;) {
@@ -793,7 +790,7 @@ NEVER_INLINE void ParkingLot::unparkAll(const void* address)
     unparkCount(address, UINT_MAX);
 }
 
-NEVER_INLINE void ParkingLot::forEachImpl(const ScopedLambda<void(Thread&, const void*)>& callback)
+NEVER_INLINE void ParkingLot::forEachImpl(const ScopedLambda<void(uintptr_t, const void*)>& callback)
 {
     Vector<Bucket*> bucketsToUnlock = lockHashtable();
 
@@ -803,10 +800,15 @@ NEVER_INLINE void ParkingLot::forEachImpl(const ScopedLambda<void(Thread&, const
         if (!bucket)
             continue;
         for (RefPtr currentThreadData = bucket->queueHead; currentThreadData; currentThreadData = currentThreadData->nextInQueue)
-            callback(currentThreadData->thread.get(), currentThreadData->address);
+            callback(reinterpret_cast<uintptr_t>(currentThreadData.get()), currentThreadData->address);
     }
     
     unlockHashtable(bucketsToUnlock);
+}
+
+uintptr_t ParkingLot::currentThreadID()
+{
+    return reinterpret_cast<uintptr_t>(myThreadData());
 }
 
 } // namespace WTF

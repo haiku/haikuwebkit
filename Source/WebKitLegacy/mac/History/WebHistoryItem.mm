@@ -290,7 +290,7 @@ WebHistoryItem *kit(HistoryItem* item)
         return nil;
 
     _private = [[WebHistoryItemPrivate alloc] init];
-    _private->_historyItem = WTFMove(item);
+    _private->_historyItem = WTF::move(item);
 
     ASSERT(!historyItemWrappers().get(*core(_private)));
     historyItemWrappers().set(*core(_private), self);

@@ -290,18 +290,18 @@ static std::optional<WebCore::ApplicationManifest::Shortcut> makeVectorElement(c
     RetainPtr<NSArray<_WKApplicationManifestIcon *>> shortcuts = [aDecoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSArray class], [_WKApplicationManifestShortcut class], [_WKApplicationManifestIcon class]]] forKey:@"shortcuts"];
 
     WebCore::ApplicationManifest coreApplicationManifest {
-        WTFMove(rawJSON),
+        WTF::move(rawJSON),
         static_cast<WebCore::ApplicationManifest::Direction>(dir),
-        WTFMove(name),
-        WTFMove(shortName),
-        WTFMove(description),
-        WTFMove(scopeURL),
+        WTF::move(name),
+        WTF::move(shortName),
+        WTF::move(description),
+        WTF::move(scopeURL),
         isDefaultScope,
         static_cast<WebCore::ApplicationManifest::Display>(display),
-        WTFMove(orientationValue),
-        WTFMove(manifestURL),
-        WTFMove(startURL),
-        WTFMove(manifestId),
+        WTF::move(orientationValue),
+        WTF::move(manifestURL),
+        WTF::move(startURL),
+        WTF::move(manifestId),
         WebCore::roundAndClampToSRGBALossy(RetainPtr { backgroundColor.get().CGColor }.get()),
         WebCore::roundAndClampToSRGBALossy(RetainPtr { themeColor.get().CGColor }.get()),
         makeVector<String>(categories.get()),
@@ -309,7 +309,7 @@ static std::optional<WebCore::ApplicationManifest::Shortcut> makeVectorElement(c
         makeVector<WebCore::ApplicationManifest::Shortcut>(shortcuts.get()),
     };
 
-    API::Object::constructInWrapper<API::ApplicationManifest>(self, WTFMove(coreApplicationManifest));
+    API::Object::constructInWrapper<API::ApplicationManifest>(self, WTF::move(coreApplicationManifest));
 
     return self;
 }

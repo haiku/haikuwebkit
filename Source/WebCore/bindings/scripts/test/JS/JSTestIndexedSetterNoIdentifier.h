@@ -32,7 +32,7 @@ public:
     static JSTestIndexedSetterNoIdentifier* create(JSC::Structure* structure, JSDOMGlobalObject* globalObject, Ref<TestIndexedSetterNoIdentifier>&& impl)
     {
         SUPPRESS_UNCOUNTED_LOCAL auto& vm = globalObject->vm();
-        JSTestIndexedSetterNoIdentifier* ptr = new (NotNull, JSC::allocateCell<JSTestIndexedSetterNoIdentifier>(vm)) JSTestIndexedSetterNoIdentifier(structure, *globalObject, WTFMove(impl));
+        JSTestIndexedSetterNoIdentifier* ptr = new (NotNull, JSC::allocateCell<JSTestIndexedSetterNoIdentifier>(vm)) JSTestIndexedSetterNoIdentifier(structure, *globalObject, WTF::move(impl));
         ptr->finishCreation(vm);
         return ptr;
     }

@@ -188,16 +188,16 @@ public:
         }
 
         singleton().emplace(std::make_pair(id, EncoderDefinition {
-            .caps = WTFMove(caps),
+            .caps = WTF::move(caps),
             .name = name,
             .parserName = parserName,
-            .factory = WTFMove(encoderFactory),
-            .encodedFormat = WTFMove(encodedFormat),
-            .setBitrate = WTFMove(setBitrate),
-            .setupEncoder = WTFMove(setupEncoder),
-            .setBitrateMode = WTFMove(setBitrateMode),
-            .setLatencyMode = WTFMove(setLatency),
-            .setBitRateAllocation = WTFMove(setBitRateAllocation),
+            .factory = WTF::move(encoderFactory),
+            .encodedFormat = WTF::move(encodedFormat),
+            .setBitrate = WTF::move(setBitrate),
+            .setupEncoder = WTF::move(setupEncoder),
+            .setBitrateMode = WTF::move(setBitrateMode),
+            .setLatencyMode = WTF::move(setLatency),
+            .setBitRateAllocation = WTF::move(setBitRateAllocation),
             .bitratePropertyName = bitratePropertyName,
             .keyframeIntervalPropertyName = keyframeIntervalPropertyName,
         }));
@@ -310,7 +310,7 @@ static bool videoEncoderSetEncoder(WebKitVideoEncoder* self, EncoderId encoderId
     auto priv = self->priv;
     auto srcPad = adoptGRef(gst_element_get_static_pad(GST_ELEMENT_CAST(self), "src"));
 
-    priv->encodedCaps = WTFMove(encodedCaps);
+    priv->encodedCaps = WTF::move(encodedCaps);
 
     auto encoderDefinition = Encoders::definition(encoderId);
     ASSERT(encoderDefinition);
@@ -465,13 +465,13 @@ bool videoEncoderSetCodec(WebKitVideoEncoder* self, const CodecConfig& config, c
         return false;
     }
 
-    return videoEncoderSetEncoder(self, encoderId, WTFMove(inputCaps), WTFMove(outputCaps), config.useAnnexB);
+    return videoEncoderSetEncoder(self, encoderId, WTF::move(inputCaps), WTF::move(outputCaps), config.useAnnexB);
 }
 
 void videoEncoderSetBitRateAllocation(WebKitVideoEncoder* self, RefPtr<WebKitVideoEncoderBitRateAllocation>&& allocation)
 {
     auto* priv = self->priv;
-    priv->bitRateAllocation = WTFMove(allocation);
+    priv->bitRateAllocation = WTF::move(allocation);
 
     if (priv->encoderId != None) {
         auto encoder = Encoders::definition(priv->encoderId);

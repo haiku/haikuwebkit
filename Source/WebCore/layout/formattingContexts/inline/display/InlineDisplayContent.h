@@ -32,8 +32,8 @@
 namespace WebCore {
 namespace InlineDisplay {
 
-using Boxes = Vector<Box>;
-using Lines = Vector<Line>;
+using Boxes = Vector<Box, 2>;
+using Lines = Vector<Line, 1>;
 
 struct Content {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(Content);

@@ -77,6 +77,7 @@ set(TestWTF_SOURCES
     Tests/WTF/Markable.cpp
     Tests/WTF/MathExtras.cpp
     Tests/WTF/MediaTime.cpp
+    Tests/WTF/MemoryDump.cpp
     Tests/WTF/MetaAllocator.cpp
     Tests/WTF/MoveOnlyLifecycleLogger.cpp
     Tests/WTF/NakedPtr.cpp

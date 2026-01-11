@@ -40,7 +40,7 @@ class PlatformKeyboardEvent;
 struct FocusEventData;
 
 class KeyboardEvent final : public UIEventWithKeyState {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(KeyboardEvent);
+    WTF_MAKE_TZONE_ALLOCATED(KeyboardEvent);
 public:
     enum KeyLocationCode {
         DOM_KEY_LOCATION_STANDARD = 0x00,

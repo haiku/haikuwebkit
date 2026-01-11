@@ -33,6 +33,7 @@
 #include "DeprecatedGlobalSettings.h"
 #include "FourCC.h"
 #include "GraphicsContext.h"
+#include "ImmersiveVideoMetadata.h"
 #include "InbandTextTrackPrivate.h"
 #include "IntRect.h"
 #include "LegacyCDMSession.h"
@@ -50,10 +51,8 @@
 #include "PlatformTimeRanges.h"
 #include "ResourceError.h"
 #include "SecurityOrigin.h"
-#include "SpatialVideoMetadata.h"
 #include "VideoFrame.h"
 #include "VideoFrameMetadata.h"
-#include "VideoProjectionMetadata.h"
 #include <JavaScriptCore/ArrayBuffer.h>
 #include <wtf/Identified.h>
 #include <wtf/Lock.h>
@@ -113,6 +112,7 @@
 #endif
 
 #if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+#include "MediaDeviceRouteController.h"
 #include "MediaPlayerPrivateWirelessPlayback.h"
 #endif
 
@@ -310,7 +310,7 @@ static RemoteMediaPlayerSupport::RegisterRemotePlayerCallback& registerRemotePla
 
 void RemoteMediaPlayerSupport::setRegisterRemotePlayerCallback(RegisterRemotePlayerCallback&& callback)
 {
-    registerRemotePlayerCallback() = WTFMove(callback);
+    registerRemotePlayerCallback() = WTF::move(callback);
 }
 
 static void buildMediaEnginesVector() WTF_REQUIRES_LOCK(mediaEngineVectorLock)
@@ -372,8 +372,8 @@ static void buildMediaEnginesVector() WTF_REQUIRES_LOCK(mediaEngineVectorLock)
 #endif
 
 #if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
-    if (DeprecatedGlobalSettings::isWirelessPlaybackMediaPlayerEnabled()) {
-        if (registerRemoteEngine)
+    if (!hasPlatformStrategies() || platformStrategies()->mediaStrategy()->wirelessPlaybackMediaPlayerEnabled()) {
+        if (registerRemoteEngine && !mockMediaDeviceRouteControllerEnabled())
             registerRemoteEngine(addMediaEngine, MediaPlayerEnums::MediaEngineIdentifier::WirelessPlayback);
         else
             MediaPlayerPrivateWirelessPlayback::registerMediaEngine(addMediaEngine);
@@ -396,7 +396,7 @@ static const Vector<std::unique_ptr<MediaPlayerFactory>>& installedMediaEngines(
 
 static void addMediaEngine(std::unique_ptr<MediaPlayerFactory>&& factory)
 {
-    mutableInstalledMediaEnginesVector().append(WTFMove(factory));
+    mutableInstalledMediaEnginesVector().append(WTF::move(factory));
 }
 
 static String applicationOctetStream()
@@ -729,7 +729,7 @@ void MediaPlayer::loadWithNextMediaEngine(const MediaPlayerFactory* current)
 void MediaPlayer::queueTaskOnEventLoop(Function<void()>&& task)
 {
     ASSERT(isMainThread());
-    protectedClient()->mediaPlayerQueueTaskOnEventLoop(WTFMove(task));
+    protectedClient()->mediaPlayerQueueTaskOnEventLoop(WTF::move(task));
 }
 
 bool MediaPlayer::hasAvailableVideoFrame() const
@@ -849,7 +849,7 @@ bool MediaPlayer::timeIsProgressing() const
 
 bool MediaPlayer::setCurrentTimeDidChangeCallback(CurrentTimeDidChangeCallback&& callback)
 {
-    return protectedPrivate()->setCurrentTimeDidChangeCallback(WTFMove(callback));
+    return protectedPrivate()->setCurrentTimeDidChangeCallback(WTF::move(callback));
 }
 
 MediaTime MediaPlayer::getStartDate() const
@@ -951,7 +951,7 @@ RetainPtr<PlatformLayer> MediaPlayer::createVideoFullscreenLayer()
 
 void MediaPlayer::setVideoFullscreenLayer(PlatformLayer* layer, Function<void()>&& completionHandler)
 {
-    protectedPrivate()->setVideoFullscreenLayer(layer, WTFMove(completionHandler));
+    protectedPrivate()->setVideoFullscreenLayer(layer, WTF::move(completionHandler));
 }
 
 void MediaPlayer::updateVideoFullscreenInlineImage()
@@ -1018,7 +1018,7 @@ void MediaPlayer::videoLayerSizeDidChange(const FloatSize& size)
 
 void MediaPlayer::setVideoLayerSizeFenced(const FloatSize& size, WTF::MachSendRightAnnotated&& fence)
 {
-    protectedPrivate()->setVideoLayerSizeFenced(size, WTFMove(fence));
+    protectedPrivate()->setVideoLayerSizeFenced(size, WTF::move(fence));
 }
 
 #if PLATFORM(IOS_FAMILY)
@@ -1175,7 +1175,7 @@ double MediaPlayer::liveUpdateInterval()
 
 void MediaPlayer::didLoadingProgress(DidLoadingProgressCompletionHandler&& callback) const
 {
-    protectedPrivate()->didLoadingProgressAsync(WTFMove(callback));
+    protectedPrivate()->didLoadingProgressAsync(WTF::move(callback));
 }
 
 void MediaPlayer::setPresentationSize(const IntSize& size)
@@ -1282,7 +1282,7 @@ void MediaPlayer::getSupportedTypes(HashSet<String>& types)
     for (auto& engine : installedMediaEngines()) {
         HashSet<String> engineTypes;
         engine->getSupportedTypes(engineTypes);
-        types.addAll(WTFMove(engineTypes));
+        types.addAll(WTF::move(engineTypes));
     }
 } 
 
@@ -1339,7 +1339,7 @@ OptionSet<MediaPlaybackTargetType> MediaPlayer::supportedPlaybackTargetTypes() c
 
 void MediaPlayer::setWirelessPlaybackTarget(Ref<MediaPlaybackTarget>&& device)
 {
-    protectedPrivate()->setWirelessPlaybackTarget(WTFMove(device));
+    protectedPrivate()->setWirelessPlaybackTarget(WTF::move(device));
 }
 
 void MediaPlayer::setShouldPlayToPlaybackTarget(bool shouldPlay)
@@ -1376,7 +1376,7 @@ void MediaPlayer::setShouldMaintainAspectRatio(bool maintainAspectRatio)
 
 void MediaPlayer::requestHostingContext(LayerHostingContextCallback&& callback)
 {
-    return protectedPrivate()->requestHostingContext(WTFMove(callback));
+    return protectedPrivate()->requestHostingContext(WTF::move(callback));
 }
 
 HostingContext MediaPlayer::hostingContext() const
@@ -1440,9 +1440,9 @@ template<typename T>
 static void addToHash(HashSet<T>& toHash, HashSet<T>&& fromHash)
 {
     if (toHash.isEmpty())
-        toHash = WTFMove(fromHash);
+        toHash = WTF::move(fromHash);
     else
-        toHash.addAll(WTFMove(fromHash));
+        toHash.addAll(WTF::move(fromHash));
 }
     
 HashSet<SecurityOriginData> MediaPlayer::originsInMediaCache(const String& path)
@@ -1603,7 +1603,7 @@ String MediaPlayer::mediaKeysStorageDirectory() const
 
 void MediaPlayer::initializationDataEncountered(const String& initDataType, RefPtr<ArrayBuffer>&& initData)
 {
-    protectedClient()->mediaPlayerInitializationDataEncountered(initDataType, WTFMove(initData));
+    protectedClient()->mediaPlayerInitializationDataEncountered(initDataType, WTF::move(initData));
 }
 
 void MediaPlayer::waitingForKeyChanged()
@@ -1643,7 +1643,7 @@ long MediaPlayer::platformErrorCode() const
     return protectedPrivate()->platformErrorCode();
 }
 
-CachedResourceLoader* MediaPlayer::cachedResourceLoader()
+CachedResourceLoader* MediaPlayer::cachedResourceLoader() const
 {
     return protectedClient()->mediaPlayerCachedResourceLoader();
 }
@@ -1707,7 +1707,7 @@ void MediaPlayer::notifyTrackModeChanged()
         privateInterface->notifyTrackModeChanged();
 }
 
-Vector<RefPtr<PlatformTextTrack>> MediaPlayer::outOfBandTrackSources()
+Vector<Ref<PlatformTextTrack>> MediaPlayer::outOfBandTrackSources()
 {
     return protectedClient()->outOfBandTrackSources();
 }
@@ -1816,7 +1816,7 @@ String MediaPlayer::mediaPlayerNetworkInterfaceName() const
 
 void MediaPlayer::getRawCookies(const URL& url, MediaPlayerClient::GetRawCookiesCallback&& completionHandler) const
 {
-    protectedClient()->mediaPlayerGetRawCookies(url, WTFMove(completionHandler));
+    protectedClient()->mediaPlayerGetRawCookies(url, WTF::move(completionHandler));
 }
 #endif
 
@@ -1897,7 +1897,7 @@ AVPlayer* MediaPlayer::objCAVFoundationAVPlayer() const
 
 bool MediaPlayer::performTaskAtTime(Function<void(const MediaTime&)>&& task, const MediaTime& time)
 {
-    return protectedPrivate()->performTaskAtTime(WTFMove(task), time);
+    return protectedPrivate()->performTaskAtTime(WTF::move(task), time);
 }
 
 bool MediaPlayer::shouldIgnoreIntrinsicSize()
@@ -1979,7 +1979,7 @@ void MediaPlayer::playerContentBoxRectChanged(const LayoutRect& rect)
 #if PLATFORM(COCOA)
 void MediaPlayer::onNewVideoFrameMetadata(VideoFrameMetadata&& metadata, RetainPtr<CVPixelBufferRef>&& buffer)
 {
-    protectedClient()->mediaPlayerOnNewVideoFrameMetadata(WTFMove(metadata), WTFMove(buffer));
+    protectedClient()->mediaPlayerOnNewVideoFrameMetadata(WTF::move(metadata), WTF::move(buffer));
 }
 #endif
 
@@ -2097,7 +2097,7 @@ const Logger& MediaPlayer::mediaPlayerLogger()
 
 void MediaPlayer::setMessageClientForTesting(WeakPtr<MessageClientForTesting> internalMessageClient)
 {
-    m_internalMessageClient = WTFMove(internalMessageClient);
+    m_internalMessageClient = WTF::move(internalMessageClient);
     protectedPrivate()->setMessageClientForTesting(m_internalMessageClient);
 }
 
@@ -2224,18 +2224,11 @@ String SeekTarget::toString() const
         WTF::LogArgument<MediaTime>::toString(positiveThreshold), ']');
 }
 
-String convertSpatialVideoMetadataToString(const SpatialVideoMetadata& metadata)
-{
-    return makeString("SpatialMetadata {"_s, WTF::LogArgument<WebCore::IntSize>::toString(metadata.size),
-        WTF::LogArgument<float>::toString(metadata.horizontalFOVDegrees),
-        WTF::LogArgument<float>::toString(metadata.baseline),
-        WTF::LogArgument<float>::toString(metadata.disparityAdjustment), '}');
-}
-
 String convertEnumerationToString(VideoProjectionMetadataKind kind)
 {
-    static const std::array<NeverDestroyed<String>, 7> values {
+    static const std::array<NeverDestroyed<String>, 8> values {
         MAKE_STATIC_STRING_IMPL("Unknown"),
+        MAKE_STATIC_STRING_IMPL("Rectilinear"),
         MAKE_STATIC_STRING_IMPL("Equirectangular"),
         MAKE_STATIC_STRING_IMPL("HalfEquirectangular"),
         MAKE_STATIC_STRING_IMPL("EquiAngularCubemap"),
@@ -2243,20 +2236,23 @@ String convertEnumerationToString(VideoProjectionMetadataKind kind)
         MAKE_STATIC_STRING_IMPL("Pyramid"),
         MAKE_STATIC_STRING_IMPL("AppleImmersiveVideo"),
     };
-    static_assert(!static_cast<size_t>(VideoProjectionMetadataKind::Unknown), "VideoProjectionMetadataKind::Unknown is not 0 as expected");
-    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::Equirectangular) == 1, "VideoProjectionMetadataKind::Equirectangular is not 1 as expected");
-    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::HalfEquirectangular) == 2, "VideoProjectionMetadataKind::HalfEquirectangular is not 2 as expected");
-    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::EquiAngularCubemap) == 3, "VideoProjectionMetadataKind::EquiAngularCubemap is not 3 as expected");
-    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::Parametric) == 4, "VideoProjectionMetadataKind::Parametric is not 4 as expected");
-    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::Pyramid) == 5, "VideoProjectionMetadataKind::Pyramid is not 5 as expected");
-    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::AppleImmersiveVideo) == 6, "VideoProjectionMetadataKind::AppleImmersiveVideo is not 6 as expected");
+    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::Rectilinear) == 1, "VideoProjectionMetadataKind::Rectilinear is not 1 as expected");
+    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::Equirectangular) == 2, "VideoProjectionMetadataKind::Equirectangular is not 2 as expected");
+    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::HalfEquirectangular) == 3, "VideoProjectionMetadataKind::HalfEquirectangular is not 3 as expected");
+    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::EquiAngularCubemap) == 4, "VideoProjectionMetadataKind::EquiAngularCubemap is not 4 as expected");
+    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::Parametric) == 5, "VideoProjectionMetadataKind::Parametric is not 5 as expected");
+    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::Pyramid) == 6, "VideoProjectionMetadataKind::Pyramid is not 6 as expected");
+    static_assert(static_cast<size_t>(VideoProjectionMetadataKind::AppleImmersiveVideo) == 7, "VideoProjectionMetadataKind::AppleImmersiveVideo is not 7 as expected");
     ASSERT(static_cast<size_t>(kind) < std::size(values));
     return values[static_cast<size_t>(kind)];
 }
 
-String convertVideoProjectionMetadataToString(const VideoProjectionMetadata& metadata)
+String convertImmersiveVideoMetadataToString(const ImmersiveVideoMetadata& metadata)
 {
-    return makeString('{', convertEnumerationToString(metadata.kind), '}');
+    return makeString("ImmersiveVideoMetadata {"_s, convertEnumerationToString(metadata.kind), WTF::LogArgument<WebCore::IntSize>::toString(metadata.size),
+        WTF::LogArgument<std::optional<int32_t>>::toString(metadata.horizontalFieldOfView),
+        WTF::LogArgument<std::optional<uint32_t>>::toString(metadata.stereoCameraBaseline),
+        WTF::LogArgument<std::optional<int32_t>>::toString(metadata.horizontalDisparityAdjustment), " }"_s);
 }
 
 } // namespace WebCore

@@ -30,7 +30,7 @@ webkit_platform_header: "TransferString.h"
     WebCore::SharedMemoryHandle dataHandle;
 };
 
-using IPC::TransferString::IPCData = Variant<std::span<const uint8_t>, std::span<const char16_t>, IPC::TransferString::SharedSpan8, IPC::TransferString::SharedSpan16>;
+using IPC::TransferString::IPCData = Variant<std::monostate, std::span<const uint8_t>, std::span<const char16_t>, IPC::TransferString::SharedSpan8, IPC::TransferString::SharedSpan16>;
 
 [CustomHeader] class IPC::TransferString {
     IPC::TransferString::IPCData toIPCData();

@@ -169,6 +169,11 @@ inline bool isCombiningMark(char32_t character)
     return 0x0300 <= character && character <= 0x036F;
 }
 
+inline bool isCurrencySymbol(char32_t character)
+{
+    return u_charType(character) == U_CURRENCY_SYMBOL;
+}
+
 } // namespace WTF
 
 using WTF::isEmojiGroupCandidate;
@@ -189,3 +194,4 @@ using WTF::isEastAsianFullWidth;
 using WTF::isCJKSymbolOrPunctuation;
 using WTF::isFullwidthMiddleDotPunctuation;
 using WTF::isCombiningMark;
+using WTF::isCurrencySymbol;

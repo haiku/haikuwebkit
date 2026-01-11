@@ -1,5 +1,9 @@
+[ iOS ] Modules/async-clipboard/ios/ClipboardImageReaderIOS.mm
+[ iOS ] Modules/system-preview/ARKitBadgeSystemImage.mm
 [ Mac ] accessibility/cocoa/AXCoreObjectCocoa.mm
 accessibility/cocoa/AccessibilityObjectCocoa.mm
+[ iOS ] accessibility/ios/AccessibilityObjectIOS.mm
+[ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
 [ Mac ] accessibility/mac/AXObjectCacheMac.mm
 [ Mac ] accessibility/mac/AccessibilityObjectMac.mm
 accessibility/mac/WebAccessibilityObjectWrapperBase.mm
@@ -15,22 +19,25 @@ editing/cocoa/DataDetection.mm
 editing/cocoa/EditingHTMLConverter.mm
 editing/cocoa/NodeHTMLConverter.mm
 loader/archive/cf/LegacyWebArchive.cpp
-page/cocoa/ResourceUsageThreadCocoa.mm
+[ iOS ] page/ios/EventHandlerIOS.mm
 page/mac/ChromeMac.mm
 [ Mac ] page/mac/EventHandlerMac.mm
 [ Mac ] page/scrolling/mac/ScrollingStateScrollingNodeMac.mm
-[ Mac ]page/scrolling/mac/ScrollingTreeFrameScrollingNodeMac.mm
-[ Mac ]page/scrolling/mac/ScrollingTreeScrollingNodeDelegateMac.mm
+[ Mac ] page/scrolling/mac/ScrollingTreeFrameScrollingNodeMac.mm
+[ Mac ] page/scrolling/mac/ScrollingTreeScrollingNodeDelegateMac.mm
 platform/audio/cocoa/AudioEncoderCocoa.cpp
 platform/audio/cocoa/AudioFileReaderCocoa.cpp
 platform/audio/cocoa/PlatformRawAudioDataCocoa.cpp
+[ iOS ] platform/audio/ios/AudioSessionIOS.mm
 platform/cf/KeyedDecoderCF.cpp
+[ iOS ] platform/cocoa/ContentFilterUnblockHandlerCocoa.mm
 [ Mac ] platform/cocoa/DragImageCocoa.mm
 platform/cocoa/PlatformPasteboardCocoa.mm
 platform/cocoa/RemoteCommandListenerCocoa.mm
 platform/cocoa/SearchPopupMenuCocoa.mm
 platform/cocoa/SerializedPlatformDataCueValue.mm
 platform/cocoa/SystemVersion.mm
+[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
 platform/graphics/avfoundation/AVTrackPrivateAVFObjCImpl.mm
 platform/graphics/avfoundation/FormatDescriptionUtilities.cpp
 platform/graphics/avfoundation/InbandTextTrackPrivateAVF.cpp
@@ -47,6 +54,7 @@ platform/graphics/cg/GradientRendererCG.cpp
 platform/graphics/cg/GraphicsContextCG.cpp
 platform/graphics/cg/GraphicsContextGLCG.cpp
 platform/graphics/cg/ImageDecoderCG.cpp
+[ iOS ] platform/graphics/cg/PDFDocumentImage.cpp
 platform/graphics/cg/PathCG.cpp
 platform/graphics/cocoa/AV1UtilitiesCocoa.mm
 platform/graphics/cocoa/CMUtilities.mm
@@ -63,27 +71,6 @@ platform/graphics/cocoa/VideoMediaSampleRenderer.mm
 [ Mac ] platform/graphics/mac/controls/SwitchMacUtilities.mm
 [ Mac ] platform/graphics/mac/controls/SwitchThumbMac.mm
 [ Mac ] platform/graphics/mac/controls/SwitchTrackMac.mm
-platform/ios/PlaybackSessionInterfaceAVKitLegacy.mm
-platform/ios/WebAVPlayerController.mm
-platform/libwebrtc/LibWebRTCVPXVideoDecoder.cpp
-platform/mediastream/mac/AVVideoCaptureSource.mm
-platform/mediastream/mac/CoreAudioCaptureUnit.mm
-platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
-platform/network/mac/ResourceHandleMac.mm
-platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm
-platform/text/cocoa/LocaleCocoa.mm
-rendering/AttachmentLayout.mm
-testing/Internals.mm
-testing/cocoa/WebViewVisualIdentificationOverlay.mm
-[ iOS ] Modules/async-clipboard/ios/ClipboardImageReaderIOS.mm
-[ iOS ] Modules/system-preview/ARKitBadgeSystemImage.mm
-[ iOS ] accessibility/ios/AccessibilityObjectIOS.mm
-[ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
-[ iOS ] page/ios/EventHandlerIOS.mm
-[ iOS ] platform/audio/ios/AudioSessionIOS.mm
-[ iOS ] platform/cocoa/ContentFilterUnblockHandlerCocoa.mm
-[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
-[ iOS ] platform/graphics/cg/PDFDocumentImage.cpp
 [ iOS ] platform/ios/DragImageIOS.mm
 [ iOS ] platform/ios/LegacyTileCache.mm
 [ iOS ] platform/ios/LegacyTileGrid.mm
@@ -92,12 +79,14 @@ testing/cocoa/WebViewVisualIdentificationOverlay.mm
 [ iOS ] platform/ios/PasteboardIOS.mm
 [ iOS ] platform/ios/PlatformPasteboardIOS.mm
 [ iOS ] platform/ios/PlatformScreenIOS.mm
+platform/ios/PlaybackSessionInterfaceAVKitLegacy.mm
 [ iOS ] platform/ios/QuickLook.mm
 [ iOS ] platform/ios/ScrollViewIOS.mm
 [ iOS ] platform/ios/UIViewControllerUtilities.mm
 [ iOS ] platform/ios/ValidationBubbleIOS.mm
 [ iOS ] platform/ios/VideoPresentationInterfaceAVKitLegacy.mm
 [ iOS ] platform/ios/VideoPresentationInterfaceIOS.mm
+platform/ios/WebAVPlayerController.mm
 [ iOS ] platform/ios/WebItemProviderPasteboard.mm
 [ iOS ] platform/ios/WidgetIOS.mm
 [ iOS ] platform/ios/wak/WAKScrollView.mm
@@ -106,7 +95,16 @@ testing/cocoa/WebViewVisualIdentificationOverlay.mm
 [ iOS ] platform/ios/wak/WAKWindow.mm
 [ iOS ] platform/ios/wak/WKView.mm
 [ iOS ] platform/ios/wak/WebCoreThread.mm
+platform/libwebrtc/LibWebRTCVPXVideoDecoder.cpp
+platform/mediastream/mac/AVVideoCaptureSource.mm
+platform/mediastream/mac/CoreAudioCaptureUnit.mm
+platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
 [ iOS ] platform/network/ios/WebCoreURLResponseIOS.mm
 [ iOS ] platform/network/mac/ResourceErrorMac.mm
+platform/network/mac/ResourceHandleMac.mm
+platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm
+platform/text/cocoa/LocaleCocoa.mm
 [ iOS ] platform/text/mac/TextBoundaries.mm
+rendering/AttachmentLayout.mm
 [ iOS ] rendering/ios/RenderThemeIOS.mm
+testing/cocoa/WebViewVisualIdentificationOverlay.mm

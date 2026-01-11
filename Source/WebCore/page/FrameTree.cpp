@@ -88,7 +88,7 @@ void FrameTree::removeChild(Frame& child)
 
     child.tree().m_parent = nullptr;
     newLocationForPrevious = std::exchange(child.tree().m_previousSibling, nullptr);
-    newLocationForNext = WTFMove(child.tree().m_nextSibling);
+    newLocationForNext = WTF::move(child.tree().m_nextSibling);
 
     m_scopedChildCount = invalidCount;
 }
@@ -416,29 +416,29 @@ Frame* FrameTree::nextAncestorSibling(const Frame* stayWithin) const
     return nullptr;
 }
 
-Frame* FrameTree::firstRenderedChild() const
+RefPtr<Frame> FrameTree::firstRenderedChild() const
 {
-    auto* child = firstChild();
+    RefPtr child = firstChild();
     if (!child)
         return nullptr;
 
-    if (auto* localChild = dynamicDowncast<LocalFrame>(child); localChild && localChild->ownerRenderer())
+    if (RefPtr localChild = dynamicDowncast<LocalFrame>(child); localChild && localChild->ownerRenderer())
         return child;
 
     while ((child = child->tree().nextSibling())) {
-        if (auto* localChild = dynamicDowncast<LocalFrame>(child); localChild && localChild->ownerRenderer())
+        if (RefPtr localChild = dynamicDowncast<LocalFrame>(child); localChild && localChild->ownerRenderer())
             return child;
     }
 
     return nullptr;
 }
 
-Frame* FrameTree::nextRenderedSibling() const
+RefPtr<Frame> FrameTree::nextRenderedSibling() const
 {
-    auto* sibling = m_thisFrame.ptr();
+    RefPtr sibling = m_thisFrame.ptr();
 
     while ((sibling = sibling->tree().nextSibling())) {
-        if (auto* localSibling = dynamicDowncast<LocalFrame>(sibling); localSibling && localSibling->ownerRenderer())
+        if (RefPtr localSibling = dynamicDowncast<LocalFrame>(sibling); localSibling && localSibling->ownerRenderer())
             return sibling;
     }
     
@@ -463,9 +463,9 @@ LocalFrame* FrameTree::nextLocalSibling() const
     return nullptr;
 }
 
-Frame* FrameTree::traverseNextRendered(const Frame* stayWithin) const
+RefPtr<Frame> FrameTree::traverseNextRendered(const Frame* stayWithin) const
 {
-    auto* child = firstRenderedChild();
+    RefPtr child = firstRenderedChild();
     if (child) {
         ASSERT(!stayWithin || child->tree().isDescendantOf(stayWithin));
         return child;
@@ -474,13 +474,13 @@ Frame* FrameTree::traverseNextRendered(const Frame* stayWithin) const
     if (m_thisFrame.ptr() == stayWithin)
         return nullptr;
 
-    auto* sibling = nextRenderedSibling();
+    RefPtr sibling = nextRenderedSibling();
     if (sibling) {
         ASSERT(!stayWithin || sibling->tree().isDescendantOf(stayWithin));
         return sibling;
     }
 
-    auto* frame = m_thisFrame.ptr();
+    RefPtr frame = m_thisFrame.ptr();
     while (!sibling && (!stayWithin || frame->tree().parent() != stayWithin)) {
         frame = frame->tree().parent();
         if (!frame)

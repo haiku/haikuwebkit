@@ -566,7 +566,7 @@ JSValue IntlNumberFormat::format(JSGlobalObject* globalObject, double value) con
     status = callBufferProducingFunction(unumf_resultToString, formattedNumber.get(), buffer);
     if (U_FAILURE(status))
         return throwTypeError(globalObject, scope, "Failed to format a number."_s);
-    return jsString(vm, String(WTFMove(buffer)));
+    return jsString(vm, String(WTF::move(buffer)));
 }
 
 // https://tc39.es/ecma402/#sec-formatnumber
@@ -590,7 +590,7 @@ JSValue IntlNumberFormat::format(JSGlobalObject* globalObject, IntlMathematicalV
     status = callBufferProducingFunction(unumf_resultToString, formattedNumber.get(), buffer);
     if (U_FAILURE(status))
         return throwTypeError(globalObject, scope, "Failed to format a BigInt."_s);
-    return jsString(vm, String(WTFMove(buffer)));
+    return jsString(vm, String(WTF::move(buffer)));
 }
 
 JSValue IntlNumberFormat::formatRange(JSGlobalObject* globalObject, double start, double end) const
@@ -877,7 +877,7 @@ void IntlNumberFormat::formatRangeToPartsInternal(JSGlobalObject* globalObject, 
         fields.append(IntlNumberFormatField { fieldType, { beginIndex, endIndex } });
     }
 
-    auto flatten = flattenFields(WTFMove(fields), formattedStringLength);
+    auto flatten = flattenFields(WTF::move(fields), formattedStringLength);
 
     auto createPart = [&] (JSString* type, int32_t beginIndex, int32_t length) {
         auto sourceType = [&](int32_t index) -> JSString* {
@@ -999,7 +999,7 @@ JSValue IntlNumberFormat::formatRangeToParts(JSGlobalObject* globalObject, IntlM
         }
 
         if (equal)
-            RELEASE_AND_RETURN(scope, formatToParts(globalObject, WTFMove(start), jsNontrivialString(vm, "shared"_s)));
+            RELEASE_AND_RETURN(scope, formatToParts(globalObject, WTF::move(start), jsNontrivialString(vm, "shared"_s)));
     }
 
     JSArray* parts = JSArray::tryCreate(vm, globalObject->arrayStructureForIndexingTypeDuringAllocation(ArrayWithContiguous), 0);
@@ -1008,7 +1008,7 @@ JSValue IntlNumberFormat::formatRangeToParts(JSGlobalObject* globalObject, IntlM
         return { };
     }
 
-    formatRangeToPartsInternal(globalObject, m_style, WTFMove(start), WTFMove(end), formattedValue, parts);
+    formatRangeToPartsInternal(globalObject, m_style, WTF::move(start), WTF::move(end), formattedValue, parts);
     RETURN_IF_EXCEPTION(scope, { });
 
     return parts;
@@ -1273,7 +1273,7 @@ void IntlNumberFormat::formatToPartsInternal(JSGlobalObject* globalObject, Style
         fields.append(IntlNumberFormatField { fieldType, { beginIndex, endIndex } });
     }
 
-    auto flatten = flattenFields(WTFMove(fields), stringLength);
+    auto flatten = flattenFields(WTF::move(fields), stringLength);
 
     auto literalString = jsNontrivialString(vm, "literal"_s);
     Identifier unitName;
@@ -1325,7 +1325,7 @@ JSValue IntlNumberFormat::formatToParts(JSGlobalObject* globalObject, double val
         return throwTypeError(globalObject, scope, "Failed to format a number."_s);
     IntlFieldIterator iterator(*fieldItr.get());
 
-    auto resultString = String(WTFMove(result));
+    auto resultString = String(WTF::move(result));
 
     JSArray* parts = JSArray::tryCreate(vm, globalObject->arrayStructureForIndexingTypeDuringAllocation(ArrayWithContiguous), 0);
     if (!parts)
@@ -1370,7 +1370,7 @@ JSValue IntlNumberFormat::formatToParts(JSGlobalObject* globalObject, IntlMathem
 
     IntlFieldIterator iterator(*fieldItr.get());
 
-    auto resultString = String(WTFMove(result));
+    auto resultString = String(WTF::move(result));
 
     JSArray* parts = JSArray::tryCreate(vm, globalObject->arrayStructureForIndexingTypeDuringAllocation(ArrayWithContiguous), 0);
     if (!parts)

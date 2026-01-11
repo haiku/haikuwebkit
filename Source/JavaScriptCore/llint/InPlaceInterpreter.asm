@@ -269,7 +269,12 @@ end
 .checkStack:
     operationCallMayThrowPreservingVolatileRegisters(macro()
         move scratch, a1
+if X86_64
+        # On x86_64, callee parameter (ws0) gets clobbered by saveCallSiteIndex(). Reload from stack.
+        loadp UnboxedWasmCalleeStackSlot[cfr], a2
+else
         move callee, a2
+end
         cCall3(_ipint_extern_check_stack_and_vm_traps)
     end)
 

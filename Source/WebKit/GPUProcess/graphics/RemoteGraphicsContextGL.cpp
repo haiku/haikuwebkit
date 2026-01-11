@@ -72,8 +72,8 @@ IPC::StreamConnectionWorkQueue& remoteGraphicsContextGLStreamWorkQueueSingleton(
 Ref<RemoteGraphicsContextGL> RemoteGraphicsContextGL::create(GPUConnectionToWebProcess& gpuConnectionToWebProcess, GraphicsContextGLAttributes&& attributes, RemoteGraphicsContextGLIdentifier graphicsContextGLIdentifier, RemoteRenderingBackend& renderingBackend, Ref<IPC::StreamServerConnection>&& streamConnection)
 {
     ASSERT_NOT_REACHED();
-    auto instance = adoptRef(*new RemoteGraphicsContextGL(gpuConnectionToWebProcess, graphicsContextGLIdentifier, renderingBackend, WTFMove(streamConnection)));
-    instance->initialize(WTFMove(attributes));
+    auto instance = adoptRef(*new RemoteGraphicsContextGL(gpuConnectionToWebProcess, graphicsContextGLIdentifier, renderingBackend, WTF::move(streamConnection)));
+    instance->initialize(WTF::move(attributes));
     return instance;
 }
 #endif
@@ -81,7 +81,7 @@ Ref<RemoteGraphicsContextGL> RemoteGraphicsContextGL::create(GPUConnectionToWebP
 RemoteGraphicsContextGL::RemoteGraphicsContextGL(GPUConnectionToWebProcess& gpuConnectionToWebProcess, RemoteGraphicsContextGLIdentifier identifier, RemoteRenderingBackend& renderingBackend, Ref<IPC::StreamServerConnection>&& streamConnection)
     : m_gpuConnectionToWebProcess(gpuConnectionToWebProcess)
     , m_workQueue(remoteGraphicsContextGLStreamWorkQueueSingleton())
-    , m_connection(WTFMove(streamConnection))
+    , m_connection(WTF::move(streamConnection))
     , m_identifier(identifier)
     , m_renderingBackend(renderingBackend)
     , m_sharedResourceCache(gpuConnectionToWebProcess.sharedResourceCache())
@@ -108,15 +108,15 @@ IGNORE_GCC_WARNINGS_END
 void RemoteGraphicsContextGL::initialize(GraphicsContextGLAttributes&& attributes)
 {
     assertIsMainRunLoop();
-    m_workQueue->dispatch([attributes = WTFMove(attributes), protectedThis = Ref { *this }]() mutable {
-        protectedThis->workQueueInitialize(WTFMove(attributes));
+    m_workQueue->dispatch([attributes = WTF::move(attributes), protectedThis = Ref { *this }]() mutable {
+        protectedThis->workQueueInitialize(WTF::move(attributes));
     });
 }
 
 void RemoteGraphicsContextGL::stopListeningForIPC(Ref<RemoteGraphicsContextGL>&& refFromConnection)
 {
     assertIsMainRunLoop();
-    m_workQueue->dispatch([protectedThis = WTFMove(refFromConnection)] {
+    m_workQueue->dispatch([protectedThis = WTF::move(refFromConnection)] {
         protectedThis->workQueueUninitialize();
     });
 }
@@ -124,7 +124,7 @@ void RemoteGraphicsContextGL::stopListeningForIPC(Ref<RemoteGraphicsContextGL>&&
 void RemoteGraphicsContextGL::workQueueInitialize(WebCore::GraphicsContextGLAttributes&& attributes)
 {
     assertIsCurrent(workQueue());
-    platformWorkQueueInitialize(WTFMove(attributes));
+    platformWorkQueueInitialize(WTF::move(attributes));
     m_connection->open(*this, m_workQueue);
     if (RefPtr context = m_context) {
         context->setClient(this);
@@ -224,7 +224,7 @@ void RemoteGraphicsContextGL::surfaceBufferToVideoFrame(WebCore::GraphicsContext
     std::optional<WebKit::RemoteVideoFrameProxy::Properties> result;
     if (auto videoFrame = protectedContext()->surfaceBufferToVideoFrame(buffer))
         result = m_videoFrameObjectHeap->add(videoFrame.releaseNonNull());
-    completionHandler(WTFMove(result));
+    completionHandler(WTF::move(result));
 }
 #endif
 
@@ -302,7 +302,7 @@ void RemoteGraphicsContextGL::getBufferSubDataSharedMemory(uint32_t target, uint
     RefPtr context = m_context;
 
     handle.setOwnershipOfMemory(m_sharedResourceCache->resourceOwner(), WebKit::MemoryLedger::Default);
-    auto buffer = SharedMemory::map(WTFMove(handle), SharedMemory::Protection::ReadWrite);
+    auto buffer = SharedMemory::map(WTF::move(handle), SharedMemory::Protection::ReadWrite);
     if (buffer && dataSize <= buffer->size())
         validBufferData = context->getBufferSubDataWithStatus(target, offset, buffer->mutableSpan().subspan(0, dataSize));
     else
@@ -350,7 +350,7 @@ void RemoteGraphicsContextGL::readPixelsSharedMemory(WebCore::IntRect rect, uint
 
     RefPtr context = m_context;
     handle.setOwnershipOfMemory(m_sharedResourceCache->resourceOwner(), WebKit::MemoryLedger::Default);
-    if (auto buffer = SharedMemory::map(WTFMove(handle), SharedMemory::Protection::ReadWrite))
+    if (auto buffer = SharedMemory::map(WTF::move(handle), SharedMemory::Protection::ReadWrite))
         readArea = context->readPixelsWithStatus(rect, format, type, packReverseRowOrder, buffer->mutableSpan());
     else
         context->addError(GCGLErrorCode::InvalidOperation);

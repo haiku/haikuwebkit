@@ -66,7 +66,6 @@
 #include "RequestPriority.h"
 #include "SecurityOrigin.h"
 #include "Settings.h"
-#include "StyleInheritedData.h"
 #include "StyleResolveForDocument.h"
 #include "StyleScope.h"
 #include "StyleSheetContents.h"
@@ -80,7 +79,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLLinkElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLLinkElement);
 
 using namespace HTMLNames;
 
@@ -202,7 +201,7 @@ void HTMLLinkElement::attributeChanged(const QualifiedName& name, const AtomStri
 #if ENABLE(WEB_PAGE_SPATIAL_BACKDROP)
         auto wasSpatialBackdrop = m_relAttribute.isSpatialBackdrop;
 #endif
-        m_relAttribute = WTFMove(parsedRel);
+        m_relAttribute = WTF::move(parsedRel);
         if (m_relList)
             m_relList->associatedAttributeValueChanged();
         if (didMutateRel)
@@ -217,7 +216,7 @@ void HTMLLinkElement::attributeChanged(const QualifiedName& name, const AtomStri
         URL url = getNonEmptyURLAttribute(hrefAttr);
         if (url == m_url)
             return;
-        m_url = WTFMove(url);
+        m_url = WTF::move(url);
         process();
         break;
     }
@@ -226,7 +225,7 @@ void HTMLLinkElement::attributeChanged(const QualifiedName& name, const AtomStri
         URL environmentMapURL = getNonEmptyURLAttribute(environmentmapAttr);
         if (environmentMapURL == m_environmentMapURL)
             return;
-        m_environmentMapURL = WTFMove(environmentMapURL);
+        m_environmentMapURL = WTF::move(environmentMapURL);
         process();
         break;
     }
@@ -255,7 +254,7 @@ void HTMLLinkElement::attributeChanged(const QualifiedName& name, const AtomStri
         auto media = newValue.string().convertToASCIILowercase();
         if (media == m_media)
             return;
-        m_media = WTFMove(media);
+        m_media = WTF::move(media);
         process();
         if (m_sheet && !isDisabled())
             m_styleScope->didChangeActiveStyleSheetCandidates();
@@ -393,13 +392,13 @@ void HTMLLinkElement::process()
         options.referrerPolicy = params.referrerPolicy;
         options.fetchPriority = fetchPriority();
 
-        auto request = createPotentialAccessControlRequest(URL { m_url }, WTFMove(options), document, crossOrigin());
-        request.setPriority(WTFMove(priority));
-        request.setCharset(WTFMove(charset));
+        auto request = createPotentialAccessControlRequest(URL { m_url }, WTF::move(options), document, crossOrigin());
+        request.setPriority(WTF::move(priority));
+        request.setCharset(WTF::move(charset));
         request.setInitiator(*this);
 
         ASSERT_WITH_SECURITY_IMPLICATION(!m_cachedSheet);
-        m_cachedSheet = document->protectedCachedResourceLoader()->requestCSSStyleSheet(WTFMove(request)).value_or(nullptr);
+        m_cachedSheet = document->protectedCachedResourceLoader()->requestCSSStyleSheet(WTF::move(request)).value_or(nullptr);
 
         if (CachedResourceHandle cachedSheet = m_cachedSheet)
             cachedSheet->addClient(*this);
@@ -576,7 +575,7 @@ void HTMLLinkElement::initializeStyleSheet(Ref<StyleSheetContents>&& styleSheet,
         m_sheet->clearOwnerNode();
     }
 
-    m_sheet = CSSStyleSheet::create(WTFMove(styleSheet), *this, cachedStyleSheet.isCORSSameOrigin());
+    m_sheet = CSSStyleSheet::create(WTF::move(styleSheet), *this, cachedStyleSheet.isCORSSameOrigin());
     m_sheet->setMediaQueries(MQ::MediaQueryParser::parse(m_media, context.context));
     if (!isInShadowTree())
         m_sheet->setTitle(title());
@@ -640,7 +639,7 @@ void HTMLLinkElement::setCSSStyleSheet(const String& href, const URL& baseURL, A
     styleSheet.get().checkLoaded();
 
     if (styleSheet.get().isCacheable())
-        const_cast<CachedCSSStyleSheet*>(cachedStyleSheet)->saveParsedStyleSheet(WTFMove(styleSheet));
+        const_cast<CachedCSSStyleSheet*>(cachedStyleSheet)->saveParsedStyleSheet(WTF::move(styleSheet));
 }
 
 bool HTMLLinkElement::styleSheetIsLoading() const

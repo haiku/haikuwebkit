@@ -28,6 +28,8 @@
 
 #if HAVE(AVROUTING_FRAMEWORK)
 
+#import "MediaStrategy.h"
+#import "PlatformStrategies.h"
 #import <WebKitAdditions/MediaDeviceRouteControllerAdditions.mm>
 
 #import <pal/ios/AVRoutingSoftLink.h>
@@ -68,18 +70,6 @@ RefPtr<MediaDeviceRoute> MediaDeviceRouteController::routeForIdentifier(const st
     return nullptr;
 }
 
-bool MediaDeviceRouteController::handleEvent(WebMediaDevicePlatformRouteEvent *event)
-{
-    switch (event.reason) {
-    case WebMediaDevicePlatformRouteEventReasonActivate:
-        return activateRoute(event.route);
-    case WebMediaDevicePlatformRouteEventReasonDeactivate:
-        return deactivateRoute(event.route);
-    }
-
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
 bool MediaDeviceRouteController::activateRoute(WebMediaDevicePlatformRoute *platformRoute)
 {
     m_activeRoutes.removeAllMatching([&](auto& route) { return route->platformRoute() == platformRoute; });
@@ -105,3 +95,28 @@ bool MediaDeviceRouteController::deactivateRoute(WebMediaDevicePlatformRoute *pl
 } // namespace WebCore
 
 #endif // HAVE(AVROUTING_FRAMEWORK)
+
+namespace WebCore {
+
+static bool& mockMediaDeviceRouteControllerEnabledValue()
+{
+    static bool mockMediaDeviceRouteControllerEnabled;
+    return mockMediaDeviceRouteControllerEnabled;
+}
+
+void setMockMediaDeviceRouteControllerEnabled(bool isEnabled)
+{
+    if (mockMediaDeviceRouteControllerEnabledValue() == isEnabled)
+        return;
+
+    mockMediaDeviceRouteControllerEnabledValue() = isEnabled;
+#if ENABLE(VIDEO)
+    platformStrategies()->mediaStrategy()->resetMediaEngines();
+#endif
+}
+bool mockMediaDeviceRouteControllerEnabled()
+{
+    return mockMediaDeviceRouteControllerEnabledValue();
+}
+
+} // namespace WebCore

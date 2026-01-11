@@ -29,7 +29,7 @@ namespace WebCore {
 class SVGElement;
 
 class LegacyRenderSVGContainer : public LegacyRenderSVGModelObject {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(LegacyRenderSVGContainer);
+    WTF_MAKE_TZONE_ALLOCATED(LegacyRenderSVGContainer);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(LegacyRenderSVGContainer);
 public:
     virtual ~LegacyRenderSVGContainer();
@@ -55,6 +55,7 @@ protected:
 
     FloatRect strokeBoundingBox() const final;
     FloatRect repaintRectInLocalCoordinates(RepaintRectCalculation = RepaintRectCalculation::Fast) const final;
+    FloatRect decoratedBoundingBox() const final;
 
     bool nodeAtFloatPoint(const HitTestRequest&, HitTestResult&, const FloatPoint& pointInParent, HitTestAction) override;
 

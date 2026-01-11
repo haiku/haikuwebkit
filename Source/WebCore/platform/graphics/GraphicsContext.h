@@ -106,8 +106,8 @@ public:
     Pattern* fillPattern() const { return fillBrush().pattern(); }
     void setFillBrush(const SourceBrush& brush) { m_state.setFillBrush(brush); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::FillBrush)); }
     void setFillColor(const Color& color) { m_state.setFillColor(color); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::FillBrush)); }
-    void setFillGradient(Ref<Gradient>&& gradient, const AffineTransform& spaceTransform = { }) { m_state.setFillGradient(WTFMove(gradient), spaceTransform); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::FillBrush)); }
-    void setFillPattern(Ref<Pattern>&& pattern) { m_state.setFillPattern(WTFMove(pattern)); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::FillBrush)); }
+    void setFillGradient(Ref<Gradient>&& gradient, const AffineTransform& spaceTransform = { }) { m_state.setFillGradient(WTF::move(gradient), spaceTransform); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::FillBrush)); }
+    void setFillPattern(Ref<Pattern>&& pattern) { m_state.setFillPattern(WTF::move(pattern)); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::FillBrush)); }
 
     WindRule fillRule() const { return m_state.fillRule(); }
     void setFillRule(WindRule fillRule) { m_state.setFillRule(fillRule); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::FillRule)); }
@@ -119,8 +119,8 @@ public:
     Pattern* strokePattern() const { return strokeBrush().pattern(); }
     void setStrokeBrush(const SourceBrush& brush) { m_state.setStrokeBrush(brush); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::StrokeBrush)); }
     void setStrokeColor(const Color& color) { m_state.setStrokeColor(color); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::StrokeBrush)); }
-    void setStrokeGradient(Ref<Gradient>&& gradient, const AffineTransform& spaceTransform = { }) { m_state.setStrokeGradient(WTFMove(gradient), spaceTransform); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::StrokeBrush)); }
-    void setStrokePattern(Ref<Pattern>&& pattern) { m_state.setStrokePattern(WTFMove(pattern)); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::StrokeBrush)); }
+    void setStrokeGradient(Ref<Gradient>&& gradient, const AffineTransform& spaceTransform = { }) { m_state.setStrokeGradient(WTF::move(gradient), spaceTransform); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::StrokeBrush)); }
+    void setStrokePattern(Ref<Pattern>&& pattern) { m_state.setStrokePattern(WTF::move(pattern)); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::StrokeBrush)); }
 
     float strokeThickness() const { return m_state.strokeThickness(); }
     void setStrokeThickness(float thickness) { m_state.setStrokeThickness(thickness); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::StrokeThickness)); }

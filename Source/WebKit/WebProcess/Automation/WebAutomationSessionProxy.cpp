@@ -370,9 +370,7 @@ WebCore::AccessibilityObject* WebAutomationSessionProxy::getAccessibilityObjectF
         // the accessibility object for this element will not be created (because it doesn't yet have its renderer).
         axObjectCache->performDeferredCacheUpdate(ForceLayout::Yes);
 
-        // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
-        // as we merely return it right away (rdar://165602290).
-        SUPPRESS_UNCOUNTED_LOCAL if (auto* axObject = axObjectCache->exportedGetOrCreate(*coreElement))
+        if (auto* axObject = axObjectCache->exportedGetOrCreate(*coreElement))
             return axObject;
     }
 
@@ -441,7 +439,7 @@ void WebAutomationSessionProxy::evaluateJavaScriptFunction(WebCore::PageIdentifi
     auto callbackID = JSCallbackIdentifier::generate();
 
     auto result = m_webFramePendingEvaluateJavaScriptCallbacksMap.add(frameID, HashMap<JSCallbackIdentifier, CompletionHandler<void(String&&, String&&)>>());
-    result.iterator->value.set(callbackID, WTFMove(completionHandler));
+    result.iterator->value.set(callbackID, WTF::move(completionHandler));
 
     JSValueRef functionArguments[] = {
         toJSValue(context, function),
@@ -670,20 +668,14 @@ static WebCore::Element* containerElementForElement(WebCore::Element& element)
     if (is<WebCore::HTMLOptionElement>(element)) {
         if (auto* parentElement = WebCore::ancestorsOfType<WebCore::HTMLDataListElement>(element).first())
             return parentElement;
-        // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
-        // as we merely return it right away (rdar://165602290).
-        SUPPRESS_UNCOUNTED_LOCAL if (auto* parentElement = downcast<WebCore::HTMLOptionElement>(element).ownerSelectElement())
+        if (auto* parentElement = downcast<WebCore::HTMLOptionElement>(element).ownerSelectElement())
             return parentElement;
-
         return nullptr;
     }
 
     if (RefPtr optgroup = dynamicDowncast<WebCore::HTMLOptGroupElement>(element)) {
-        // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
-        // as we merely return it right away (rdar://165602290).
-        SUPPRESS_UNCOUNTED_LOCAL if (auto* parentElement = optgroup->ownerSelectElement())
+        if (auto* parentElement = optgroup->ownerSelectElement())
             return parentElement;
-
         return nullptr;
     }
 
@@ -804,8 +796,8 @@ void WebAutomationSessionProxy::computeElementLayout(WebCore::PageIdentifier pag
 
     auto elementInViewCenterPoint = visiblePortionOfElementRect.center();
     auto elementList = containerElement->protectedTreeScope()->elementsFromPoint(elementInViewCenterPoint.x(), elementInViewCenterPoint.y(), WebCore::HitTestSource::User);
-    auto index = elementList.findIf([containerElement] (auto& item) {
-        return item.get() == containerElement.get();
+    auto index = elementList.findIf([containerElement](auto& item) {
+        return item.ptr() == containerElement;
     });
     if (elementList.isEmpty() || index == notFound) {
         // We hit this case if the element is visibility:hidden or opacity:0, in which case it will not hit test
@@ -820,7 +812,7 @@ void WebAutomationSessionProxy::computeElementLayout(WebCore::PageIdentifier pag
     // Check the case where a non-descendant element hit tests before the target element. For example, a child <option>
     // of a <select> does not obscure the <select>, but two sibling <div> that overlap at the IVCP will obscure each other.
     // Node::isDescendantOf() is not self-inclusive, so that is explicitly checked here.
-    isObscured = elementList[0] != containerElement && !RefPtr { elementList[0] }->isShadowIncludingDescendantOf(containerElement.get());
+    isObscured = elementList[0].ptr() != containerElement && !Ref { elementList[0] }->isShadowIncludingDescendantOf(containerElement.get());
 
     switch (coordinateSystem) {
     case CoordinateSystem::Page:
@@ -945,7 +937,7 @@ void WebAutomationSessionProxy::setFilesForInputFileUpload(WebCore::PageIdentifi
     fileObjects.appendContainerWithMapping(filenames, [&](auto& path) {
         return WebCore::File::create(&inputElement->document(), path);
     });
-    inputElement->setFiles(WebCore::FileList::create(WTFMove(fileObjects)));
+    inputElement->setFiles(WebCore::FileList::create(WTF::move(fileObjects)));
 
     completionHandler(std::nullopt);
 }
@@ -976,9 +968,9 @@ static WebCore::IntRect snapshotElementRectForScreenshot(WebPage& page, WebCore:
 
 void WebAutomationSessionProxy::takeScreenshot(WebCore::PageIdentifier pageID, std::optional<WebCore::FrameIdentifier> frameID, String nodeHandle, bool scrollIntoViewIfNeeded, bool clipToViewport, CompletionHandler<void(std::optional<WebCore::ShareableBitmapHandle>&&, String&&)>&& completionHandler)
 {
-    snapshotRectForScreenshot(pageID, frameID, nodeHandle, scrollIntoViewIfNeeded, clipToViewport, [pageID, frameID, completionHandler = WTFMove(completionHandler)] (std::optional<String> errorString, WebCore::IntRect&& rect) mutable {
+    snapshotRectForScreenshot(pageID, frameID, nodeHandle, scrollIntoViewIfNeeded, clipToViewport, [pageID, frameID, completionHandler = WTF::move(completionHandler)] (std::optional<String> errorString, WebCore::IntRect&& rect) mutable {
         if (errorString)
-            return completionHandler(std::nullopt, WTFMove(*errorString));
+            return completionHandler(std::nullopt, WTF::move(*errorString));
 
         RefPtr page = WebProcess::singleton().webPage(pageID);
         ASSERT(page);
@@ -1092,7 +1084,7 @@ void WebAutomationSessionProxy::deleteCookie(WebCore::PageIdentifier pageID, std
         return;
     }
 
-    page->protectedCorePage()->protectedCookieJar()->deleteCookie(*document, document->cookieURL(), cookieName, [completionHandler = WTFMove(completionHandler)] () mutable {
+    page->protectedCorePage()->protectedCookieJar()->deleteCookie(*document, document->cookieURL(), cookieName, [completionHandler = WTF::move(completionHandler)] () mutable {
         completionHandler(std::nullopt);
     });
 }

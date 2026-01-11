@@ -114,12 +114,12 @@ ScriptBuffer SWScriptStorage::store(const ServiceWorkerRegistrationKey& registra
         return script;
     }
 
-    auto mappedFile = FileSystem::mapToFile(scriptPath, size, WTFMove(iterateOverBufferAndWriteData));
+    auto mappedFile = FileSystem::mapToFile(scriptPath, size, WTF::move(iterateOverBufferAndWriteData));
     if (!mappedFile) {
         RELEASE_LOG_ERROR(ServiceWorker, "SWScriptStorage::store: Failure to store %s, FileSystem::mapToFile() failed", scriptPath.utf8().data());
         return { };
     }
-    return ScriptBuffer { SharedBuffer::create(WTFMove(mappedFile)) };
+    return ScriptBuffer { SharedBuffer::create(WTF::move(mappedFile)) };
 }
 
 ScriptBuffer SWScriptStorage::retrieve(const ServiceWorkerRegistrationKey& registrationKey, const URL& scriptURL)

@@ -41,7 +41,7 @@ class HTMLOptionElement;
 class HTMLSelectElement;
 
 class RenderListBox final : public RenderBlockFlow, public ScrollableArea {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderListBox);
+    WTF_MAKE_TZONE_ALLOCATED(RenderListBox);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderListBox);
 public:
     RenderListBox(HTMLSelectElement&, RenderStyle&&);
@@ -96,7 +96,7 @@ private:
 
     bool logicalScroll(ScrollLogicalDirection, ScrollGranularity, unsigned stepCount = 1, Element** stopElement = nullptr) override;
 
-    void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;
+    void styleDidChange(Style::Difference, const RenderStyle* oldStyle) override;
 
     void computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const override;
     void computePreferredLogicalWidths() override;

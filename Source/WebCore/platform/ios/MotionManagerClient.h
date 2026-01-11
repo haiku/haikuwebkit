@@ -41,6 +41,8 @@ public:
 
     virtual void orientationChanged(double, double, double, double, double) { }
     virtual void motionChanged(double, double, double, double, double, double, std::optional<double>, std::optional<double>, std::optional<double>) { }
+
+    virtual bool isWebDeviceOrientationUpdateProviderProxy() const { return false; }
 };
 
 };

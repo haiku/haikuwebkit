@@ -271,7 +271,7 @@ void RenderSelection::apply(const RenderRange& newSelection, RepaintMode blockRe
             if (!currentRenderer->isRenderTextOrLineBreak())
                 m_selectionGeometryGatherer.setTextOnly(false);
 #endif
-            newSelectedRenderers.set(*currentRenderer, WTFMove(selectionGeometry));
+            newSelectedRenderers.set(*currentRenderer, WTF::move(selectionGeometry));
             CheckedPtr containingBlock = currentRenderer->containingBlock();
             while (containingBlock && !is<RenderView>(*containingBlock)) {
                 auto& blockSelectionGeometry = newSelectedBlocks.add(*containingBlock, nullptr).iterator->value;

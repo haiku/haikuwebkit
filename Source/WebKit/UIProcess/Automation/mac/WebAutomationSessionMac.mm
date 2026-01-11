@@ -59,7 +59,7 @@ void WebAutomationSession::inspectBrowsingContext(const Inspector::Protocol::Aut
     if (auto pendingCallback = m_pendingInspectorCallbacksPerPage.take(page->identifier()))
         pendingCallback(makeUnexpected(STRING_FOR_PREDEFINED_ERROR_NAME(Timeout)));
 
-    m_pendingInspectorCallbacksPerPage.set(page->identifier(), WTFMove(callback));
+    m_pendingInspectorCallbacksPerPage.set(page->identifier(), WTF::move(callback));
 
     // Don't bring the inspector to front since this may be done automatically.
     // We just want it loaded so it can pause if a breakpoint is hit during a command.
@@ -85,12 +85,13 @@ void WebAutomationSession::sendSynthesizedEventsToPage(WebPageProxy& page, NSArr
     // +[NSEvent pressedMouseButtons] does not account for the NSEvent objects created through eventSender JS in tests.
     // As such, that method always returns 0. To fix this, we swizzle out +[NSEvent pressedMouseButtons], keep track of
     // the mouse button currently being pressed down, and supply the appropriate return value as specified in documentation.
+
     auto methodToSwizzle = class_getClassMethod(RetainPtr { objc_getMetaClass(NSStringFromClass([NSEvent class]).UTF8String) }.get(), @selector(pressedMouseButtons));
     // FIXME: This looks like a safer cpp false positive. It wants me to retain the Objective C block passed to imp_implementationWithBlock(),
     // which gets implicitly constructed from a C++ lambda on this line.
     SUPPRESS_UNRETAINED_ARG auto originalImplementation = method_setImplementation(methodToSwizzle, imp_implementationWithBlock([&mouseButtonsCurrentlyDown = m_mouseButtonsCurrentlyDown] {
         NSUInteger mouseButtons = 0;
-        static constexpr std::array<MouseButton, 3> potentialMouseButtons { MouseButton::Left, MouseButton::Right, MouseButton::Middle };
+        static constexpr std::array<MouseButton, 5> potentialMouseButtons { MouseButton::Left, MouseButton::Right, MouseButton::Middle, MouseButton::Back, MouseButton::Forward };
         for (std::size_t idx = 0; idx < potentialMouseButtons.size(); ++idx) {
             if (mouseButtonsCurrentlyDown.getOptional(potentialMouseButtons[idx]).value_or(false))
                 mouseButtons += (1 << idx);
@@ -208,9 +209,11 @@ void WebAutomationSession::platformSimulateMouseInteraction(WebPageProxy& page, 
         dragEventType = NSEventTypeLeftMouseDragged;
         upEventType = NSEventTypeLeftMouseUp;
         break;
+    case WebMouseEventButton::Back:
+    case WebMouseEventButton::Forward:
     case WebMouseEventButton::Middle:
         downEventType = NSEventTypeOtherMouseDown;
-        dragEventType = NSEventTypeLeftMouseDragged;
+        dragEventType = NSEventTypeOtherMouseDragged;
         upEventType = NSEventTypeOtherMouseUp;
         break;
     case WebMouseEventButton::Right:

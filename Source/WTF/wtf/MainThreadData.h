@@ -31,7 +31,7 @@ class MainThreadData {
 public:
     MainThreadData() { }
     explicit MainThreadData(T&& data)
-        : m_data(WTFMove(data))
+        : m_data(WTF::move(data))
     { }
 
     T* operator->() LIFETIME_BOUND

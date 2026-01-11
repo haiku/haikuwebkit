@@ -51,7 +51,7 @@
 #include "Page.h"
 #include "PageConfiguration.h"
 #include "RenderSVGRoot.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderView.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGFEImageElement.h"
@@ -208,7 +208,7 @@ ImageDrawResult SVGImage::drawForContainer(GraphicsContext& context, const Float
 
     ImageDrawResult result = draw(context, dstRect, scaledSrc, options);
 
-    setImageObserver(WTFMove(observer));
+    setImageObserver(WTF::move(observer));
     return result;
 }
 
@@ -250,8 +250,8 @@ RefPtr<NativeImage> SVGImage::nativeImage(const FloatSize& size, const Destinati
 
     imageBuffer->context().drawImage(*this, FloatPoint(0, 0));
 
-    setImageObserver(WTFMove(observer));
-    return ImageBuffer::sinkIntoNativeImage(WTFMove(imageBuffer));
+    setImageObserver(WTF::move(observer));
+    return ImageBuffer::sinkIntoNativeImage(WTF::move(imageBuffer));
 }
 
 void SVGImage::drawPatternForContainer(GraphicsContext& context, const FloatSize& containerSize, float containerZoom, const URL& initialFragmentURL, const FloatRect& srcRect,
@@ -306,7 +306,11 @@ ImageDrawResult SVGImage::draw(GraphicsContext& context, const FloatRect& dstRec
         context.setCompositeOperation(CompositeOperator::SourceOver, BlendMode::Normal);
     }
 
-    // FIXME: We should honor options.orientation(), since ImageBitmap's flipY handling relies on it. https://bugs.webkit.org/show_bug.cgi?id=231001
+    auto orientation = options.orientation();
+    // SVG images don't have intrinsic orientation metadata like EXIF, so FromImage defaults to None.
+    if (orientation == ImageOrientation::Orientation::FromImage)
+        orientation = ImageOrientation::Orientation::None;
+
     FloatSize scale(dstRect.size() / srcRect.size());
     
     // We can only draw the entire frame, clipped to the rect we want. So compute where the top left
@@ -316,6 +320,13 @@ ImageDrawResult SVGImage::draw(GraphicsContext& context, const FloatRect& dstRec
 
     context.translate(destOffset);
     context.scale(scale);
+
+    // Apply orientation transformation if needed.
+    if (orientation != ImageOrientation::Orientation::None) {
+        auto containerSizeForTransform = containerSize();
+        auto orientationTransform = ImageOrientation(orientation).transformFromDefault(FloatSize(containerSizeForTransform));
+        context.concatCTM(orientationTransform);
+    }
 
     view->resize(containerSize());
 
@@ -482,7 +493,7 @@ EncodedDataStatus SVGImage::dataChanged(bool allDataReceived)
         // This will become an issue when SVGImage will be able to load other
         // SVGImage objects, but we're safe now, because SVGImage can only be
         // loaded by a top-level document.
-        m_page = Page::create(WTFMove(pageConfiguration));
+        m_page = Page::create(WTF::move(pageConfiguration));
 #if ENABLE(VIDEO)
         m_page->settings().setMediaEnabled(false);
 #endif
@@ -552,7 +563,7 @@ void SVGImage::subresourcesAreFinished(Document* embedderDocument, CompletionHan
     ASSERT(rootElement());
     if (embedderDocument)
         embedderDocument->incrementLoadEventDelayCount();
-    internalPage()->localTopDocument()->whenWindowLoadEventOrDestroyed([embedderDocument = WeakPtr { embedderDocument }, completionHandler = WTFMove(completionHandler)]() mutable {
+    internalPage()->localTopDocument()->whenWindowLoadEventOrDestroyed([embedderDocument = WeakPtr { embedderDocument }, completionHandler = WTF::move(completionHandler)]() mutable {
         if (RefPtr document = embedderDocument.get())
             document->decrementLoadEventDelayCount();
         completionHandler();
@@ -568,8 +579,8 @@ void SVGImage::tryCreateFromData(std::span<const uint8_t> data, CompletionHandle
         completionHandler(nullptr);
         return;
     }
-    svgImage->subresourcesAreFinished(nullptr, [svgImage, completionHandler = WTFMove(completionHandler)]() mutable {
-        completionHandler(WTFMove(svgImage));
+    svgImage->subresourcesAreFinished(nullptr, [svgImage, completionHandler = WTF::move(completionHandler)]() mutable {
+        completionHandler(WTF::move(svgImage));
     });
 }
 

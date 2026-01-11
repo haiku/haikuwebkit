@@ -108,7 +108,7 @@ namespace TestWebKitAPI {
 static IMP makeQueryParameterRequestHandler(NSArray<NSString *> *parameters, NSArray<NSString *> *domains, NSArray<NSString *> *paths, bool& didHandleRequest)
 {
     return imp_implementationWithBlock([&didHandleRequest, parameters = RetainPtr { parameters }, domains = RetainPtr { domains }, paths = RetainPtr { paths }](WPResources *, WPResourceRequestOptions *, void(^completion)(WPLinkFilteringData *, NSError *)) mutable {
-        RunLoop::mainSingleton().dispatch([&didHandleRequest, parameters = WTFMove(parameters), domains = WTFMove(domains), paths = WTFMove(paths), completion = makeBlockPtr(completion)]() mutable {
+        RunLoop::mainSingleton().dispatch([&didHandleRequest, parameters = WTF::move(parameters), domains = WTF::move(domains), paths = WTF::move(paths), completion = makeBlockPtr(completion)]() mutable {
             auto data = adoptNS([PAL::allocWPLinkFilteringDataInstance() initWithQueryParameters:parameters.get()
 #if defined(HAS_WEB_PRIVACY_LINK_FILTERING_RULE_PATH)
                 domains:domains.get() paths:paths.get()
@@ -123,7 +123,7 @@ static IMP makeQueryParameterRequestHandler(NSArray<NSString *> *parameters, NSA
 static IMP makeAllowedLinkFilteringDataRequestHandler(NSArray<NSString *> *parameters)
 {
     return imp_implementationWithBlock([parameters = RetainPtr { parameters }](WPResources *, WPResourceRequestOptions *, void(^completion)(WPLinkFilteringData *, NSError *)) mutable {
-        RunLoop::mainSingleton().dispatch([parameters = WTFMove(parameters), completion = makeBlockPtr(completion)]() mutable {
+        RunLoop::mainSingleton().dispatch([parameters = WTF::move(parameters), completion = makeBlockPtr(completion)]() mutable {
             auto data = adoptNS([PAL::allocWPLinkFilteringDataInstance() initWithQueryParameters:parameters.get()]);
             completion(data.get(), nil);
         });
@@ -555,7 +555,7 @@ TEST(AdvancedPrivacyProtections, DoNotHideReferrerInPopupWindow)
     RetainPtr preferences = adoptNS([WKWebpagePreferences new]);
     [preferences _setPopUpPolicy:_WKWebsitePopUpPolicyAllow];
 
-    RetainPtr webView = createWebViewWithAdvancedPrivacyProtections(YES, WTFMove(preferences));
+    RetainPtr webView = createWebViewWithAdvancedPrivacyProtections(YES, WTF::move(preferences));
     [webView setUIDelegate:uiDelegate.get()];
 
     // Load the main page on 127.0.0.1, which opens a cross-origin popup window on localhost.

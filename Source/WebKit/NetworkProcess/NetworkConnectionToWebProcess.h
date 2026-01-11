@@ -217,7 +217,7 @@ public:
     void addNetworkLoadInformation(WebCore::ResourceLoaderIdentifier identifier, WebCore::NetworkLoadInformation&& information)
     {
         ASSERT(!m_networkLoadInformationByID.contains(identifier));
-        m_networkLoadInformationByID.add(identifier, makeUnique<WebCore::NetworkLoadInformation>(WTFMove(information)));
+        m_networkLoadInformationByID.add(identifier, makeUnique<WebCore::NetworkLoadInformation>(WTF::move(information)));
     }
 
     void addNetworkLoadInformationMetrics(WebCore::ResourceLoaderIdentifier identifier, const WebCore::NetworkLoadMetrics& metrics)

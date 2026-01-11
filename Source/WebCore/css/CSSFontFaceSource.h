@@ -26,6 +26,7 @@
 #pragma once
 
 #include "FontLoadRequest.h"
+#include "TrustedFonts.h"
 #include <JavaScriptCore/ArrayBufferView.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/AtomString.h>
@@ -46,14 +47,17 @@ struct FontCustomPlatformData;
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(CSSFontFaceSource);
 class CSSFontFaceSource final : public FontLoadRequestClient {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(CSSFontFaceSource, CSSFontFaceSource);
-    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(CSSFontFaceSource);
+    WTF_MAKE_TZONE_ALLOCATED(CSSFontFaceSource);
 public:
     CSSFontFaceSource(CSSFontFace& owner, AtomString fontFaceName);
     CSSFontFaceSource(CSSFontFace& owner, AtomString fontFaceName, SVGFontFaceElement&);
     CSSFontFaceSource(CSSFontFace& owner, CSSFontSelector&, Ref<FontLoadRequest>&&);
     CSSFontFaceSource(CSSFontFace& owner, Ref<JSC::ArrayBufferView>&&);
     virtual ~CSSFontFaceSource();
+
+    // FontLoadRequestClient.
+    void ref() const final;
+    void deref() const final;
 
     //                      => Success
     //                    //
@@ -68,9 +72,9 @@ public:
     };
     Status status() const { return m_status; }
 
-    void opportunisticallyStartFontDataURLLoading();
+    void opportunisticallyStartFontDataURLLoading(DownloadableBinaryFontTrustedTypes);
 
-    void load(Document* = nullptr);
+    void load(DownloadableBinaryFontTrustedTypes, Document* = nullptr);
     RefPtr<Font> font(const FontDescription&, bool syntheticBold, bool syntheticItalic, const FontCreationContext&);
 
     FontLoadRequest* fontLoadRequest() const { return m_fontRequest.get(); }
@@ -86,6 +90,8 @@ private:
     void setStatus(Status);
 
     Ref<CSSFontFace> protectedCSSFontFace() const;
+
+    RefPtr<FontCustomPlatformData> loadCustomFont(SharedBuffer&, DownloadableBinaryFontTrustedTypes);
 
     AtomString m_fontFaceName; // Font name for local fonts
     WeakRef<CSSFontFace> m_owningCSSFontFace; // Our owning font face.

@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebGLDepthTexture);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebGLDepthTexture);
 
 WebGLDepthTexture::WebGLDepthTexture(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::WebGLDepthTexture)

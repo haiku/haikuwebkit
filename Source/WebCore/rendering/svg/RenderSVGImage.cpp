@@ -50,10 +50,10 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderSVGImage);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderSVGImage);
 
 RenderSVGImage::RenderSVGImage(SVGImageElement& element, RenderStyle&& style)
-    : RenderSVGModelObject(Type::SVGImage, element, WTFMove(style))
+    : RenderSVGModelObject(Type::SVGImage, element, WTF::move(style))
     , m_imageResource(makeUniqueRef<RenderImageResource>())
 {
     ASSERT(isRenderSVGImage());
@@ -420,7 +420,7 @@ bool RenderSVGImage::needsHasSVGTransformFlags() const
     return protectedImageElement()->hasTransformRelatedAttributes();
 }
 
-void RenderSVGImage::applyTransform(TransformationMatrix& transform, const RenderStyle& style, const FloatRect& boundingBox, OptionSet<RenderStyle::TransformOperationOption> options) const
+void RenderSVGImage::applyTransform(TransformationMatrix& transform, const RenderStyle& style, const FloatRect& boundingBox, OptionSet<Style::TransformResolverOption> options) const
 {
     applySVGTransform(transform, protectedImageElement(), style, boundingBox, std::nullopt, std::nullopt, options);
 }

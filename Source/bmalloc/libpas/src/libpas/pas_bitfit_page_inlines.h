@@ -34,6 +34,7 @@
 #include "pas_mte.h"
 #include "pas_page_base_inlines.h"
 #include "pas_page_sharing_pool.h"
+#include "pas_stats.h"
 #include "pas_thread.h"
 
 PAS_BEGIN_EXTERN_C;
@@ -249,6 +250,7 @@ static PAS_ALWAYS_INLINE pas_bitfit_allocation_result pas_bitfit_page_finish_all
 
     PAS_PROFILE(BITFIT_ALLOCATION, &page_config, begin, size, allocation_mode);
     PAS_MTE_HANDLE(BITFIT_ALLOCATION, page_config, begin, size, allocation_mode);
+    PAS_RECORD_STAT_MALLOC(pas_stats_heap_type_bitfit, size);
 
     return pas_bitfit_allocation_result_create_success(begin);
 }

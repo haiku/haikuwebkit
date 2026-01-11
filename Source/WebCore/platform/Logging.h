@@ -110,6 +110,7 @@ namespace WebCore {
     M(FTP) \
     M(Fullscreen) \
     M(Gamepad) \
+    M(GraphicsBuffer) \
     M(HDR) \
     M(HID) \
     M(History) \

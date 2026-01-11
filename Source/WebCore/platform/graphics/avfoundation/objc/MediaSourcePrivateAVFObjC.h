@@ -122,7 +122,7 @@ private:
     void bufferedChanged(const PlatformTimeRanges&) final;
 
     WeakPtr<MediaPlayerPrivateMediaSourceAVFObjC> m_player WTF_GUARDED_BY_CAPABILITY(mainThread);
-    SourceBufferPrivateAVFObjC* m_sourceBufferWithSelectedVideo WTF_GUARDED_BY_CAPABILITY(m_dispatcher.get()) { nullptr };
+    ThreadSafeWeakPtr<SourceBufferPrivateAVFObjC> m_sourceBufferWithSelectedVideo WTF_GUARDED_BY_CAPABILITY(m_dispatcher.get());
     ThreadSafeWeakPtr<AudioVideoRenderer> m_renderer;
 #if !RELEASE_LOG_DISABLED
     const Ref<const Logger> m_logger;

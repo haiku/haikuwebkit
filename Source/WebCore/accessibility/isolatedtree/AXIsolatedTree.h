@@ -404,9 +404,9 @@ struct IsolatedObjectData {
     bool getsGeometryFromChildren;
 
     IsolatedObjectData(Vector<AXID> childrenIDs, AXPropertyVector properties, Ref<AXIsolatedTree> tree, Markable<AXID> parentID, AXID axID, AccessibilityRole role, OptionSet<AXPropertyFlag> propertyFlags, bool getsGeometryFromChildren)
-        : childrenIDs(WTFMove(childrenIDs))
-        , properties(WTFMove(properties))
-        , tree(WTFMove(tree))
+        : childrenIDs(WTF::move(childrenIDs))
+        , properties(WTF::move(properties))
+        , tree(WTF::move(tree))
         , parentID(parentID)
         , axID(axID)
         , role(role)
@@ -422,7 +422,7 @@ struct IsolatedObjectData {
         properties.removeFirstMatching([&property] (const auto& propertyAndValue) {
             return propertyAndValue.first == property;
         });
-        setPropertyIn(property, WTFMove(value), properties, propertyFlags);
+        setPropertyIn(property, WTF::move(value), properties, propertyFlags);
     }
 };
 
@@ -610,8 +610,8 @@ private:
         RefPtr<AccessibilityObjectWrapper> wrapper;
 #endif
         explicit NodeChange(IsolatedObjectData&& isolatedData, RetainPtr<AccessibilityObjectWrapper> wrapper)
-            : data(WTFMove(isolatedData))
-            , wrapper(WTFMove(wrapper))
+            : data(WTF::move(isolatedData))
+            , wrapper(WTF::move(wrapper))
         { }
 
         NodeChange(const NodeChange&) = delete;

@@ -68,7 +68,7 @@ private:
     public:
         static Ref<NonByteSource> create(FetchBodyOwner& owner) { return adoptRef(*new NonByteSource(owner)); }
 
-        bool enqueue(RefPtr<JSC::ArrayBuffer>&& chunk) { return controller().enqueue(WTFMove(chunk)); }
+        bool enqueue(RefPtr<JSC::ArrayBuffer>&& chunk) { return controller().enqueue(WTF::move(chunk)); }
         void close();
         void error(const Exception&);
 

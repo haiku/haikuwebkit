@@ -64,14 +64,13 @@
 #include "RenderMultiColumnSpannerPlaceholder.h"
 #include "RenderQuote.h"
 #include "RenderSVGRoot.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderTreeBuilder.h"
 #include "RenderWidget.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGImage.h"
 #include "SVGSVGElement.h"
 #include "Settings.h"
-#include "StyleInheritedData.h"
 #include "StyleScope.h"
 #include "TransformState.h"
 #include <wtf/SetForScope.h>
@@ -80,10 +79,10 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderView);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderView);
 
 RenderView::RenderView(Document& document, RenderStyle&& style)
-    : RenderBlockFlow(Type::View, document, WTFMove(style))
+    : RenderBlockFlow(Type::View, document, WTF::move(style))
     , m_frameView(*document.view())
     , m_initialContainingBlock(makeUniqueRef<Layout::InitialContainingBlock>(RenderStyle::clone(this->style())))
     , m_layoutState(makeUniqueRef<Layout::LayoutState>(document, m_initialContainingBlock, Layout::LayoutState::Type::Primary, LayoutIntegration::layoutWithFormattingContextForBox, LayoutIntegration::formattingContextRootLogicalWidthForType, LayoutIntegration::formattingContextRootLogicalHeightForType, LayoutIntegration::layoutWithFormattingContextForBlockInInline))
@@ -116,7 +115,7 @@ void RenderView::willBeDestroyed()
     RenderBlockFlow::willBeDestroyed();
 }
 
-void RenderView::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)
+void RenderView::styleDidChange(Style::Difference diff, const RenderStyle* oldStyle)
 {
     RenderBlockFlow::styleDidChange(diff, oldStyle);
 
@@ -175,7 +174,7 @@ bool RenderView::isChildAllowed(const RenderObject& child, const RenderStyle&) c
 void RenderView::layout()
 {
     StackStats::LayoutCheckPoint layoutCheckPoint;
-    if (!document().paginated())
+    if (!protectedDocument()->paginated())
         m_pageLogicalSize = { };
 
     if (shouldUsePrintingLayout()) {
@@ -675,7 +674,7 @@ void RenderView::absoluteQuads(Vector<FloatQuad>& quads, bool* wasFixed) const
 
 bool RenderView::printing() const
 {
-    return document().printing();
+    return protectedDocument()->printing();
 }
 
 bool RenderView::shouldUsePrintingLayout() const

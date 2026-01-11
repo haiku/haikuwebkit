@@ -2263,6 +2263,13 @@ window.UIHelper = class UIHelper {
         });
     }
 
+    // When setting expected results, if your test includes
+    // a return after the string as a part of the test,
+    // make sure to include two entries for the string,
+    // one with the '\n' and one without.
+    // Mac and iOS have different tokenizing behavior
+    // which can lead to different results when looking
+    // for the key string in this dictionary.
     static async setSpellCheckerResults(results)
     {
         if (!this.isMac() && !this.isIOSFamily())
@@ -2578,6 +2585,7 @@ window.UIHelper = class UIHelper {
                 if (options.normalize) {
                     debugText = debugText
                         .replace(/uid=\d+/g, "uid=…")
+                        .replace(/"uid":\d+/g, "\"uid\":\"…\"")
                         .replace(/\[\d+,\d+;\d+x\d+\]/g, "[…]")
                         .replace(/\t/g, "    ");
                 }

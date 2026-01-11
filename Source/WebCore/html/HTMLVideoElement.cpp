@@ -74,9 +74,9 @@ do { \
     if (willLog(WTFLogLevel::Always)) { \
         RELEASE_LOG_FORWARDABLE(Media, HTMLVIDEOELEMENT_##formatString, logIdentifier(), ##__VA_ARGS__); \
         if (logger().hasEnabledInspector()) { \
-            char buffer[1024] = { 0 }; \
+            std::array<char, 1024> buffer { }; \
             SAFE_SPRINTF(std::span { buffer }, MESSAGE_HTMLVIDEOELEMENT_##formatString, logIdentifier(), ##__VA_ARGS__); \
-            logger().toObservers(logChannel(), WTFLogLevel::Always, String::fromUTF8(buffer)); \
+            logger().toObservers(logChannel(), WTFLogLevel::Always, String::fromUTF8(buffer.data())); \
         } \
     } \
 } while (0)
@@ -84,7 +84,7 @@ do { \
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLVideoElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLVideoElement);
 
 using namespace HTMLNames;
 
@@ -121,7 +121,7 @@ bool HTMLVideoElement::rendererIsNeeded(const RenderStyle& style)
 
 RenderPtr<RenderElement> HTMLVideoElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
-    return createRenderer<RenderVideo>(*this, WTFMove(style));
+    return createRenderer<RenderVideo>(*this, WTF::move(style));
 }
 
 void HTMLVideoElement::didAttachRenderers()
@@ -717,7 +717,7 @@ unsigned HTMLVideoElement::requestVideoFrameCallback(Ref<VideoFrameRequestCallba
     }
 
     auto identifier = ++m_nextVideoFrameRequestIndex;
-    m_videoFrameRequests.append(makeUniqueRef<VideoFrameRequest>(identifier, WTFMove(callback)));
+    m_videoFrameRequests.append(makeUniqueRef<VideoFrameRequest>(identifier, WTF::move(callback)));
 
     if (RefPtr page = document().page())
         page->scheduleRenderingUpdate(RenderingUpdateStep::VideoFrameCallbacks);

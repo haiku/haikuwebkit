@@ -159,7 +159,7 @@ private:
                         auto addResult = resultMap.add(typedKey, result.size());
                         if (!addResult.isNewEntry) {
                             ASSERT(result[addResult.iterator->value].key == typedKey);
-                            result[addResult.iterator->value].value = ValueAdjuster<V>::adjust(WTFMove(typedValue));
+                            result[addResult.iterator->value].value = ValueAdjuster<V>::adjust(WTF::move(typedValue));
                             continue;
                         }
                     }
@@ -167,7 +167,7 @@ private:
                     UNUSED_VARIABLE(resultMap);
                 
                 // 5. Otherwise, append to result a mapping (typedKey, typedValue).
-                result.append({ WTFMove(typedKey), ValueAdjuster<V>::adjust(WTFMove(typedValue)) });
+                result.append({ WTF::move(typedKey), ValueAdjuster<V>::adjust(WTF::move(typedValue)) });
             }
         }
 

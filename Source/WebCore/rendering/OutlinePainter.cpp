@@ -30,6 +30,7 @@
 #include "BorderPainter.h"
 #include "BorderShape.h"
 #include "ContainerNodeInlines.h"
+#include "FloatPointGraph.h"
 #include "FloatRoundedRect.h"
 #include "GeometryUtilities.h"
 #include "GraphicsContext.h"
@@ -45,9 +46,10 @@
 #include "RenderInline.h"
 #include "RenderListBox.h"
 #include "RenderObjectDocument.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderSVGModelObject.h"
 #include "RenderTheme.h"
+#include "StyleBorderRadius.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 
 namespace WebCore {
@@ -88,8 +90,8 @@ void OutlinePainter::paintOutline(const RenderElement& renderer, const LayoutRec
     if (!borderStyle || *borderStyle == BorderStyle::None)
         return;
 
-    auto outlineWidth = Style::evaluate<LayoutUnit>(styleToUse->outlineWidth(), Style::ZoomNeeded { });
-    auto outlineOffset = Style::evaluate<LayoutUnit>(styleToUse->outlineOffset(), Style::ZoomNeeded { });
+    auto outlineWidth = Style::evaluate<LayoutUnit>(styleToUse->usedOutlineWidth(), Style::ZoomNeeded { });
+    auto outlineOffset = Style::evaluate<LayoutUnit>(styleToUse->usedOutlineOffset(), Style::ZoomNeeded { });
 
     auto outerRect = paintRect;
     outerRect.inflate(outlineOffset + outlineWidth);
@@ -177,8 +179,8 @@ void OutlinePainter::paintOutlineWithLineRects(const RenderInline& renderer, con
 
     auto styleToUse = CheckedRef { renderer.style() };
 
-    auto outlineOffset = Style::evaluate<float>(styleToUse->outlineOffset(), Style::ZoomNeeded { });
-    auto outlineWidth = Style::evaluate<float>(styleToUse->outlineWidth(), Style::ZoomNeeded { });
+    auto outlineOffset = Style::evaluate<float>(styleToUse->usedOutlineOffset(), Style::ZoomNeeded { });
+    auto outlineWidth = Style::evaluate<float>(styleToUse->usedOutlineWidth(), Style::ZoomNeeded { });
 
     auto deviceScaleFactor = WebCore::deviceScaleFactor(renderer);
 
@@ -190,7 +192,7 @@ void OutlinePainter::paintOutlineWithLineRects(const RenderInline& renderer, con
         rect.inflate(outlineOffset + outlineWidth / 2);
         pixelSnappedRects.append(snapRectToDevicePixels(rect, deviceScaleFactor));
     }
-    auto path = PathUtilities::pathWithShrinkWrappedRectsForOutline(pixelSnappedRects, styleToUse->border().radii(), outlineOffset, styleToUse->writingMode(), deviceScaleFactor);
+    auto path = pathWithShrinkWrappedRects(pixelSnappedRects, styleToUse->border().radii, outlineOffset, styleToUse->writingMode(), deviceScaleFactor);
     if (path.isEmpty()) {
         // Disjoint line spanning inline boxes.
         for (auto rect : lineRects) {
@@ -201,7 +203,7 @@ void OutlinePainter::paintOutlineWithLineRects(const RenderInline& renderer, con
     }
 
     auto& graphicsContext = m_paintInfo.context();
-    auto outlineColor = styleToUse->visitedDependentColorWithColorFilter(CSSPropertyOutlineColor);
+    auto outlineColor = styleToUse->visitedDependentOutlineColorApplyingColorFilter();
     auto useTransparencyLayer = !outlineColor.isOpaque();
     if (useTransparencyLayer) {
         graphicsContext.beginTransparencyLayer(outlineColor.alphaAsFloat());
@@ -237,15 +239,15 @@ static bool useShrinkWrappedFocusRingForOutlineStyleAuto()
 
 static void drawFocusRing(GraphicsContext& context, const Path& path, const RenderStyle& style, const Color& color)
 {
-    context.drawFocusRing(path, Style::evaluate<float>(style.outlineWidth(), Style::ZoomNeeded { }), color);
+    context.drawFocusRing(path, Style::evaluate<float>(style.usedOutlineWidth(), Style::ZoomNeeded { }), color);
 }
 
 static void drawFocusRing(GraphicsContext& context, Vector<FloatRect> rects, const RenderStyle& style, const Color& color)
 {
 #if PLATFORM(MAC)
-    context.drawFocusRing(rects, 0, Style::evaluate<float>(style.outlineWidth(), Style::ZoomNeeded { }), color);
+    context.drawFocusRing(rects, 0, Style::evaluate<float>(style.usedOutlineWidth(), Style::ZoomNeeded { }), color);
 #else
-    context.drawFocusRing(rects, Style::evaluate<float>(style.outlineOffset(), Style::ZoomNeeded { }), Style::evaluate<float>(style.outlineWidth(), Style::ZoomNeeded { }), color);
+    context.drawFocusRing(rects, Style::evaluate<float>(style.usedOutlineOffset(), Style::ZoomNeeded { }), Style::evaluate<float>(style.usedOutlineWidth(), Style::ZoomNeeded { }), color);
 #endif
 }
 
@@ -256,7 +258,7 @@ void OutlinePainter::paintFocusRing(const RenderElement& renderer, const Vector<
     ASSERT(style->outlineStyle() == OutlineStyle::Auto);
 
     auto deviceScaleFactor = WebCore::deviceScaleFactor(renderer);
-    auto outlineOffset = Style::evaluate<float>(style->outlineOffset(), Style::ZoomNeeded { });
+    auto outlineOffset = Style::evaluate<float>(style->usedOutlineOffset(), Style::ZoomNeeded { });
 
     Vector<FloatRect> pixelSnappedFocusRingRects;
     for (auto rect : focusRingRects) {
@@ -265,9 +267,9 @@ void OutlinePainter::paintFocusRing(const RenderElement& renderer, const Vector<
     }
     auto styleOptions = renderer.styleColorOptions();
     styleOptions.add(StyleColorOptions::UseSystemAppearance);
-    auto focusRingColor = usePlatformFocusRingColorForOutlineStyleAuto() ? RenderTheme::singleton().focusRingColor(styleOptions) : style->visitedDependentColorWithColorFilter(CSSPropertyOutlineColor);
+    auto focusRingColor = usePlatformFocusRingColorForOutlineStyleAuto() ? RenderTheme::singleton().focusRingColor(styleOptions) : style->visitedDependentOutlineColorApplyingColorFilter();
     if (useShrinkWrappedFocusRingForOutlineStyleAuto() && style->hasBorderRadius()) {
-        Path path = PathUtilities::pathWithShrinkWrappedRectsForOutline(pixelSnappedFocusRingRects, style->border().radii(), outlineOffset, style->writingMode(), deviceScaleFactor);
+        auto path = pathWithShrinkWrappedRects(pixelSnappedFocusRingRects, style->border().radii, outlineOffset, style->writingMode(), deviceScaleFactor);
         if (path.isEmpty()) {
             for (auto rect : pixelSnappedFocusRingRects)
                 path.addRect(rect);
@@ -386,7 +388,7 @@ bool OutlinePainter::collectFocusRingRectsForBlock(const RenderBlock& renderer, 
         auto topMargin = prevInlineHasLineBox ? renderer.collapsedMarginBefore() : 0_lu;
         auto bottomMargin = nextInlineHasLineBox ? renderer.collapsedMarginAfter() : 0_lu;
         LayoutRect rect(additionalOffset.x(), additionalOffset.y() - topMargin, renderer.width(), renderer.height() + topMargin + bottomMargin);
-        appendIfNotEmpty(rects, WTFMove(rect));
+        appendIfNotEmpty(rects, WTF::move(rect));
     } else if (renderer.width() && renderer.height())
         rects.append(LayoutRect(additionalOffset, renderer.size()));
 
@@ -437,7 +439,7 @@ void OutlinePainter::collectFocusRingRectsForInlineChildren(const RenderBlockFlo
             , additionalOffset.y() + top
             , LayoutUnit { unflippedVisualRect.width() }
             , bottom - top };
-        appendIfNotEmpty(rects, WTFMove(rect));
+        appendIfNotEmpty(rects, WTF::move(rect));
     }
 
     if (hasBlockContent) {
@@ -449,6 +451,228 @@ void OutlinePainter::collectFocusRingRectsForInlineChildren(const RenderBlockFlo
             collectFocusRingRectsForChildBox(renderBox, rects, additionalOffset, paintContainer);
         }
     }
+}
+
+static std::pair<FloatPoint, FloatPoint> startAndEndPointsForCorner(const FloatPointGraph::Edge& fromEdge, const FloatPointGraph::Edge& toEdge, const FloatSize& radius)
+{
+    FloatSize fromEdgeVector = *fromEdge.second - *fromEdge.first;
+    FloatSize toEdgeVector = *toEdge.second - *toEdge.first;
+
+    FloatPoint fromEdgeNorm = toFloatPoint(fromEdgeVector);
+    fromEdgeNorm.normalize();
+    FloatSize fromOffset = FloatSize(radius.width() * fromEdgeNorm.x(), radius.height() * fromEdgeNorm.y());
+    FloatPoint startPoint = *fromEdge.second - fromOffset;
+
+    FloatPoint toEdgeNorm = toFloatPoint(toEdgeVector);
+    toEdgeNorm.normalize();
+    FloatSize toOffset = FloatSize(radius.width() * toEdgeNorm.x(), radius.height() * toEdgeNorm.y());
+    FloatPoint endPoint = *toEdge.first + toOffset;
+    return std::make_pair(startPoint, endPoint);
+}
+
+enum class CornerType : uint8_t { TopLeft, TopRight, BottomRight, BottomLeft, Other };
+
+static CornerType cornerType(const FloatPointGraph::Edge& fromEdge, const FloatPointGraph::Edge& toEdge)
+{
+    auto fromEdgeVector = *fromEdge.second - *fromEdge.first;
+    auto toEdgeVector = *toEdge.second - *toEdge.first;
+
+    if (fromEdgeVector.height() < 0 && toEdgeVector.width() > 0)
+        return CornerType::TopLeft;
+    if (fromEdgeVector.width() > 0 && toEdgeVector.height() > 0)
+        return CornerType::TopRight;
+    if (fromEdgeVector.height() > 0 && toEdgeVector.width() < 0)
+        return CornerType::BottomRight;
+    if (fromEdgeVector.width() < 0 && toEdgeVector.height() < 0)
+        return CornerType::BottomLeft;
+    return CornerType::Other;
+}
+
+static CornerType cornerTypeForMultiline(const FloatPointGraph::Edge& fromEdge, const FloatPointGraph::Edge& toEdge, const Vector<FloatPoint>& corners)
+{
+    auto corner = cornerType(fromEdge, toEdge);
+    if (corner == CornerType::TopLeft && corners.at(0) == *fromEdge.second)
+        return corner;
+    if (corner == CornerType::TopRight && corners.at(1) == *fromEdge.second)
+        return corner;
+    if (corner == CornerType::BottomRight && corners.at(2) == *fromEdge.second)
+        return corner;
+    if (corner == CornerType::BottomLeft && corners.at(3) == *fromEdge.second)
+        return corner;
+    return CornerType::Other;
+}
+
+static std::pair<FloatPoint, FloatPoint> controlPointsForBezierCurve(CornerType cornerType, const FloatPointGraph::Edge& fromEdge, const FloatPointGraph::Edge& toEdge, const FloatSize& radius)
+{
+    FloatPoint cp1;
+    FloatPoint cp2;
+    switch (cornerType) {
+    case CornerType::TopLeft: {
+        cp1 = FloatPoint(fromEdge.second->x(), fromEdge.second->y() + radius.height() * Path::circleControlPoint());
+        cp2 = FloatPoint(toEdge.first->x() + radius.width() * Path::circleControlPoint(), toEdge.first->y());
+        break;
+    }
+    case CornerType::TopRight: {
+        cp1 = FloatPoint(fromEdge.second->x() - radius.width() * Path::circleControlPoint(), fromEdge.second->y());
+        cp2 = FloatPoint(toEdge.first->x(), toEdge.first->y() + radius.height() * Path::circleControlPoint());
+        break;
+    }
+    case CornerType::BottomRight: {
+        cp1 = FloatPoint(fromEdge.second->x(), fromEdge.second->y() - radius.height() * Path::circleControlPoint());
+        cp2 = FloatPoint(toEdge.first->x() - radius.width() * Path::circleControlPoint(), toEdge.first->y());
+        break;
+    }
+    case CornerType::BottomLeft: {
+        cp1 = FloatPoint(fromEdge.second->x() + radius.width() * Path::circleControlPoint(), fromEdge.second->y());
+        cp2 = FloatPoint(toEdge.first->x(), toEdge.first->y() - radius.height() * Path::circleControlPoint());
+        break;
+    }
+    case CornerType::Other: {
+        ASSERT_NOT_REACHED();
+        break;
+    }
+    }
+    return std::make_pair(cp1, cp2);
+}
+
+static FloatRoundedRect::Radii adjustedRadiiForHuggingCurve(const FloatRoundedRect::Radii& inputRadii, float outlineOffset)
+{
+    // This adjusts the radius so that it follows the border curve even when offset is present.
+    auto adjustedRadius = [outlineOffset](const FloatSize& radius) {
+        FloatSize expandSize;
+        if (radius.width() > outlineOffset)
+            expandSize.setWidth(std::min(outlineOffset, radius.width() - outlineOffset));
+        if (radius.height() > outlineOffset)
+            expandSize.setHeight(std::min(outlineOffset, radius.height() - outlineOffset));
+        FloatSize adjustedRadius = radius;
+        adjustedRadius.expand(expandSize.width(), expandSize.height());
+        // Do not go to negative radius.
+        return adjustedRadius.expandedTo(FloatSize(0, 0));
+    };
+
+    return {
+        adjustedRadius(inputRadii.topLeft()),
+        adjustedRadius(inputRadii.topRight()),
+        adjustedRadius(inputRadii.bottomLeft()),
+        adjustedRadius(inputRadii.bottomRight()),
+    };
+}
+
+static std::optional<FloatRect> rectFromPolygon(const FloatPointGraph::Polygon& poly)
+{
+    if (poly.size() != 4)
+        return std::optional<FloatRect>();
+
+    std::optional<FloatPoint> topLeft;
+    std::optional<FloatPoint> bottomRight;
+    for (unsigned i = 0; i < poly.size(); ++i) {
+        const auto& toEdge = poly[i];
+        const auto& fromEdge = (i > 0) ? poly[i - 1] : poly[poly.size() - 1];
+        auto corner = cornerType(fromEdge, toEdge);
+        if (corner == CornerType::TopLeft) {
+            ASSERT(!topLeft);
+            topLeft = *fromEdge.second;
+        } else if (corner == CornerType::BottomRight) {
+            ASSERT(!bottomRight);
+            bottomRight = *fromEdge.second;
+        }
+    }
+    if (!topLeft || !bottomRight)
+        return std::optional<FloatRect>();
+    return FloatRect(topLeft.value(), bottomRight.value());
+}
+
+Path OutlinePainter::pathWithShrinkWrappedRects(const Vector<FloatRect>& rects, const Style::BorderRadius& radii, float outlineOffset, WritingMode writingMode, float deviceScaleFactor)
+{
+    auto roundedRect = [radii, outlineOffset, deviceScaleFactor](const FloatRect& rect) {
+        auto adjustedRadii = adjustedRadiiForHuggingCurve(Style::evaluate<FloatRoundedRect::Radii>(radii, rect.size(), Style::ZoomNeeded { }), outlineOffset);
+        adjustedRadii.scale(calcBorderRadiiConstraintScaleFor(rect, adjustedRadii));
+
+        LayoutRoundedRect roundedRect(
+            LayoutRect(rect),
+            LayoutRoundedRect::Radii(
+                LayoutSize(adjustedRadii.topLeft()),
+                LayoutSize(adjustedRadii.topRight()),
+                LayoutSize(adjustedRadii.bottomLeft()),
+                LayoutSize(adjustedRadii.bottomRight())
+            )
+        );
+        Path path;
+        path.addRoundedRect(roundedRect.pixelSnappedRoundedRectForPainting(deviceScaleFactor));
+        return path;
+    };
+
+    if (rects.size() == 1)
+        return roundedRect(rects.at(0));
+
+    auto [graph, polys] = FloatPointGraph::polygonsForRect(rects);
+
+    // Fall back to corner painting with no radius for empty and disjoint rectangles.
+    if (!polys.size() || polys.size() > 1)
+        return Path();
+    const auto& poly = polys.at(0);
+    // Fast path when poly has one rect only.
+    std::optional<FloatRect> rect = rectFromPolygon(poly);
+    if (rect)
+        return roundedRect(rect.value());
+
+    Path path;
+    // Multiline outline needs to match multiline border painting. Only first and last lines are getting rounded borders.
+    auto isLeftToRight = writingMode.isBidiLTR();
+    auto firstLineRect = isLeftToRight ? rects.at(0) : rects.at(rects.size() - 1);
+    auto lastLineRect = isLeftToRight ? rects.at(rects.size() - 1) : rects.at(0);
+    // Adjust radius so that it matches the box border.
+    auto firstLineRadii = Style::evaluate<FloatRoundedRect::Radii>(radii, firstLineRect.size(), Style::ZoomNeeded { });
+    auto lastLineRadii = Style::evaluate<FloatRoundedRect::Radii>(radii, lastLineRect.size(), Style::ZoomNeeded { });
+    firstLineRadii.scale(calcBorderRadiiConstraintScaleFor(firstLineRect, firstLineRadii));
+    lastLineRadii.scale(calcBorderRadiiConstraintScaleFor(lastLineRect, lastLineRadii));
+
+    // physical topLeft/topRight/bottomRight/bottomLeft
+    auto isHorizontal = writingMode.isHorizontal();
+    auto corners = Vector<FloatPoint>::from(
+        firstLineRect.minXMinYCorner(),
+        isHorizontal ? lastLineRect.maxXMinYCorner() : firstLineRect.maxXMinYCorner(),
+        lastLineRect.maxXMaxYCorner(),
+        isHorizontal ? firstLineRect.minXMaxYCorner() : lastLineRect.minXMaxYCorner()
+    );
+
+    for (unsigned i = 0; i < poly.size(); ++i) {
+        auto moveOrAddLineTo = [i, &path](const FloatPoint& startPoint) {
+            if (!i)
+                path.moveTo(startPoint);
+            else
+                path.addLineTo(startPoint);
+        };
+        const auto& toEdge = poly[i];
+        const auto& fromEdge = (i > 0) ? poly[i - 1] : poly[poly.size() - 1];
+        FloatSize radius;
+        auto corner = cornerTypeForMultiline(fromEdge, toEdge, corners);
+        switch (corner) {
+        case CornerType::TopLeft:
+            radius = firstLineRadii.topLeft();
+            break;
+        case CornerType::TopRight:
+            radius = lastLineRadii.topRight();
+            break;
+        case CornerType::BottomRight:
+            radius = lastLineRadii.bottomRight();
+            break;
+        case CornerType::BottomLeft:
+            radius = firstLineRadii.bottomLeft();
+            break;
+        case CornerType::Other:
+            // Do not apply border radius on corners that normal border painting skips. (multiline content)
+            moveOrAddLineTo(*fromEdge.second);
+            continue;
+        }
+        auto [startPoint, endPoint] = startAndEndPointsForCorner(fromEdge, toEdge, radius);
+        moveOrAddLineTo(startPoint);
+
+        auto [cp1, cp2] = controlPointsForBezierCurve(corner, fromEdge, toEdge, radius);
+        path.addBezierCurveTo(cp1, cp2, endPoint);
+    }
+    path.closeSubpath();
+    return path;
 }
 
 void OutlinePainter::addPDFURLAnnotationForLink(const RenderElement& renderer, const LayoutPoint& paintOffset) const
@@ -478,4 +702,4 @@ void OutlinePainter::addPDFURLAnnotationForLink(const RenderElement& renderer, c
     m_paintInfo.context().setURLForRect(element->protectedDocument()->completeURL(href), urlRect);
 }
 
-}
+} // namespace WebCore

@@ -69,13 +69,9 @@ class CachedRawResource;
         friend class InspectorInstrumentation;
         friend class InspectorNetworkAgent;
 
-        // CachedResourceClient.
+        // CachedResourceClient, ThreadableLoader.
         void ref() const final { RefCounted::ref(); }
         void deref() const final { RefCounted::deref(); }
-
-    protected:
-        void refThreadableLoader() override { ref(); }
-        void derefThreadableLoader() override { deref(); }
 
     private:
         enum BlockingBehavior {
@@ -120,6 +116,7 @@ class CachedRawResource;
 
         Document& document() { return *m_document; }
         Ref<Document> protectedDocument();
+        Ref<const Document> protectedDocument() const;
 
         const ThreadableLoaderOptions& options() const { return m_options; }
         const String& referrer() const { return m_referrer; }
@@ -137,7 +134,7 @@ class CachedRawResource;
         CachedResourceHandle<CachedRawResource> protectedResource() const;
 
         CachedResourceHandle<CachedRawResource> m_resource;
-        ThreadableLoaderClient* m_client; // FIXME: Use a smart pointer.
+        WeakPtr<ThreadableLoaderClient> m_client;
         WeakPtr<Document, WeakPtrImplWithEventTargetData> m_document;
         ThreadableLoaderOptions m_options;
         bool m_responsesCanBeOpaque { true };

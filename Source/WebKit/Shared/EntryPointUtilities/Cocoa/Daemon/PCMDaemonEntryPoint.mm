@@ -52,10 +52,10 @@ static CompletionHandler<void(PCM::EncodedMessage&&)> replySender(PCM::MessageTy
 {
     if (!PCM::messageTypeSendsReply(messageType))
         return nullptr;
-    return [request = WTFMove(request)] (PCM::EncodedMessage&& message) {
+    return [request = WTF::move(request)] (PCM::EncodedMessage&& message) {
         // FIXME: This is a false positive. <rdar://164843889>
         SUPPRESS_RETAINPTR_CTOR_ADOPT auto reply = adoptXPCObject(xpc_dictionary_create_reply(request.get()));
-        PCM::addVersionAndEncodedMessageToDictionary(WTFMove(message), reply.get());
+        PCM::addVersionAndEncodedMessageToDictionary(WTF::move(message), reply.get());
         xpc_connection_send_message(XPCObjectPtr<xpc_connection_t> { xpc_dictionary_get_remote_connection(request.get()) }.get(), reply.get());
     };
 }

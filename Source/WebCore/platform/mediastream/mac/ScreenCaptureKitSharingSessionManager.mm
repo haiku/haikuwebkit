@@ -410,7 +410,7 @@ void ScreenCaptureKitSharingSessionManager::promptForGetDisplayMedia(DisplayCapt
     if (!m_promptHelper)
         m_promptHelper = adoptNS([[WebDisplayMediaPromptHelper alloc] initWithCallback:this]);
 
-    m_completionHandler = WTFMove(completionHandler);
+    m_completionHandler = WTF::move(completionHandler);
 
     bool showingPicker = useSCContentSharingPicker() ? promptWithSCContentSharingPicker(promptType) : promptWithSCContentSharingSession(promptType);
     if (!showingPicker) {
@@ -576,7 +576,7 @@ RefPtr<ScreenCaptureSessionSource> ScreenCaptureKitSharingSessionManager::create
             protectedThis->cleanupSessionSource(source);
     };
 
-    auto newSession = ScreenCaptureSessionSource::create(WTFMove(observer), WTFMove(stream), contentFilter, sharingSession, WTFMove(cleanupFunction));
+    auto newSession = ScreenCaptureSessionSource::create(WTF::move(observer), WTF::move(stream), contentFilter, sharingSession, WTF::move(cleanupFunction));
     m_activeSources.append(newSession);
 
     return newSession;
@@ -607,15 +607,15 @@ void ScreenCaptureKitSharingSessionManager::cleanupSharingSession(SCContentShari
 
 Ref<ScreenCaptureSessionSource> ScreenCaptureSessionSource::create(WeakPtr<ScreenCaptureSessionSourceObserver> observer, RetainPtr<SCStream> stream, RetainPtr<SCContentFilter> filter, RetainPtr<SCContentSharingSession> sharingSession, CleanupFunction&& cleanupFunction)
 {
-    return adoptRef(*new ScreenCaptureSessionSource(WTFMove(observer), WTFMove(stream), WTFMove(filter), WTFMove(sharingSession), WTFMove(cleanupFunction)));
+    return adoptRef(*new ScreenCaptureSessionSource(WTF::move(observer), WTF::move(stream), WTF::move(filter), WTF::move(sharingSession), WTF::move(cleanupFunction)));
 }
 
 ScreenCaptureSessionSource::ScreenCaptureSessionSource(WeakPtr<ScreenCaptureSessionSourceObserver>&& observer, RetainPtr<SCStream>&& stream, RetainPtr<SCContentFilter>&& filter, RetainPtr<SCContentSharingSession>&& sharingSession, CleanupFunction&& cleanupFunction)
-    : m_stream(WTFMove(stream))
-    , m_contentFilter(WTFMove(filter))
-    , m_sharingSession(WTFMove(sharingSession))
-    , m_observer(WTFMove(observer))
-    , m_cleanupFunction(WTFMove(cleanupFunction))
+    : m_stream(WTF::move(stream))
+    , m_contentFilter(WTF::move(filter))
+    , m_sharingSession(WTF::move(sharingSession))
+    , m_observer(WTF::move(observer))
+    , m_cleanupFunction(WTF::move(cleanupFunction))
 {
 }
 

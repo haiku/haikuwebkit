@@ -1,4 +1,4 @@
-CONSOLE MESSAGE: Reached 1 million iterations
+CONSOLE MESSAGE: Reached maximum iterations
 Tests for truncating async stack traces that exceed the maximum async stack trace depth.
 
 

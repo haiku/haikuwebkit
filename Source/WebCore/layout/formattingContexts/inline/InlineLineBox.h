@@ -121,7 +121,7 @@ private:
     bool m_hasContent { false };
     bool m_isFirstFormattedLine { true };
     InlineRect m_logicalRect;
-    OptionSet<InlineLevelBox::Type> m_boxTypes;
+    EnumSet<InlineLevelBox::Type> m_boxTypes;
 
     FontBaseline m_baselineType { FontBaseline::Alphabetic };
     InlineLevelBox m_rootInlineBox;

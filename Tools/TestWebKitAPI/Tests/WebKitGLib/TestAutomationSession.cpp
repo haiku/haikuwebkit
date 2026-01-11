@@ -37,7 +37,7 @@ public:
         GRefPtr<GSocketClient> socketClient = adoptGRef(g_socket_client_new());
         g_socket_client_connect_to_host_async(socketClient.get(), "127.0.0.1:2229", 0, nullptr, [](GObject* client, GAsyncResult* result, gpointer userData) {
             GRefPtr<GSocketConnection> connection = adoptGRef(g_socket_client_connect_to_host_finish(G_SOCKET_CLIENT(client), result, nullptr));
-            static_cast<AutomationTest*>(userData)->setConnection(SocketConnection::create(WTFMove(connection), s_messageHandlers, userData));
+            static_cast<AutomationTest*>(userData)->setConnection(SocketConnection::create(WTF::move(connection), s_messageHandlers, userData));
         }, this);
         g_main_loop_run(m_mainLoop.get());
     }
@@ -58,7 +58,7 @@ public:
 
     void setConnection(Ref<SocketConnection>&& connection)
     {
-        m_connection = WTFMove(connection);
+        m_connection = WTF::move(connection);
         g_main_loop_quit(m_mainLoop.get());
     }
 
@@ -67,7 +67,7 @@ public:
         bool newConnection = !m_connectionID;
         bool wasPaired = m_target.isPaired;
         m_connectionID = connectionID;
-        m_target = WTFMove(target);
+        m_target = WTF::move(target);
         if (newConnection || (!wasPaired && m_target.isPaired))
             g_main_loop_quit(m_mainLoop.get());
     }

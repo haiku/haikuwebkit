@@ -45,7 +45,15 @@
 
 // This can't use USE(APPLE_INTERNAL_SDK) because this comes before PlatformUse.h.
 #if PLATFORM(COCOA) && __has_include(<WebKitAdditions/AdditionalPlatformHave.h>)
+/* FIXME: Properly support using WKA in modules. */
+#if defined(__clang__) && defined(__has_feature) && __has_feature(modules)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnon-modular-include-in-module"
+#endif
 #include <WebKitAdditions/AdditionalPlatformHave.h>
+#if defined(__clang__) && defined(__has_feature) && __has_feature(modules)
+#pragma clang diagnostic pop
+#endif
 #endif
 
 
@@ -59,14 +67,11 @@
 #define HAVE_ARM_IDIV_INSTRUCTIONS 1
 #endif
 
-#if CPU(ADDRESS64) && PLATFORM(IOS_FAMILY) && !PLATFORM(IOS_FAMILY_SIMULATOR) && !PLATFORM(MACCATALYST)
-#define HAVE_36BIT_ADDRESS 1
-#endif
-
 #if CPU(ADDRESS64)
 #if HAVE(36BIT_ADDRESS)
 #define WTF_OS_CONSTANT_EFFECTIVE_ADDRESS_WIDTH 36
-#elif OS(DARWIN)
+/* iOS simulators lie about the size of the address space */
+#elif OS(DARWIN) && !PLATFORM(IOS_FAMILY_SIMULATOR)
 #define WTF_OS_CONSTANT_EFFECTIVE_ADDRESS_WIDTH (WTF::getMSBSetConstexpr(MACH_VM_MAX_ADDRESS) + 1)
 #else
 /* We strongly assume that effective address width is <= 48 in 64bit architectures (e.g. NaN boxing). */
@@ -211,7 +216,7 @@
 #define HAVE_MADV_FREE_REUSE 1
 #endif
 
-#if OS(DARWIN) || OS(HAIKU)
+#if OS(DARWIN) || OS(HAIKU) || OS(QNX)
 #define HAVE_MADV_DONTNEED 1
 #endif
 
@@ -411,7 +416,7 @@
 #define HAVE_URL_FORMATTING 1
 #endif
 
-#if !OS(WINDOWS)
+#if !OS(WINDOWS) && !OS(QNX)
 #define HAVE_STACK_BOUNDS_FOR_NEW_THREAD 1
 #endif
 
@@ -461,11 +466,6 @@
 
 #if PLATFORM(IOS) || PLATFORM(MACCATALYST) || PLATFORM(VISION)
 #define HAVE_LINK_PREVIEW 1
-#endif
-
-#if PLATFORM(COCOA)
-#define HAVE_CFNETWORK_NSURLSESSION_CONNECTION_CACHE_LIMITS 1
-#define HAVE_CFNETWORK_METRICS_APIS_V4 1
 #endif
 
 #if PLATFORM(COCOA) || (defined(USE_CURL) && USE_CURL)
@@ -519,10 +519,6 @@
 
 #if PLATFORM(MACCATALYST)
 #define HAVE_LOOKUP_GESTURE_RECOGNIZER 1
-#endif
-
-#if PLATFORM(COCOA)
-#define HAVE_ALLOWS_SENSITIVE_LOGGING 1
 #endif
 
 #if PLATFORM(COCOA)
@@ -646,10 +642,6 @@
 
 #if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 140000) || PLATFORM(IOS) || PLATFORM(VISION)
 #define HAVE_PASSKIT_APPLE_PAY_LATER_AVAILABILITY 1
-#endif
-
-#if PLATFORM(COCOA)
-#define HAVE_LOGGING_PRIVACY_LEVEL 1
 #endif
 
 #if PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST)
@@ -1259,7 +1251,7 @@
 #endif
 
 #if !defined(HAVE_ADDITIONAL_NS_ACCESSIBILITY_CONSTANTS) \
-    && ((PLATFORM(MAC) && __MAC_OS_X_VERSION_MAX_ALLOWED >= 260000))
+    && ((PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000))
 #define HAVE_ADDITIONAL_NS_ACCESSIBILITY_CONSTANTS 1
 #endif
 
@@ -1403,6 +1395,12 @@
 #if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 140000) \
     || PLATFORM(MACCATALYST) || PLATFORM(IOS) || PLATFORM(VISION)
 #define HAVE_AVASSETWRITER_WITH_OPUS_SUPPORTED 1
+#endif
+
+#if !defined(HAVE_CREDENTIAL_UPDATE_API) \
+    && ((PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 160000) \
+    || ((PLATFORM(IOS) || PLATFORM(MACCATALYST)) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 190000))
+#define HAVE_CREDENTIAL_UPDATE_API 1
 #endif
 
 #if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 140000) \
@@ -1893,4 +1891,10 @@
 #if !defined(HAVE_BROWSERENGINEKIT_WEBCONTENTFILTER) \
 && PLATFORM(IOS) && __has_include(<BrowserEngineKit/BEWebContentFilter.h>)
 #define HAVE_BROWSERENGINEKIT_WEBCONTENTFILTER 1
+#endif
+
+#if !defined(HAVE_IMMERSIVE_VIDEO_METADATA_SUPPORT) \
+    && ((PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 160000) \
+    || PLATFORM(IOS_FAMILY))
+#define HAVE_IMMERSIVE_VIDEO_METADATA_SUPPORT 1
 #endif

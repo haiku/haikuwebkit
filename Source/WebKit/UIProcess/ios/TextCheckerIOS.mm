@@ -240,7 +240,7 @@ Vector<TextCheckingResult> TextChecker::checkTextOfParagraph(SpellDocumentTag sp
                 TextCheckingResult result;
                 result.type = TextCheckingType::Spelling;
                 result.range = resultRange;
-                results.append(WTFMove(result));
+                results.append(WTF::move(result));
             } else if (resultType == NSTextCheckingTypeGrammar && checkingTypes.contains(TextCheckingType::Grammar)) {
                 TextCheckingResult result;
                 NSArray *details = [incomingResult grammarDetails];
@@ -261,9 +261,9 @@ Vector<TextCheckingResult> TextChecker::checkTextOfParagraph(SpellDocumentTag sp
                     detail.range = detailNSRange;
                     detail.userDescription = [incomingDetail objectForKey:@"NSGrammarUserDescription"];
                     detail.guesses = makeVector<String>([incomingDetail objectForKey:@"NSGrammarCorrections"]);
-                    result.details.append(WTFMove(detail));
+                    result.details.append(WTF::move(detail));
                 }
-                results.append(WTFMove(result));
+                results.append(WTF::move(result));
             } else if (resultType == NSTextCheckingTypeCorrection && checkingTypes.contains(TextCheckingType::Correction)) {
                 TextCheckingResult result;
                 result.type = TextCheckingType::Correction;
@@ -285,10 +285,10 @@ Vector<TextCheckingResult> TextChecker::checkTextOfParagraph(SpellDocumentTag sp
                         detail.range = detailNSRange;
                         detail.userDescription = [incomingDetail objectForKey:@"NSGrammarUserDescription"];
                         detail.guesses = makeVector<String>([incomingDetail objectForKey:@"NSGrammarCorrections"]);
-                        result.details.append(WTFMove(detail));
+                        result.details.append(WTF::move(detail));
                     }
                 }
-                results.append(WTFMove(result));
+                results.append(WTF::move(result));
             }
         }
     } else
@@ -303,7 +303,7 @@ Vector<TextCheckingResult> TextChecker::checkTextOfParagraph(SpellDocumentTag sp
             TextCheckingResult result;
             result.type = TextCheckingType::Spelling;
             result.range = misspelledRange;
-            results.append(WTFMove(result));
+            results.append(WTF::move(result));
 
             offsetSoFar = misspelledRange.location + misspelledRange.length;
         } while (offsetSoFar < [stringToCheck length]);
@@ -386,7 +386,7 @@ static Vector<TextCheckingResult> convertExtendedCheckingResults(NSArray<NSTextC
                 detail.userDescription = [incomingDetail objectForKey:@"NSGrammarUserDescription"];
                 RetainPtr<NSArray> guesses = [incomingDetail objectForKey:@"NSGrammarCorrections"];
                 detail.guesses = makeVector<String>(guesses.get());
-                result.details.append(WTFMove(detail));
+                result.details.append(WTF::move(detail));
             }
             results.append(result);
         }
@@ -404,7 +404,7 @@ void TextChecker::requestExtendedCheckingOfString(Ref<TextCheckerCompletion>&& t
 
     RetainPtr textString = textCheckerCompletion->textCheckingRequestData().text().createNSString();
     NSRange range = NSMakeRange(0, textCheckerCompletion->textCheckingRequestData().text().length());
-    [textChecker requestProofreadingReviewOfString:textString.get() range:range language:nil options:@{ } completionHandler:makeBlockPtr([textCompletion = WTFMove(textCheckerCompletion)](NSArray<NSTextCheckingResult *> *incomingResults) {
+    [textChecker requestProofreadingReviewOfString:textString.get() range:range language:nil options:@{ } completionHandler:makeBlockPtr([textCompletion = WTF::move(textCheckerCompletion)](NSArray<NSTextCheckingResult *> *incomingResults) {
         auto results = convertExtendedCheckingResults(incomingResults);
         callOnMainRunLoop([textCompletion, results] {
             textCompletion->didFinishCheckingText(results);

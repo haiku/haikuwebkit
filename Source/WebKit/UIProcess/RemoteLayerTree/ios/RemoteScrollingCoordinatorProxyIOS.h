@@ -77,7 +77,6 @@ public:
     RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const override;
     HashSet<Ref<RemoteProgressBasedTimeline>> timelinesForScrollingNodeIDForTesting(WebCore::ScrollingNodeID) const override;
     void progressBasedTimelinesWereUpdatedForNode(const WebCore::ScrollingTreeScrollingNode&) override;
-    void updateAnimations();
 #endif
 
     void displayDidRefresh(WebCore::PlatformDisplayID) override;
@@ -101,6 +100,12 @@ private:
 
     bool shouldSnapForMainFrameScrolling(WebCore::ScrollEventAxis) const;
     std::pair<float, std::optional<unsigned>> closestSnapOffsetForMainFrameScrolling(WebCore::ScrollEventAxis, float currentScrollOffset, WebCore::FloatPoint scrollDestination, float velocity) const;
+
+#if ENABLE(THREADED_ANIMATIONS)
+    void updateTimeDependentAnimationStacks();
+    void updateAnimationStacksDependentOnScrollingNode(const WebCore::ScrollingTreeScrollingNode&);
+    void updateAnimationStacks(NOESCAPE const Function<bool(const RemoteAnimationStack&)>&);
+#endif
 
     HashMap<unsigned, OptionSet<WebCore::TouchAction>> m_touchActionsByTouchIdentifier;
 

@@ -101,7 +101,7 @@ void ScrollingTreeStickyNodeCocoa::setIsSticking(bool isSticking)
     if (!scrollingTree)
         return;
 
-    ensureOnMainRunLoop([scrollingTree = WTFMove(scrollingTree), nodeID = scrollingNodeID()] {
+    ensureOnMainRunLoop([scrollingTree = WTF::move(scrollingTree), nodeID = scrollingNodeID()] {
         scrollingTree->stickyScrollingTreeNodeBeganSticking(nodeID);
     });
 }

@@ -78,14 +78,14 @@ void PreviewConverter::updateMainResource()
     if (m_state != State::Updating)
         return;
 
-    auto provider = m_provider.get();
+    RefPtr provider = m_provider.get();
     if (!provider) {
         didFailUpdating();
         return;
     }
 
     provider->provideMainResourceForPreviewConverter(*this, [this, protectedThis = Ref { *this }](Ref<FragmentedSharedBuffer>&& buffer) {
-        appendFromBuffer(WTFMove(buffer));
+        appendFromBuffer(WTF::move(buffer));
     });
 }
 
@@ -280,7 +280,7 @@ void PreviewConverter::delegateDidFailWithError(const ResourceError& error)
     }
 
     ASSERT(m_state == State::Updating);
-    auto provider = m_provider.get();
+    RefPtr provider = m_provider.get();
     if (!provider) {
         didFailConvertingWithError(error);
         return;

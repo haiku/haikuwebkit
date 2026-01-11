@@ -156,7 +156,7 @@ public:
     T takeLast()
     {
         ASSERT_WITH_SECURITY_IMPLICATION(!isEmpty());
-        T result = WTFMove(last());
+        T result = WTF::move(last());
         --m_size;
         return result;
     }

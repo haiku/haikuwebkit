@@ -173,7 +173,7 @@ public:
 
 #if ENABLE(THREADED_ANIMATIONS)
     const WebCore::AcceleratedTimelinesUpdate& timelinesUpdate() const { return m_timelinesUpdate; }
-    void setTimelinesUpdate(WebCore::AcceleratedTimelinesUpdate&& timelinesUpdate) { m_timelinesUpdate = WTFMove(timelinesUpdate); }
+    void setTimelinesUpdate(WebCore::AcceleratedTimelinesUpdate&& timelinesUpdate) { m_timelinesUpdate = WTF::move(timelinesUpdate); }
 #endif
 
 private:

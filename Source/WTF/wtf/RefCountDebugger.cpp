@@ -32,6 +32,10 @@ bool RefCountDebugger::areThreadingChecksEnabledGlobally { false };
 // This is a convenience that makes IPC serialization easier.
 static_assert(sizeof(RefCountedBase) == sizeof(ThreadSafeRefCountedBase));
 
+#if defined(NDEBUG) && !ASSERT_ENABLED && !ENABLE(SECURITY_ASSERTIONS) && COMPILER(CLANG) && !OS(WINDOWS)
+static_assert(sizeof(RefCountedBase) == sizeof(unsigned), "RefCountedBase should stay small");
+#endif
+
 class RefLogStackShot : public StackShot {
     static const size_t s_size = 18;
     static const size_t s_skip = 6;

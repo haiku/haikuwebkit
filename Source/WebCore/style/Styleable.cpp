@@ -45,10 +45,11 @@
 #include "RenderElementInlines.h"
 #include "RenderListItem.h"
 #include "RenderListMarker.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderView.h"
 #include "StyleAnimations.h"
 #include "StylableInlines.h"
+#include "StyleChangedAnimatableProperties.h"
 #include "StyleCustomPropertyData.h"
 #include "StyleInterpolation.h"
 #include "StyleOriginatedAnimation.h"
@@ -434,7 +435,7 @@ void Styleable::updateCSSAnimations(const RenderStyle* currentStyle, const Rende
             if (!foundMatchingAnimation && isInDisplayNoneTree == Style::IsInDisplayNoneTree::No) {
                 auto cssAnimation = CSSAnimation::create(*this, Style::Animation { currentAnimation }, currentStyle, newStyle, resolutionContext);
                 newStyleOriginatedAnimations.append(cssAnimation.ptr());
-                newAnimations.add(WTFMove(cssAnimation));
+                newAnimations.add(WTF::move(cssAnimation));
             }
         }
     }
@@ -447,7 +448,7 @@ void Styleable::updateCSSAnimations(const RenderStyle* currentStyle, const Rende
         }
     }
 
-    setAnimationsCreatedByMarkup(WTFMove(newAnimations));
+    setAnimationsCreatedByMarkup(WTF::move(newAnimations));
 
     keyframeEffectStack.setCSSAnimationList(Style::Animations { currentAnimationList });
 
@@ -629,7 +630,7 @@ static void updateCSSTransitionsForStyleableAndProperty(const Styleable& styleab
     auto createCSSTransition = [&](const RenderStyle& oldStyle, Seconds delay, Seconds duration, const RenderStyle& reversingAdjustedStartStyle, double reversingShorteningFactor) {
         auto cssTransition = CSSTransition::create(styleable, property, generationTime, *matchingTransition, oldStyle, afterChangeStyle, delay, duration, reversingAdjustedStartStyle, reversingShorteningFactor);
         newStyleOriginatedAnimations.append(cssTransition.ptr());
-        styleable.ensureRunningTransitionsByProperty().set(property, WTFMove(cssTransition));
+        styleable.ensureRunningTransitionsByProperty().set(property, WTF::move(cssTransition));
     };
 
     bool hasRunningTransition = styleable.hasRunningTransitionForProperty(property);
@@ -786,7 +787,7 @@ void Styleable::updateCSSTransitions(const RenderStyle& currentStyle, const Rend
                     } else if (propertyId != CSSPropertyInvalid)
                         transitionProperties.m_properties.set(propertyId);
                 },
-                [&] (const AtomString&) { }
+                [&](const AtomString&) { }
             );
         };
 
@@ -794,7 +795,7 @@ void Styleable::updateCSSTransitions(const RenderStyle& currentStyle, const Rend
         if (auto* lastStyleChangeEventStyle = this->lastStyleChangeEventStyle())
             targetStyle = lastStyleChangeEventStyle;
 
-        targetStyle->conservativelyCollectChangedAnimatableProperties(newStyle, transitionProperties);
+        Style::conservativelyCollectChangedAnimatableProperties(*targetStyle, newStyle, transitionProperties);
 
         // When we have keyframeEffectStack, it can affect on properties. So we just add them.
         if (keyframeEffectStack()) {

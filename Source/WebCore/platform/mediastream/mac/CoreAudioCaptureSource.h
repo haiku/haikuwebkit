@@ -177,7 +177,7 @@ private:
 
 inline CaptureSourceOrError CoreAudioCaptureSourceFactory::createAudioCaptureSource(const CaptureDevice& device, MediaDeviceHashSalts&& hashSalts, const MediaConstraints* constraints, std::optional<PageIdentifier> pageIdentifier)
 {
-    return CoreAudioCaptureSource::create(device, WTFMove(hashSalts), constraints, pageIdentifier);
+    return CoreAudioCaptureSource::create(device, WTF::move(hashSalts), constraints, pageIdentifier);
 }
 
 } // namespace WebCore

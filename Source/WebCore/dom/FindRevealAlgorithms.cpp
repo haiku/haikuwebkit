@@ -33,7 +33,7 @@
 #include "HTMLDetailsElement.h"
 #include "HTMLSlotElement.h"
 #include "NodeRenderStyle.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "Settings.h"
 #include "UserAgentParts.h"
 

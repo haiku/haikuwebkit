@@ -59,7 +59,7 @@
 #import "NodeName.h"
 #import "RenderImage.h"
 #import "RenderObjectStyle.h"
-#import "RenderStyleInlines.h"
+#import "RenderStyle+GettersInlines.h"
 #import "RenderText.h"
 #import "StyleExtractor.h"
 #import "StyleProperties.h"
@@ -405,13 +405,13 @@ static void updateAttributes(const Node* node, const RenderStyle& style, OptionS
         [attributes setObject:paragraphStyle.get() forKey:NSParagraphStyleAttributeName];
     }
 
-    Color foregroundColor = style.visitedDependentColorWithColorFilter(CSSPropertyColor);
+    auto foregroundColor = style.visitedDependentColorApplyingColorFilter();
     if (foregroundColor.isVisible())
         [attributes setObject:cocoaColor(foregroundColor).get() forKey:NSForegroundColorAttributeName];
     else
         [attributes removeObjectForKey:NSForegroundColorAttributeName];
 
-    Color backgroundColor = style.visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor);
+    auto backgroundColor = style.visitedDependentBackgroundColorApplyingColorFilter();
     if (backgroundColor.isVisible())
         [attributes setObject:cocoaColor(backgroundColor).get() forKey:NSBackgroundColorAttributeName];
     else
@@ -506,7 +506,7 @@ static AttributedString editingAttributedStringInternal(const SimpleRange& range
         stringLength += currentTextLength;
     }
 
-    return AttributedString::fromNSAttributedString(WTFMove(string));
+    return AttributedString::fromNSAttributedString(WTF::move(string));
 }
 
 AttributedString editingAttributedString(const SimpleRange& range, OptionSet<IncludedElement> includedElements)

@@ -153,3 +153,11 @@ private:
 
 } // namespace TestWithSwift
 } // namespace Messages
+
+namespace CompletionHandlers {
+namespace TestWithSwift {
+using TestAsyncMessageCompletionHandler = WTF::RefCountable<Messages::TestWithSwift::TestAsyncMessage::Reply>;
+using TestSyncMessageCompletionHandler = WTF::RefCountable<Messages::TestWithSwift::TestSyncMessage::Reply>;
+} // namespace TestWithSwift
+} // namespace CompletionHandlers
+

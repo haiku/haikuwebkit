@@ -136,7 +136,7 @@ public:
 
     static void provideTo(Supplementable<T>* host, ASCIILiteral key, std::unique_ptr<Supplement<T>> supplement)
     {
-        host->provideSupplement(key, WTFMove(supplement));
+        host->provideSupplement(key, WTF::move(supplement));
     }
 
     static Supplement<T>* from(Supplementable<T>* host, ASCIILiteral key)
@@ -152,7 +152,7 @@ public:
     {
         ASSERT(canCurrentThreadAccessThreadLocalData(m_thread));
         ASSERT(!m_supplements.get(key));
-        m_supplements.add(key, WTFMove(supplement));
+        m_supplements.add(key, WTF::move(supplement));
     }
 
     Supplement<T>* requireSupplement(ASCIILiteral key)

@@ -91,7 +91,7 @@ void WebInspectorBackend::setFrontendConnection(IPC::Connection::Handle&& connec
     if (!connectionHandle)
         return;
 
-    Ref frontendConnection = IPC::Connection::createClientConnection(IPC::Connection::Identifier { WTFMove(connectionHandle) });
+    Ref frontendConnection = IPC::Connection::createClientConnection(IPC::Connection::Identifier { WTF::move(connectionHandle) });
     m_frontendConnection = frontendConnection.copyRef();
     frontendConnection->open(*this);
 
@@ -128,7 +128,7 @@ void WebInspectorBackend::whenFrontendConnectionEstablished(Function<void(IPC::C
         return;
     }
 
-    m_frontendConnectionActions.append(WTFMove(callback));
+    m_frontendConnectionActions.append(WTF::move(callback));
 }
 
 // Called by WebInspectorBackend messages
@@ -190,7 +190,7 @@ void WebInspectorBackend::showMainResourceForFrame(WebCore::FrameIdentifier fram
     if (!m_page->corePage())
         return;
 
-    String inspectorFrameIdentifier = m_page->corePage()->inspectorController().ensurePageAgent().frameId(frame->protectedCoreLocalFrame().get());
+    String inspectorFrameIdentifier = CheckedRef { m_page->corePage()->inspectorController().ensurePageAgent() }->frameId(frame->protectedCoreLocalFrame().get());
 
     whenFrontendConnectionEstablished([inspectorFrameIdentifier](auto& frontendConnection) {
         frontendConnection.send(Messages::WebInspectorUI::ShowMainResourceForFrame(inspectorFrameIdentifier), 0);
@@ -256,7 +256,7 @@ void WebInspectorBackend::setDeveloperPreferenceOverride(InspectorBackendClient:
 
 void WebInspectorBackend::setEmulatedConditions(std::optional<int64_t>&& bytesPerSecondLimit)
 {
-    WebProcess::singleton().protectedParentProcessConnection()->send(Messages::WebInspectorBackendProxy::SetEmulatedConditions(WTFMove(bytesPerSecondLimit)), m_page->identifier());
+    WebProcess::singleton().protectedParentProcessConnection()->send(Messages::WebInspectorBackendProxy::SetEmulatedConditions(WTF::move(bytesPerSecondLimit)), m_page->identifier());
 }
 
 #endif // ENABLE(INSPECTOR_NETWORK_THROTTLING)

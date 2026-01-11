@@ -106,6 +106,7 @@ public:
 
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) final;
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const;
+    bool isSessionClosed() const;
 private:
 #if PLATFORM(COCOA)
     static Ref<NetworkTransportSession> create(NetworkConnectionToWebProcess&, WebTransportSessionIdentifier, WebCore::WebTransportOptions&&, nw_connection_group_t, nw_endpoint_t);

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012 Google Inc. All rights reserved.
- * Copyright (C) 2013-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -111,6 +111,7 @@ class InternalsSetLike;
 class LocalFrame;
 class Location;
 class MallocStatistics;
+class MediaControlsHost;
 class MediaSessionManagerInterface;
 class MediaStream;
 class MediaStreamTrack;
@@ -119,6 +120,7 @@ class MessagePort;
 class MockCDMFactory;
 class MockCaptionDisplaySettingsClientCallback;
 class MockContentFilterSettings;
+class MockMediaDeviceRouteController;
 class MockPageOverlay;
 class MockPaymentCoordinator;
 class NodeList;
@@ -302,7 +304,6 @@ public:
     void setUserAgentPart(Element&, const AtomString&);
 
     // DOMTimers throttling testing.
-    int timerNestingLevel();
     ExceptionOr<bool> isTimerThrottled(int timeoutId);
     ExceptionOr<bool> isTimerAligned(int timeoutId);
     String requestAnimationFrameThrottlingReasons() const;
@@ -846,6 +847,7 @@ public:
     ExceptionOr<void> setCaptionsStyleSheetOverride(const String&);
     ExceptionOr<void> setPrimaryAudioTrackLanguageOverride(const String&);
     ExceptionOr<void> setCaptionDisplayMode(const String&);
+    String captionDisplayMode() const;
 #if ENABLE(VIDEO)
     RefPtr<TextTrackCueGeneric> createGenericCue(double startTime, double endTime, String text);
     ExceptionOr<String> textTrackBCP47Language(TextTrack&);
@@ -857,6 +859,7 @@ public:
 
     void setMockCaptionDisplaySettingsClientCallback(RefPtr<MockCaptionDisplaySettingsClientCallback>&&);
     MockCaptionDisplaySettingsClientCallback* mockCaptionDisplaySettingsClientCallback() const;
+    RefPtr<MediaControlsHost> controlsHostForMediaElement(HTMLMediaElement&);
 #endif
 
     ExceptionOr<Ref<DOMRect>> selectionBounds();
@@ -964,6 +967,8 @@ public:
     void setTrackingPreventionEnabled(bool);
 
     bool isReadableStreamDisturbed(ReadableStream&);
+    void observeReadableStreamLifetime(ReadableStream&);
+    unsigned observedLiveReadableStreamCount();
     JSC::JSValue cloneArrayBuffer(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue, JSC::JSValue);
 
     String composedTreeAsText(Node&);
@@ -1201,6 +1206,7 @@ public:
         bool haveEverRegisteredAsNowPlayingApplication;
     };
     ExceptionOr<NowPlayingState> nowPlayingState() const;
+    void setNowPlayingUpdateInterval(double);
 
     struct MediaUsageState {
         String mediaURL;
@@ -1259,7 +1265,7 @@ public:
     void setMediaElementVolumeLocked(HTMLMediaElement&, bool);
 
 #if ENABLE(SPEECH_SYNTHESIS)
-    ExceptionOr<RefPtr<SpeechSynthesisUtterance>> speechSynthesisUtteranceForCue(const VTTCue&);
+    SpeechSynthesisUtterance* speechSynthesisUtteranceForCue(const VTTCue&);
     ExceptionOr<RefPtr<VTTCue>> mediaElementCurrentlySpokenCue(HTMLMediaElement&);
 #endif
 
@@ -1350,11 +1356,11 @@ public:
         static Cookie toCookie(CookieData&& cookieData)
         {
             Cookie cookie;
-            cookie.name = WTFMove(cookieData.name);
-            cookie.value = WTFMove(cookieData.value);
-            cookie.domain = WTFMove(cookieData.domain);
-            cookie.path = WTFMove(cookieData.path);
-            cookie.expires = WTFMove(cookieData.expires);
+            cookie.name = WTF::move(cookieData.name);
+            cookie.value = WTF::move(cookieData.value);
+            cookie.domain = WTF::move(cookieData.domain);
+            cookie.path = WTF::move(cookieData.path);
+            cookie.expires = WTF::move(cookieData.expires);
             if (cookieData.isSameSiteNone)
                 cookie.sameSite = Cookie::SameSitePolicy::None;
             else if (cookieData.isSameSiteLax)
@@ -1530,9 +1536,12 @@ public:
     enum class ContentSizeCategory { L, XXXL };
     void setContentSizeCategory(ContentSizeCategory);
 
-#if ENABLE(ATTACHMENT_ELEMENT) && ENABLE(SERVICE_CONTROLS)
+#if ENABLE(ATTACHMENT_ELEMENT)
+#if ENABLE(SERVICE_CONTROLS)
     bool hasImageControls(const HTMLImageElement&) const;
-#endif // ENABLE(ATTACHMENT_ELEMENT) && ENABLE(SERVICE_CONTROLS)
+#endif // ENABLE(SERVICE_CONTROLS)
+    String attachmentElementShadowUserAgentStyleSheet() const;
+#endif // ENABLE(ATTACHMENT_ELEMENT)
 
 #if ENABLE(MEDIA_SESSION)
     ExceptionOr<double> currentMediaSessionPosition(const MediaSession&);
@@ -1656,9 +1665,15 @@ public:
     bool isModelElementIntersectingViewport(HTMLModelElement&);
 #endif
 
+    ExceptionOr<void> copyImageAtLocation(int x, int y);
+
     bool hasMediaSessionManager() const;
 
     size_t fileConnectionHandleCount(const FileSystemHandle&) const;
+
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+    MockMediaDeviceRouteController& mockMediaDeviceRouteController();
+#endif
 
 private:
     explicit Internals(Document&);
@@ -1735,6 +1750,10 @@ private:
     std::unique_ptr<CaptionUserPreferencesTestingModeToken> m_testingModeToken;
     RefPtr<MockCaptionDisplaySettingsClientCallback> m_mockCaptionDisplaySettingsClientCallback;
 #endif
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+    RefPtr<MockMediaDeviceRouteController> m_mockMediaDeviceRouteController;
+#endif
+    WeakHashSet<ReadableStream> m_observedLiveReadableStreams;
 };
 
 } // namespace WebCore

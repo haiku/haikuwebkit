@@ -87,7 +87,10 @@ enum {
     N_PROPERTIES
 };
 
-static constexpr uint8_t RGBA8BytesPerPixel = 4;
+#if USE(SKIA)
+static constexpr SkColorType WebKitImageColorType = kBGRA_8888_SkColorType;
+#endif
+static constexpr uint8_t BGRA8BytesPerPixel = 4;
 
 static std::array<GParamSpec*, N_PROPERTIES> sObjProperties;
 
@@ -177,7 +180,7 @@ static void webkit_image_class_init(WebKitImageClass* imageClass)
     g_param_spec_uint(
         "stride",
         nullptr, nullptr,
-        RGBA8BytesPerPixel, G_MAXUINT, 4,
+        BGRA8BytesPerPixel, G_MAXUINT, 4,
         static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
     g_object_class_install_properties(objectClass, N_PROPERTIES, sObjProperties.data());
@@ -186,14 +189,14 @@ static void webkit_image_class_init(WebKitImageClass* imageClass)
 WebKitImage* webkitImageNew(int width, int height, guint stride, GRefPtr<GBytes>&& bytes)
 {
     RELEASE_ASSERT(bytes);
-    RELEASE_ASSERT(static_cast<gsize>(width) * RGBA8BytesPerPixel <= stride);
+    RELEASE_ASSERT(static_cast<gsize>(width) * BGRA8BytesPerPixel <= stride);
 
     auto* image = WEBKIT_IMAGE(g_object_new(WEBKIT_TYPE_IMAGE,
         "width", width,
         "height", height,
         "stride", stride,
         nullptr));
-    image->priv->bytes = WTFMove(bytes);
+    image->priv->bytes = WTF::move(bytes);
 
     return image;
 }
@@ -278,7 +281,7 @@ static guint webkitImageHash(GIcon* icon)
     auto* bytes = webkit_image_as_bytes(image);
     auto dataSpan = span(bytes);
 
-    gsize rowBytes = image->priv->width * RGBA8BytesPerPixel;
+    gsize rowBytes = image->priv->width * BGRA8BytesPerPixel;
 
     ASSERT(dataSpan.size() >= image->priv->stride * (image->priv->height - 1) + rowBytes);
 
@@ -311,7 +314,7 @@ static gboolean webkitImageEqual(GIcon* icon1, GIcon* icon2)
     auto dataSpan1 = span(bytes1);
     auto dataSpan2 = span(bytes2);
 
-    gsize rowBytes = image1->priv->width * RGBA8BytesPerPixel;
+    gsize rowBytes = image1->priv->width * BGRA8BytesPerPixel;
 
     ASSERT(dataSpan1.size() >= image1->priv->stride * (image1->priv->height - 1) + rowBytes);
     ASSERT(dataSpan2.size() >= image2->priv->stride * (image1->priv->height - 1) + rowBytes);
@@ -346,9 +349,11 @@ static GInputStream* webkitImageLoad(GLoadableIcon* icon, int size, char** type,
     SkImageInfo info = SkImageInfo::Make(
         image->priv->width,
         image->priv->height,
-        kBGRA_8888_SkColorType,
+        WebKitImageColorType,
         kUnpremul_SkAlphaType
     );
+
+    static_assert(WebKitImageColorType == kBGRA_8888_SkColorType, "WebKitImage assumes PixelFormat::BGRA8 from WebImage");
 
     sk_sp<SkImage> skImage = SkImages::RasterFromData(info, skData, image->priv->stride);
 

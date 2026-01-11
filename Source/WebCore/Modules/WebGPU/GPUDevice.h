@@ -89,11 +89,11 @@ class XRBinding;
 }
 
 class GPUDevice : public RefCounted<GPUDevice>, public ActiveDOMObject, public EventTarget {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(GPUDevice);
+    WTF_MAKE_TZONE_ALLOCATED(GPUDevice);
 public:
     static Ref<GPUDevice> create(ScriptExecutionContext* scriptExecutionContext, Ref<WebGPU::Device>&& backing, String&& queueLabel, GPUAdapterInfo& info)
     {
-        return adoptRef(*new GPUDevice(scriptExecutionContext, WTFMove(backing), WTFMove(queueLabel), info));
+        return adoptRef(*new GPUDevice(scriptExecutionContext, WTF::move(backing), WTF::move(queueLabel), info));
     }
 
     virtual ~GPUDevice();
@@ -188,4 +188,6 @@ private:
     bool m_waitingForDeviceLostPromise { false };
 };
 
-}
+} // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_EVENTTARGET(GPUDevice)

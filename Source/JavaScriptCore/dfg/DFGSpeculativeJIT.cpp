@@ -90,8 +90,6 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace JSC { namespace DFG {
 
-DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(SpeculativeJIT);
-
 WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED_IMPL(FPRTemporary);
 WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED_IMPL(GPRTemporary);
 WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED_IMPL(JSValueRegsFlushedCallResult);
@@ -107,6 +105,7 @@ WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED_IMPL(SpeculateBooleanOperand);
 #if USE(BIGINT32)
 WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED_IMPL(SpeculateBigInt32Operand);
 #endif
+WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED_IMPL(SpeculativeJIT);
 WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED_IMPL(JSValueOperand);
 WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED_IMPL(StorageOperand);
 
@@ -189,7 +188,7 @@ void SpeculativeJIT::compile()
     m_jitCode->variableEventStream = finalizeEventStream();
 
     auto finalizer = makeUniqueWithoutFastMallocCheck<JITFinalizer>(m_graph.m_plan, m_jitCode.releaseNonNull());
-    m_graph.m_plan.setFinalizer(WTFMove(finalizer));
+    m_graph.m_plan.setFinalizer(WTF::move(finalizer));
 }
 
 void SpeculativeJIT::compileFunction()
@@ -295,7 +294,7 @@ void SpeculativeJIT::compileFunction()
     m_jitCode->variableEventStream = finalizeEventStream();
 
     auto finalizer = makeUniqueWithoutFastMallocCheck<JITFinalizer>(m_graph.m_plan, m_jitCode.releaseNonNull(), withArityCheck);
-    m_graph.m_plan.setFinalizer(WTFMove(finalizer));
+    m_graph.m_plan.setFinalizer(WTF::move(finalizer));
 }
 
 void SpeculativeJIT::exceptionCheck(GPRReg exceptionReg)
@@ -372,7 +371,7 @@ void SpeculativeJIT::speculationCheckOutOfMemory(JSValueSource, Node*, const Jum
     }
 
     auto slowCases = jumpToFail;
-    addSlowPathGeneratorLambda([=, this, slowCases = WTFMove(slowCases)]() {
+    addSlowPathGeneratorLambda([=, this, slowCases = WTF::move(slowCases)]() {
         slowCases.link(this);
         store32(CCallHelpers::TrustedImm32(callSiteIndex.bits()), CCallHelpers::tagFor(CallFrameSlot::argumentCountIncludingThis));
         jumpThunk(CodeLocationLabel(vm().getCTIStub(CommonJITThunkID::ThrowOutOfMemoryError).retaggedCode<NoPtrTag>()));
@@ -686,12 +685,12 @@ RegisterSetBuilder SpeculativeJIT::usedRegisters()
 
 void SpeculativeJIT::addSlowPathGenerator(std::unique_ptr<SlowPathGenerator> slowPathGenerator)
 {
-    m_slowPathGenerators.append(WTFMove(slowPathGenerator));
+    m_slowPathGenerators.append(WTF::move(slowPathGenerator));
 }
 
 void SpeculativeJIT::addSlowPathGeneratorLambda(Function<void()>&& lambda)
 {
-    m_slowPathLambdas.append(SlowPathLambda { WTFMove(lambda), m_currentNode, static_cast<unsigned>(m_stream.size()) });
+    m_slowPathLambdas.append(SlowPathLambda { WTF::move(lambda), m_currentNode, static_cast<unsigned>(m_stream.size()) });
 }
 
 void SpeculativeJIT::runSlowPathGenerators(PCToCodeOriginMapBuilder& pcToCodeOriginMapBuilder)
@@ -712,7 +711,7 @@ void SpeculativeJIT::runSlowPathGenerators(PCToCodeOriginMapBuilder& pcToCodeOri
         slowPathGenerator->generate(this);
 
         if (sizeMarker) [[unlikely]]
-            vm().jitSizeStatistics->markEnd(WTFMove(*sizeMarker), *this, m_graph.m_plan);
+            vm().jitSizeStatistics->markEnd(WTF::move(*sizeMarker), *this, m_graph.m_plan);
     }
     for (auto& slowPathLambda : m_slowPathLambdas) {
         Node* currentNode = slowPathLambda.currentNode;
@@ -725,7 +724,7 @@ void SpeculativeJIT::runSlowPathGenerators(PCToCodeOriginMapBuilder& pcToCodeOri
         ASSERT(!m_underSilentSpill);
         m_outOfLineStreamIndex = std::nullopt;
         if (sizeMarker) [[unlikely]]
-            vm().jitSizeStatistics->markEnd(WTFMove(*sizeMarker), *this, m_graph.m_plan);
+            vm().jitSizeStatistics->markEnd(WTF::move(*sizeMarker), *this, m_graph.m_plan);
     }
 }
 
@@ -2221,7 +2220,7 @@ void SpeculativeJIT::compileCurrentBlock()
         compile(m_currentNode);
 
         if (sizeMarker) [[unlikely]]
-            vm().jitSizeStatistics->markEnd(WTFMove(*sizeMarker), *this, m_graph.m_plan);
+            vm().jitSizeStatistics->markEnd(WTF::move(*sizeMarker), *this, m_graph.m_plan);
 
         if (belongsInMinifiedGraph(m_currentNode->op()))
             m_minifiedGraph->append(MinifiedNode::fromNode(m_currentNode));
@@ -2366,15 +2365,15 @@ void SpeculativeJIT::linkOSREntries(LinkBuffer& linkBuffer)
                 }
                 return DeadFlush;
             });
-            noticeCatchEntrypoint(*block, m_osrEntryHeads[osrEntryIndex++], linkBuffer, WTFMove(argumentFormats));
+            noticeCatchEntrypoint(*block, m_osrEntryHeads[osrEntryIndex++], linkBuffer, WTF::move(argumentFormats));
         } else {
             ASSERT(block->isOSRTarget);
             noticeOSREntry(*block, m_osrEntryHeads[osrEntryIndex++], linkBuffer);
         }
     }
 
-    jitCode()->finalizeOSREntrypoints(WTFMove(m_osrEntry));
-    jitCode()->common.finalizeCatchEntrypoints(WTFMove(m_graph.m_catchEntrypoints));
+    jitCode()->finalizeOSREntrypoints(WTF::move(m_osrEntry));
+    jitCode()->common.finalizeCatchEntrypoints(WTF::move(m_graph.m_catchEntrypoints));
 
     ASSERT(osrEntryIndex == m_osrEntryHeads.size());
     
@@ -4851,7 +4850,7 @@ void SpeculativeJIT::compileMathIC(Node* node, JITBinaryMathIC<Generator>* mathI
 
         auto done = label();
 
-        addSlowPathGeneratorLambda([=, this, savePlans = WTFMove(savePlans)] () {
+        addSlowPathGeneratorLambda([=, this, savePlans = WTF::move(savePlans)] () {
             addICGenerationState->slowPathJumps.link(this);
             addICGenerationState->slowPathStart = label();
 #if ENABLE(MATH_IC_STATS)
@@ -5498,7 +5497,7 @@ void SpeculativeJIT::compileMathIC(Node* node, JITUnaryMathIC<Generator>* mathIC
 
         auto done = label();
 
-        addSlowPathGeneratorLambda([=, this, savePlans = WTFMove(savePlans)] () {
+        addSlowPathGeneratorLambda([=, this, savePlans = WTF::move(savePlans)] () {
             icGenerationState->slowPathJumps.link(this);
             icGenerationState->slowPathStart = label();
 #if ENABLE(MATH_IC_STATS)
@@ -6513,18 +6512,10 @@ void SpeculativeJIT::compileArithSqrt(Node* node)
 {
     if (node->child1().useKind() == DoubleRepUse) {
         SpeculateDoubleOperand op1(this, node->child1());
-        FPRReg op1FPR = op1.fpr();
 
-        if (!supportsFloatingPointSqrt() || !Options::useArchitectureSpecificOptimizations()) {
-            flushRegisters();
-            FPRResult result(this);
-            callOperationWithoutExceptionCheck(Math::sqrtDouble, result.fpr(), op1FPR);
-            doubleResult(result.fpr(), node);
-        } else {
-            FPRTemporary result(this, op1);
-            sqrtDouble(op1.fpr(), result.fpr());
-            doubleResult(result.fpr(), node);
-        }
+        FPRTemporary result(this, op1);
+        sqrtDouble(op1.fpr(), result.fpr());
+        doubleResult(result.fpr(), node);
         return;
     }
 
@@ -8758,7 +8749,7 @@ void SpeculativeJIT::compileCreateDirectArguments(Node* node)
     } else {
         auto generator = makeUniqueWithoutFastMallocCheck<CallCreateDirectArgumentsSlowPathGenerator>(
             slowPath, this, resultGPR, structure, lengthGPR, minCapacity);
-        addSlowPathGenerator(WTFMove(generator));
+        addSlowPathGenerator(WTF::move(generator));
     }
 
     if (inlineCallFrame) {
@@ -10679,13 +10670,13 @@ static void allocateTemporaryRegistersForSnippet(SpeculativeJIT* jit, Vector<GPR
     for (unsigned i = 0; i < snippet.numGPScratchRegisters; ++i) {
         GPRTemporary temporary(jit);
         gpScratch.append(temporary.gpr());
-        gpHolders.append(WTFMove(temporary));
+        gpHolders.append(WTF::move(temporary));
     }
 
     for (unsigned i = 0; i < snippet.numFPScratchRegisters; ++i) {
         FPRTemporary temporary(jit);
         fpScratch.append(temporary.fpr());
-        fpHolders.append(WTFMove(temporary));
+        fpHolders.append(WTF::move(temporary));
     }
 }
 
@@ -10702,7 +10693,7 @@ void SpeculativeJIT::compileCallDOM(Node* node)
     auto appendCell = [&](Edge& edge) {
         SpeculateCellOperand operand(this, edge);
         regs.append(operand.gpr());
-        operands.append(OperandVariant(WTF::InPlaceType<SpeculateCellOperand>, WTFMove(operand)));
+        operands.append(OperandVariant(WTF::InPlaceType<SpeculateCellOperand>, WTF::move(operand)));
     };
 
     auto appendString = [&](Edge& edge) {
@@ -10710,19 +10701,19 @@ void SpeculativeJIT::compileCallDOM(Node* node)
         GPRReg gpr = operand.gpr();
         regs.append(gpr);
         speculateString(edge, gpr);
-        operands.append(OperandVariant(WTF::InPlaceType<SpeculateCellOperand>, WTFMove(operand)));
+        operands.append(OperandVariant(WTF::InPlaceType<SpeculateCellOperand>, WTF::move(operand)));
     };
 
     auto appendInt32 = [&](Edge& edge) {
         SpeculateInt32Operand operand(this, edge);
         regs.append(operand.gpr());
-        operands.append(OperandVariant(WTF::InPlaceType<SpeculateInt32Operand>, WTFMove(operand)));
+        operands.append(OperandVariant(WTF::InPlaceType<SpeculateInt32Operand>, WTF::move(operand)));
     };
 
     auto appendBoolean = [&](Edge& edge) {
         SpeculateBooleanOperand operand(this, edge);
         regs.append(operand.gpr());
-        operands.append(OperandVariant(WTF::InPlaceType<SpeculateBooleanOperand>, WTFMove(operand)));
+        operands.append(OperandVariant(WTF::InPlaceType<SpeculateBooleanOperand>, WTF::move(operand)));
     };
 
     unsigned index = 0;
@@ -10822,7 +10813,7 @@ void SpeculativeJIT::compileCallDOMGetter(Node* node)
     Vector<GPRTemporary> gpTempraries;
     Vector<FPRTemporary> fpTempraries;
     allocateTemporaryRegistersForSnippet(this, gpTempraries, fpTempraries, gpScratch, fpScratch, *snippet);
-    SnippetParams params(this, WTFMove(regs), WTFMove(gpScratch), WTFMove(fpScratch));
+    SnippetParams params(this, WTF::move(regs), WTF::move(gpScratch), WTF::move(fpScratch));
     snippet->generator()->run(*this, params);
     jsValueResult(result.regs(), node);
 }
@@ -10888,7 +10879,7 @@ void SpeculativeJIT::compileCheckJSCast(Node* node)
     Vector<FPRTemporary> fpTempraries;
     allocateTemporaryRegistersForSnippet(this, gpTempraries, fpTempraries, gpScratch, fpScratch, snippet.get());
 
-    SnippetParams params(this, WTFMove(regs), WTFMove(gpScratch), WTFMove(fpScratch));
+    SnippetParams params(this, WTF::move(regs), WTF::move(gpScratch), WTF::move(fpScratch));
     JumpList failureCases = snippet->generator()->run(*this, params);
     if (node->op() == CheckJSCast)
         speculationCheck(BadType, JSValueSource::unboxedCell(baseGPR), node->child1(), failureCases);
@@ -11425,7 +11416,7 @@ void SpeculativeJIT::compileNewRegExpUntyped(Node* node)
         flushRegisters();
         GPRFlushedCallResult result(this);
         GPRReg resultGPR = result.gpr();
-        callOperation(operationNewRegExpString, resultGPR, LinkableConstant::globalObject(*this, node), patternGPR, flagsGPR);
+        callOperation(operationNewRegExpString, resultGPR, LinkableConstant::globalObject(*this, node), TrustedImmPtr(node->structure()), patternGPR, flagsGPR);
         cellResult(resultGPR, node);
         return;
     }
@@ -11439,7 +11430,7 @@ void SpeculativeJIT::compileNewRegExpUntyped(Node* node)
     flushRegisters();
     GPRFlushedCallResult result(this);
     GPRReg resultGPR = result.gpr();
-    callOperation(operationNewRegExpUntyped, resultGPR, LinkableConstant::globalObject(*this, node), patternRegs, flagsRegs);
+    callOperation(operationNewRegExpUntyped, resultGPR, LinkableConstant::globalObject(*this, node), TrustedImmPtr(node->structure()), patternRegs, flagsRegs);
     cellResult(resultGPR, node);
 }
 
@@ -12313,21 +12304,6 @@ void SpeculativeJIT::speculateOther(Edge edge)
     speculateOther(edge, operand.jsValueRegs());
 }
 
-void SpeculativeJIT::speculateNotOther(Edge edge, JSValueRegs regs, GPRReg tempGPR)
-{
-    DFG_TYPE_CHECK(regs, edge, ~SpecOther, branchIfOther(regs, tempGPR));
-}
-
-void SpeculativeJIT::speculateNotOther(Edge edge)
-{
-    if (!needsTypeCheck(edge, ~SpecOther))
-        return;
-
-    JSValueOperand operand(this, edge, ManualOperandSpeculation);
-    GPRTemporary temp(this);
-    speculateNotOther(edge, operand.jsValueRegs(), temp.gpr());
-}
-
 void SpeculativeJIT::speculateMisc(Edge edge, JSValueRegs regs)
 {
 #if USE(JSVALUE64)
@@ -12495,9 +12471,6 @@ void SpeculativeJIT::speculate(Node*, Edge edge)
         break;
     case NotDoubleUse:
         speculateNotDouble(edge);
-        break;
-    case NotOtherUse:
-        speculateNotOther(edge);
         break;
     case NeitherDoubleNorHeapBigIntUse:
         speculateNeitherDoubleNorHeapBigInt(edge);
@@ -13019,7 +12992,7 @@ void SpeculativeJIT::compileStoreBarrier(Node* node)
     Vector<SilentRegisterSavePlan> savePlans;
     silentSpillAllRegistersImpl(false, savePlans, InvalidGPRReg);
 
-    addSlowPathGeneratorLambda([=, this, savePlans = WTFMove(savePlans)]() {
+    addSlowPathGeneratorLambda([=, this, savePlans = WTF::move(savePlans)]() {
         slowCase.link(this);
 
         if (isFenced) {
@@ -16422,7 +16395,7 @@ void SpeculativeJIT::compileHasIndexedProperty(Node* node, S_JITOperation_GCZ sl
     Vector<SilentRegisterSavePlan> savePlans;
     silentSpillAllRegistersImpl(false, savePlans, resultGPR);
     Label doneOperationCall = label();
-    addSlowPathGeneratorLambda([=, this, savePlans = WTFMove(savePlans), slowCases = WTFMove(slowCases)]() {
+    addSlowPathGeneratorLambda([=, this, savePlans = WTF::move(savePlans), slowCases = WTF::move(slowCases)]() {
         slowCases.link(this);
 
         if (preserveIndexReg) {
@@ -17601,7 +17574,7 @@ unsigned SpeculativeJIT::appendExceptionHandlingOSRExit(ExitKind kind, unsigned 
     exit.m_codeOrigin = opCatchOrigin;
     exit.m_exceptionHandlerCallSiteIndex = callSite;
     OSRExitCompilationInfo& exitInfo = appendExitInfo(jumpsToFail);
-    unsigned index = appendOSRExit(WTFMove(exit), /* isExceptionHandler */ true);
+    unsigned index = appendOSRExit(WTF::move(exit), /* isExceptionHandler */ true);
     m_exceptionHandlerOSRExitCallSites.append(ExceptionHandlingOSRExitInfo { exitInfo, *exceptionHandler, callSite });
     return index;
 }
@@ -17626,7 +17599,7 @@ unsigned SpeculativeJIT::appendOSRExit(OSRExit&& exit, bool isExceptionHandler)
     }
 
     unsigned result = m_osrExit.size();
-    m_osrExit.append(WTFMove(exit));
+    m_osrExit.append(WTF::move(exit));
     return result;
 }
 

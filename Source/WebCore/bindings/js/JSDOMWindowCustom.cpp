@@ -603,7 +603,7 @@ JSValue JSDOMWindow::queueMicrotask(JSGlobalObject& lexicalGlobalObject, CallFra
     auto* globalObject = asObject(functionValue)->globalObject();
 
     scope.release();
-    globalObjectMethodTable()->queueMicrotaskToEventLoop(*this, JSC::QueuedTask { nullptr, JSC::InternalMicrotask::InvokeFunctionJob, globalObject, functionValue });
+    globalObjectMethodTable()->queueMicrotaskToEventLoop(*this, JSC::QueuedTask { nullptr, JSC::InternalMicrotask::InvokeFunctionJob, 0, globalObject, functionValue });
     return jsUndefined();
 }
 

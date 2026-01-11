@@ -125,7 +125,7 @@ void RemoteScrollingCoordinator::scrollUpdateForNode(ScrollUpdate update, Comple
 {
     LOG_WITH_STREAM(Scrolling, stream << "RemoteScrollingCoordinator::scrollUpdateForNode: " << update);
 
-    applyScrollUpdate(WTFMove(update));
+    applyScrollUpdate(WTF::move(update));
     completionHandler();
 }
 

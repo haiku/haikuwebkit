@@ -45,11 +45,11 @@ static constexpr ASCIILiteral endpointIdentifierKey = "video-receiver-endpoint-i
 static constexpr ASCIILiteral cacheCommandKey = "video-receiver-cache-command"_s;
 
 VideoReceiverEndpointMessage::VideoReceiverEndpointMessage(std::optional<WebCore::ProcessIdentifier> processIdentifier, WebCore::HTMLMediaElementIdentifier mediaElementIdentifier, std::optional<WebCore::MediaPlayerIdentifier> playerIdentifier, WebCore::VideoReceiverEndpoint endpoint, WebCore::VideoReceiverEndpointIdentifier endpointIdentifier)
-    : m_processIdentifier { WTFMove(processIdentifier) }
-    , m_mediaElementIdentifier { WTFMove(mediaElementIdentifier) }
-    , m_playerIdentifier { WTFMove(playerIdentifier) }
-    , m_endpoint { WTFMove(endpoint) }
-    , m_endpointIdentifier { WTFMove(endpointIdentifier) }
+    : m_processIdentifier { WTF::move(processIdentifier) }
+    , m_mediaElementIdentifier { WTF::move(mediaElementIdentifier) }
+    , m_playerIdentifier { WTF::move(playerIdentifier) }
+    , m_endpoint { WTF::move(endpoint) }
+    , m_endpointIdentifier { WTF::move(endpointIdentifier) }
 {
     RELEASE_ASSERT(!m_endpoint || xpc_get_type(m_endpoint.get()) == XPC_TYPE_DICTIONARY);
 }
@@ -85,11 +85,11 @@ XPCObjectPtr<xpc_object_t> VideoReceiverEndpointMessage::encode() const
 }
 
 VideoReceiverSwapEndpointsMessage::VideoReceiverSwapEndpointsMessage(std::optional<WebCore::ProcessIdentifier> processIdentifier, WebCore::HTMLMediaElementIdentifier sourceMediaElementIdentifier, std::optional<WebCore::MediaPlayerIdentifier> sourcePlayerIdentifier, WebCore::HTMLMediaElementIdentifier destinationMediaElementIdentifier, std::optional<WebCore::MediaPlayerIdentifier> destinationPlayerIdentifier)
-    : m_processIdentifier { WTFMove(processIdentifier) }
-    , m_sourceMediaElementIdentifier { WTFMove(sourceMediaElementIdentifier) }
-    , m_sourcePlayerIdentifier { WTFMove(sourcePlayerIdentifier) }
-    , m_destinationMediaElementIdentifier { WTFMove(destinationMediaElementIdentifier) }
-    , m_destinationPlayerIdentifier { WTFMove(destinationPlayerIdentifier) }
+    : m_processIdentifier { WTF::move(processIdentifier) }
+    , m_sourceMediaElementIdentifier { WTF::move(sourceMediaElementIdentifier) }
+    , m_sourcePlayerIdentifier { WTF::move(sourcePlayerIdentifier) }
+    , m_destinationMediaElementIdentifier { WTF::move(destinationMediaElementIdentifier) }
+    , m_destinationPlayerIdentifier { WTF::move(destinationPlayerIdentifier) }
 {
 }
 

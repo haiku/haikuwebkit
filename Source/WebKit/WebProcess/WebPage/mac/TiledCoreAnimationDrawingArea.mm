@@ -190,7 +190,7 @@ void TiledCoreAnimationDrawingArea::updateRenderingWithForcedRepaintAsync(WebPag
         return completionHandler();
     }
 
-    dispatchAfterEnsuringUpdatedScrollPosition([weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)] () mutable {
+    dispatchAfterEnsuringUpdatedScrollPosition([weakThis = WeakPtr { *this }, completionHandler = WTF::move(completionHandler)] () mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return completionHandler();
@@ -290,7 +290,7 @@ void TiledCoreAnimationDrawingArea::dispatchAfterEnsuringUpdatedScrollPosition(W
         invalidatePostRenderingUpdateRunLoopObserver();
     }
 
-    ScrollingThread::dispatchBarrier([weakThis = WeakPtr { *this }, retainedPage = Ref { m_webPage.get() }, function = WTFMove(function)] {
+    ScrollingThread::dispatchBarrier([weakThis = WeakPtr { *this }, retainedPage = Ref { m_webPage.get() }, function = WTF::move(function)] {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -450,7 +450,7 @@ void TiledCoreAnimationDrawingArea::handleActivityStateChangeCallbacksIfNeeded()
 
 void TiledCoreAnimationDrawingArea::activityStateDidChange(OptionSet<ActivityState> changed, ActivityStateChangeID activityStateChangeID, CompletionHandler<void()>&& nextActivityStateChangeCallback)
 {
-    m_nextActivityStateChangeCallbacks.append(WTFMove(nextActivityStateChangeCallback));
+    m_nextActivityStateChangeCallbacks.append(WTF::move(nextActivityStateChangeCallback));
     m_activityStateChangeID = std::max(m_activityStateChangeID, activityStateChangeID);
 
     if (changed & ActivityState::IsVisible) {

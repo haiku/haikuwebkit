@@ -30,7 +30,7 @@
 #include <WebCore/RenderObjectNode.h>
 #include <WebCore/RenderObjectStyle.h>
 #include <WebCore/RenderReplaced.h>
-#include <WebCore/RenderStyleInlines.h>
+#include <WebCore/RenderStyle+GettersInlines.h>
 #include <WebCore/RenderView.h>
 #include <WebCore/VisibleRectContext.h>
 

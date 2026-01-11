@@ -30,15 +30,6 @@
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {
-struct RenderBlockFlowRareData;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::RenderBlockFlowRareData> : std::true_type { };
-}
-
-namespace WebCore {
 
 class FloatingObjects;
 class LineBreaker;
@@ -120,7 +111,7 @@ public:
 };
 
 class RenderBlockFlow : public RenderBlock {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderBlockFlow);
+    WTF_MAKE_TZONE_ALLOCATED(RenderBlockFlow);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderBlockFlow);
 public:
     RenderBlockFlow(Type, Element&, RenderStyle&&, OptionSet<BlockFlowFlag> = { });
@@ -142,14 +133,14 @@ protected:
 
     // RenderBlockFlow always contains either lines or paragraphs. When the children are all blocks (e.g. paragraphs), we call layoutBlockChildren.
     // When the children are all inline (e.g., lines), we call layoutInlineChildren.
-    void layoutInFlowChildren(RelayoutChildren, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom, LayoutUnit& maxFloatLogicalBottom);
+    void layoutInFlowChildren(RelayoutChildren, LayoutUnit previousHeight, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom, LayoutUnit& maxFloatLogicalBottom);
     void layoutBlockChildren(RelayoutChildren, LayoutUnit& maxFloatLogicalBottom);
-    void layoutInlineChildren(RelayoutChildren, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom);
+    void layoutInlineChildren(RelayoutChildren, LayoutUnit previousHeight, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom);
 
     void simplifiedNormalFlowLayout() override;
     LayoutUnit shiftForAlignContent(LayoutUnit intrinsicLogicalHeight, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom);
 
-    void computeOverflow(LayoutUnit oldClientAfterEdge, OptionSet<ComputeOverflowOptions> = { }) override;
+    void computeOverflow(LayoutRect contentArea, OptionSet<ComputeOverflowOptions> = { }) override;
     void addOverflowFromInFlowChildren(OptionSet<ComputeOverflowOptions> = { }) override;
 
     // RenderBlockFlows override these methods, since they are the only class that supports margin collapsing.
@@ -421,6 +412,8 @@ public:
 
     std::optional<LayoutUnit> lowestInitialLetterLogicalBottom() const;
 
+    void paintBlockLevelContentInInline(PaintInfo&, const LayoutPoint& paintOffset);
+
 protected:
     bool isChildEligibleForMarginTrim(Style::MarginTrimSide, const RenderBox&) const final;
 
@@ -453,8 +446,8 @@ protected:
     void setMaxMarginBeforeValues(LayoutUnit pos, LayoutUnit neg);
     void setMaxMarginAfterValues(LayoutUnit pos, LayoutUnit neg);
 
-    void styleWillChange(StyleDifference, const RenderStyle& newStyle) override;
-    void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;
+    void styleWillChange(Style::Difference, const RenderStyle& newStyle) override;
+    void styleDidChange(Style::Difference, const RenderStyle* oldStyle) override;
 
     void createFloatingObjects();
 
@@ -527,8 +520,13 @@ private:
     bool hasSvgTextLayout() const;
 
     bool hasInlineLayout() const;
-    void layoutInlineContent(RelayoutChildren, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom);
-    bool markInlineContentDirtyForLayout(RelayoutChildren);
+    void layoutInlineContent(RelayoutChildren, LayoutUnit previousHeight, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom);
+    struct InlineContentStatus {
+        bool hasSimpleOutOfFlowContentOnly { false };
+        std::optional<bool> onlyBlockContentNeedsLayout { };
+    };
+    InlineContentStatus markInlineContentDirtyForLayout(RelayoutChildren);
+    bool layoutSimpleBlockContentInInline(MarginInfo&);
     void updateRepaintTopAndBottomAfterLayout(RelayoutChildren, std::optional<LayoutRect> partialRepaintRect, std::pair<float, float> oldContentTopAndBottomIncludingInkOverflow, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom);
     std::optional<LayoutUnit> updateLineClampStateAndLogicalHeightAfterLayout();
     bool tryComputePreferredWidthsUsingInlinePath(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth);

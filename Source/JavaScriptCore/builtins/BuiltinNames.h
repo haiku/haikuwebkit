@@ -78,15 +78,14 @@ namespace JSC {
     macro(resolvePromise) \
     macro(rejectPromise) \
     macro(fulfillPromise) \
-    macro(resolveWithoutPromise) \
-    macro(rejectWithoutPromise) \
-    macro(fulfillWithoutPromise) \
     macro(resolvePromiseWithFirstResolvingFunctionCallCheck) \
     macro(rejectPromiseWithFirstResolvingFunctionCallCheck) \
     macro(fulfillPromiseWithFirstResolvingFunctionCallCheck) \
-    macro(resolveWithoutPromiseForAsyncAwait) \
+    macro(resolveWithInternalMicrotaskForAsyncAwait) \
+    macro(asyncGeneratorQueueEnqueue) \
+    macro(asyncGeneratorQueueDequeueResolve) \
+    macro(asyncGeneratorQueueDequeueReject) \
     macro(driveAsyncFunction) \
-    macro(awaitValue) \
     macro(newHandledRejectedPromise) \
     macro(promiseEmptyOnFulfilled) \
     macro(promiseEmptyOnRejected) \
@@ -149,9 +148,6 @@ namespace JSC {
     macro(regExpCreate) \
     macro(isRegExp) \
     macro(isFinite) \
-    macro(replaceUsingRegExp) \
-    macro(replaceUsingStringSearch) \
-    macro(replaceAllUsingStringSearch) \
     macro(makeTypeError) \
     macro(AggregateError) \
     macro(mapStorage) \
@@ -168,7 +164,6 @@ namespace JSC {
     macro(setIterationEntryKey) \
     macro(setIteratorNext) \
     macro(setIteratorKey) \
-    macro(setClone) \
     macro(setPrototypeDirect) \
     macro(setPrototypeDirectOrThrow) \
     macro(regExpBuiltinExec) \

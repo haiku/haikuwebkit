@@ -230,7 +230,7 @@ def function_parameter_requires_suppress_forward_decl(type, kind, for_reply=Fals
 
 def arguments_constructor_name(type, name):
     if type in types_that_must_be_moved():
-        return 'WTFMove(%s)' % name
+        return 'WTF::move(%s)' % name
 
     return name
 
@@ -315,7 +315,7 @@ def message_to_struct_declaration(receiver, message):
         if requires_suppress_forward_decl[i]:
             result.append('SUPPRESS_FORWARD_DECL_ARG ')
         if parameter.type in types_that_must_be_moved():
-            result.append('encoder << WTFMove(m_%s);\n' % parameter.name)
+            result.append('encoder << WTF::move(m_%s);\n' % parameter.name)
         else:
             result.append('encoder << m_%s;\n' % parameter.name)
     result.append('    }\n')
@@ -784,6 +784,11 @@ def forward_declarations_and_headers(receiver):
     return (forward_declarations, header_includes)
 
 
+def message_to_completion_handler_using_declaration(receiver, message):
+    completion_handler_name = message.name + 'CompletionHandler'
+    return 'using %s = WTF::RefCountable<Messages::%s::%s::Reply>;' % (completion_handler_name, receiver.name, message.name)
+
+
 def generate_messages_header(receiver):
     result = []
 
@@ -859,6 +864,14 @@ def generate_messages_header(receiver):
     result.append('\n')
     result.append('} // namespace %s\n} // namespace Messages\n' % receiver.name)
 
+    if receiver.swift_receiver:
+        result.append('\n')
+        result.append('namespace CompletionHandlers {\nnamespace %s {\n' % receiver.name)
+        result.append('\n'.join([message_to_completion_handler_using_declaration(receiver, x) for x in receiver.messages if x.reply_parameters is not None]))
+        result.append('\n')
+        result.append('} // namespace %s\n} // namespace CompletionHandlers\n' % receiver.name)
+        result.append('\n')
+
     if receiver.condition:
         result.append('\n#endif // %s\n' % receiver.condition)
 
@@ -890,7 +903,7 @@ def async_message_statement(receiver, message):
     else:
         target_name = 'this'
     if receiver.has_attribute(NOT_USING_IPC_CONNECTION_ATTRIBUTE) and message.reply_parameters is not None and not message.has_attribute(SYNCHRONOUS_ATTRIBUTE):
-        dispatch_function_args = ['decoder', 'WTFMove(replyHandler)', target_name, '&%s' % handler_function(receiver, message)]
+        dispatch_function_args = ['decoder', 'WTF::move(replyHandler)', target_name, '&%s' % handler_function(receiver, message)]
     else:
         dispatch_function_args = ['decoder', target_name, '&%s' % handler_function(receiver, message)]
 
@@ -1091,6 +1104,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WTF::UUID': ['<wtf/UUID.h>'],
         'WallTime': ['<wtf/WallTime.h>'],
         'WebCore::AXDebugInfo': ['<WebCore/AXObjectCache.h>'],
+        'WebCore::AccessibilityRemoteToken': ['<WebCore/AXObjectCache.h>'],
         'WebCore::AriaNotifyData': ['<WebCore/AXObjectCache.h>'],
         'WebCore::LiveRegionAnnouncementData': ['<WebCore/AXObjectCache.h>'],
         'WebCore::AlternativeTextType': ['<WebCore/AlternativeTextClient.h>'],
@@ -1196,6 +1210,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::GraphicsContextGLSimulatedEventForTesting': ['<WebCore/GraphicsContextGL.h>'],
         'WebCore::GraphicsContextGLSurfaceBuffer': ['<WebCore/GraphicsContextGL.h>'],
         'WebCore::GraphicsDropShadow': ['<WebCore/GraphicsStyle.h>'],
+        'WebCore::GraphicsLayerKeyframeValueList': ['<WebCore/GraphicsLayerKeyframeValueList.h>'],
         'WebCore::HasAvailableTargets': ['<WebCore/MediaSessionHelperIOS.h>'],
         'WebCore::HasInsecureContent': ['<WebCore/FrameLoaderTypes.h>'],
         'WebCore::HasOrShouldIgnoreUserGesture': ['<WebCore/DocumentStorageAccess.h>'],
@@ -1218,7 +1233,6 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::IsLoggedIn': ['<WebCore/IsLoggedIn.h>'],
         'WebCore::IDBResourceObjectIdentifier': ['<WebCore/IDBResourceIdentifier.h>'],
         'WebCore::ISOWebVTTCue': ['<WebCore/ISOVTTCue.h>'],
-        'WebCore::KeyframeValueList': ['<WebCore/GraphicsLayer.h>'],
         'WebCore::KeypressCommand': ['<WebCore/KeyboardEvent.h>'],
         'WebCore::LastNavigationWasAppInitiated': ['<WebCore/ServiceWorkerClientData.h>'],
         'WebCore::LegacyCDMSessionClient::MediaKeyErrorCode': ['<WebCore/LegacyCDMSession.h>'],
@@ -1258,6 +1272,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::ModalContainerDecision': ['<WebCore/ModalContainerTypes.h>'],
         'WebCore::MouseEventPolicy': ['<WebCore/DocumentLoader.h>'],
         'WebCore::NetworkTransactionInformation': ['<WebCore/NetworkLoadInformation.h>'],
+        'WebCore::NavigationUpgradeToHTTPSBehavior': ['<WebCore/FrameLoaderTypes.h>'],
         'WebCore::NowPlayingMetadata': ['<WebCore/NowPlayingInfo.h>'],
         'WebCore::OpaqueOriginIdentifier': ['<WebCore/SecurityOriginData.h>'],
         'WebCore::PasteboardCustomData': ['<WebCore/Pasteboard.h>'],
@@ -1967,21 +1982,17 @@ def convert_enable_macros_to_swift_syntax(condition):
     return re.sub(r'ENABLE\(([^)]+)\)', r'ENABLE_\1', condition)
 
 
-def generate_swift_message_handler(receiver):
+def generate_swift_message_handler_internals(receiver, unsafe_keyword):
     result = []
-    result.append(block_to_line_comments(_license_header))
-    result.append('\n')
-
-    if receiver.condition:
-        result.append('#if %s\n' % convert_enable_macros_to_swift_syntax(receiver.condition))
 
     class_name = receiver.name
     message_forwarder_class = class_name + 'MessageForwarder'
     ref_message_forwarder_class = 'Ref' + message_forwarder_class
     weak_ref_class = class_name + 'WeakRef'
-    result.append('\n')
-    result.append('internal import WebKit_Internal\n')
-    result.append('\n')
+
+    if receiver.condition:
+        result.append('#if %s\n' % convert_enable_macros_to_swift_syntax(receiver.condition))
+
     result.append('final class %s {\n' % (weak_ref_class))
     result.append('    private weak var target: %s?\n' % (class_name))
     result.append('    init(target: %s) {\n' % (class_name))
@@ -1999,23 +2010,44 @@ def generate_swift_message_handler(receiver):
     result.append('        // Safety: we\'re creating a pointer which will immediately be stored in a\n')
     result.append('        // proper ref-counted reference on the C++ side before this call returns.\n')
     result.append('        // Workaround for rdar://163107752.\n')
-    result.append('        #if compiler(>=6.2)\n')
-    result.append('        return unsafe WebKit.%s.createFromWeak(\n' % (message_forwarder_class))
+    result.append('        return %sWebKit.%s.createFromWeak(\n' % (unsafe_keyword, message_forwarder_class))
     result.append('            OpaquePointer(\n')
     result.append('                Unmanaged.passRetained(weakRefContainer).toOpaque()\n')
     result.append('            )\n')
     result.append('        )\n')
-    result.append('        #else\n')
-    result.append('        return WebKit.%s.createFromWeak(\n' % (message_forwarder_class))
-    result.append('            OpaquePointer(\n')
-    result.append('                Unmanaged.passRetained(weakRefContainer).toOpaque()\n')
-    result.append('            )\n')
-    result.append('        )\n')
-    result.append('        #endif\n')
     result.append('    }\n')
     result.append('}\n')
+
     if receiver.condition:
-        result.append('#endif')
+        result.append('#endif\n')
+
+    return result
+
+
+def generate_swift_message_handler(receiver):
+    result = []
+    result.append(block_to_line_comments(_license_header))
+    result.append('\n')
+
+    result.append('\n')
+    if receiver.condition:
+        result.append('#if %s\n' % convert_enable_macros_to_swift_syntax(receiver.condition))
+    result.append('internal import WebKit_Internal\n')
+    if receiver.condition:
+        result.append('#endif\n')
+    result.append('\n')
+
+    # Workaround for absence of https://github.com/swiftlang/swift/pull/74415
+    # - we repeat everything for older compilers
+    result.append('#if compiler(>=6.2)\n')
+    result.append('\n')
+    result.extend(generate_swift_message_handler_internals(receiver, 'unsafe '))
+    result.append('\n')
+    result.append('#else\n')
+    result.append('\n')
+    result.extend(generate_swift_message_handler_internals(receiver, ''))
+    result.append('\n')
+    result.append('#endif\n')
 
     return ''.join(result)
 

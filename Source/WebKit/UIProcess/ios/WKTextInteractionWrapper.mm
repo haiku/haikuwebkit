@@ -205,6 +205,10 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(HideEditMenuScope);
 
 - (void)prepareToMoveSelectionContainer:(UIView *)newContainer
 {
+    RetainPtr contentView = _view;
+    if (!contentView)
+        return;
+
 #if HAVE(UI_TEXT_SELECTION_DISPLAY_INTERACTION)
     RetainPtr displayInteraction = [self textSelectionDisplayInteraction];
     RetainPtr highlightView = [displayInteraction highlightView];
@@ -216,9 +220,10 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(HideEditMenuScope);
         // When the display interaction is in the activated state, calling these delegate methods tells it
         // to remove and reparent all internally managed views (e.g. selection highlight views, selection
         // handles) in the new selection container.
-        [self activateSelection];
-        [displayInteraction willMoveToView:_view];
-        [displayInteraction didMoveToView:_view];
+        if (![contentView _isSuppressingSelectionAssistant])
+            [self activateSelection];
+        [displayInteraction willMoveToView:contentView.get()];
+        [displayInteraction didMoveToView:contentView.get()];
 
         _managedTextSelectionViews = { };
         for (UIView *subview in newContainer.subviews) {
@@ -227,7 +232,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(HideEditMenuScope);
         }
     }
 
-    if (newContainer == _view)
+    if (newContainer == contentView)
         return;
 
     auto findParentViewBelowNewContainer = [&](UIView *view) -> RetainPtr<UIView> {
@@ -235,7 +240,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(HideEditMenuScope);
             return nil;
 
         for (RetainPtr foundView = view; foundView; foundView = [foundView superview]) {
-            if (foundView == _view)
+            if (foundView == contentView)
                 return nil;
 
             if ([foundView superview] == newContainer)
@@ -245,14 +250,14 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(HideEditMenuScope);
         return nil;
     };
 
-    RetainPtr viewsIntersectingSelection = [_view allViewsIntersectingSelectionRange];
+    RetainPtr viewsIntersectingSelection = [contentView allViewsIntersectingSelectionRange];
     RetainPtr subviewsBeforeSelection = adoptNS([NSMutableSet new]);
     for (UIView *view in viewsIntersectingSelection.get()) {
         if (RetainPtr parentBelowNewContainer = findParentViewBelowNewContainer(view))
             [subviewsBeforeSelection addObject:parentBelowNewContainer.get()];
     }
 
-    RefPtr page = [_view page];
+    RefPtr page = [contentView page];
     bool insertSelectionAfterCompositingViews = page && page->editorState().visualData->enclosingLayerUsesContentsLayer;
 
     // Ensure that the selection highlight is inserted after all `subviewsBeforeSelection`.

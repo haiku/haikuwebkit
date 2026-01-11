@@ -54,6 +54,7 @@
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/URL.h>
 #include <wtf/UUID.h>
+#include <wtf/glib/GMallocString.h>
 #include <wtf/glib/GSpanExtras.h>
 #include <wtf/glib/GThreadSafeWeakPtr.h>
 #include <wtf/glib/GUniquePtr.h>
@@ -312,35 +313,35 @@ bool isProtocolAllowed(const WTF::URL& url)
 
 std::optional<TrackID> getStreamIdFromPad(const GRefPtr<GstPad>& pad)
 {
-    GUniquePtr<gchar> streamIdAsCharacters(gst_pad_get_stream_id(pad.get()));
-    if (!streamIdAsCharacters) {
+    auto streamIdAsString = GMallocString::unsafeAdoptFromUTF8(gst_pad_get_stream_id(pad.get()));
+    if (!streamIdAsString) {
         GST_DEBUG_OBJECT(pad.get(), "Failed to get stream-id from pad");
         return std::nullopt;
     }
 
-    std::optional<TrackID> streamId(parseStreamId(StringView::fromLatin1(streamIdAsCharacters.get())));
+    std::optional<TrackID> streamId(parseStreamId(streamIdAsString.span()));
     if (!streamId)
-        GST_WARNING_OBJECT(pad.get(), "Got invalid stream-id from pad: %s", streamIdAsCharacters.get());
+        GST_WARNING_OBJECT(pad.get(), "Got invalid stream-id from pad: %s", streamIdAsString.utf8());
 
     return streamId;
 }
 
 std::optional<TrackID> getStreamIdFromStream(const GRefPtr<GstStream>& stream)
 {
-    const gchar* streamIdAsCharacters = gst_stream_get_stream_id(stream.get());
-    if (!streamIdAsCharacters) {
+    auto streamIdAsString = CStringView::unsafeFromUTF8(gst_stream_get_stream_id(stream.get()));
+    if (!streamIdAsString) {
         GST_DEBUG_OBJECT(stream.get(), "Failed to get stream-id from stream");
         return std::nullopt;
     }
 
-    std::optional<TrackID> streamId(parseStreamId(StringView::fromLatin1(streamIdAsCharacters)));
+    std::optional<TrackID> streamId(parseStreamId(streamIdAsString.span()));
     if (!streamId)
-        GST_WARNING_OBJECT(stream.get(), "Got invalid stream-id from stream: %s", streamIdAsCharacters);
+        GST_WARNING_OBJECT(stream.get(), "Got invalid stream-id from stream: %s", streamIdAsString.utf8());
 
     return streamId;
 }
 
-std::optional<TrackID> parseStreamId(StringView stringId)
+std::optional<TrackID> parseStreamId(const String& stringId)
 {
     auto maybeUUID = WTF::UUID::parse(stringId);
     if (maybeUUID.has_value())
@@ -403,18 +404,17 @@ bool areEncryptedCaps(const GstCaps* caps)
 static std::optional<Vector<String>> s_UIProcessCommandLineOptions;
 void setGStreamerOptionsFromUIProcess(Vector<String>&& options)
 {
-    s_UIProcessCommandLineOptions = WTFMove(options);
+    s_UIProcessCommandLineOptions = WTF::move(options);
 }
 
 Vector<String> extractGStreamerOptionsFromCommandLine()
 {
-    GUniqueOutPtr<GError> error;
-    GMallocSpan<char> contents = gFileGetContents("/proc/self/cmdline", error);
+    auto contents = gFileGetContents("/proc/self/cmdline"_s);
     if (!contents)
         return { };
 
     Vector<String> options;
-    auto optionsString = String::fromUTF8(contents.span());
+    auto optionsString = String::fromUTF8(contents->span());
     optionsString.split('\0', [&options](StringView item) {
         if (item.startsWith("--gst"_s))
             options.append(item.toString());
@@ -475,8 +475,8 @@ bool ensureGStreamerInitialized()
         GST_DEBUG_CATEGORY_INIT(webkit_gst_common_debug, "webkitcommon", 0, "WebKit Common utilities");
 
         if (isFastMallocEnabled()) {
-            const char* disableFastMalloc = getenv("WEBKIT_GST_DISABLE_FAST_MALLOC");
-            if (!disableFastMalloc || !strcmp(disableFastMalloc, "0"))
+            auto disableFastMalloc = CStringView::unsafeFromUTF8(getenv("WEBKIT_GST_DISABLE_FAST_MALLOC"));
+            if (!disableFastMalloc || disableFastMalloc == "0"_s)
                 gst_allocator_set_default(GST_ALLOCATOR(g_object_new(gst_allocator_fast_malloc_get_type(), nullptr)));
         }
         WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
@@ -557,16 +557,16 @@ void registerWebKitGStreamerElements()
 
         // Prevent decodebin(3) from auto-plugging hlsdemux if it was disabled. UAs should be able
         // to fallback to MSE when this happens.
-        const char* hlsSupport = g_getenv("WEBKIT_GST_ENABLE_HLS_SUPPORT");
-        if (!hlsSupport || !g_strcmp0(hlsSupport, "0")) {
+        auto hlsSupport = CStringView::unsafeFromUTF8(g_getenv("WEBKIT_GST_ENABLE_HLS_SUPPORT"));
+        if (!hlsSupport || hlsSupport == "0"_s) {
             if (auto factory = adoptGRef(gst_element_factory_find("hlsdemux")))
                 gst_plugin_feature_set_rank(GST_PLUGIN_FEATURE_CAST(factory.get()), GST_RANK_NONE);
         }
 
         // Prevent decodebin(3) from auto-plugging dashdemux if it was disabled. UAs should be able
         // to fallback to MSE when this happens.
-        const char* dashSupport = g_getenv("WEBKIT_GST_ENABLE_DASH_SUPPORT");
-        if (!dashSupport || !g_strcmp0(dashSupport, "0")) {
+        auto dashSupport = CStringView::unsafeFromUTF8(g_getenv("WEBKIT_GST_ENABLE_DASH_SUPPORT"));
+        if (!dashSupport || dashSupport == "0"_s) {
             if (auto factory = adoptGRef(gst_element_factory_find("dashdemux")))
                 gst_plugin_feature_set_rank(GST_PLUGIN_FEATURE_CAST(factory.get()), GST_RANK_NONE);
         }
@@ -633,16 +633,16 @@ static HashMap<String, GRefPtr<GstElement>>& activePipelinesMap()
 
 void registerActivePipeline(const GRefPtr<GstElement>& pipeline)
 {
-    GUniquePtr<gchar> name(gst_object_get_name(GST_OBJECT_CAST(pipeline.get())));
+    auto name = GMallocString::unsafeAdoptFromUTF8(gst_object_get_name(GST_OBJECT_CAST(pipeline.get())));
     Locker locker { s_activePipelinesMapLock };
-    activePipelinesMap().add(unsafeSpan(name.get()), GRefPtr<GstElement>(pipeline));
+    activePipelinesMap().add(name.span(), GRefPtr<GstElement>(pipeline));
 }
 
 void unregisterPipeline(const GRefPtr<GstElement>& pipeline)
 {
-    GUniquePtr<gchar> name(gst_object_get_name(GST_OBJECT_CAST(pipeline.get())));
+    auto name = GMallocString::unsafeAdoptFromUTF8(gst_object_get_name(GST_OBJECT_CAST(pipeline.get())));
     Locker locker { s_activePipelinesMapLock };
-    activePipelinesMap().remove(unsafeSpan(name.get()));
+    activePipelinesMap().remove(name.span());
 }
 
 void WebCoreLogObserver::didLogMessage(const WTFLogChannel& channel, WTFLogLevel level, Vector<JSONLogValue>&& values)
@@ -716,7 +716,7 @@ void deinitializeGStreamer()
     auto activeTracers = gst_tracing_get_active_tracers();
     while (activeTracers) {
         auto tracer = adoptGRef(GST_TRACER_CAST(activeTracers->data));
-        if (!isLeaksTracerActive && !g_strcmp0(G_OBJECT_TYPE_NAME(G_OBJECT(tracer.get())), "GstLeaksTracer"))
+        if (!isLeaksTracerActive && equal(unsafeSpan(G_OBJECT_TYPE_NAME(G_OBJECT(tracer.get()))), "GstLeaksTracer"_s))
             isLeaksTracerActive = true;
         activeTracers = g_list_delete_link(activeTracers, activeTracers);
     }
@@ -738,12 +738,12 @@ void deinitializeGStreamer()
     gst_deinit();
 }
 
-unsigned getGstPlayFlag(const char* nick)
+unsigned getGstPlayFlag(ASCIILiteral nick)
 {
     static GFlagsClass* flagsClass = static_cast<GFlagsClass*>(g_type_class_ref(g_type_from_name("GstPlayFlags")));
     ASSERT(flagsClass);
 
-    GFlagsValue* flag = g_flags_get_value_by_nick(flagsClass, nick);
+    GFlagsValue* flag = g_flags_get_value_by_nick(flagsClass, nick.characters());
     if (!flag)
         return 0;
 
@@ -776,7 +776,7 @@ MediaTime fromGstClockTime(GstClockTime time)
 
 RefPtr<GstMappedOwnedBuffer> GstMappedOwnedBuffer::create(GRefPtr<GstBuffer>&& buffer)
 {
-    auto* mappedBuffer = new GstMappedOwnedBuffer(WTFMove(buffer));
+    auto* mappedBuffer = new GstMappedOwnedBuffer(WTF::move(buffer));
     if (!mappedBuffer->isValid()) {
         delete mappedBuffer;
         return nullptr;
@@ -1046,7 +1046,7 @@ static void dumpPipeline(const GRefPtr<GstElement>& pipeline, String&& dotFileNa
     }
 
     auto data = createAsyncPipelineDumpData();
-    data->dotFileName = WTFMove(dotFileName);
+    data->dotFileName = WTF::move(dotFileName);
     gst_element_call_async(pipeline.get(), reinterpret_cast<GstElementCallAsyncFunc>(+[](GstElement* pipeline, gpointer userData) {
         auto data = reinterpret_cast<AsyncPipelineDumpData*>(userData);
         GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN_CAST(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, data->dotFileName.utf8().data());
@@ -1060,7 +1060,7 @@ void connectSimpleBusMessageCallback(GstElement* pipeline, Function<void(GstMess
 
     auto data = createMessageBusData();
     data->pipeline.reset(pipeline);
-    data->handler = WTFMove(customHandler);
+    data->handler = WTF::move(customHandler);
     data->asynchronousPipelineDumping = asynchronousPipelineDumping;
     auto handler = g_signal_connect_data(bus.get(), "message", G_CALLBACK(+[](GstBus*, GstMessage* message, gpointer userData) {
         auto data = reinterpret_cast<MessageBusData*>(userData);
@@ -1072,7 +1072,7 @@ void connectSimpleBusMessageCallback(GstElement* pipeline, Function<void(GstMess
         case GST_MESSAGE_ERROR: {
             GST_ERROR_OBJECT(pipeline.get(), "Got message: %" GST_PTR_FORMAT, message);
             auto dotFileName = makeString(unsafeSpan(GST_OBJECT_NAME(pipeline.get())), "_error"_s);
-            dumpPipeline(pipeline, WTFMove(dotFileName), data->asynchronousPipelineDumping);
+            dumpPipeline(pipeline, WTF::move(dotFileName), data->asynchronousPipelineDumping);
             break;
         }
         case GST_MESSAGE_STATE_CHANGED: {
@@ -1088,7 +1088,7 @@ void connectSimpleBusMessageCallback(GstElement* pipeline, Function<void(GstMess
                 gst_element_state_get_name(newState), gst_element_state_get_name(pending));
 
             auto dotFileName = makeString(unsafeSpan(GST_OBJECT_NAME(pipeline.get())), '_', unsafeSpan(gst_element_state_get_name(oldState)), '_', unsafeSpan(gst_element_state_get_name(newState)));
-            dumpPipeline(pipeline, WTFMove(dotFileName), data->asynchronousPipelineDumping);
+            dumpPipeline(pipeline, WTF::move(dotFileName), data->asynchronousPipelineDumping);
             break;
         }
         case GST_MESSAGE_LATENCY:
@@ -1221,16 +1221,19 @@ GstBuffer* /* (transfer full) */ gstBufferNewWrappedFast(void* data, size_t leng
     return gst_buffer_new_wrapped_full(static_cast<GstMemoryFlags>(0), data, length, 0, length, data, fastFree);
 }
 
-GstElement* /* (transfer floating) */ makeGStreamerElement(ASCIILiteral factoryName, const String& name)
+GstElement* /* (transfer floating) */ makeGStreamerElement(CStringView factoryName, const String& name)
 {
     static Lock lock;
     static Vector<String> cache WTF_GUARDED_BY_LOCK(lock);
-    auto* element = gst_element_factory_make(factoryName.characters(), name.isEmpty() ? nullptr : name.ascii().data());
+    auto* element = gst_element_factory_make(factoryName.utf8(), name.isEmpty() ? nullptr : name.ascii().data());
     Locker locker { lock };
-    if (!element && !cache.contains(factoryName)) {
-        cache.append(factoryName);
-        WTFLogAlways("GStreamer element %s not found. Please install it", factoryName.characters());
-        ASSERT_NOT_REACHED_WITH_MESSAGE("GStreamer element %s not found. Please install it", factoryName.characters());
+    if (!element) {
+        String factoryNameString(factoryName.span());
+        if (!cache.contains(factoryNameString)) {
+            cache.append(WTF::move(factoryNameString));
+            WTFLogAlways("GStreamer element %s not found. Please install it", factoryName.utf8());
+            ASSERT_NOT_REACHED_WITH_MESSAGE("GStreamer element %s not found. Please install it", factoryName.utf8());
+        }
     }
     ASSERT(g_object_is_floating(element));
     return element;
@@ -1273,6 +1276,24 @@ static ASCIILiteral webrtcStatsTypeName(int value)
     return nullptr;
 }
 
+static ASCIILiteral webrtcDtlsTransportStateName(int value)
+{
+    switch (value) {
+    case GST_WEBRTC_DTLS_TRANSPORT_STATE_NEW:
+        return "new"_s;
+    case GST_WEBRTC_DTLS_TRANSPORT_STATE_CLOSED:
+        return "closed"_s;
+    case GST_WEBRTC_DTLS_TRANSPORT_STATE_FAILED:
+        return "failed"_s;
+    case GST_WEBRTC_DTLS_TRANSPORT_STATE_CONNECTING:
+        return "connecting"_s;
+    case GST_WEBRTC_DTLS_TRANSPORT_STATE_CONNECTED:
+        return "connected"_s;
+    }
+    ASSERT_NOT_REACHED();
+    return nullptr;
+}
+
 #if GST_CHECK_VERSION(1, 27, 0)
 static ASCIILiteral webrtcIceTcpCandidateTypeName(int value)
 {
@@ -1285,6 +1306,20 @@ static ASCIILiteral webrtcIceTcpCandidateTypeName(int value)
         return "passive"_s;
     case GST_WEBRTC_ICE_TCP_CANDIDATE_TYPE_SO:
         return "so"_s;
+    }
+    ASSERT_NOT_REACHED();
+    return nullptr;
+}
+
+static ASCIILiteral webrtcDtlsRoleName(int value)
+{
+    switch (value) {
+    case GST_WEBRTC_DTLS_ROLE_CLIENT:
+        return "client"_s;
+    case GST_WEBRTC_DTLS_ROLE_SERVER:
+        return "server"_s;
+    case GST_WEBRTC_DTLS_ROLE_UNKNOWN:
+        return "unknown"_s;
     }
     ASSERT_NOT_REACHED();
     return nullptr;
@@ -1498,7 +1533,7 @@ static std::optional<RefPtr<JSON::Value>> gstStructureValueToJSON(const GValue* 
     }
 
     if (valueType == G_TYPE_STRING)
-        return JSON::Value::create(makeString(unsafeSpan(g_value_get_string(value))))->asValue();
+        return JSON::Value::create(String(byteCast<char8_t>(unsafeSpan(g_value_get_string(value)))))->asValue();
 
 #if USE(GSTREAMER_WEBRTC)
     if (valueType == GST_TYPE_WEBRTC_STATS_TYPE) {
@@ -1506,9 +1541,19 @@ static std::optional<RefPtr<JSON::Value>> gstStructureValueToJSON(const GValue* 
         if (!name.isEmpty()) [[likely]]
             return JSON::Value::create(makeString(name))->asValue();
     }
+    if (valueType == GST_TYPE_WEBRTC_DTLS_TRANSPORT_STATE) {
+        auto name = webrtcDtlsTransportStateName(g_value_get_enum(value));
+        if (!name.isEmpty()) [[likely]]
+            return JSON::Value::create(makeString(name))->asValue();
+    }
 #if GST_CHECK_VERSION(1, 27, 0)
     if (valueType == GST_TYPE_WEBRTC_ICE_TCP_CANDIDATE_TYPE) {
         auto name = webrtcIceTcpCandidateTypeName(g_value_get_enum(value));
+        if (!name.isEmpty()) [[likely]]
+            return JSON::Value::create(makeString(name))->asValue();
+    }
+    if (valueType == GST_TYPE_WEBRTC_DTLS_ROLE) {
+        auto name = webrtcDtlsRoleName(g_value_get_enum(value));
         if (!name.isEmpty()) [[likely]]
             return JSON::Value::create(makeString(name))->asValue();
     }
@@ -1527,10 +1572,8 @@ static RefPtr<JSON::Value> gstStructureToJSON(const GstStructure* structure)
         return nullptr;
 
     gstStructureForeach(structure, [&](auto id, auto value) -> bool {
-        if (auto jsonValue = gstStructureValueToJSON(value)) {
-            auto fieldId = gstIdToString(id);
-            resultValue->setValue(fieldId.toString(), jsonValue->releaseNonNull());
-        }
+        if (auto jsonValue = gstStructureValueToJSON(value))
+            resultValue->setValue(gstIdToString(id), jsonValue->releaseNonNull());
         return TRUE;
     });
     return resultValue;
@@ -1562,7 +1605,7 @@ PlatformVideoColorSpace videoColorSpaceFromInfo(const GstVideoInfo& info)
 {
     ensureGStreamerInitialized();
 #ifndef GST_DISABLE_GST_DEBUG
-    GUniquePtr<char> colorimetry(gst_video_colorimetry_to_string(&GST_VIDEO_INFO_COLORIMETRY(&info)));
+    auto colorimetry = GMallocString::unsafeAdoptFromUTF8(gst_video_colorimetry_to_string(&GST_VIDEO_INFO_COLORIMETRY(&info)));
 #endif
     PlatformVideoColorSpace colorSpace;
     switch (GST_VIDEO_INFO_COLORIMETRY(&info).matrix) {
@@ -1589,7 +1632,7 @@ PlatformVideoColorSpace videoColorSpaceFromInfo(const GstVideoInfo& info)
         break;
     default:
 #ifndef GST_DISABLE_GST_DEBUG
-        GST_WARNING("Unhandled colorspace matrix from %s", colorimetry.get());
+        GST_WARNING("Unhandled colorspace matrix from %s", colorimetry.utf8());
 #endif
         break;
     }
@@ -1639,7 +1682,7 @@ PlatformVideoColorSpace videoColorSpaceFromInfo(const GstVideoInfo& info)
         break;
     default:
 #ifndef GST_DISABLE_GST_DEBUG
-        GST_WARNING("Unhandled colorspace transfer from %s", colorimetry.get());
+        GST_WARNING("Unhandled colorspace transfer from %s", colorimetry.utf8());
 #endif
         break;
     }
@@ -1680,7 +1723,7 @@ PlatformVideoColorSpace videoColorSpaceFromInfo(const GstVideoInfo& info)
         break;
     default:
 #ifndef GST_DISABLE_GST_DEBUG
-        GST_WARNING("Unhandled colorspace primaries from %s", colorimetry.get());
+        GST_WARNING("Unhandled colorspace primaries from %s", colorimetry.utf8());
 #endif
         break;
     }
@@ -1909,8 +1952,8 @@ bool gstElementMatchesFactoryAndHasProperty(GstElement* element, ASCIILiteral fa
     if (!factory)
         return gstObjectHasProperty(element, propertyName);
 
-    auto nameView = StringView::fromLatin1(GST_OBJECT_NAME(factory));
-    if (fnmatch(factoryNamePattern.characters(), nameView.toStringWithoutCopying().ascii().data(), 0))
+    auto nameView = CStringView::unsafeFromUTF8(GST_OBJECT_NAME(factory));
+    if (fnmatch(factoryNamePattern.characters(), nameView.utf8(), 0))
         return false;
 
     return gstObjectHasProperty(element, propertyName);
@@ -1924,7 +1967,7 @@ GRefPtr<GstBuffer> wrapSpanData(const std::span<const uint8_t>& span)
     Vector<uint8_t> data { span };
     auto bufferSize = data.size();
     auto bufferData = data.mutableSpan().data();
-    auto buffer = adoptGRef(gst_buffer_new_wrapped_full(GST_MEMORY_FLAG_READONLY, bufferData, bufferSize, 0, bufferSize, new Vector<uint8_t>(WTFMove(data)), [](gpointer data) {
+    auto buffer = adoptGRef(gst_buffer_new_wrapped_full(GST_MEMORY_FLAG_READONLY, bufferData, bufferSize, 0, bufferSize, new Vector<uint8_t>(WTF::move(data)), [](gpointer data) {
         delete static_cast<Vector<uint8_t>*>(data);
     }));
     return buffer;
@@ -1979,12 +2022,12 @@ bool gstStructureMapInPlace(GstStructure* structure, Function<bool(GstId, GValue
 #endif
 }
 
-StringView gstIdToString(GstId id)
+String gstIdToString(GstId id)
 {
 #if GST_CHECK_VERSION(1, 26, 0)
-    return StringView::fromLatin1(gst_id_str_as_str(id));
+    return byteCast<char8_t>(unsafeSpan(gst_id_str_as_str(id)));
 #else
-    return StringView::fromLatin1(g_quark_to_string(id));
+    return byteCast<char8_t>(unsafeSpan(g_quark_to_string(id)));
 #endif
 }
 
@@ -2047,15 +2090,14 @@ GRefPtr<GstCaps> buildDMABufCaps()
 #if GST_CHECK_VERSION(1, 24, 0)
     gst_caps_set_simple(caps.get(), "format", G_TYPE_STRING, "DMA_DRM", nullptr);
 
-    static const char* formats = g_getenv("WEBKIT_GST_DMABUF_FORMATS");
-    if (formats && *formats) {
-        auto formatsString = StringView::fromLatin1(formats);
+    auto formats = CStringView::unsafeFromUTF8(g_getenv("WEBKIT_GST_DMABUF_FORMATS"));
+    if (!formats.isEmpty()) {
         GValue drmSupportedFormats = G_VALUE_INIT;
         g_value_init(&drmSupportedFormats, GST_TYPE_LIST);
-        for (auto token : formatsString.split(',')) {
+        for (auto token : String(formats.span()).split(',')) {
             GValue value = G_VALUE_INIT;
             g_value_init(&value, G_TYPE_STRING);
-            g_value_set_string(&value, token.toStringWithoutCopying().ascii().data());
+            g_value_set_string(&value, token.utf8().data());
             gst_value_list_append_and_take_value(&drmSupportedFormats, &value);
         }
         gst_caps_set_value(caps.get(), "drm-format", &drmSupportedFormats);
@@ -2102,7 +2144,7 @@ GRefPtr<GstCaps> buildDMABufCaps()
 #endif // USE(GBM)
 
 #if USE(GSTREAMER_GL)
-static std::optional<GRefPtr<GstContext>> requestGLContext(const char* contextType)
+static std::optional<GRefPtr<GstContext>> requestGLContext(ASCIILiteral contextType)
 {
     auto& sharedDisplay = PlatformDisplay::sharedDisplay();
     auto* gstGLDisplay = sharedDisplay.gstGLDisplay();
@@ -2111,13 +2153,13 @@ static std::optional<GRefPtr<GstContext>> requestGLContext(const char* contextTy
     if (!gstGLDisplay || !gstGLContext)
         return std::nullopt;
 
-    if (!g_strcmp0(contextType, GST_GL_DISPLAY_CONTEXT_TYPE)) {
+    if (contextType == ASCIILiteral::fromLiteralUnsafe(GST_GL_DISPLAY_CONTEXT_TYPE)) {
         GRefPtr<GstContext> displayContext = adoptGRef(gst_context_new(GST_GL_DISPLAY_CONTEXT_TYPE, FALSE));
         gst_context_set_gl_display(displayContext.get(), gstGLDisplay);
         return displayContext;
     }
 
-    if (!g_strcmp0(contextType, "gst.gl.app_context")) {
+    if (contextType == "gst.gl.app_context"_s) {
         GRefPtr<GstContext> appContext = adoptGRef(gst_context_new("gst.gl.app_context", FALSE));
         GstStructure* structure = gst_context_writable_structure(appContext.get());
         gst_structure_set(structure, "context", GST_TYPE_GL_CONTEXT, gstGLContext, nullptr);
@@ -2131,7 +2173,7 @@ bool setGstElementGLContext(GstElement* element, ASCIILiteral contextType)
 {
     GRefPtr<GstContext> oldContext = adoptGRef(gst_element_get_context(element, contextType.characters()));
     if (!oldContext) {
-        auto newContext = requestGLContext(contextType.characters());
+        auto newContext = requestGLContext(contextType);
         if (!newContext)
             return false;
         gst_element_set_context(element, newContext->get());

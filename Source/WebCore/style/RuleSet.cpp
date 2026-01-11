@@ -136,10 +136,11 @@ static bool shouldHaveBucketForAttributeName(const CSSSelector& attributeSelecto
 void RuleSet::addRule(const StyleRule& rule, unsigned selectorIndex, unsigned selectorListIndex)
 {
     RuleData ruleData(rule, selectorIndex, selectorListIndex, m_ruleCount, { });
-    addRule(WTFMove(ruleData), 0, 0, 0);
+    // This path is used when building invalidation RuleSets, no need to collect features (nullptr CollectionContext).
+    addRule(WTF::move(ruleData), 0, 0, 0, nullptr);
 }
 
-void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerIdentifier, ContainerQueryIdentifier containerQueryIdentifier, ScopeRuleIdentifier scopeRuleIdentifier)
+void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerIdentifier, ContainerQueryIdentifier containerQueryIdentifier, ScopeRuleIdentifier scopeRuleIdentifier, RuleFeatureSet::CollectionContext* featureCollectionContext)
 {
     ASSERT(ruleData.position() == m_ruleCount);
 
@@ -161,16 +162,18 @@ void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerId
     const auto& scopeRules = scopeRulesFor(ruleData);
 
     auto computeLinkMatchType = [&] {
+        ASSERT(ruleData.selector());
         // General case: no @scope rule or current rule selector is not :scope.
         if (scopeRules.isEmpty() || !ruleData.selector()->hasScope())
-            return SelectorChecker::determineLinkMatchType(ruleData.selector());
+            return SelectorChecker::determineLinkMatchType(*ruleData.selector());
         // When current rule is :scope, we need to take into account the @scope selectors to determine the link match type.
         Ref scopeRule = scopeRules.last();
-        return SelectorChecker::determineLinkMatchType(ruleData.selector(), scopeRule.ptr());
+        return SelectorChecker::determineLinkMatchType(*ruleData.selector(), scopeRule.ptr());
     };
     ruleData.setLinkMatchType(computeLinkMatchType());
 
-    m_features.collectFeatures(ruleData, scopeRules);
+    if (featureCollectionContext)
+        m_features.collectFeatures(*featureCollectionContext, ruleData, scopeRules);
 
     unsigned classBucketSize = 0;
     const CSSSelector* idSelector = nullptr;
@@ -346,10 +349,10 @@ void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerId
             cueBackgroundSelector->setPseudoElement(CSSSelector::PseudoElement::UserAgentPart);
             cueBackgroundSelector->setValue(UserAgentParts::internalCueBackground());
 
-            Ref cueBackgroundStyleRule = StyleRule::create(ruleData.styleRule().properties().immutableCopyIfNeeded(), ruleData.styleRule().hasDocumentSecurityOrigin(), CSSSelectorList { MutableCSSSelectorList::from(WTFMove(cueBackgroundSelector)) });
+            Ref cueBackgroundStyleRule = StyleRule::create(ruleData.styleRule().properties().immutableCopyIfNeeded(), ruleData.styleRule().hasDocumentSecurityOrigin(), CSSSelectorList { MutableCSSSelectorList::from(WTF::move(cueBackgroundSelector)) });
 
             // Warning: Recursion!
-            addRule(WTFMove(cueBackgroundStyleRule), 0, 0);
+            addRule(WTF::move(cueBackgroundStyleRule), 0, 0);
         }
 #endif
         return;

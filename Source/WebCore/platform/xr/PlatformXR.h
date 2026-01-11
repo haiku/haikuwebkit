@@ -93,7 +93,6 @@ enum class ReferenceSpaceType : uint8_t {
     LocalFloor,
     BoundedFloor,
     Unbounded,
-    Webgpu
 };
 
 enum class Eye : uint8_t {
@@ -168,8 +167,6 @@ inline SessionFeature sessionFeatureFromReferenceSpaceType(ReferenceSpaceType re
         return SessionFeature::ReferenceSpaceTypeBoundedFloor;
     case ReferenceSpaceType::Unbounded:
         return SessionFeature::ReferenceSpaceTypeUnbounded;
-    case ReferenceSpaceType::Webgpu:
-        return SessionFeature::WebGPU;
     }
 
     ASSERT_NOT_REACHED();
@@ -299,9 +296,21 @@ struct Ray {
     WebCore::FloatPoint3D direction;
 };
 
+enum class InputSourceSpaceType : uint8_t {
+    TargetRay,
+    Grip,
+};
+
+struct InputSourceSpaceInfo {
+    InputSourceHandle handle;
+    InputSourceSpaceType type;
+};
+
+using NativeOriginInformation = Variant<ReferenceSpaceType, InputSourceSpaceInfo>;
+
 struct HitTestOptions {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(HitTestOptions);
-    WebCore::TransformationMatrix nativeOrigin;
+    NativeOriginInformation nativeOrigin;
     Vector<WebCore::XRHitTestTrackableType> entityTypes;
     Ray offsetRay;
 };
@@ -491,7 +500,7 @@ public:
     virtual void shutDownTrackingAndRendering() = 0;
     virtual void didCompleteShutdownTriggeredBySystem() { }
     TrackingAndRenderingClient* trackingAndRenderingClient() const { return m_trackingAndRenderingClient.get(); }
-    void setTrackingAndRenderingClient(WeakPtr<TrackingAndRenderingClient>&& client) { m_trackingAndRenderingClient = WTFMove(client); }
+    void setTrackingAndRenderingClient(WeakPtr<TrackingAndRenderingClient>&& client) { m_trackingAndRenderingClient = WTF::move(client); }
 
     // If this method returns true, that means the device will notify TrackingAndRenderingClient
     // when the platform has completed all steps to shut down the XR session.

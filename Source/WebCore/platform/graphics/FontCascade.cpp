@@ -65,7 +65,7 @@ FontCascade::FontCascade()
 }
 
 FontCascade::FontCascade(FontCascadeDescription&& description)
-    : m_fontDescription(WTFMove(description))
+    : m_fontDescription(WTF::move(description))
     , m_generation(++lastFontCascadeGeneration)
     , m_useBackslashAsYenSymbol(computeUseBackslashAsYenSymbol())
     , m_enableKerning(computeEnableKerning())
@@ -75,7 +75,7 @@ FontCascade::FontCascade(FontCascadeDescription&& description)
 }
 
 FontCascade::FontCascade(FontCascadeDescription&& description, const FontCascade& other)
-    : m_fontDescription(WTFMove(description))
+    : m_fontDescription(WTF::move(description))
     , m_spacing(other.m_spacing)
     , m_generation(++lastFontCascadeGeneration)
     , m_useBackslashAsYenSymbol(computeUseBackslashAsYenSymbol())
@@ -155,13 +155,13 @@ unsigned FontCascade::fontSelectorVersion() const
 void FontCascade::updateFonts(Ref<FontCascadeFonts>&& fonts) const
 {
     // FIXME: Ideally we'd only update m_generation if the fonts changed.
-    m_fonts = WTFMove(fonts);
+    m_fonts = WTF::move(fonts);
     m_generation = ++lastFontCascadeGeneration;
 }
 
 void FontCascade::update(RefPtr<FontSelector>&& fontSelector) const
 {
-    m_fontSelector = WTFMove(fontSelector);
+    m_fontSelector = WTF::move(fontSelector);
     FontCache::forCurrentThread()->updateFontCascade(*this);
 }
 
@@ -486,7 +486,7 @@ bool FontCascade::hasValidAverageCharWidth() const
         return false;
 #endif
 
-    static constexpr ComparableASCIILiteral names[] = {
+    static constexpr SortedArraySet set { std::to_array<ComparableASCIILiteral>({
         "#GungSeo"_s,
         "#HeadLineA"_s,
         "#PCMyungjo"_s,
@@ -521,8 +521,7 @@ bool FontCascade::hasValidAverageCharWidth() const
         "STHeiti"_s,
         "Symbol"_s,
         "Times"_s,
-    };
-    static constexpr SortedArraySet set { names };
+    }) };
     return !set.contains(family);
 }
 
@@ -1553,7 +1552,7 @@ void FontCascade::drawGlyphBuffer(GraphicsContext& context, const GlyphBuffer& g
                 context.drawGlyphs(*fontData, glyphBuffer.glyphs(lastFrom, glyphCount), glyphBuffer.advances(lastFrom, glyphCount), startPoint, m_fontDescription.usedFontSmoothing());
             }
             lastFrom = nextGlyph;
-            fontData = WTFMove(nextFontData);
+            fontData = WTF::move(nextFontData);
             startPoint.setX(nextX);
             startPoint.setY(nextY);
         }

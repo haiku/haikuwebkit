@@ -393,10 +393,10 @@ Ref<AtomStringImpl> AtomStringImpl::addSlowCase(Ref<StringImpl>&& string)
         return *uncheckedDowncast<AtomStringImpl>(StringImpl::empty());
 
     if (string->isStatic())
-        return addStatic(WTFMove(string));
+        return addStatic(WTF::move(string));
 
     if (string->isSymbol())
-        return addSymbol(WTFMove(string));
+        return addSymbol(WTF::move(string));
 
     ASSERT_WITH_MESSAGE(!string->isAtom(), "AtomStringImpl should not hit the slow case if the string is already an atom.");
 
@@ -406,7 +406,7 @@ Ref<AtomStringImpl> AtomStringImpl::addSlowCase(Ref<StringImpl>&& string)
     if (addResult.isNewEntry) {
         ASSERT(addResult.iterator->get() == string.ptr());
         string->setIsAtom(true);
-        return uncheckedDowncast<AtomStringImpl>(WTFMove(string));
+        return uncheckedDowncast<AtomStringImpl>(WTF::move(string));
     }
 
     return *uncheckedDowncast<AtomStringImpl>(addResult.iterator->get());

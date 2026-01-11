@@ -48,7 +48,7 @@ static ExceptionOr<Vector<uint8_t>> signECDSACryptoKit(CryptoAlgorithmIdentifier
     auto rv = key->sign(data.span(), std::to_underlying(toCKHashFunction(hash)));
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return Exception { ExceptionCode::OperationError };
-    return WTFMove(rv.result);
+    return WTF::move(rv.result);
 #else
     UNUSED_PARAM(hash);
     UNUSED_PARAM(key);

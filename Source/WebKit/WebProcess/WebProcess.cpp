@@ -47,7 +47,6 @@
 #include "RemoteMediaEngineConfigurationFactory.h"
 #include "RemoteMediaSessionManagerProxyMessages.h"
 #include "RemoteRemoteCommandListener.h"
-#include "RemoteSharedResourceCacheProxy.h"
 #include "RemoteWebLockRegistry.h"
 #include "RemoteWorkerType.h"
 #include "SpeechRecognitionRealtimeMediaSourceManager.h"
@@ -473,7 +472,7 @@ void WebProcess::initializeWebProcess(WebProcessCreationParameters&& parameters,
     ASSERT(m_pageMap.isEmpty());
 
     if (parameters.websiteDataStoreParameters)
-        setWebsiteDataStoreParameters(WTFMove(*parameters.websiteDataStoreParameters));
+        setWebsiteDataStoreParameters(WTF::move(*parameters.websiteDataStoreParameters));
 
     setLegacyPresentingApplicationPID(parameters.presentingApplicationPID);
 
@@ -535,7 +534,7 @@ void WebProcess::initializeWebProcess(WebProcessCreationParameters&& parameters,
             else
                 parentProcessConnection->send(Messages::WebProcessProxy::DidExceedInactiveMemoryLimit(), 0);
         });
-        memoryPressureHandler.setMemoryFootprintNotificationThresholds(WTFMove(parameters.memoryFootprintNotificationThresholds), [this, protectedThis = Ref { *this }](size_t footprint) {
+        memoryPressureHandler.setMemoryFootprintNotificationThresholds(WTF::move(parameters.memoryFootprintNotificationThresholds), [this, protectedThis = Ref { *this }](size_t footprint) {
             protectedParentProcessConnection()->send(Messages::WebProcessProxy::DidExceedMemoryFootprintThreshold(footprint), 0);
         });
 #endif
@@ -718,9 +717,9 @@ void WebProcess::initializeWebProcess(WebProcessCreationParameters&& parameters,
         prewarmGlobally();
 #endif
 
-    updateStorageAccessUserAgentStringQuirks(WTFMove(parameters.storageAccessUserAgentStringQuirksData));
-    updateDomainsWithStorageAccessQuirks(WTFMove(parameters.storageAccessPromptQuirksDomains));
-    updateScriptTrackingPrivacyFilter(WTFMove(parameters.scriptTrackingPrivacyRules));
+    updateStorageAccessUserAgentStringQuirks(WTF::move(parameters.storageAccessUserAgentStringQuirksData));
+    updateDomainsWithStorageAccessQuirks(WTF::move(parameters.storageAccessPromptQuirksDomains));
+    updateScriptTrackingPrivacyFilter(WTF::move(parameters.scriptTrackingPrivacyRules));
 
 #if ENABLE(GAMEPAD)
     // Web processes need to periodically notify the UI process of gamepad access at least as frequently
@@ -735,13 +734,11 @@ void WebProcess::initializeWebProcess(WebProcessCreationParameters&& parameters,
 
 #if ENABLE(REMOTE_INSPECTOR) && ENABLE(WEBASSEMBLY)
     if (JSC::Options::enableWasmDebugger()) [[unlikely]] {
-        if (JSC::VM* vm = WebCore::commonVMOrNull()) {
-            bool success = JSC::Wasm::DebugServer::singleton().startRWI(vm, [](const String& response) {
-                return WebKit::WebProcess::singleton().send(Messages::WebProcessProxy::SendWasmDebuggerResponse(response), 0);
-            });
-            if (!success)
-                WEBPROCESS_RELEASE_LOG_ERROR(Inspector, "Failed to start WasmDebugServer in RWI mode");
-        }
+        bool success = JSC::Wasm::DebugServer::singleton().startRWI([](const String& response) {
+            return WebKit::WebProcess::singleton().send(Messages::WebProcessProxy::SendWasmDebuggerResponse(response), 0);
+        });
+        if (!success)
+            WEBPROCESS_RELEASE_LOG_ERROR(Inspector, "Failed to start WasmDebugServer in RWI mode");
     }
 #endif
 
@@ -769,9 +766,9 @@ void WebProcess::setWebsiteDataStoreParameters(WebProcessDataStoreParameters&& p
     if (parameters.trackingPreventionEnabled) {
         if (!ResourceLoadObserver::singletonIfExists())
             ResourceLoadObserver::setShared(*new WebResourceLoadObserver(parameters.sessionID.isEphemeral() ? WebCore::ResourceLoadStatistics::IsEphemeral::Yes : WebCore::ResourceLoadStatistics::IsEphemeral::No));
-        ResourceLoadObserver::singleton().setDomainsWithUserInteraction(WTFMove(parameters.domainsWithUserInteraction));
+        ResourceLoadObserver::singleton().setDomainsWithUserInteraction(WTF::move(parameters.domainsWithUserInteraction));
         if (!parameters.sessionID.isEphemeral())
-            ResourceLoadObserver::singleton().setDomainsWithCrossPageStorageAccess(WTFMove(parameters.domainsWithStorageAccessQuirk), [] { });
+            ResourceLoadObserver::singleton().setDomainsWithCrossPageStorageAccess(WTF::move(parameters.domainsWithStorageAccessQuirk), [] { });
     }
 
     m_mediaKeysStorageDirectory = parameters.mediaKeyStorageDirectory;
@@ -779,7 +776,7 @@ void WebProcess::setWebsiteDataStoreParameters(WebProcessDataStoreParameters&& p
     for (auto& supplement : m_supplements.values())
         supplement->setWebsiteDataStore(parameters);
 
-    platformSetWebsiteDataStoreParameters(WTFMove(parameters));
+    platformSetWebsiteDataStoreParameters(WTF::move(parameters));
     
     ensureNetworkProcessConnection();
 
@@ -887,7 +884,7 @@ void WebProcess::prewarmGlobally()
 
 void WebProcess::prewarmWithDomainInformation(WebCore::PrewarmInformation&& prewarmInformation)
 {
-    WebCore::ProcessWarming::prewarmWithInformation(WTFMove(prewarmInformation));
+    WebCore::ProcessWarming::prewarmWithInformation(WTF::move(prewarmInformation));
 }
 
 void WebProcess::registerURLSchemeAsEmptyDocument(const String& urlScheme)
@@ -1015,7 +1012,7 @@ WebPage* WebProcess::focusedWebPage() const
 
 void WebProcess::updateStorageAccessUserAgentStringQuirks(HashMap<RegistrableDomain, String>&& userAgentStringQuirk)
 {
-    Quirks::updateStorageAccessUserAgentStringQuirks(WTFMove(userAgentStringQuirk));
+    Quirks::updateStorageAccessUserAgentStringQuirks(WTF::move(userAgentStringQuirk));
 }
     
 WebPage* WebProcess::webPage(PageIdentifier pageID) const
@@ -1028,7 +1025,7 @@ void WebProcess::createWebPage(PageIdentifier pageID, WebPageCreationParameters&
     m_hasEverHadAnyWebPages = true;
 
     auto addResult = m_pageMap.ensure(pageID, [&] {
-        return WebPage::create(pageID, WTFMove(parameters));
+        return WebPage::create(pageID, WTF::move(parameters));
     });
     Ref page { addResult.iterator->value };
 
@@ -1050,7 +1047,7 @@ void WebProcess::createWebPage(PageIdentifier pageID, WebPageCreationParameters&
         RealTimeThreads::singleton().setEnabled(hasVisibleWebPage());
 #endif
     } else
-        page->reinitializeWebPage(WTFMove(parameters));
+        page->reinitializeWebPage(WTF::move(parameters));
 
     if (m_hasPendingAccessibilityUnsuspension) {
         m_hasPendingAccessibilityUnsuspension = false;
@@ -1188,7 +1185,7 @@ WebPageGroupProxy* WebProcess::webPageGroup(WebPageGroupData&& pageGroupData)
     auto result = m_pageGroupMap.add(pageGroupData.pageGroupID, nullptr);
     if (result.isNewEntry) {
         ASSERT(!result.iterator->value);
-        result.iterator->value = WebPageGroupProxy::create(WTFMove(pageGroupData));
+        result.iterator->value = WebPageGroupProxy::create(WTF::move(pageGroupData));
     }
 
     return result.iterator->value.get();
@@ -1376,7 +1373,7 @@ NetworkProcessConnection& WebProcess::ensureNetworkProcessConnection()
     if (!m_networkProcessConnection) {
         auto connectionInfo = getNetworkProcessConnection(Ref { *parentProcessConnection() });
 
-        m_networkProcessConnection = NetworkProcessConnection::create(IPC::Connection::Identifier { WTFMove(connectionInfo.connection) }, connectionInfo.cookieAcceptPolicy);
+        m_networkProcessConnection = NetworkProcessConnection::create(IPC::Connection::Identifier { WTF::move(connectionInfo.connection) }, connectionInfo.cookieAcceptPolicy);
 #if HAVE(AUDIT_TOKEN)
         m_networkProcessConnection->setNetworkProcessAuditToken(connectionInfo.auditToken ? std::optional(connectionInfo.auditToken->auditToken()) : std::nullopt);
 #endif
@@ -1543,18 +1540,15 @@ GPUProcessConnection& WebProcess::ensureGPUProcessConnection()
         if (!connectionIdentifiers)
             CRASH();
 
-        Ref gpuConnection = IPC::Connection::createServerConnection(WTFMove(connectionIdentifiers->server));
+        Ref gpuConnection = IPC::Connection::createServerConnection(WTF::move(connectionIdentifiers->server));
 #if ENABLE(IPC_TESTING_API)
         if (gpuConnection->ignoreInvalidMessageForTesting())
             gpuConnection->setIgnoreInvalidMessageForTesting();
 #endif
-        Ref gpuProcessConnection = GPUProcessConnection::create(WTFMove(gpuConnection));
-        m_gpuProcessConnection = gpuProcessConnection.ptr();
-        protectedParentProcessConnection()->send(Messages::WebProcessProxy::CreateGPUProcessConnection(m_gpuProcessConnection->identifier(),  WTFMove(connectionIdentifiers->client)), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
+        m_gpuProcessConnection = GPUProcessConnection::create(WTF::move(gpuConnection));
+        protectedParentProcessConnection()->send(Messages::WebProcessProxy::CreateGPUProcessConnection(m_gpuProcessConnection->identifier(),  WTF::move(connectionIdentifiers->client)), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
         for (auto& page : m_pageMap.values())
-            page->gpuProcessConnectionDidBecomeAvailable(gpuProcessConnection);
-        if (m_sharedResourceCache)
-            Ref { *m_sharedResourceCache }->gpuProcessConnectionDidBecomeAvailable(gpuProcessConnection);
+            page->gpuProcessConnectionDidBecomeAvailable(Ref { *m_gpuProcessConnection });
     }
     return *m_gpuProcessConnection;
 }
@@ -1613,15 +1607,6 @@ AudioMediaStreamTrackRendererInternalUnitManager& WebProcess::audioMediaStreamTr
 }
 #endif
 
-RemoteSharedResourceCacheProxy& WebProcess::gpuProcessSharedResourceCache()
-{
-    if (!m_sharedResourceCache) {
-        m_sharedResourceCache = RemoteSharedResourceCacheProxy::create();
-        if (m_gpuProcessConnection)
-            Ref { *m_sharedResourceCache }->gpuProcessConnectionDidBecomeAvailable(Ref { *m_gpuProcessConnection });
-    }
-    return *m_sharedResourceCache;
-}
 #endif // ENABLE(GPU_PROCESS)
 
 #if ENABLE(MODEL_PROCESS)
@@ -1659,7 +1644,7 @@ void WebProcess::setEnhancedAccessibility(bool flag)
 void WebProcess::startMemorySampler(SandboxExtension::Handle&& sampleLogFileHandle, const String& sampleLogFilePath, const double interval)
 {
 #if ENABLE(MEMORY_SAMPLER)    
-    WebMemorySampler::singleton()->start(WTFMove(sampleLogFileHandle), sampleLogFilePath, interval);
+    WebMemorySampler::singleton()->start(WTF::move(sampleLogFileHandle), sampleLogFilePath, interval);
 #else
     UNUSED_PARAM(sampleLogFileHandle);
     UNUSED_PARAM(sampleLogFilePath);
@@ -1701,7 +1686,7 @@ void WebProcess::fetchWebsiteData(OptionSet<WebsiteDataType> websiteDataTypes, C
             return WebsiteData::Entry { origin->data(), WebsiteDataType::MemoryCache, 0 };
         });
     }
-    completionHandler(WTFMove(websiteData));
+    completionHandler(WTF::move(websiteData));
 }
 
 void WebProcess::deleteWebsiteData(OptionSet<WebsiteDataType> websiteDataTypes, WallTime modifiedSince, CompletionHandler<void()>&& completionHandler)
@@ -1866,7 +1851,7 @@ void WebProcess::prepareToSuspend(bool isSuspensionImminent, MonotonicTime estim
     updateFreezerStatus();
 #endif
 
-    markAllLayersVolatile([this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)]() mutable {
+    markAllLayersVolatile([this, protectedThis = Ref { *this }, completionHandler = WTF::move(completionHandler)]() mutable {
         WEBPROCESS_RELEASE_LOG_FORWARDABLE(ProcessSuspension, WEBPROCESS_READY_TO_SUSPEND);
         completionHandler();
     });
@@ -1889,7 +1874,7 @@ void WebProcess::accessibilityRelayProcessSuspended(bool suspended)
 void WebProcess::markAllLayersVolatile(CompletionHandler<void()>&& completionHandler)
 {
     WEBPROCESS_RELEASE_LOG_FORWARDABLE(ProcessSuspension, WEBPROCESS_MARK_ALL_LAYERS_VOLATILE);
-    auto callbackAggregator = CallbackAggregator::create(WTFMove(completionHandler));
+    auto callbackAggregator = CallbackAggregator::create(WTF::move(completionHandler));
     for (auto& page : m_pageMap.values()) {
         page->markLayersVolatile([this, protectedThis = Ref { *this }, callbackAggregator, pageID = page->identifier()] (bool succeeded) {
             if (succeeded)
@@ -2260,19 +2245,19 @@ void WebProcess::establishRemoteWorkerContextConnectionToNetworkProcess(RemoteWo
     Ref ipcConnection = ensureNetworkProcessConnection().connection();
     switch (workerType) {
     case RemoteWorkerType::ServiceWorker:
-        SWContextManager::singleton().setConnection(WebSWContextManagerConnection::create(WTFMove(ipcConnection), WTFMove(site), serviceWorkerPageIdentifier, pageGroupID, webPageProxyID, pageID, store, WTFMove(initializationData)));
-        SWContextManager::singleton().protectedConnection()->establishConnection(WTFMove(completionHandler));
+        SWContextManager::singleton().setConnection(WebSWContextManagerConnection::create(WTF::move(ipcConnection), WTF::move(site), serviceWorkerPageIdentifier, pageGroupID, webPageProxyID, pageID, store, WTF::move(initializationData)));
+        SWContextManager::singleton().protectedConnection()->establishConnection(WTF::move(completionHandler));
         break;
     case RemoteWorkerType::SharedWorker:
-        SharedWorkerContextManager::singleton().setConnection(WebSharedWorkerContextManagerConnection::create(WTFMove(ipcConnection), WTFMove(site), pageGroupID, webPageProxyID, pageID, store, WTFMove(initializationData)));
-        SharedWorkerContextManager::singleton().protectedConnection()->establishConnection(WTFMove(completionHandler));
+        SharedWorkerContextManager::singleton().setConnection(WebSharedWorkerContextManagerConnection::create(WTF::move(ipcConnection), WTF::move(site), pageGroupID, webPageProxyID, pageID, store, WTF::move(initializationData)));
+        SharedWorkerContextManager::singleton().protectedConnection()->establishConnection(WTF::move(completionHandler));
         break;
     }
 }
 
 void WebProcess::registerServiceWorkerClients(CompletionHandler<void(bool)>&& completionHandler)
 {
-    ensureNetworkProcessConnection().connection().sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::PingPongForServiceWorkers { }, WTFMove(completionHandler));
+    ensureNetworkProcessConnection().connection().sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::PingPongForServiceWorkers { }, WTF::move(completionHandler));
 }
 
 void WebProcess::addServiceWorkerRegistration(WebCore::ServiceWorkerRegistrationIdentifier identifier)
@@ -2438,7 +2423,7 @@ void WebProcess::setThirdPartyCookieBlockingMode(ThirdPartyCookieBlockingMode th
 
 void WebProcess::setDomainsWithUserInteraction(HashSet<WebCore::RegistrableDomain>&& domains)
 {
-    ResourceLoadObserver::singleton().setDomainsWithUserInteraction(WTFMove(domains));
+    ResourceLoadObserver::singleton().setDomainsWithUserInteraction(WTF::move(domains));
 }
 
 void WebProcess::setDomainsWithCrossPageStorageAccess(HashMap<TopFrameDomain, Vector<SubResourceDomain>>&& domains, CompletionHandler<void()>&& completionHandler)
@@ -2449,12 +2434,12 @@ void WebProcess::setDomainsWithCrossPageStorageAccess(HashMap<TopFrameDomain, Ve
                 webPage->addDomainWithPageLevelStorageAccess(domain, subResourceDomain);
         }
     }
-    ResourceLoadObserver::singleton().setDomainsWithCrossPageStorageAccess(WTFMove(domains), WTFMove(completionHandler));
+    ResourceLoadObserver::singleton().setDomainsWithCrossPageStorageAccess(WTF::move(domains), WTF::move(completionHandler));
 }
 
 void WebProcess::sendResourceLoadStatisticsDataImmediately(CompletionHandler<void()>&& completionHandler)
 {
-    ResourceLoadObserver::singleton().updateCentralStatisticsStore(WTFMove(completionHandler));
+    ResourceLoadObserver::singleton().updateCentralStatisticsStore(WTF::move(completionHandler));
 }
 
 bool WebProcess::haveStorageAccessQuirksForDomain(const WebCore::RegistrableDomain& domain)
@@ -2474,7 +2459,7 @@ void WebProcess::updateScriptTrackingPrivacyFilter(ScriptTrackingPrivacyRules&& 
     if (rules.isEmpty())
         return;
 
-    m_scriptTrackingPrivacyFilter = WTF::makeUnique<ScriptTrackingPrivacyFilter>(WTFMove(rules));
+    m_scriptTrackingPrivacyFilter = WTF::makeUnique<ScriptTrackingPrivacyFilter>(WTF::move(rules));
 }
 
 void WebProcess::setChildProcessDebuggabilityEnabled(bool childProcessDebuggabilityEnabled)
@@ -2744,7 +2729,7 @@ void WebProcess::setResourceMonitorContentRuleList(WebCompiledContentRuleListDat
 {
     WEBPROCESS_RELEASE_LOG(ResourceMonitoring, "setResourceMonitorContentRuleList");
 
-    RefPtr compiledContentRuleList = WebCompiledContentRuleList::create(WTFMove(ruleListData));
+    RefPtr compiledContentRuleList = WebCompiledContentRuleList::create(WTF::move(ruleListData));
     if (!compiledContentRuleList) {
         WEBPROCESS_RELEASE_LOG_ERROR(ResourceMonitoring, "setResourceMonitorContentRuleList: Failed to create rule list");
         return;
@@ -2754,13 +2739,13 @@ void WebProcess::setResourceMonitorContentRuleList(WebCompiledContentRuleListDat
     auto identifier = compiledContentRuleList->data().identifier;
     backend.addContentExtension(identifier, compiledContentRuleList.releaseNonNull(), { }, ContentExtensions::ContentExtension::ShouldCompileCSS::No);
 
-    WebCore::ResourceMonitorChecker::singleton().setContentRuleList(WTFMove(backend));
+    WebCore::ResourceMonitorChecker::singleton().setContentRuleList(WTF::move(backend));
 }
 
 void WebProcess::setResourceMonitorContentRuleListAsync(WebCompiledContentRuleListData&& ruleListData, CompletionHandler<void()>&& completionHandler)
 {
     WEBPROCESS_RELEASE_LOG(ResourceMonitoring, "setResourceMonitorContentRuleListAsync");
-    setResourceMonitorContentRuleList(WTFMove(ruleListData));
+    setResourceMonitorContentRuleList(WTF::move(ruleListData));
     completionHandler();
 }
 #endif

@@ -380,7 +380,7 @@ Vector<SecurityOriginData> DatabaseTracker::origins()
     int stepResult;
     while ((stepResult = statement->step()) == SQLITE_ROW) {
         if (auto origin = SecurityOriginData::fromDatabaseIdentifier(statement->columnText(0)))
-            origins.append(WTFMove(origin).value().isolatedCopy());
+            origins.append(WTF::move(origin).value().isolatedCopy());
     }
     origins.shrinkToFit();
 
@@ -1181,7 +1181,7 @@ void DatabaseTracker::removeDeletedOpenedDatabases() WTF_IGNORES_THREAD_SAFETY_A
             }
 
             if (!deletedDatabaseNamesForThisOrigin.isEmpty())
-                deletedDatabaseNames.append({ origin, WTFMove(deletedDatabaseNamesForThisOrigin) });
+                deletedDatabaseNames.append({ origin, WTF::move(deletedDatabaseNamesForThisOrigin) });
         }
     }
     

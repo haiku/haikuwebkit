@@ -724,11 +724,6 @@ String AXAttachmentRoleText()
     return WEB_UI_STRING("attachment", "accessibility role description for an attachment element");
 }
 
-String AXRemovedText()
-{
-    return WEB_UI_STRING("removed", "prefix for announcing removed content in live regions");
-}
-
 String AXSearchFieldCancelButtonText()
 {
     return WEB_UI_STRING("cancel", "accessibility description for a search field cancel button");
@@ -1372,6 +1367,16 @@ String textTrackOnMenuItemText()
 String textTrackAutomaticMenuItemText()
 {
     return WEB_UI_STRING_KEY("Auto (Recommended)", "Auto (Recommended) (text track)", "Menu item label for automatic track selection behavior.");
+}
+
+String captionStylePreviewWithProfileName(const String& profileName)
+{
+    return WEB_UI_FORMAT_STRING("This is the %s subtitle style", "This is the %s subtitle style (Caption User Preferences)", profileName.utf8().data());
+}
+
+String captionStylePreview()
+{
+    return WEB_UI_STRING_KEY("This is a preview style", "This is a preview style (Caption User Preferences)", "Caption Style Preview String");
 }
 
 #if PLATFORM(COCOA)

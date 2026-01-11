@@ -42,7 +42,9 @@
 #import "Page.h"
 #import "PlatformCALayer.h"
 #import "PlatformCALayerDelegatedContents.h"
+#import <WebCore/DDMesh.h>
 #import <WebGPU/DDModelTypes.h>
+#import <wtf/RetainPtr.h>
 
 namespace WebCore {
 
@@ -131,7 +133,7 @@ DDModelPlayer::~DDModelPlayer()
 
 void DDModelPlayer::ensureOnMainThreadWithProtectedThis(Function<void(Ref<DDModelPlayer>)>&& task)
 {
-    ensureOnMainThread([protectedThis = Ref { *this }, task = WTFMove(task)]() mutable {
+    ensureOnMainThread([protectedThis = Ref { *this }, task = WTF::move(task)]() mutable {
         task(protectedThis);
     });
 }
@@ -157,7 +159,7 @@ void DDModelPlayer::load(Model& modelSource, LayoutSize size)
 
     m_currentModel = gpu->backing().createModelBacking(size.width().toUnsigned(), size.height().toUnsigned(), [protectedThis = Ref { *this }] (Vector<MachSendRight>&& surfaceHandles) {
         if (surfaceHandles.size())
-            protectedThis->m_displayBuffers = WTFMove(surfaceHandles);
+            protectedThis->m_displayBuffers = WTF::move(surfaceHandles);
     });
 
     m_modelLoader = adoptNS([[DDBridgeModelLoader alloc] init]);

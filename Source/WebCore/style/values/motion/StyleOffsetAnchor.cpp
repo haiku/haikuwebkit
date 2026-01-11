@@ -26,8 +26,8 @@
 #include "StyleOffsetAnchor.h"
 
 #include "CSSPositionValue.h"
-#include "RenderStyleInlines.h"
 #include "StyleBuilderChecking.h"
+#include "StyleComputedStyle+InitialInlines.h"
 #include "StyleLengthWrapper+Blending.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include <wtf/text/TextStream.h>
@@ -55,7 +55,7 @@ auto CSSValueConversion<OffsetAnchor>::operator()(BuilderState& state, const CSS
 
     RefPtr positionValue = requiredDowncast<CSSPositionValue>(state, value);
     if (!positionValue)
-        return RenderStyle::initialOffsetAnchor();
+        return Style::ComputedStyle::initialOffsetAnchor();
     return OffsetAnchor { toStyle(positionValue->position(), state) };
 }
 

@@ -130,7 +130,7 @@ Ref<PlatformCALayer> PlatformCALayerRemote::clone(PlatformCALayerClient* owner) 
     updateClonedLayerProperties(clone);
 
     clone->setClonedLayer(this);
-    return WTFMove(clone);
+    return WTF::move(clone);
 }
 
 PlatformCALayerRemote::~PlatformCALayerRemote()
@@ -553,7 +553,7 @@ void PlatformCALayerRemote::setMaskLayer(RefPtr<WebCore::PlatformCALayer>&& laye
     if (isEquivalentLayer(layer.get(), m_properties.maskLayerID))
         return;
 
-    PlatformCALayer::setMaskLayer(WTFMove(layer));
+    PlatformCALayer::setMaskLayer(WTF::move(layer));
 
     if (RefPtr layer = maskLayer())
         m_properties.maskLayerID = layer->layerID();

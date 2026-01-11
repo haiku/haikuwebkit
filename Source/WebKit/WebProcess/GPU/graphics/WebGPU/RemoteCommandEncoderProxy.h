@@ -65,12 +65,12 @@ private:
     template<typename T>
     WARN_UNUSED_RETURN IPC::Error send(T&& message)
     {
-        return root().protectedStreamClientConnection()->send(WTFMove(message), backing());
+        return root().protectedStreamClientConnection()->send(WTF::move(message), backing());
     }
     template<typename T>
     WARN_UNUSED_RETURN IPC::Connection::SendSyncResult<T> sendSync(T&& message)
     {
-        return root().protectedStreamClientConnection()->sendSync(WTFMove(message), backing());
+        return root().protectedStreamClientConnection()->sendSync(WTF::move(message), backing());
     }
 
     RefPtr<WebCore::WebGPU::RenderPassEncoder> beginRenderPass(const WebCore::WebGPU::RenderPassDescriptor&) final;

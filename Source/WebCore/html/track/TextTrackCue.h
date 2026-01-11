@@ -47,7 +47,7 @@ class TextTrack;
 class TextTrackCue;
 
 class TextTrackCueBox : public HTMLElement {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(TextTrackCueBox);
+    WTF_MAKE_TZONE_ALLOCATED(TextTrackCueBox);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(TextTrackCueBox);
 public:
     static Ref<TextTrackCueBox> create(Document&, TextTrackCue&);
@@ -67,7 +67,7 @@ private:
 };
 
 class TextTrackCue : public RefCounted<TextTrackCue>, public EventTarget, public ActiveDOMObject {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(TextTrackCue);
+    WTF_MAKE_TZONE_ALLOCATED(TextTrackCue);
 public:
     static ExceptionOr<Ref<TextTrackCue>> create(Document&, double start, double end, DocumentFragment&);
 
@@ -167,8 +167,8 @@ private:
 
     WeakPtr<TextTrack, WeakPtrImplWithEventTargetData> m_track;
 
-    RefPtr<DocumentFragment> m_cueNode;
-    RefPtr<TextTrackCueBox> m_displayTree;
+    const RefPtr<DocumentFragment> m_cueNode;
+    const RefPtr<TextTrackCueBox> m_displayTree;
 
     int m_fontSize { 0 };
     bool m_fontSizeIsImportant { false };
@@ -192,6 +192,8 @@ template<> struct LogArgument<WebCore::TextTrackCue> {
     static String toString(const WebCore::TextTrackCue& cue) { return cue.toJSONString(); }
 };
 
-}
+} // namespace WTF
+
+SPECIALIZE_TYPE_TRAITS_EVENTTARGET(TextTrackCue)
 
 #endif

@@ -57,7 +57,7 @@ public:
         FileSystemSyncAccessHandleIdentifier identifier;
         FileSystem::FileHandle file;
         uint64_t capacity { 0 };
-        SyncAccessHandleInfo isolatedCopy() && { return { identifier, WTFMove(file), capacity }; }
+        SyncAccessHandleInfo isolatedCopy() && { return { identifier, WTF::move(file), capacity }; }
     };
     using GetAccessHandleCallback = CompletionHandler<void(ExceptionOr<SyncAccessHandleInfo>&&)>;
     using VoidCallback = CompletionHandler<void(ExceptionOr<void>&&)>;

@@ -27,9 +27,8 @@
 #pragma once
 
 #include <WebCore/FontTaggedSettings.h>
-#include <wtf/AbstractRefCounted.h>
-#include <wtf/CheckedRef.h>
-#include <wtf/TZoneMallocInlines.h>
+#include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
+#include <wtf/TZoneMalloc.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/AtomString.h>
 
@@ -41,9 +40,8 @@ class FontDescription;
 class FontLoadRequest;
 struct FontSelectionSpecifiedCapabilities;
 
-class FontLoadRequestClient : public CanMakeWeakPtr<FontLoadRequestClient>, public CanMakeCheckedPtr<FontLoadRequestClient> {
-    WTF_MAKE_TZONE_ALLOCATED_INLINE(FontLoadRequestClient);
-    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(FontLoadRequestClient);
+class FontLoadRequestClient : public AbstractRefCountedAndCanMakeWeakPtr<FontLoadRequestClient> {
+    WTF_FORBID_HEAP_ALLOCATION_WITH_VALIDATION(FontLoadRequestClient);
 public:
     virtual ~FontLoadRequestClient() = default;
     virtual void fontLoaded(FontLoadRequest&) { }

@@ -265,8 +265,8 @@ private:
         GrContextOptions options;
         options.fAllowMSAAOnNewIntel = shouldAllowMSAAOnNewIntel();
         if (auto grContext = GrDirectContexts::MakeGL(skiaGLInterface(), options)) {
-            m_skiaGLContext = WTFMove(glContext);
-            m_skiaGrContext = WTFMove(grContext);
+            m_skiaGLContext = WTF::move(glContext);
+            m_skiaGrContext = WTF::move(grContext);
             m_sampleCount = initializeMSAASampleCount(m_skiaGrContext.get());
         }
     }

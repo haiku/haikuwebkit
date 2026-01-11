@@ -54,7 +54,7 @@ public:
 
 protected:
     Adapter(String&& name, SupportedFeatures& features, SupportedLimits& limits, bool isFallbackAdapter)
-        : m_name(WTFMove(name))
+        : m_name(WTF::move(name))
         , m_features(features)
         , m_limits(limits)
         , m_isFallbackAdapter(isFallbackAdapter)

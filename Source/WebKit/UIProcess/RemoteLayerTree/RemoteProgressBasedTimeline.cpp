@@ -35,7 +35,7 @@
 
 namespace WebKit {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RemoteProgressBasedTimeline);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteProgressBasedTimeline);
 
 Ref<RemoteProgressBasedTimeline> RemoteProgressBasedTimeline::create(TimelineID identifier, const WebCore::ProgressResolutionData& resolutionData)
 {

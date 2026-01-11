@@ -40,7 +40,7 @@ class HTMLSelectElement;
 class RenderText;
 
 class RenderMenuList final : public RenderFlexibleBox, private PopupMenuClient {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderMenuList);
+    WTF_MAKE_TZONE_ALLOCATED(RenderMenuList);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderMenuList);
 public:
     RenderMenuList(HTMLSelectElement&, RenderStyle&&);
@@ -94,7 +94,7 @@ private:
     void computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const override;
     void computePreferredLogicalWidths() override;
 
-    void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;
+    void styleDidChange(Style::Difference, const RenderStyle* oldStyle) override;
 
     // PopupMenuClient methods
     void valueChanged(unsigned listIndex, bool fireOnChange = true) override;

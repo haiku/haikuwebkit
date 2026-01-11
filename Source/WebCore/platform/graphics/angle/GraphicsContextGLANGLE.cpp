@@ -96,7 +96,7 @@ static std::span<uint8_t> glMapBufferRangeSpan(GLenum target, GLintptr offset, G
     return unsafeMakeSpan(static_cast<uint8_t*>(ptr), length);
 }
 
-static constexpr std::pair<ComparableASCIILiteral, GCGLExtension> extensionsMapping[] {
+static constexpr SortedArrayMap extensionsMapping { std::to_array<std::pair<ComparableASCIILiteral, GCGLExtension>>({
     { "GL_ANGLE_base_vertex_base_instance"_s, GCGLExtension::ANGLE_base_vertex_base_instance },
     { "GL_ANGLE_clip_cull_distance"_s, GCGLExtension::ANGLE_clip_cull_distance },
     { "GL_ANGLE_compressed_texture_etc"_s, GCGLExtension::ANGLE_compressed_texture_etc },
@@ -154,16 +154,12 @@ static constexpr std::pair<ComparableASCIILiteral, GCGLExtension> extensionsMapp
     { "GL_OES_texture_half_float_linear"_s, GCGLExtension::OES_texture_half_float_linear },
     { "GL_OES_vertex_array_object"_s, GCGLExtension::OES_vertex_array_object },
     { "GL_QCOM_render_shared_exponent"_s, GCGLExtension::QCOM_render_shared_exponent },
-};
-// Enums are expected to map the strings. Verify that the extensions are in ascending order, like the strings.
-static_assert(std::is_sorted(std::begin(extensionsMapping), std::end(extensionsMapping), [](auto& a, auto b) {
-    return a.second < b.second;
-}));
+}) };
 
 static ASCIILiteral extensionName(GCGLExtension extension)
 {
     size_t index = static_cast<size_t>(extension);
-    std::span mapping { extensionsMapping };
+    std::span mapping { extensionsMapping.array() };
     if (mapping.size() < index) {
         ASSERT_NOT_REACHED();
         return { };
@@ -179,8 +175,7 @@ static ASCIILiteral extensionName(GCGLExtension extension)
 
 static std::optional<GCGLExtension> extensionEnum(const CString& extension)
 {
-    static constexpr SortedArrayMap map { extensionsMapping };
-    if (auto* result = map.tryGet(extension.span()))
+    if (auto* result = extensionsMapping.tryGet(extension.span()))
         return *result;
     return std::nullopt;
 }
@@ -1470,7 +1465,7 @@ Vector<GCGLUniformActiveInfo> GraphicsContextGLANGLE::activeUniforms(PlatformGLO
                 info.locations.append(GL_GetUniformLocation(program, elementName.data()));
             }
         }
-        result.append(WTFMove(info));
+        result.append(WTF::move(info));
     }
     return result;
 }

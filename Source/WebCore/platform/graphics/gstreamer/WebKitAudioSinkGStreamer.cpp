@@ -100,7 +100,7 @@ static bool webKitAudioSinkConfigure(WebKitAudioSink* sink)
 
         auto sink = adoptGRef(gst_pad_get_parent_element(pad));
         uint64_t periodTime = gst_util_uint64_scale_ceil(AudioUtilities::renderQuantumSize, GST_SECOND, *sampleRate);
-        GStreamerAudioMixer::singleton().configureSourcePeriodTime(StringView::fromLatin1(GST_ELEMENT_NAME(sink.get())), periodTime);
+        GStreamerAudioMixer::singleton().configureSourcePeriodTime(CStringView::unsafeFromUTF8(GST_ELEMENT_NAME(sink.get())), periodTime);
         return GST_PAD_PROBE_OK;
     }), nullptr, nullptr);
     return true;

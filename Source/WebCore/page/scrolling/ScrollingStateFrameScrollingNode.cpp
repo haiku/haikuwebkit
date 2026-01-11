@@ -93,7 +93,7 @@ ScrollingStateFrameScrollingNode::ScrollingStateFrameScrollingNode(
 ) : ScrollingStateScrollingNode(
     isMainFrame ? ScrollingNodeType::MainFrame : ScrollingNodeType::Subframe,
     scrollingNodeID,
-    WTFMove(children),
+    WTF::move(children),
     changedProperties,
     layerID,
     scrollableAreaSize,
@@ -101,12 +101,12 @@ ScrollingStateFrameScrollingNode::ScrollingStateFrameScrollingNode(
     reachableContentsSize,
     scrollPosition,
     scrollOrigin,
-    WTFMove(scrollableAreaParameters),
+    WTF::move(scrollableAreaParameters),
 #if ENABLE(SCROLLING_THREAD)
     synchronousScrollingReasons,
 #endif
-    WTFMove(requestedScrollData),
-    WTFMove(snapOffsetsInfo),
+    WTF::move(requestedScrollData),
+    WTF::move(snapOffsetsInfo),
     currentHorizontalSnapPointIndex,
     currentVerticalSnapPointIndex,
     isMonitoringWheelEvents,
@@ -115,19 +115,19 @@ ScrollingStateFrameScrollingNode::ScrollingStateFrameScrollingNode(
     horizontalScrollbarLayer,
     verticalScrollbarLayer,
     mouseIsOverContentArea,
-    WTFMove(mouseLocationState),
-    WTFMove(scrollbarHoverState),
-    WTFMove(scrollbarEnabledState),
-    WTFMove(scrollbarColor),
+    WTF::move(mouseLocationState),
+    WTF::move(scrollbarHoverState),
+    WTF::move(scrollbarEnabledState),
+    WTF::move(scrollbarColor),
     scrollbarLayoutDirection,
     scrollbarWidth,
     useDarkAppearanceForScrollbars,
-    WTFMove(keyboardScrollData))
+    WTF::move(keyboardScrollData))
     , m_rootContentsLayer(rootContentsLayer)
     , m_counterScrollingLayer(counterScrollingLayer)
     , m_insetClipLayer(insetClipLayer)
     , m_contentShadowLayer(contentShadowLayer)
-    , m_eventTrackingRegions(WTFMove(eventTrackingRegions))
+    , m_eventTrackingRegions(WTF::move(eventTrackingRegions))
     , m_layoutViewport(layoutViewport)
     , m_sizeForVisibleContent(sizeForVisibleContent)
     , m_minLayoutViewportOrigin(minLayoutViewportOrigin)
@@ -137,7 +137,7 @@ ScrollingStateFrameScrollingNode::ScrollingStateFrameScrollingNode(
     , m_obscuredContentInsets(obscuredContentInsets)
     , m_headerHeight(headerHeight)
     , m_footerHeight(footerHeight)
-    , m_behaviorForFixed(WTFMove(scrollBehaviorForFixedElements))
+    , m_behaviorForFixed(WTF::move(scrollBehaviorForFixedElements))
 
     , m_visualViewportIsSmallerThanLayoutViewport(visualViewportIsSmallerThanLayoutViewport)
     , m_asyncFrameOrOverflowScrollingEnabled(asyncFrameOrOverflowScrollingEnabled)

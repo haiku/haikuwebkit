@@ -184,7 +184,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebGLRenderingContextBase);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebGLRenderingContextBase);
 
 static constexpr Seconds secondsBetweenRestoreAttempts { 1_s };
 static constexpr int maxGLErrorsAllowedToConsole = 256;
@@ -475,9 +475,9 @@ std::unique_ptr<WebGLRenderingContextBase> WebGLRenderingContextBase::create(Can
 
     std::unique_ptr<WebGLRenderingContextBase> renderingContext;
     if (isWebGL2)
-        renderingContext = WebGL2RenderingContext::create(canvas, WTFMove(attributes));
+        renderingContext = WebGL2RenderingContext::create(canvas, WTF::move(attributes));
     else
-        renderingContext = WebGLRenderingContext::create(canvas, WTFMove(attributes));
+        renderingContext = WebGLRenderingContext::create(canvas, WTF::move(attributes));
     renderingContext->initializeNewContext(context.releaseNonNull());
     renderingContext->suspendIfNeeded();
     InspectorInstrumentation::didCreateCanvasRenderingContext(*renderingContext);
@@ -489,7 +489,7 @@ std::unique_ptr<WebGLRenderingContextBase> WebGLRenderingContextBase::create(Can
 WebGLRenderingContextBase::WebGLRenderingContextBase(CanvasBase& canvas, CanvasRenderingContext::Type type, WebGLContextAttributes&& attributes)
     : GPUBasedCanvasRenderingContext(canvas, type)
     , m_generatedImageCache(4)
-    , m_attributes(WTFMove(attributes))
+    , m_attributes(WTF::move(attributes))
     , m_creationAttributes(m_attributes)
     , m_numGLErrorsToConsoleAllowed(protectedScriptExecutionContext()->settingsValues().webGLErrorsToConsoleEnabled ? maxGLErrorsAllowedToConsole : 0)
 {
@@ -520,7 +520,7 @@ void WebGLRenderingContextBase::initializeNewContext(Ref<GraphicsContextGL> cont
         m_context->setClient(nullptr);
         m_context = nullptr;
     }
-    m_context = WTFMove(context);
+    m_context = WTF::move(context);
     updateActiveOrdinal();
     if (!wasActive)
         addActiveContext(*this);
@@ -2866,7 +2866,7 @@ void WebGLRenderingContextBase::makeXRCompatible(MakeXRCompatiblePromise&& promi
     // 3. Let context be the target WebGLRenderingContextBase object.
     // 4. Ensure an immersive XR device is selected.
     auto& xrSystem = NavigatorWebXR::xr(window->navigator());
-    xrSystem.ensureImmersiveXRDeviceIsSelected([this, protectedThis = Ref { *this }, promise = WTFMove(promise), protectedXrSystem = Ref { xrSystem }]() mutable {
+    xrSystem.ensureImmersiveXRDeviceIsSelected([this, protectedThis = Ref { *this }, promise = WTF::move(promise), protectedXrSystem = Ref { xrSystem }]() mutable {
         auto rejectPromiseWithInvalidStateError = makeScopeExit([&]() {
             m_attributes.xrCompatible = false;
             promise.reject(Exception { ExceptionCode::InvalidStateError });
@@ -3427,7 +3427,7 @@ ExceptionOr<void> WebGLRenderingContextBase::texImageSource(TexImageFunctionID f
     }
 
     // Fallback pure SW path.
-    RefPtr image = BitmapImage::create(internalFrame->copyNativeImage());
+    auto image = context->videoFrameToImage(*internalFrame);
     if (!image)
         return { };
 
@@ -3710,12 +3710,12 @@ bool WebGLRenderingContextBase::validateTexFunc(TexImageFunctionID functionID, T
 
 void WebGLRenderingContextBase::texImage2D(GCGLenum target, GCGLint level, GCGLenum internalformat, GCGLsizei width, GCGLsizei height, GCGLint border, GCGLenum format, GCGLenum type, RefPtr<ArrayBufferView>&& pixels)
 {
-    texImageArrayBufferViewHelper(TexImageFunctionID::TexImage2D, target, level, internalformat, width, height, 1, border, format, type, 0, 0, 0, WTFMove(pixels), NullAllowed, 0);
+    texImageArrayBufferViewHelper(TexImageFunctionID::TexImage2D, target, level, internalformat, width, height, 1, border, format, type, 0, 0, 0, WTF::move(pixels), NullAllowed, 0);
 }
 
 void WebGLRenderingContextBase::texSubImage2D(GCGLenum target, GCGLint level, GCGLint xoffset, GCGLint yoffset, GCGLsizei width, GCGLsizei height, GCGLenum format, GCGLenum type, RefPtr<ArrayBufferView>&& pixels)
 {
-    texImageArrayBufferViewHelper(TexImageFunctionID::TexSubImage2D, target, level, 0, width, height, 1, 0, format, type, xoffset, yoffset, 0, WTFMove(pixels), NullNotAllowed, 0);
+    texImageArrayBufferViewHelper(TexImageFunctionID::TexSubImage2D, target, level, 0, width, height, 1, 0, format, type, xoffset, yoffset, 0, WTF::move(pixels), NullNotAllowed, 0);
 }
 
 ExceptionOr<void> WebGLRenderingContextBase::texSubImage2D(GCGLenum target, GCGLint level, GCGLint xoffset, GCGLint yoffset, GCGLenum format, GCGLenum type, std::optional<TexImageSource>&& source)
@@ -3728,7 +3728,7 @@ ExceptionOr<void> WebGLRenderingContextBase::texSubImage2D(GCGLenum target, GCGL
         return { };
     }
 
-    return texImageSourceHelper(TexImageFunctionID::TexSubImage2D, target, level, 0, 0, format, type, xoffset, yoffset, 0, sentinelEmptyRect(), 1, 0, WTFMove(*source));
+    return texImageSourceHelper(TexImageFunctionID::TexSubImage2D, target, level, 0, 0, format, type, xoffset, yoffset, 0, sentinelEmptyRect(), 1, 0, WTF::move(*source));
 }
 
 bool WebGLRenderingContextBase::validateTypeAndArrayBufferType(ASCIILiteral functionName, ArrayBufferViewFunctionType functionType, GCGLenum type, ArrayBufferView* pixels)
@@ -4108,7 +4108,7 @@ ExceptionOr<void> WebGLRenderingContextBase::texImage2D(GCGLenum target, GCGLint
         return { };
     }
 
-    return texImageSourceHelper(TexImageFunctionID::TexImage2D, target, level, internalformat, 0, format, type, 0, 0, 0, sentinelEmptyRect(), 1, 0, WTFMove(*source));
+    return texImageSourceHelper(TexImageFunctionID::TexImage2D, target, level, internalformat, 0, format, type, 0, 0, 0, sentinelEmptyRect(), 1, 0, WTF::move(*source));
 }
 
 RefPtr<Image> WebGLRenderingContextBase::drawImageIntoBuffer(Image& image, int width, int height, int deviceScaleFactor, ASCIILiteral functionName)
@@ -4517,22 +4517,22 @@ void WebGLRenderingContextBase::vertexAttrib4f(GCGLuint index, GCGLfloat v0, GCG
 
 void WebGLRenderingContextBase::vertexAttrib1fv(GCGLuint index, Float32List&& v)
 {
-    vertexAttribfvImpl("vertexAttrib1fv"_s, index, WTFMove(v), 1);
+    vertexAttribfvImpl("vertexAttrib1fv"_s, index, WTF::move(v), 1);
 }
 
 void WebGLRenderingContextBase::vertexAttrib2fv(GCGLuint index, Float32List&& v)
 {
-    vertexAttribfvImpl("vertexAttrib2fv"_s, index, WTFMove(v), 2);
+    vertexAttribfvImpl("vertexAttrib2fv"_s, index, WTF::move(v), 2);
 }
 
 void WebGLRenderingContextBase::vertexAttrib3fv(GCGLuint index, Float32List&& v)
 {
-    vertexAttribfvImpl("vertexAttrib3fv"_s, index, WTFMove(v), 3);
+    vertexAttribfvImpl("vertexAttrib3fv"_s, index, WTF::move(v), 3);
 }
 
 void WebGLRenderingContextBase::vertexAttrib4fv(GCGLuint index, Float32List&& v)
 {
-    vertexAttribfvImpl("vertexAttrib4fv"_s, index, WTFMove(v), 4);
+    vertexAttribfvImpl("vertexAttrib4fv"_s, index, WTF::move(v), 4);
 }
 
 void WebGLRenderingContextBase::vertexAttribPointer(GCGLuint index, GCGLint size, GCGLenum type, GCGLboolean normalized, GCGLsizei stride, long long offset)
@@ -4725,7 +4725,7 @@ unsigned WebGLRenderingContextBase::getUnsignedIntParameter(GCGLenum pname)
 
 RefPtr<Float32Array> WebGLRenderingContextBase::getWebGLFloatArrayParameter(GCGLenum pname)
 {
-    GCGLfloat value[4] = {0};
+    std::array<GCGLfloat, 4> value { };
     graphicsContextGL()->getFloatv(pname, value);
     unsigned length = 0;
     switch (pname) {
@@ -4741,7 +4741,7 @@ RefPtr<Float32Array> WebGLRenderingContextBase::getWebGLFloatArrayParameter(GCGL
     default:
         notImplemented();
     }
-    return Float32Array::tryCreate(value, length);
+    return Float32Array::tryCreate(std::span(value).first(length));
 }
 
 RefPtr<Int32Array> WebGLRenderingContextBase::getWebGLIntArrayParameter(GCGLenum pname)
@@ -4914,11 +4914,11 @@ void WebGLRenderingContextBase::printToConsole(MessageLevel level, String&& mess
     // Error messages can occur during function calls, so show stack traces for them.
     if (level == MessageLevel::Error) {
         Ref<Inspector::ScriptCallStack> stackTrace = Inspector::createScriptCallStack(JSExecState::currentState());
-        consoleMessage = makeUnique<Inspector::ConsoleMessage>(MessageSource::Rendering, MessageType::Log, level, WTFMove(message), WTFMove(stackTrace));
+        consoleMessage = makeUnique<Inspector::ConsoleMessage>(MessageSource::Rendering, MessageType::Log, level, WTF::move(message), WTF::move(stackTrace));
     } else
-        consoleMessage = makeUnique<Inspector::ConsoleMessage>(MessageSource::Rendering, MessageType::Log, level, WTFMove(message));
+        consoleMessage = makeUnique<Inspector::ConsoleMessage>(MessageSource::Rendering, MessageType::Log, level, WTF::move(message));
 
-    scriptExecutionContext->addConsoleMessage(WTFMove(consoleMessage));
+    scriptExecutionContext->addConsoleMessage(WTF::move(consoleMessage));
 
     --m_numGLErrorsToConsoleAllowed;
     if (!m_numGLErrorsToConsoleAllowed)
@@ -5439,62 +5439,62 @@ template<typename T> void loseExtension(RefPtr<T> extension)
 
 void WebGLRenderingContextBase::loseExtensions(LostContextMode mode)
 {
-    loseExtension(WTFMove(m_angleInstancedArrays));
-    loseExtension(WTFMove(m_extBlendMinMax));
-    loseExtension(WTFMove(m_extClipControl));
-    loseExtension(WTFMove(m_extColorBufferFloat));
-    loseExtension(WTFMove(m_extColorBufferHalfFloat));
-    loseExtension(WTFMove(m_extConservativeDepth));
-    loseExtension(WTFMove(m_extDepthClamp));
-    loseExtension(WTFMove(m_extDisjointTimerQuery));
-    loseExtension(WTFMove(m_extDisjointTimerQueryWebGL2));
-    loseExtension(WTFMove(m_extFloatBlend));
-    loseExtension(WTFMove(m_extFragDepth));
-    loseExtension(WTFMove(m_extPolygonOffsetClamp));
-    loseExtension(WTFMove(m_extRenderSnorm));
-    loseExtension(WTFMove(m_extShaderTextureLOD));
-    loseExtension(WTFMove(m_extTextureCompressionBPTC));
-    loseExtension(WTFMove(m_extTextureCompressionRGTC));
-    loseExtension(WTFMove(m_extTextureFilterAnisotropic));
-    loseExtension(WTFMove(m_extTextureMirrorClampToEdge));
-    loseExtension(WTFMove(m_extTextureNorm16));
-    loseExtension(WTFMove(m_extsRGB));
-    loseExtension(WTFMove(m_khrParallelShaderCompile));
-    loseExtension(WTFMove(m_nvShaderNoperspectiveInterpolation));
-    loseExtension(WTFMove(m_oesDrawBuffersIndexed));
-    loseExtension(WTFMove(m_oesElementIndexUint));
-    loseExtension(WTFMove(m_oesFBORenderMipmap));
-    loseExtension(WTFMove(m_oesSampleVariables));
-    loseExtension(WTFMove(m_oesShaderMultisampleInterpolation));
-    loseExtension(WTFMove(m_oesStandardDerivatives));
-    loseExtension(WTFMove(m_oesTextureFloat));
-    loseExtension(WTFMove(m_oesTextureFloatLinear));
-    loseExtension(WTFMove(m_oesTextureHalfFloat));
-    loseExtension(WTFMove(m_oesTextureHalfFloatLinear));
-    loseExtension(WTFMove(m_oesVertexArrayObject));
-    loseExtension(WTFMove(m_webglBlendFuncExtended));
-    loseExtension(WTFMove(m_webglClipCullDistance));
-    loseExtension(WTFMove(m_webglColorBufferFloat));
-    loseExtension(WTFMove(m_webglCompressedTextureASTC));
-    loseExtension(WTFMove(m_webglCompressedTextureETC));
-    loseExtension(WTFMove(m_webglCompressedTextureETC1));
-    loseExtension(WTFMove(m_webglCompressedTexturePVRTC));
-    loseExtension(WTFMove(m_webglCompressedTextureS3TC));
-    loseExtension(WTFMove(m_webglCompressedTextureS3TCsRGB));
-    loseExtension(WTFMove(m_webglDebugRendererInfo));
-    loseExtension(WTFMove(m_webglDebugShaders));
-    loseExtension(WTFMove(m_webglDepthTexture));
-    loseExtension(WTFMove(m_webglDrawBuffers));
-    loseExtension(WTFMove(m_webglDrawInstancedBaseVertexBaseInstance));
-    loseExtension(WTFMove(m_webglMultiDraw));
-    loseExtension(WTFMove(m_webglMultiDrawInstancedBaseVertexBaseInstance));
-    loseExtension(WTFMove(m_webglPolygonMode));
-    loseExtension(WTFMove(m_webglProvokingVertex));
-    loseExtension(WTFMove(m_webglRenderSharedExponent));
-    loseExtension(WTFMove(m_webglStencilTexturing));
+    loseExtension(WTF::move(m_angleInstancedArrays));
+    loseExtension(WTF::move(m_extBlendMinMax));
+    loseExtension(WTF::move(m_extClipControl));
+    loseExtension(WTF::move(m_extColorBufferFloat));
+    loseExtension(WTF::move(m_extColorBufferHalfFloat));
+    loseExtension(WTF::move(m_extConservativeDepth));
+    loseExtension(WTF::move(m_extDepthClamp));
+    loseExtension(WTF::move(m_extDisjointTimerQuery));
+    loseExtension(WTF::move(m_extDisjointTimerQueryWebGL2));
+    loseExtension(WTF::move(m_extFloatBlend));
+    loseExtension(WTF::move(m_extFragDepth));
+    loseExtension(WTF::move(m_extPolygonOffsetClamp));
+    loseExtension(WTF::move(m_extRenderSnorm));
+    loseExtension(WTF::move(m_extShaderTextureLOD));
+    loseExtension(WTF::move(m_extTextureCompressionBPTC));
+    loseExtension(WTF::move(m_extTextureCompressionRGTC));
+    loseExtension(WTF::move(m_extTextureFilterAnisotropic));
+    loseExtension(WTF::move(m_extTextureMirrorClampToEdge));
+    loseExtension(WTF::move(m_extTextureNorm16));
+    loseExtension(WTF::move(m_extsRGB));
+    loseExtension(WTF::move(m_khrParallelShaderCompile));
+    loseExtension(WTF::move(m_nvShaderNoperspectiveInterpolation));
+    loseExtension(WTF::move(m_oesDrawBuffersIndexed));
+    loseExtension(WTF::move(m_oesElementIndexUint));
+    loseExtension(WTF::move(m_oesFBORenderMipmap));
+    loseExtension(WTF::move(m_oesSampleVariables));
+    loseExtension(WTF::move(m_oesShaderMultisampleInterpolation));
+    loseExtension(WTF::move(m_oesStandardDerivatives));
+    loseExtension(WTF::move(m_oesTextureFloat));
+    loseExtension(WTF::move(m_oesTextureFloatLinear));
+    loseExtension(WTF::move(m_oesTextureHalfFloat));
+    loseExtension(WTF::move(m_oesTextureHalfFloatLinear));
+    loseExtension(WTF::move(m_oesVertexArrayObject));
+    loseExtension(WTF::move(m_webglBlendFuncExtended));
+    loseExtension(WTF::move(m_webglClipCullDistance));
+    loseExtension(WTF::move(m_webglColorBufferFloat));
+    loseExtension(WTF::move(m_webglCompressedTextureASTC));
+    loseExtension(WTF::move(m_webglCompressedTextureETC));
+    loseExtension(WTF::move(m_webglCompressedTextureETC1));
+    loseExtension(WTF::move(m_webglCompressedTexturePVRTC));
+    loseExtension(WTF::move(m_webglCompressedTextureS3TC));
+    loseExtension(WTF::move(m_webglCompressedTextureS3TCsRGB));
+    loseExtension(WTF::move(m_webglDebugRendererInfo));
+    loseExtension(WTF::move(m_webglDebugShaders));
+    loseExtension(WTF::move(m_webglDepthTexture));
+    loseExtension(WTF::move(m_webglDrawBuffers));
+    loseExtension(WTF::move(m_webglDrawInstancedBaseVertexBaseInstance));
+    loseExtension(WTF::move(m_webglMultiDraw));
+    loseExtension(WTF::move(m_webglMultiDrawInstancedBaseVertexBaseInstance));
+    loseExtension(WTF::move(m_webglPolygonMode));
+    loseExtension(WTF::move(m_webglProvokingVertex));
+    loseExtension(WTF::move(m_webglRenderSharedExponent));
+    loseExtension(WTF::move(m_webglStencilTexturing));
 
     if (mode == LostContextMode::RealLostContext)
-        loseExtension(WTFMove(m_webglLoseContext));
+        loseExtension(WTF::move(m_webglLoseContext));
 }
 
 void WebGLRenderingContextBase::forceContextLost()
@@ -5560,8 +5560,8 @@ void WebGLRenderingContextBase::addDebugMessage(GCGLenum type, GCGLenum id, GCGL
     } else
         formattedMessage = makeString("WebGL debug message: type:"_s, debugMessageTypeToString(type), ", id:"_s, id, " severity: "_s, debugMessageSeverityToString(severity), ": "_s, String::fromUTF8(message.span()));
 
-    auto consoleMessage = makeUnique<Inspector::ConsoleMessage>(MessageSource::Rendering, MessageType::Log, level, WTFMove(formattedMessage));
-    scriptExecutionContext->addConsoleMessage(WTFMove(consoleMessage));
+    auto consoleMessage = makeUnique<Inspector::ConsoleMessage>(MessageSource::Rendering, MessageType::Log, level, WTF::move(formattedMessage));
+    scriptExecutionContext->addConsoleMessage(WTF::move(consoleMessage));
 
     --m_numGLErrorsToConsoleAllowed;
     if (!m_numGLErrorsToConsoleAllowed)

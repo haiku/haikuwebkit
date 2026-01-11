@@ -160,12 +160,12 @@ bool CoordinatedUnacceleratedTileBuffer::tryEnsureSurface()
 Ref<CoordinatedTileBuffer> CoordinatedAcceleratedTileBuffer::create(Ref<BitmapTexture>&& texture)
 {
     auto flags = CoordinatedTileBuffer::Flags { texture->isOpaque() ? CoordinatedTileBuffer::NoFlags : CoordinatedTileBuffer::SupportsAlpha };
-    return adoptRef(*new CoordinatedAcceleratedTileBuffer(WTFMove(texture), flags));
+    return adoptRef(*new CoordinatedAcceleratedTileBuffer(WTF::move(texture), flags));
 }
 
 CoordinatedAcceleratedTileBuffer::CoordinatedAcceleratedTileBuffer(Ref<BitmapTexture>&& texture, Flags flags)
     : CoordinatedTileBuffer(flags)
-    , m_texture(WTFMove(texture))
+    , m_texture(WTF::move(texture))
 {
 }
 
@@ -214,7 +214,13 @@ bool CoordinatedAcceleratedTileBuffer::tryEnsureSurface()
 
 void CoordinatedAcceleratedTileBuffer::completePainting()
 {
-    auto* grContext = PlatformDisplay::sharedDisplay().skiaGrContext();
+    auto* recordingContext = m_surface->recordingContext();
+    auto* grContext = recordingContext ? recordingContext->asDirectContext() : nullptr;
+    if (!grContext) {
+        CoordinatedTileBuffer::completePainting();
+        return;
+    }
+
     auto& glDisplay = PlatformDisplay::sharedDisplay().glDisplay();
     if (GLFence::isSupported(glDisplay)) {
         grContext->flushAndSubmit(m_surface.get(), GrSyncCpu::kNo);

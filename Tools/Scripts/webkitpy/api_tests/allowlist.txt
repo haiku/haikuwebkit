@@ -301,7 +301,6 @@ TestWebKitAPI.FloatSize
 TestWebKitAPI.FocusPreservationTests
 TestWebKitAPI.FontCascadeTest
 TestWebKitAPI.FontShadowTest
-TestWebKitAPI.FormValidation
 TestWebKitAPI.FragmentedSharedBufferTest
 TestWebKitAPI.Geolocation
 TestWebKitAPI.GestureRecognizerTests
@@ -454,7 +453,6 @@ TestWebKitAPI.WKWebExtensionAPIEvent
 TestWebKitAPI.WKWebExtensionAPIExtension
 TestWebKitAPI.WKWebExtensionAPILocalization
 TestWebKitAPI.WKWebExtensionAPINamespace
-TestWebKitAPI.WKWebExtensionAPIStorage
 TestWebKitAPI.WKWebExtensionContext
 TestWebKitAPI.WKWebExtensionController
 TestWebKitAPI.WKWebExtensionControllerConfiguration

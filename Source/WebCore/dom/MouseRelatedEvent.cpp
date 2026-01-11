@@ -35,7 +35,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(MouseRelatedEvent);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(MouseRelatedEvent);
 
 // FIXME: Remove this variant.
 MouseRelatedEvent::MouseRelatedEvent()
@@ -51,7 +51,7 @@ MouseRelatedEvent::MouseRelatedEvent(enum EventInterfaceType eventInterface)
 MouseRelatedEvent::MouseRelatedEvent(enum EventInterfaceType eventInterface, const AtomString& eventType, CanBubble canBubble, IsCancelable isCancelable, IsComposed isComposed,
     MonotonicTime timestamp, RefPtr<WindowProxy>&& view, int detail,
     const DoublePoint& screenLocation, const DoublePoint& windowLocation, double movementX, double movementY, OptionSet<Modifier> modifiers, IsSimulated isSimulated, IsTrusted isTrusted)
-    : UIEventWithKeyState(eventInterface, eventType, canBubble, isCancelable, isComposed, timestamp, WTFMove(view), detail, modifiers, isTrusted)
+    : UIEventWithKeyState(eventInterface, eventType, canBubble, isCancelable, isComposed, timestamp, WTF::move(view), detail, modifiers, isTrusted)
         , m_movementX(movementX)
         , m_movementY(movementY)
         , m_windowLocation(windowLocation)
@@ -63,7 +63,7 @@ MouseRelatedEvent::MouseRelatedEvent(enum EventInterfaceType eventInterface, con
 
 MouseRelatedEvent::MouseRelatedEvent(enum EventInterfaceType eventInterface, const AtomString& type, IsCancelable isCancelable, MonotonicTime timestamp, RefPtr<WindowProxy>&& view, const DoublePoint& globalLocation, OptionSet<Modifier> modifiers)
     : MouseRelatedEvent(eventInterface, type, CanBubble::Yes, isCancelable, IsComposed::Yes, timestamp,
-        WTFMove(view), 0, globalLocation, globalLocation /* Converted in init */, 0, 0, modifiers, IsSimulated::No)
+        WTF::move(view), 0, globalLocation, globalLocation /* Converted in init */, 0, 0, modifiers, IsSimulated::No)
 {
 }
 
@@ -100,7 +100,7 @@ void MouseRelatedEvent::init(bool isSimulated, const DoublePoint& windowLocation
         if (RefPtr frameView = frameViewFromWindowProxy(view())) {
             DoublePoint absolutePoint = frameView->windowToContents(windowLocation);
             DoublePoint documentPoint = frameView->absoluteToDocumentPoint(absolutePoint);
-            m_pageLocation = WTFMove(documentPoint);
+            m_pageLocation = WTF::move(documentPoint);
             m_clientLocation = pagePointToClientPoint(m_pageLocation, frameView.get());
         }
     }
@@ -217,7 +217,7 @@ void MouseRelatedEvent::computeRelativePosition()
     // FIXME: event.layerX and event.layerY are poorly defined,
     // and probably don't always correspond to RenderLayer offsets.
     // https://bugs.webkit.org/show_bug.cgi?id=21868
-    RefPtr node = WTFMove(targetNode);
+    RefPtr node = WTF::move(targetNode);
     while (node && !node->renderer())
         node = node->parentNode();
 

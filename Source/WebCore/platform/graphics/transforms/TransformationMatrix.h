@@ -336,10 +336,10 @@ public:
         friend bool operator==(const Decomposed4Type&, const Decomposed4Type&) = default;
     };
     
-    bool decompose2(Decomposed2Type&) const WARN_UNUSED_RETURN;
+    WARN_UNUSED_RETURN bool decompose2(Decomposed2Type&) const;
     void recompose2(const Decomposed2Type&);
 
-    WEBCORE_EXPORT bool decompose4(Decomposed4Type&) const WARN_UNUSED_RETURN;
+    WARN_UNUSED_RETURN WEBCORE_EXPORT bool decompose4(Decomposed4Type&) const;
     void recompose4(const Decomposed4Type&);
 
     WEBCORE_EXPORT void blend(const TransformationMatrix& from, double progress, CompositeOperation = CompositeOperation::Replace);

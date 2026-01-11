@@ -521,7 +521,6 @@ $(PROJECT_DIR)/Modules/identity/DigitalCredentialRequest.idl
 $(PROJECT_DIR)/Modules/identity/DigitalCredentialRequestOptions.idl
 $(PROJECT_DIR)/Modules/identity/IdentityCredentialProtocol.idl
 $(PROJECT_DIR)/Modules/identity/protocols/ISO18013/MobileDocumentRequest.idl
-$(PROJECT_DIR)/Modules/identity/protocols/openid/OpenID4VPRequest.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBCursor.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBCursorDirection.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBCursorWithValue.idl
@@ -554,6 +553,7 @@ $(PROJECT_DIR)/Modules/mediacapabilities/TransferFunction.idl
 $(PROJECT_DIR)/Modules/mediacapabilities/VideoConfiguration.idl
 $(PROJECT_DIR)/Modules/mediacapabilities/WorkerNavigator+MediaCapabilities.idl
 $(PROJECT_DIR)/Modules/mediacontrols/DOMWindow+MediaControls.idl
+$(PROJECT_DIR)/Modules/mediacontrols/MediaControlsContextMenuItem.idl
 $(PROJECT_DIR)/Modules/mediacontrols/MediaControlsHost.idl
 $(PROJECT_DIR)/Modules/mediacontrols/MediaControlsUtils.idl
 $(PROJECT_DIR)/Modules/mediarecorder/BlobEvent.idl
@@ -1343,6 +1343,8 @@ $(PROJECT_DIR)/css/ElementCSSInlineStyle+Typedom.idl
 $(PROJECT_DIR)/css/ElementCSSInlineStyle.idl
 $(PROJECT_DIR)/css/FontFace.idl
 $(PROJECT_DIR)/css/FontFaceSet.idl
+$(PROJECT_DIR)/css/FontFaceSetLoadEvent.idl
+$(PROJECT_DIR)/css/FontFaceSetLoadEventInit.idl
 $(PROJECT_DIR)/css/FontFaceSource.idl
 $(PROJECT_DIR)/css/LinkStyle.idl
 $(PROJECT_DIR)/css/MediaList.idl
@@ -1363,6 +1365,8 @@ $(PROJECT_DIR)/css/htmlSwitchControl.css
 $(PROJECT_DIR)/css/make-css-file-arrays.pl
 $(PROJECT_DIR)/css/mathml.css
 $(PROJECT_DIR)/css/mathmlCoreExtras.css
+$(PROJECT_DIR)/css/mathmlFontSizeMath.css
+$(PROJECT_DIR)/css/mathmlLegacyFontSizeMath.css
 $(PROJECT_DIR)/css/popover.css
 $(PROJECT_DIR)/css/quirks.css
 $(PROJECT_DIR)/css/scripts/process-css-properties.py
@@ -1461,9 +1465,9 @@ $(PROJECT_DIR)/dom/DeviceOrientationOrMotionPermissionState.idl
 $(PROJECT_DIR)/dom/Document+CSSOMView.idl
 $(PROJECT_DIR)/dom/Document+CaretPositionFromPoint.idl
 $(PROJECT_DIR)/dom/Document+Fullscreen.idl
-$(PROJECT_DIR)/dom/Document+Immersive.idl
 $(PROJECT_DIR)/dom/Document+HTML.idl
 $(PROJECT_DIR)/dom/Document+HTMLObsolete.idl
+$(PROJECT_DIR)/dom/Document+Immersive.idl
 $(PROJECT_DIR)/dom/Document+PageVisibility.idl
 $(PROJECT_DIR)/dom/Document+PointerLock.idl
 $(PROJECT_DIR)/dom/Document+Selection.idl
@@ -1718,6 +1722,7 @@ $(PROJECT_DIR)/html/MediaController.idl
 $(PROJECT_DIR)/html/MediaEncryptedEvent.idl
 $(PROJECT_DIR)/html/MediaError.idl
 $(PROJECT_DIR)/html/OffscreenCanvas.idl
+$(PROJECT_DIR)/html/Origin.idl
 $(PROJECT_DIR)/html/PopoverInvokerElement.idl
 $(PROJECT_DIR)/html/RadioNodeList.idl
 $(PROJECT_DIR)/html/ResolvedCaptionDisplaySettingsOptions.idl
@@ -2148,6 +2153,8 @@ $(PROJECT_DIR)/testing/MockApplePaySetupFeature.idl
 $(PROJECT_DIR)/testing/MockCDMFactory.idl
 $(PROJECT_DIR)/testing/MockCaptionDisplaySettingsClientCallback.idl
 $(PROJECT_DIR)/testing/MockContentFilterSettings.idl
+$(PROJECT_DIR)/testing/MockMediaDeviceRoute.idl
+$(PROJECT_DIR)/testing/MockMediaDeviceRouteController.idl
 $(PROJECT_DIR)/testing/MockPageOverlay.idl
 $(PROJECT_DIR)/testing/MockPaymentAddress.idl
 $(PROJECT_DIR)/testing/MockPaymentContactFields.idl

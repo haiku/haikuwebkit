@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
+
 #if ENABLE(WEBASSEMBLY)
 
 #include <JavaScriptCore/JSCJSValue.h>
@@ -94,8 +96,8 @@ class WebAssemblyBuiltinSignature {
     using Expectations = Vector<std::unique_ptr<WebAssemblyBuiltinTypeExpectation>>;
 public:
     WebAssemblyBuiltinSignature(Expectations&& results, Expectations&& params)
-        : m_results(WTFMove(results))
-        , m_params(WTFMove(params))
+        : m_results(WTF::move(results))
+        , m_params(WTF::move(params))
     { }
 
     size_t numParams() const { return m_params.size(); }
@@ -123,7 +125,7 @@ public:
     WebAssemblyBuiltin(uint32_t id, ASCIILiteral name, WebAssemblyBuiltinSignature&& sig, WasmEntrypoint wasmEntrypoint, WasmTrampolinePtr wasmTrampoline, NativeFunction jsHostFunction)
         : m_id(id)
         , m_name(name)
-        , m_signature(WTFMove(sig))
+        , m_signature(WTF::move(sig))
         , m_jsHostFunction(jsHostFunction)
     {
         ASSERT(sig.numParams() <= 4); // see generateWasmBuiltinTrampoline() for why this is the limit

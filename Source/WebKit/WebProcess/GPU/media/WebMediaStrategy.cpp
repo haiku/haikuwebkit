@@ -53,7 +53,7 @@
 namespace WebKit {
 using namespace WebCore;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebMediaStrategy);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebMediaStrategy);
 
 WebMediaStrategy::~WebMediaStrategy() = default;
 
@@ -138,6 +138,14 @@ void WebMediaStrategy::enableMockMediaSource()
     }
 #endif
     WebCore::MediaStrategy::addMockMediaSourceEngine();
+}
+#endif
+
+#if PLATFORM(COCOA) && ENABLE(VIDEO)
+void WebMediaStrategy::nativeImageFromVideoFrame(const WebCore::VideoFrame& frame, CompletionHandler<void(std::optional<RefPtr<WebCore::NativeImage>>&&)>&& completionHandler)
+{
+    // FIMXE: Move out of sync IPC.
+    completionHandler(WebProcess::singleton().ensureProtectedGPUProcessConnection()->protectedVideoFrameObjectHeapProxy()->getNativeImage(frame));
 }
 #endif
 

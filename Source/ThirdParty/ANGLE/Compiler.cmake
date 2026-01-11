@@ -457,6 +457,8 @@ set(angle_translator_lib_msl_sources
 )
 
 set(angle_translator_lib_wgsl_sources
+    "src/compiler/translator/tree_ops/wgsl/RewriteMultielementSwizzleAssignment.cpp"
+    "src/compiler/translator/tree_ops/wgsl/RewriteMultielementSwizzleAssignment.h"
     "src/compiler/translator/wgsl/OutputUniformBlocks.cpp"
     "src/compiler/translator/wgsl/OutputUniformBlocks.h"
     "src/compiler/translator/wgsl/RewritePipelineVariables.cpp"

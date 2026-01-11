@@ -607,7 +607,6 @@ CapabilityLevel canCompile(Graph& graph)
                 case AnyIntUse:
                 case DoubleRepAnyIntUse:
                 case NotDoubleUse:
-                case NotOtherUse:
                 case NeitherDoubleNorHeapBigIntUse:
                 case NeitherDoubleNorHeapBigIntNorStringUse:
                     // These are OK.

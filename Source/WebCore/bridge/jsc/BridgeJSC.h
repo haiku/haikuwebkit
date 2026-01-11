@@ -64,6 +64,8 @@ public:
     virtual int numParameters() const = 0;
 
     virtual ~Method() = default;
+
+    virtual bool isObjcMethod() const { return false; }
 };
 
 class Class {
@@ -76,6 +78,8 @@ public:
     virtual JSValue fallbackObject(JSGlobalObject*, Instance*, PropertyName) { return jsUndefined(); }
 
     virtual ~Class() = default;
+
+    virtual bool isObjcClass() const { return false; }
 };
 
 class Instance : public RefCounted<Instance> {
@@ -116,6 +120,8 @@ public:
 
     virtual bool getOwnPropertySlot(JSObject*, JSGlobalObject*, PropertyName, PropertySlot&) { return false; }
     virtual bool put(JSObject*, JSGlobalObject*, PropertyName, JSValue, PutPropertySlot&) { return false; }
+
+    virtual bool isObjcInstance() const { return false; }
 
 protected:
     virtual void virtualBegin() { }

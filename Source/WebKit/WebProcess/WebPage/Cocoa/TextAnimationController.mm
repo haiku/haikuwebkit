@@ -235,14 +235,14 @@ void TextAnimationController::addSourceTextAnimationForActiveWritingToolsSession
         if (m_activeAnimation) {
             if (auto finalReplaceHander = std::exchange(m_finalReplaceHandler, std::nullopt))
                 (*finalReplaceHander)(WebCore::TextAnimationRunMode::OnlyReplaceText);
-            m_finalReplaceHandler = WTFMove(completionHandler);
+            m_finalReplaceHandler = WTF::move(completionHandler);
         } else
             completionHandler(WebCore::TextAnimationRunMode::OnlyReplaceText);
         return;
     }
 
     // On iOS this will search for the completion handler to pass the text indicator to so that the animation can continue.
-    protectedWebPage()->addTextAnimationForAnimationID(sourceAnimationUUID, { WebCore::TextAnimationType::Source, runMode, WTF::UUID(WTF::UUID::emptyValue), sourceAnimationUUID, destinationAnimationUUID }, textIndicator, WTFMove(completionHandler));
+    protectedWebPage()->addTextAnimationForAnimationID(sourceAnimationUUID, { WebCore::TextAnimationType::Source, runMode, WTF::UUID(WTF::UUID::emptyValue), sourceAnimationUUID, destinationAnimationUUID }, textIndicator, WTF::move(completionHandler));
     m_activeAnimation = sourceAnimationUUID;
     m_textAnimationRanges.append({ sourceAnimationUUID, replaceCharacterRange });
 }

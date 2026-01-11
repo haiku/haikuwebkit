@@ -30,7 +30,11 @@
 
 - (void)dealloc
 {
-    SUPPRESS_UNRETAINED_ARG [_appid release];
+    self.appid = nil;
+    self.evalByCredential = nil;
+    self.eval = nil;
+    self.largeBlob = nil;
+
     [super dealloc];
 }
 
@@ -64,6 +68,11 @@
     SUPPRESS_UNRETAINED_ARG [_support release];
     SUPPRESS_UNRETAINED_ARG [_write release];
     [super dealloc];
+}
+
+- (id)copyWithZone:(NSZone *)zone
+{
+    return [self retain];
 }
 
 @end

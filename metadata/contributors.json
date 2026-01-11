@@ -655,6 +655,13 @@
    },
    {
       "emails" : [
+         "anand_srinivasan@apple.com"
+      ],
+      "github" : "asworkjsc",
+      "name" : "Anand Srinivasan"
+   },
+   {
+      "emails" : [
          "andersca@apple.com",
          "acarlsson@apple.com"
       ],
@@ -3613,6 +3620,13 @@
    },
    {
       "emails" : [
+         "helmut@januschka.com"
+      ],
+      "github" : "hjanuschka",
+      "name" : "Helmut Januschka"
+   },
+   {
+      "emails" : [
          "hhjalmarsson@apple.com"
       ],
       "github" : "HerculesH",
@@ -4847,6 +4861,18 @@
       "name" : "Justin Schuh",
       "nicks" : [
          "jschuh"
+      ]
+   },
+   {
+      "emails" : [
+         "k_tamkun@apple.com",
+         "kai@tamkun.io"
+      ],
+      "github" : "heimskr",
+      "name" : "Kai Tamkun",
+      "nicks" : [
+         "kai",
+         "heimskr"
       ]
    },
    {

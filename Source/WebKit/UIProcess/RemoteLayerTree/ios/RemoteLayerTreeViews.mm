@@ -39,12 +39,17 @@
 #import <WebCore/TouchAction.h>
 #import <WebCore/TransformationMatrix.h>
 #import <WebCore/WebCoreCALayerExtras.h>
-#import <pal/cocoa/CoreMaterialSoftLink.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <ranges>
 #import <wtf/SoftLinking.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
+
+#if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
+#import "WKSeparatedImageView.h"
+#endif
+
+#import <pal/cocoa/CoreMaterialSoftLink.h>
 
 namespace WTF {
 
@@ -211,7 +216,7 @@ OptionSet<WebCore::TouchAction> touchActionsForPoint(UIView *rootView, const Web
             return WebCore::TouchAction::Auto;
 
         if ([view isKindOfClass:[WKCompositingView class]]) {
-            hitView = WTFMove(view);
+            hitView = WTF::move(view);
             break;
         }
     }
@@ -240,7 +245,7 @@ OptionSet<WebCore::EventListenerRegionType> eventListenerTypesAtPoint(UIView *ro
     RetainPtr<UIView> hitView;
     for (RetainPtr view : viewsAtPoint | std::views::reverse) {
         if ([view isKindOfClass:[WKCompositingView class]]) {
-            hitView = WTFMove(view);
+            hitView = WTF::move(view);
             break;
         }
     }
@@ -427,6 +432,13 @@ static Class scrollViewScrollIndicatorClassSingleton()
 
 @end
 
+#endif
+
+#if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
+@interface WKSeparatedImageView (WKContentControlled) <WKContentControlled>
+@end
+@implementation WKSeparatedImageView (WKContentControlled)
+@end
 #endif
 
 @implementation WKUIRemoteView

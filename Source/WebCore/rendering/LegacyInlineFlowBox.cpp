@@ -34,6 +34,7 @@
 #include "RenderInline.h"
 #include "RenderLayer.h"
 #include "RenderObjectInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderTableCell.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
@@ -45,7 +46,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(LegacyInlineFlowBox);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(LegacyInlineFlowBox);
 
 struct SameSizeAsLegacyInlineFlowBox : public LegacyInlineBox {
     uint32_t bitfields : 23;
@@ -211,7 +212,7 @@ inline void LegacyInlineFlowBox::addTextBoxVisualOverflow(LegacyInlineTextBox& t
     auto rightGlyphEdge = glyphOverflow ? glyphOverflow->right : 0_lu;
 
     auto viewportSize = textBox.renderer().frame().view() ? textBox.renderer().frame().view()->size() : IntSize();
-    LayoutUnit strokeOverflow(std::ceil(lineStyle.computedStrokeWidth(viewportSize) / 2.0f));
+    LayoutUnit strokeOverflow(std::ceil(lineStyle.usedStrokeWidth(viewportSize) / 2.0f));
     auto topGlyphOverflow = -strokeOverflow - topGlyphEdge;
     auto bottomGlyphOverflow = strokeOverflow + bottomGlyphEdge;
     auto leftGlyphOverflow = -strokeOverflow - leftGlyphEdge;
@@ -276,7 +277,7 @@ void LegacyInlineFlowBox::setVisualOverflow(const LayoutRect& rect, LayoutUnit l
         return;
 
     if (!m_overflow)
-        m_overflow = makeUnique<RenderOverflow>(frameBox, frameBox);
+        m_overflow = makeUnique<RenderOverflow>(frameBox, frameBox, frameBox);
 
     m_overflow->setVisualOverflow(rect);
 }

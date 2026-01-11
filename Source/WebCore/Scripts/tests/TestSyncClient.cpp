@@ -36,38 +36,38 @@ void TestSyncClient::broadcastAudioSessionTypeToOtherProcesses(const WebCore::DO
 {
     TestSyncDataVariant dataVariant;
     dataVariant.emplace<enumToUnderlyingType(TestSyncDataType::AudioSessionType)>(data);
-    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::AudioSessionType, WTFMove(dataVariant) });
+    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::AudioSessionType, WTF::move(dataVariant) });
 }
 #endif
 void TestSyncClient::broadcastMainFrameURLChangeToOtherProcesses(const URL& data)
 {
     TestSyncDataVariant dataVariant;
     dataVariant.emplace<enumToUnderlyingType(TestSyncDataType::MainFrameURLChange)>(data);
-    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::MainFrameURLChange, WTFMove(dataVariant) });
+    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::MainFrameURLChange, WTF::move(dataVariant) });
 }
 void TestSyncClient::broadcastIsAutofocusProcessedToOtherProcesses(const bool& data)
 {
     TestSyncDataVariant dataVariant;
     dataVariant.emplace<enumToUnderlyingType(TestSyncDataType::IsAutofocusProcessed)>(data);
-    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::IsAutofocusProcessed, WTFMove(dataVariant) });
+    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::IsAutofocusProcessed, WTF::move(dataVariant) });
 }
 void TestSyncClient::broadcastUserDidInteractWithPageToOtherProcesses(const bool& data)
 {
     TestSyncDataVariant dataVariant;
     dataVariant.emplace<enumToUnderlyingType(TestSyncDataType::UserDidInteractWithPage)>(data);
-    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::UserDidInteractWithPage, WTFMove(dataVariant) });
+    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::UserDidInteractWithPage, WTF::move(dataVariant) });
 }
 void TestSyncClient::broadcastAnotherOneToOtherProcesses(const StringifyThis& data)
 {
     TestSyncDataVariant dataVariant;
     dataVariant.emplace<enumToUnderlyingType(TestSyncDataType::AnotherOne)>(data);
-    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::AnotherOne, WTFMove(dataVariant) });
+    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::AnotherOne, WTF::move(dataVariant) });
 }
 void TestSyncClient::broadcastMultipleHeadersToOtherProcesses(const HashSet<URL>& data)
 {
     TestSyncDataVariant dataVariant;
     dataVariant.emplace<enumToUnderlyingType(TestSyncDataType::MultipleHeaders)>(data);
-    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::MultipleHeaders, WTFMove(dataVariant) });
+    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::MultipleHeaders, WTF::move(dataVariant) });
 }
 
 } // namespace WebCore

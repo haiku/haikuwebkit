@@ -713,6 +713,66 @@ CommitDate: {time_c}
             self.assertFalse(repo._is_on_default_branch(fetched_commit.hash))
             self.assertNotEqual(mock_git.remotes[remote_ref][-1].hash, fetched_commit.hash)
 
+    def test_branches_for(self):
+        with mocks.local.Git(
+            self.path,
+            remotes={
+                'security': 'git@github.example.com:WebKit/WebKit-security.git',
+            },
+        ) as mock_git:
+            del mock_git.remotes['security/eng/squash-branch']
+            mock_git.remotes['security/hidden-branch'] = [mock_git.commits[mock_git.branch][-1]]
+
+            repo = local.Git(self.path)
+
+            all_branches = repo.branches_for()
+            self.assertEqual(
+                ['branch-a', 'branch-b', 'eng/squash-branch', 'hidden-branch', 'main'],
+                all_branches,
+            )
+
+            origin_branches = repo.branches_for(remote='origin')
+            self.assertEqual(
+                ['branch-a', 'branch-b', 'main'],
+                origin_branches,
+            )
+
+            remote_false_branches = repo.branches_for(remote=False)
+            self.assertEqual(
+                ['branch-a', 'branch-b', 'eng/squash-branch', 'main'],
+                remote_false_branches,
+            )
+
+            remote_none_branches = repo.branches_for(remote=None)
+            self.assertEqual(
+                {
+                    None: {'branch-a', 'branch-b', 'eng/squash-branch', 'main'},
+                    'origin': {'branch-a', 'branch-b', 'main'},
+                    'security': {'branch-a', 'branch-b', 'hidden-branch', 'main'},
+                },
+                dict(remote_none_branches),
+            )
+
+            contains_5_main = repo.branches_for(hash=repo.find('5@main').hash, remote=None)
+            self.assertEqual(
+                {
+                    None: {'eng/squash-branch', 'main'},
+                    'origin': {'main'},
+                    'security': {'main', 'hidden-branch'},
+                },
+                dict(contains_5_main),
+            )
+
+            contains_1_main = repo.branches_for(hash=repo.find('1@main').hash, remote=None)
+            self.assertEqual(
+                {
+                    None: {'branch-a', 'branch-b', 'eng/squash-branch', 'main'},
+                    'origin': {'branch-a', 'branch-b', 'main'},
+                    'security': {'branch-a', 'branch-b', 'hidden-branch', 'main'},
+                },
+                dict(contains_1_main),
+            )
+
 
 class TestMockGit(testing.PathTestCase):
     basepath = 'mock/repository'

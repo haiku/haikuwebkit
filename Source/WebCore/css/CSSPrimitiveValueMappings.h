@@ -41,7 +41,6 @@
 #include "FontSizeAdjust.h"
 #include "GraphicsTypes.h"
 #include "RenderStyleConstants.h"
-#include "SVGRenderStyleDefs.h"
 #include "ScrollAxis.h"
 #include "ScrollTypes.h"
 #include "StyleContain.h"
@@ -1704,73 +1703,17 @@ template<> constexpr FontSizeAdjust::Metric fromCSSValueID(CSSValueID valueID)
     return FontSizeAdjust::Metric::ExHeight;
 }
 
-constexpr CSSValueID toCSSValueID(FontSmoothingMode smoothing)
-{
-    switch (smoothing) {
-    case FontSmoothingMode::AutoSmoothing:
-        return CSSValueAuto;
-    case FontSmoothingMode::NoSmoothing:
-        return CSSValueNone;
-    case FontSmoothingMode::Antialiased:
-        return CSSValueAntialiased;
-    case FontSmoothingMode::SubpixelAntialiased:
-        return CSSValueSubpixelAntialiased;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return CSSValueInvalid;
-}
+#define TYPE FontSmoothingMode
+#define FOR_EACH(CASE) CASE(Auto) CASE(None) CASE(Antialiased) CASE(SubpixelAntialiased)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
 
-template<> constexpr FontSmoothingMode fromCSSValueID(CSSValueID valueID)
-{
-    switch (valueID) {
-    case CSSValueAuto:
-        return FontSmoothingMode::AutoSmoothing;
-    case CSSValueNone:
-        return FontSmoothingMode::NoSmoothing;
-    case CSSValueAntialiased:
-        return FontSmoothingMode::Antialiased;
-    case CSSValueSubpixelAntialiased:
-        return FontSmoothingMode::SubpixelAntialiased;
-    default:
-        break;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return FontSmoothingMode::AutoSmoothing;
-}
-
-constexpr CSSValueID toCSSValueID(TextRenderingMode e)
-{
-    switch (e) {
-    case TextRenderingMode::AutoTextRendering:
-        return CSSValueAuto;
-    case TextRenderingMode::OptimizeSpeed:
-        return CSSValueOptimizeSpeed;
-    case TextRenderingMode::OptimizeLegibility:
-        return CSSValueOptimizeLegibility;
-    case TextRenderingMode::GeometricPrecision:
-        return CSSValueGeometricPrecision;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return CSSValueInvalid;
-}
-
-template<> constexpr TextRenderingMode fromCSSValueID(CSSValueID valueID)
-{
-    switch (valueID) {
-    case CSSValueAuto:
-        return TextRenderingMode::AutoTextRendering;
-    case CSSValueOptimizeSpeed:
-        return TextRenderingMode::OptimizeSpeed;
-    case CSSValueOptimizeLegibility:
-        return TextRenderingMode::OptimizeLegibility;
-    case CSSValueGeometricPrecision:
-        return TextRenderingMode::GeometricPrecision;
-    default:
-        break;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return TextRenderingMode::AutoTextRendering;
-}
+#define TYPE TextRenderingMode
+#define FOR_EACH(CASE) CASE(Auto) CASE(OptimizeSpeed) CASE(OptimizeLegibility) CASE(GeometricPrecision)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
 
 #define TYPE Hyphens
 #define FOR_EACH(CASE) CASE(None) CASE(Manual) CASE(Auto)
@@ -2394,31 +2337,11 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-constexpr CSSValueID toCSSValueID(FontOpticalSizing sizing)
-{
-    switch (sizing) {
-    case FontOpticalSizing::Enabled:
-        return CSSValueAuto;
-    case FontOpticalSizing::Disabled:
-        return CSSValueNone;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return CSSValueInvalid;
-}
-
-template<> constexpr FontOpticalSizing fromCSSValueID(CSSValueID valueID)
-{
-    switch (valueID) {
-    case CSSValueAuto:
-        return FontOpticalSizing::Enabled;
-    case CSSValueNone:
-        return FontOpticalSizing::Disabled;
-    default:
-        break;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return FontOpticalSizing::Enabled;
-}
+#define TYPE FontOpticalSizing
+#define FOR_EACH(CASE) CASE(Auto) CASE(None)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
 
 template<> constexpr FontTechnology fromCSSValueID(CSSValueID valueID)
 {

@@ -255,7 +255,7 @@ public:
     }
     
     FastBitVectorImpl(Words&& words)
-        : m_words(WTFMove(words))
+        : m_words(WTF::move(words))
     {
     }
 

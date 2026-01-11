@@ -111,7 +111,7 @@ RenderPtr<RenderElement> ImageInputType::createInputRenderer(RenderStyle&& style
 {
     ASSERT(element());
     // FIXME: https://github.com/llvm/llvm-project/pull/142471 Moving style is not unsafe.
-    SUPPRESS_UNCOUNTED_ARG return createRenderer<RenderImage>(RenderObject::Type::Image, *protectedElement(), WTFMove(style));
+    SUPPRESS_UNCOUNTED_ARG return createRenderer<RenderImage>(RenderObject::Type::Image, *protectedElement(), WTF::move(style));
 }
 
 void ImageInputType::attributeChanged(const QualifiedName& name)

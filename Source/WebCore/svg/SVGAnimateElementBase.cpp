@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGAnimateElementBase);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGAnimateElementBase);
 
 SVGAnimateElementBase::SVGAnimateElementBase(const QualifiedName& tagName, Document& document)
     : SVGAnimationElement(tagName, document)

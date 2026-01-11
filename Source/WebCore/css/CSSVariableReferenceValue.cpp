@@ -36,17 +36,19 @@
 #include "CSSRegisteredCustomProperty.h"
 #include "CSSVariableData.h"
 #include "ConstantPropertyMap.h"
+#include "CustomFunctionRegistry.h"
 #include "Document.h"
-#include "RenderStyle.h"
+#include "RenderStyle+GettersInlines.h"
 #include "StyleBuilder.h"
 #include "StyleCustomPropertyRegistry.h"
 #include "StyleResolver.h"
+#include "StyleScope.h"
 
 namespace WebCore {
 
 CSSVariableReferenceValue::CSSVariableReferenceValue(Ref<CSSVariableData>&& data)
     : CSSValue(ClassType::VariableReference)
-    , m_data(WTFMove(data))
+    , m_data(WTF::move(data))
 {
     cacheSimpleReference();
 }
@@ -58,7 +60,7 @@ Ref<CSSVariableReferenceValue> CSSVariableReferenceValue::create(const CSSParser
 
 Ref<CSSVariableReferenceValue> CSSVariableReferenceValue::create(Ref<CSSVariableData>&& data)
 {
-    return adoptRef(*new CSSVariableReferenceValue(WTFMove(data)));
+    return adoptRef(*new CSSVariableReferenceValue(WTF::move(data)));
 }
 
 bool CSSVariableReferenceValue::equals(const CSSVariableReferenceValue& other) const
@@ -98,14 +100,14 @@ auto CSSVariableReferenceValue::resolveVariableFallback(const AtomString& variab
             if (!tokens || !CSSPropertyParser::isValidCustomPropertyValueForSyntax(registered->syntax, *tokens, context()))
                 return { FallbackResult::Invalid, { } };
 
-            return { FallbackResult::Valid, WTFMove(*tokens) };
+            return { FallbackResult::Valid, WTF::move(*tokens) };
         }
     }
 
     if (!tokens)
         return { FallbackResult::None, { } };
 
-    return { FallbackResult::Valid, WTFMove(*tokens) };
+    return { FallbackResult::Valid, WTF::move(*tokens) };
 }
 
 static const Style::CustomProperty* propertyValueForVariableName(const AtomString& variableName, CSSValueID functionId, Style::Builder& builder)
@@ -152,16 +154,56 @@ bool CSSVariableReferenceValue::resolveVariableReference(CSSParserTokenRange ran
     return true;
 }
 
+bool CSSVariableReferenceValue::evaluateDashedFunction(StringView functionName, CSSParserTokenRange, Vector<CSSParserToken>& tokens, Style::Builder& builder) const
+{
+    // https://drafts.csswg.org/css-mixins/#evaluating-custom-functions
+
+    if (!builder.state().element())
+        return false;
+
+    auto scopedFunctionName = Style::ScopedName { functionName.toAtomString(), builder.state().styleScopeOrdinal() };
+
+    CheckedPtr element = builder.state().element();
+    auto customFunction = Style::Scope::resolveTreeScopedReference(*element, scopedFunctionName, [](const Style::Scope& scope, const AtomString& name) -> CheckedPtr<const Style::CustomFunction> {
+        RefPtr resolver = scope.resolverIfExists();
+        CheckedPtr registry = resolver ? resolver->customFunctionRegistry() : nullptr;
+        return registry ? registry->functionForName(name) : nullptr;
+    });
+
+    if (!customFunction)
+        return false;
+
+    // FIXME: Evaluate the function instead of just substituting.
+
+    auto properties = customFunction->properties;
+    auto resultValue = dynamicDowncast<CSSCustomPropertyValue>(properties->getPropertyCSSValue(CSSPropertyResult));
+    if (!resultValue)
+        return false;
+
+    auto data = resultValue->asVariableData();
+    tokens.appendVector(data->tokens());
+    return true;
+}
+
 std::optional<Vector<CSSParserToken>> CSSVariableReferenceValue::resolveTokenRange(CSSParserTokenRange range, Style::Builder& builder) const
 {
     Vector<CSSParserToken> tokens;
     bool success = true;
     while (!range.atEnd()) {
-        auto functionId = range.peek().functionId();
-        if (functionId == CSSValueVar || functionId == CSSValueEnv) {
-            if (!resolveVariableReference(range.consumeBlock(), functionId, tokens, builder))
-                success = false;
-            continue;
+        auto token = range.peek();
+        if (token.type() == FunctionToken) {
+            auto functionId = token.functionId();
+            if (functionId == CSSValueVar || functionId == CSSValueEnv) {
+                if (!resolveVariableReference(range.consumeBlock(), functionId, tokens, builder))
+                    success = false;
+                continue;
+            }
+            if (isCustomPropertyName(token.value())) {
+                // <dashed-function>
+                if (!evaluateDashedFunction(token.value(), range.consumeBlock(), tokens, builder))
+                    success = false;
+                continue;
+            }
         }
         tokens.append(range.consume());
     }

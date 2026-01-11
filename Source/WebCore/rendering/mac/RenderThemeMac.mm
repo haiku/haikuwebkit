@@ -23,6 +23,7 @@
 
 #if PLATFORM(MAC)
 
+#import "AttachmentLayout.h"
 #import "BitmapImage.h"
 #import "CSSPropertyNames.h"
 #import "CSSValueKeywords.h"
@@ -60,10 +61,12 @@
 #import "RenderMedia.h"
 #import "RenderMeter.h"
 #import "RenderSlider.h"
-#import "RenderStyleSetters.h"
+#import "RenderStyle+GettersInlines.h"
+#import "RenderStyle+SettersInlines.h"
 #import "RenderView.h"
 #import "SliderThumbElement.h"
 #import "StringTruncator.h"
+#import "StyleComputedStyle+InitialInlines.h"
 #import "StylePadding.h"
 #import "UTIUtilities.h"
 #import <Carbon/Carbon.h>
@@ -843,7 +846,7 @@ static Style::PreferredSizePair sizeFromNSControlSize(NSControlSize nsControlSiz
         resultWidth = Style::PreferredSize::Fixed { static_cast<float>(controlSize.width()) };
     if (zoomedSize.height().isIntrinsicOrLegacyIntrinsicOrAuto() && controlSize.height() > 0)
         resultHeight = Style::PreferredSize::Fixed { static_cast<float>(controlSize.height()) };
-    return { WTFMove(resultWidth), WTFMove(resultHeight) };
+    return { WTF::move(resultWidth), WTF::move(resultHeight) };
 }
 
 static Style::PreferredSizePair sizeFromFont(const FontCascade& font, const Style::PreferredSizePair& zoomedSize, float zoomFactor, const std::span<const IntSize, 4> sizes)
@@ -1229,8 +1232,8 @@ static void setFontFromControlSize(RenderStyle& style, NSControlSize controlSize
     fontDescription.setSpecifiedSize([font pointSize] * style.usedZoom());
 
     // Reset line height
-    style.setLineHeight(RenderStyle::initialLineHeight());
-    style.setFontDescription(WTFMove(fontDescription));
+    style.setLineHeight(Style::ComputedStyle::initialLineHeight());
+    style.setFontDescription(WTF::move(fontDescription));
 }
 
 void RenderThemeMac::adjustListButtonStyle(RenderStyle& style, const Element* element) const
@@ -1244,6 +1247,7 @@ void RenderThemeMac::adjustListButtonStyle(RenderStyle& style, const Element* el
     UNUSED_PARAM(element);
 #endif
 
+    style.setLogicalWidth(16_css_px);
     // Add a margin to place the button at end of the input field.
     style.setMarginEnd(-4_css_px / style.usedZoomForLength().value);
 }
@@ -1422,7 +1426,7 @@ void RenderThemeMac::adjustMenuListButtonStyle(RenderStyle& style, const Element
 
     style.setMinHeight(18_css_px);
 
-    style.setLineHeight(RenderStyle::initialLineHeight());
+    style.setLineHeight(Style::ComputedStyle::initialLineHeight());
 }
 
 std::span<const IntSize, 4> RenderThemeMac::menuListSizes() const
@@ -1531,7 +1535,7 @@ std::span<const IntSize, 4> RenderThemeMac::resultsButtonSizes() const
     return sizes;
 }
 
-const int emptyResultsOffset = 9;
+constexpr int emptyResultsOffset = 9;
 void RenderThemeMac::adjustSearchFieldDecorationPartStyle(RenderStyle& style, const Element* element) const
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
@@ -1544,14 +1548,21 @@ void RenderThemeMac::adjustSearchFieldDecorationPartStyle(RenderStyle& style, co
 #endif
 
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
-    int widthOffset = 0;
-    int heightOffset = 0;
-    if (style.writingMode().isHorizontal())
-        widthOffset = emptyResultsOffset;
-    else
-        heightOffset = emptyResultsOffset;
-    style.setWidth(Style::PreferredSize::Fixed { static_cast<float>(size.width() - widthOffset) });
-    style.setHeight(Style::PreferredSize::Fixed { static_cast<float>(size.height() - heightOffset) });
+    bool isHorizontalWritingMode = style.writingMode().isHorizontal();
+    auto computedWidth = [isHorizontalWritingMode, &size]() -> float {
+        if (isHorizontalWritingMode)
+            return std::max(0, size.width() - emptyResultsOffset);
+        return size.width();
+    };
+
+    auto computedHeight = [isHorizontalWritingMode, &size]() -> float {
+        if (!isHorizontalWritingMode)
+            return std::max(0, size.height() - emptyResultsOffset);
+        return size.height();
+    };
+
+    style.setWidth(Style::PreferredSize::Fixed { computedWidth() });
+    style.setHeight(Style::PreferredSize::Fixed { computedHeight() });
     style.setBoxShadow(CSS::Keyword::None { });
 }
 
@@ -1818,7 +1829,7 @@ RenderThemeCocoa::IconAndSize RenderThemeMac::iconForAttachment(const String& fi
     if (auto icon = WebCore::iconForAttachment(fileName, attachmentType, title)) {
         RetainPtr image = icon->image();
         auto size = [image size];
-        return IconAndSize { WTFMove(image), FloatSize(size) };
+        return IconAndSize { WTF::move(image), FloatSize(size) };
     }
 
     return IconAndSize { nil, FloatSize() };
@@ -1837,8 +1848,8 @@ static void paintAttachmentIconBackground(const RenderAttachment& attachment, Gr
     if (paintBorder)
         backgroundRect.inflate(-attachmentIconSelectionBorderThickness);
 
-    CheckedRef style = attachment.style();
-    Color backgroundColor = style->colorByApplyingColorFilter(attachmentIconBackgroundColor);
+    Style::ColorResolver colorResolver { attachment.style() };
+    auto backgroundColor = colorResolver.colorApplyingColorFilter(attachmentIconBackgroundColor);
     context.fillRoundedRect(FloatRoundedRect(backgroundRect, FloatRoundedRect::Radii(attachmentIconBackgroundRadius)), backgroundColor);
 
     if (paintBorder) {
@@ -1849,7 +1860,7 @@ static void paintAttachmentIconBackground(const RenderAttachment& attachment, Gr
         Path borderPath;
         borderPath.addRoundedRect(borderRect, iconBackgroundRadiusSize);
 
-        Color borderColor = style->colorByApplyingColorFilter(attachmentIconBorderColor);
+        auto borderColor = colorResolver.colorApplyingColorFilter(attachmentIconBorderColor);
         context.setStrokeColor(borderColor);
         context.setStrokeThickness(attachmentIconSelectionBorderThickness);
         context.strokePath(borderPath);
@@ -1906,13 +1917,11 @@ static void paintAttachmentTitleBackground(const RenderAttachment& attachment, G
         return line.backgroundRect;
     });
 
-    Color backgroundColor;
-    if (attachment.frame().checkedSelection()->isFocusedAndActive())
-        backgroundColor = colorFromCocoaColor([NSColor selectedContentBackgroundColor]);
-    else
-        backgroundColor = attachmentTitleInactiveBackgroundColor;
+    auto backgroundColor = colorFromCocoaColor(attachment.frame().checkedSelection()->isFocusedAndActive() ? [NSColor selectedContentBackgroundColor] : [NSColor unemphasizedSelectedContentBackgroundColor]);
 
-    backgroundColor = attachment.checkedStyle()->colorByApplyingColorFilter(backgroundColor);
+    Style::ColorResolver colorResolver { attachment.style() };
+
+    backgroundColor = colorResolver.colorApplyingColorFilter(backgroundColor);
     context.setFillColor(backgroundColor);
 
     Path backgroundPath = PathUtilities::pathWithShrinkWrappedRects(backgroundRects, attachmentTitleBackgroundRadius);
@@ -1957,7 +1966,9 @@ static void paintAttachmentPlaceholderBorder(const RenderAttachment& attachment,
     Path borderPath;
     borderPath.addRoundedRect(layout.attachmentRect, FloatSize(attachmentPlaceholderBorderRadius, attachmentPlaceholderBorderRadius));
 
-    Color placeholderBorderColor = attachment.checkedStyle()->colorByApplyingColorFilter(attachmentPlaceholderBorderColor);
+    Style::ColorResolver colorResolver { attachment.style() };
+
+    auto placeholderBorderColor = colorResolver.colorApplyingColorFilter(attachmentPlaceholderBorderColor);
     context.setStrokeColor(placeholderBorderColor);
     context.setStrokeThickness(attachmentPlaceholderBorderWidth);
     context.setStrokeStyle(StrokeStyle::DashedStroke);

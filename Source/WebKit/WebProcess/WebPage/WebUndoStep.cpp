@@ -36,7 +36,7 @@ static WebUndoStepID generateUndoStep()
 
 Ref<WebUndoStep> WebUndoStep::create(Ref<WebCore::UndoStep>&& step)
 {
-    return adoptRef(*new WebUndoStep(WTFMove(step), generateUndoStep()));
+    return adoptRef(*new WebUndoStep(WTF::move(step), generateUndoStep()));
 }
 
 WebUndoStep::~WebUndoStep() = default;

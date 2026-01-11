@@ -347,19 +347,19 @@ inline void ObjectBase::setString(const String& name, const String& value)
 
 inline void ObjectBase::setValue(const String& name, Ref<Value>&& value)
 {
-    if (m_map.set(name, WTFMove(value)).isNewEntry)
+    if (m_map.set(name, WTF::move(value)).isNewEntry)
         m_order.append(name);
 }
 
 inline void ObjectBase::setObject(const String& name, Ref<ObjectBase>&& value)
 {
-    if (m_map.set(name, WTFMove(value)).isNewEntry)
+    if (m_map.set(name, WTF::move(value)).isNewEntry)
         m_order.append(name);
 }
 
 inline void ObjectBase::setArray(const String& name, Ref<ArrayBase>&& value)
 {
-    if (m_map.set(name, WTFMove(value)).isNewEntry)
+    if (m_map.set(name, WTF::move(value)).isNewEntry)
         m_order.append(name);
 }
 
@@ -385,17 +385,17 @@ inline void ArrayBase::pushString(const String& value)
 
 inline void ArrayBase::pushValue(Ref<Value>&& value)
 {
-    m_map.append(WTFMove(value));
+    m_map.append(WTF::move(value));
 }
 
 inline void ArrayBase::pushObject(Ref<ObjectBase>&& value)
 {
-    m_map.append(WTFMove(value));
+    m_map.append(WTF::move(value));
 }
 
 inline void ArrayBase::pushArray(Ref<ArrayBase>&& value)
 {
-    m_map.append(WTFMove(value));
+    m_map.append(WTF::move(value));
 }
 
 template<typename T>
@@ -442,21 +442,21 @@ public:
         requires (std::is_base_of_v<Value, V> && !std::is_base_of_v<ObjectBase, V> && !std::is_base_of_v<ArrayBase, V>)
     void addItem(Ref<Value>&& value)
     {
-        castedArray().pushValue(WTFMove(value));
+        castedArray().pushValue(WTF::move(value));
     }
 
     template<typename V = T>
         requires (std::is_base_of_v<ObjectBase, V>)
     void addItem(Ref<ObjectBase>&& value)
     {
-        castedArray().pushObject(WTFMove(value));
+        castedArray().pushObject(WTF::move(value));
     }
 
     template<typename V = T>
         requires (std::is_base_of_v<ArrayBase, V>)
     void addItem(Ref<ArrayBase>&& value)
     {
-        castedArray().pushArray(WTFMove(value));
+        castedArray().pushArray(WTF::move(value));
     }
 
     static Ref<ArrayOf<T>> create()

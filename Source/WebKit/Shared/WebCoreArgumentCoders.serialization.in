@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2025 Apple Inc. All rights reserved.
+# Copyright (C) 2022-2026 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -1591,10 +1591,10 @@ struct WebCore::CurrentUserDetailsOptions {
 };
 
 struct WebCore::AuthenticatorSelectionCriteria {
-    String authenticatorAttachmentString;
-    String residentKeyString;
+    std::optional<WebCore::AuthenticatorAttachment> authenticatorAttachment;
+    std::optional<WebCore::ResidentKeyRequirement> residentKey;
     bool requireResidentKey;
-    String userVerificationString;
+    WebCore::UserVerificationRequirement userVerification;
 };
 
 struct WebCore::PublicKeyCredentialEntity {
@@ -1614,7 +1614,7 @@ struct WebCore::PublicKeyCredentialUserEntity : WebCore::PublicKeyCredentialEnti
 struct WebCore::PublicKeyCredentialDescriptor {
     WebCore::PublicKeyCredentialType type;
     WebCore::BufferSource id;
-    Vector<String> transports;
+    Vector<WebCore::AuthenticatorTransport> transports;
 };
 #endif // ENABLE(WEB_AUTHN)
 
@@ -1638,7 +1638,7 @@ struct WebCore::PublicKeyCredentialCreationOptions {
     std::optional<unsigned> timeout;
     Vector<WebCore::PublicKeyCredentialDescriptor> excludeCredentials;
     std::optional<WebCore::AuthenticatorSelectionCriteria> authenticatorSelection;
-    String attestationString;
+    WebCore::AttestationConveyancePreference attestation;
     std::optional<WebCore::AuthenticationExtensionsClientInputs> extensions;
 #endif // ENABLE(WEB_AUTHN)
 };
@@ -1649,7 +1649,7 @@ struct WebCore::PublicKeyCredentialRequestOptions {
     std::optional<unsigned> timeout;
     String rpId;
     Vector<WebCore::PublicKeyCredentialDescriptor> allowCredentials;
-    String userVerificationString;
+    WebCore::UserVerificationRequirement userVerification;
     std::optional<WebCore::AuthenticationExtensionsClientInputs> extensions;
     [NotSerialized] std::optional<WebCore::AuthenticatorAttachment> authenticatorAttachment;
 #endif // ENABLE(WEB_AUTHN)
@@ -5695,17 +5695,65 @@ enum class WebCore::PlatformVideoMatrixCoefficients : uint8_t {
 };
 
 #if ENABLE(VIDEO)
+header: <WebCore/ImmersiveVideoMetadata.h>
+enum class WebCore::HeroEye : uint8_t {
+    Left,
+    Right,
+};
 
-header: <WebCore/SpatialVideoMetadata.h>
-struct WebCore::SpatialVideoMetadata {
-    WebCore::IntSize size;
-    float horizontalFOVDegrees;
-    float baseline;
-    float disparityAdjustment;
+header: <WebCore/ImmersiveVideoMetadata.h>
+enum class WebCore::ViewPackingKind : uint8_t {
+    SideBySide,
+    OverUnder,
+};
+
+header: <WebCore/ImmersiveVideoMetadata.h>
+enum class WebCore::LensAlgorithmKind : uint8_t {
+    ParametricLens,
+};
+
+header: <WebCore/ImmersiveVideoMetadata.h>
+enum class WebCore::LensDomain : uint8_t {
+    Color,
+};
+
+header: <WebCore/ImmersiveVideoMetadata.h>
+enum class WebCore::LensRole : uint8_t {
+    Mono,
+    Left,
+    Right,
+};
+
+header: <WebCore/ImmersiveVideoMetadata.h>
+enum class WebCore::ExtrinsicOriginSource : uint8_t {
+    StereoCameraSystemBaseline,
+};
+
+using WebCore::RadialDistortionCoefficients = Vector<float, 4>;
+using WebCore::LensFrameAdjustmentsPolynomial = Vector<float, 3>;
+using WebCore::ExtrinsicOrientationQuaternion = Vector<float, 3>;
+using WebCore::IntrinsicMatrix = std::array<std::array<float, 4>, 3>;
+
+header: <WebCore/ImmersiveVideoMetadata.h>
+[CustomHeader] struct WebCore::CameraCalibration {
+    WebCore::LensAlgorithmKind lensAlgorithmKind;
+    WebCore::LensDomain lensDomain;
+    int32_t lensIdentifier;
+    WebCore::LensRole lensRole;
+    WebCore::RadialDistortionCoefficients lensDistortions;
+    WebCore::LensFrameAdjustmentsPolynomial lensFrameAdjustmentsPolynomialX;
+    WebCore::LensFrameAdjustmentsPolynomial lensFrameAdjustmentsPolynomialY;
+    float radialAngleLimit;
+    WebCore::IntrinsicMatrix intrinsicMatrix;
+    float intrinsicMatrixProjectionOffset;
+    WebCore::DoubleSize intrinsicMatrixReferenceDimensions;
+    WebCore::ExtrinsicOriginSource extrinsicOriginSource;
+    WebCore::ExtrinsicOrientationQuaternion extrinsicOrientationQuaternion;
 };
 
 enum class WebCore::VideoProjectionMetadataKind : uint8_t {
     Unknown,
+    Rectilinear,
     Equirectangular,
     HalfEquirectangular,
     EquiAngularCubemap,
@@ -5714,9 +5762,20 @@ enum class WebCore::VideoProjectionMetadataKind : uint8_t {
     AppleImmersiveVideo,
 };
 
-header: <WebCore/VideoProjectionMetadata.h>
-struct WebCore::VideoProjectionMetadata {
+header: <WebCore/ImmersiveVideoMetadata.h>
+struct WebCore::ImmersiveVideoMetadata {
     WebCore::VideoProjectionMetadataKind kind;
+    WebCore::IntSize size;
+
+    std::optional<int32_t> horizontalFieldOfView;
+    std::optional<uint32_t> stereoCameraBaseline;
+    std::optional<int32_t> horizontalDisparityAdjustment;
+
+    std::optional<bool> hasLeftStereoEyeView;
+    std::optional<bool> hasRightStereoEyeView;
+    std::optional<WebCore::HeroEye> heroEye;
+    std::optional<WebCore::ViewPackingKind> viewPackingKind;
+    Vector<WebCore::CameraCalibration> cameraCalibrationDataLensCollection;
     RefPtr<WTF::JSONImpl::Value> parameters;
 };
 
@@ -5736,8 +5795,7 @@ struct WebCore::PlatformVideoTrackConfiguration : WebCore::PlatformTrackConfigur
     WebCore::PlatformVideoColorSpace colorSpace;
     double framerate;
     uint64_t bitrate;
-    std::optional<WebCore::SpatialVideoMetadata> spatialVideoMetadata;
-    std::optional<WebCore::VideoProjectionMetadata> videoProjectionMetadata;
+    std::optional<WebCore::ImmersiveVideoMetadata> immersiveVideoMetadata;
     bool isProtected;
 };
 
@@ -6282,8 +6340,6 @@ struct WebCore::MockWebAuthenticationConfiguration {
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
 
-struct WebCore::OpenID4VPRequest {
-};
 
 header: <WebCore/ISO18013.h>
 [Nested] struct WebCore::ISO18013ElementInfo {
@@ -6315,7 +6371,7 @@ struct WebCore::MobileDocumentRequest {
 };
 
 struct WebCore::DigitalCredentialsRequestData {
-    Vector<Variant<WebCore::ValidatedMobileDocumentRequest, WebCore::OpenID4VPRequest>> requests;
+    Vector<WebCore::ValidatedMobileDocumentRequest> requests;
     [Validator='!topOrigin->isNull()'] WebCore::SecurityOriginData topOrigin;
     [Validator='!documentOrigin->isNull()'] WebCore::SecurityOriginData documentOrigin;
 };
@@ -6326,7 +6382,6 @@ struct WebCore::DigitalCredentialsResponseData {
 };
 
 [Nested] enum class WebCore::IdentityCredentialProtocol : uint8_t {
-    Openid4vp,
     OrgIsoMdoc
 };
 
@@ -6727,6 +6782,7 @@ header: <WebCore/TextExtractionTypes.h>
     None,
     EditableOnly,
     Interactive,
+    AllContainers,
 };
 
 header: <WebCore/TextExtractionTypes.h>
@@ -6790,6 +6846,7 @@ header: <WebCore/TextExtractionTypes.h>
 header: <WebCore/TextExtractionTypes.h>
 [CustomHeader] struct WebCore::TextExtraction::ImageItemData {
     URL completedSource;
+    String shortenedName;
     String altText;
 };
 
@@ -6797,6 +6854,13 @@ header: <WebCore/TextExtractionTypes.h>
 [CustomHeader] struct WebCore::TextExtraction::LinkItemData {
     String target;
     URL completedURL;
+    String shortenedURLString;
+};
+
+header: <WebCore/TextExtractionTypes.h>
+[CustomHeader] struct WebCore::TextExtraction::IFrameData {
+    String origin;
+    WebCore::FrameIdentifier identifier;
 };
 
 header: <WebCore/TextExtractionTypes.h>
@@ -6806,10 +6870,21 @@ header: <WebCore/TextExtractionTypes.h>
 };
 
 header: <WebCore/TextExtractionTypes.h>
+[CustomHeader] struct WebCore::TextExtraction::FormData {
+    String autocomplete;
+    String name;
+};
+
+header: <WebCore/TextExtractionTypes.h>
 [CustomHeader] struct WebCore::TextExtraction::TextFormControlData {
     WebCore::TextExtraction::Editable editable;
     String controlType;
     String autocomplete;
+    String pattern;
+    String name;
+    std::optional<int> minLength;
+    std::optional<int> maxLength;
+    bool isRequired;
     bool isReadonly;
     bool isDisabled;
     bool isChecked;
@@ -6835,6 +6910,7 @@ header: <WebCore/TextExtractionTypes.h>
     Canvas,
     Subscript,
     Superscript,
+    Strikethrough,
     Generic
 };
 
@@ -6849,7 +6925,7 @@ header: <WebCore/TextExtractionTypes.h>
 
 header: <WebCore/TextExtractionTypes.h>
 [CustomHeader] struct WebCore::TextExtraction::Item {
-    Variant<WebCore::TextExtraction::ContainerType, WebCore::TextExtraction::TextItemData, WebCore::TextExtraction::ScrollableItemData, WebCore::TextExtraction::ImageItemData, WebCore::TextExtraction::SelectData, WebCore::TextExtraction::ContentEditableData, WebCore::TextExtraction::TextFormControlData, WebCore::TextExtraction::LinkItemData> data;
+    Variant<WebCore::TextExtraction::ContainerType, WebCore::TextExtraction::TextItemData, WebCore::TextExtraction::ScrollableItemData, WebCore::TextExtraction::ImageItemData, WebCore::TextExtraction::SelectData, WebCore::TextExtraction::ContentEditableData, WebCore::TextExtraction::TextFormControlData, WebCore::TextExtraction::FormData, WebCore::TextExtraction::LinkItemData, WebCore::TextExtraction::IFrameData> data;
     WebCore::FloatRect rectInRootView;
     Vector<WebCore::TextExtraction::Item> children;
     String nodeName;
@@ -6857,7 +6933,9 @@ header: <WebCore/TextExtractionTypes.h>
     OptionSet<WebCore::TextExtraction::EventListenerCategory> eventListeners;
     HashMap<String, String> ariaAttributes;
     String accessibilityRole;
+    String title;
     HashMap<String, String> clientAttributes;
+    unsigned enclosingBlockNumber;
 };
 
 header: <WebCore/TextExtractionTypes.h>
@@ -7386,6 +7464,7 @@ class WebCore::NetworkLoadMetrics {
     MonotonicTime responseStart;
     MonotonicTime responseEnd;
     MonotonicTime workerStart;
+    MonotonicTime firstInterimResponseStart;
 
     String protocol;
 
@@ -7400,6 +7479,7 @@ class WebCore::NetworkLoadMetrics {
     [BitField] bool failsTAOCheck;
     [BitField] bool hasCrossOriginRedirect;
     [BitField] bool fromPrefetch;
+    [BitField] bool fromCache;
 
     WebCore::PrivacyStance privacyStance;
 
@@ -7484,6 +7564,7 @@ header: <WebCore/NowPlayingInfo.h>
 
 struct WebCore::NowPlayingInfo {
     WebCore::NowPlayingMetadata metadata;
+    uint64_t updateTime;
     double duration;
     double currentTime;
     double rate;
@@ -7592,6 +7673,7 @@ header: <WebCore/Filter.h>
     Vector<Ref<WebCore::FilterFunction>> functions();
     WebCore::FilterGeometry geometry();
     OptionSet<WebCore::FilterRenderingMode> filterRenderingModes();
+    bool isShowingDebugOverlay();
 }
 
 [AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::SVGFilterRenderer {
@@ -7600,6 +7682,7 @@ header: <WebCore/Filter.h>
     [Validator='WebCore::SVGFilterRenderer::isValidSVGFilterExpression(*expression, *effects)'] Vector<Ref<WebCore::FilterEffect>> effects();
     WebCore::FilterGeometry geometry();
     OptionSet<WebCore::FilterRenderingMode> filterRenderingModes();
+    bool isShowingDebugOverlay();
     std::optional<WebCore::RenderingResourceIdentifier> renderingResourceIdentifierIfExists();
 }
 
@@ -8835,43 +8918,66 @@ enum class WebCore::EncryptionBoxType : uint8_t {
     TransportStreamEncryptionInitData
 };
 
+#if ENABLE(ENCRYPTED_MEDIA)
+using WebCore::TrackInfoEncryptionData = std::pair<WebCore::EncryptionBoxType, Ref<WebCore::SharedBuffer>>;
+using WebCore::TrackInfoEncryptionInitData = WebCore::TrackInfoAtomData;
+
 header: <WebCore/TrackInfo.h>
-[CustomHeader, RefCounted, DisableMissingMemberCheck] struct WebCore::AudioInfo {
+[CustomHeader] struct WebCore::EncryptionDataCollection {
+    WebCore::TrackInfoEncryptionData encryptionData;
+    std::optional<WebCore::FourCC> encryptionOriginalFormat;
+    Vector<WebCore::TrackInfoEncryptionInitData> encryptionInitDatas;
+};
+#endif
+
+header: <WebCore/TrackInfo.h>
+[CustomHeader] struct WebCore::TrackInfoData {
     WebCore::FourCC codecName;
     String codecString;
-    WebCore::TrackID trackID;
+    TrackID trackID;
+
 #if ENABLE(ENCRYPTED_MEDIA)
-    std::optional<std::pair<WebCore::EncryptionBoxType, Ref<WebCore::SharedBuffer>>> encryptionData;
-    std::optional<WebCore::FourCC> encryptionOriginalFormat;
-    Vector<std::pair<WebCore::FourCC, Ref<WebCore::SharedBuffer>>> encryptionInitDatas;
+    std::optional<WebCore::EncryptionDataCollection> encryptionData;
 #endif
-    [NotSerialized] WebCore::TrackInfoTrackType m_type;
+};
+
+header: <WebCore/TrackInfo.h>
+[CustomHeader] struct WebCore::AudioSpecificInfoData {
     uint32_t rate;
     uint32_t channels;
     uint32_t framesPerPacket;
     uint8_t bitDepth;
+
     RefPtr<WebCore::SharedBuffer> cookieData;
+};
+using WebCore::AudioInfoData = std::pair<WebCore::TrackInfoData, WebCore::AudioSpecificInfoData>;
+
+header: <WebCore/TrackInfo.h>
+[CustomHeader, RefCounted] class WebCore::AudioInfo {
+    WebCore::AudioInfoData toAudioInfoData();
 };
 
 header: <WebCore/TrackInfo.h>
-[CustomHeader, RefCounted, DisableMissingMemberCheck] struct WebCore::VideoInfo {
-    WebCore::FourCC codecName;
-    String codecString;
-    WebCore::TrackID trackID;
-#if ENABLE(ENCRYPTED_MEDIA)
-    std::optional<std::pair<WebCore::EncryptionBoxType, Ref<WebCore::SharedBuffer>>> encryptionData;
-    std::optional<WebCore::FourCC> encryptionOriginalFormat;
-    Vector<std::pair<WebCore::FourCC, Ref<WebCore::SharedBuffer>>> encryptionInitDatas;
-#endif
-    [NotSerialized] WebCore::TrackInfoTrackType m_type;
+[CustomHeader] struct WebCore::VideoSpecificInfoData {
     WebCore::FloatSize size;
     WebCore::FloatSize displaySize;
     uint8_t bitDepth;
     WebCore::PlatformVideoColorSpace colorSpace;
-    Vector<std::pair<WebCore::FourCC, Ref<WebCore::SharedBuffer>>> extensionAtoms
+    Vector<std::pair<WebCore::FourCC, Ref<WebCore::SharedBuffer>>> extensionAtoms;
+
+#if PLATFORM(VISION)
+    std::optional<WebCore::ImmersiveVideoMetadata> immersiveVideoMetadata;
+#endif
 };
 
-[RefCounted, CreateUsing=fromVariant] struct WebCore::TrackInfo {
+using WebCore::VideoInfoData = std::pair<WebCore::TrackInfoData, WebCore::VideoSpecificInfoData>;
+
+header: <WebCore/TrackInfo.h>
+[CustomHeader, RefCounted] class WebCore::VideoInfo {
+    WebCore::VideoInfoData toVideoInfoData();
+};
+
+[RefCounted, CreateUsing=fromVariant] class WebCore::TrackInfo {
     Variant<Ref<WebCore::AudioInfo>, Ref<WebCore::VideoInfo>> toVariant();
 };
 
@@ -9019,6 +9125,16 @@ header: <WebCore/AXObjectCache.h>
     WebCore::LiveRegionStatus status;
 };
 #endif
+
+header: <WebCore/AXObjectCache.h>
+[CustomHeader] struct WebCore::AccessibilityRemoteToken {
+#if PLATFORM(MAC)
+    Vector<uint8_t> bytes;
+#else
+    WTF::UUID uuid;
+    ProcessID pid;
+#endif
+}
 
 header: <WebCore/ScriptTrackingPrivacyCategory.h>
 [OptionSet] enum class WebCore::ScriptTrackingPrivacyFlag : uint16_t {

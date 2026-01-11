@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2026 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -263,7 +264,7 @@ static bool hasTransparentContainerStyle(const RenderStyle& style)
         && !style.hasExplicitlySetBorderRadius()
         // No visible borders or borders that do not create a complete box.
         && (!style.hasVisibleBorder()
-            || !(style.borderTopWidth() && style.borderRightWidth() && style.borderBottomWidth() && style.borderLeftWidth()));
+            || !(style.usedBorderTopWidth() && style.usedBorderRightWidth() && style.usedBorderBottomWidth() && style.usedBorderLeftWidth()));
 }
 
 static bool canTweakShapeForStyle(const RenderStyle& style)
@@ -291,7 +292,11 @@ static bool colorIsChallengingToHighlight(const Color& color)
 static bool styleIsChallengingToHighlight(const RenderStyle& style)
 {
     auto color = (style.fill().isNone() ? style.stroke() : style.fill()).tryColor();
-    return color && colorIsChallengingToHighlight(style.colorResolvingCurrentColor(*color));
+    if (!color)
+        return false;
+
+    Style::ColorResolver colorResolver { style };
+    return colorIsChallengingToHighlight(colorResolver.colorResolvingCurrentColor(*color));
 }
 
 static bool isGuardContainer(const Element& element)

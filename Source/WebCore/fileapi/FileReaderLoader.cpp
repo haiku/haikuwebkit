@@ -120,12 +120,12 @@ void FileReaderLoader::start(ScriptExecutionContext* scriptExecutionContext, con
     options.contentSecurityPolicyEnforcement = ContentSecurityPolicyEnforcement::DoNotEnforce;
 
     if (m_client) {
-        auto loader = ThreadableLoader::create(*scriptExecutionContext, *this, WTFMove(request), options);
+        auto loader = ThreadableLoader::create(*scriptExecutionContext, *this, WTF::move(request), options);
         if (!loader)
             return;
         std::exchange(m_loader, loader);
     } else
-        ThreadableLoader::loadResourceSynchronously(*scriptExecutionContext, WTFMove(request), *this, options);
+        ThreadableLoader::loadResourceSynchronously(*scriptExecutionContext, WTF::move(request), *this, options);
 }
 
 void FileReaderLoader::cancel()

@@ -50,7 +50,7 @@ WK_EXTERN
 
 + (instancetype)menuController;
 
-@property (weak, nonatomic) id<WKCaptionStyleMenuControllerDelegate> delegate;
+@property (weak, nullable, nonatomic) id<WKCaptionStyleMenuControllerDelegate> delegate;
 @property (readonly, nonatomic) PlatformMenu *captionStyleMenu;
 #if !TARGET_OS_OSX && !TARGET_OS_WATCH
 @property (readonly, nullable, nonatomic) UIContextMenuInteraction *contextMenuInteraction;

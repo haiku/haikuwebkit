@@ -25,6 +25,9 @@
 
 #pragma once
 
+#include <wtf/FastMalloc.h>
+#include <wtf/Platform.h>
+
 #if USE(APPLE_INTERNAL_SDK)
 #include <sys/kdebug_private.h>
 #define HAVE_KDEBUG_H 1
@@ -122,6 +125,8 @@ enum TracePointCode {
     ThreadTimersEnd,
     TimerFiredStart,
     TimerFiredEnd,
+    CoreImageRenderStart,
+    CoreImageRenderEnd,
 
     WebKitRange = 10000,
     WebHTMLViewPaintStart,
@@ -171,6 +176,8 @@ enum TracePointCode {
     WebXRCPFrameStartSubmissionEnd,
     WebXRCPFrameEndSubmissionStart,
     WebXRCPFrameEndSubmissionEnd,
+    TextExtractionStart,
+    TextExtractionEnd,
 
     GPUProcessRange = 16000,
     WakeUpAndApplyDisplayListStart,
@@ -179,8 +186,8 @@ enum TracePointCode {
 #if PLATFORM(GTK) || PLATFORM(WPE)
     GTKWPEPortRange = 20000,
 
-    UpdateRenderingStart,
-    UpdateRenderingEnd,
+    LayerTreeHostRenderingUpdateStart,
+    LayerTreeHostRenderingUpdateEnd,
     WaitForCompositionCompletionStart,
     WaitForCompositionCompletionEnd,
     RenderLayerTreeStart,

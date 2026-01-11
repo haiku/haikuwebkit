@@ -113,15 +113,15 @@ static const MessageNameSet& messageNamesToIgnoreWhileSuspended()
 
 Ref<SuspendedPageProxy> SuspendedPageProxy::create(WebPageProxy& page, Ref<WebProcessProxy>&& process, Ref<WebFrameProxy>&& mainFrame, Ref<BrowsingContextGroup>&& browsingContextGroup, ShouldDelayClosingUntilFirstLayerFlush shouldDelayClosingUntilFirstLayerFlush)
 {
-    return adoptRef(*new SuspendedPageProxy(page, WTFMove(process), WTFMove(mainFrame), WTFMove(browsingContextGroup), shouldDelayClosingUntilFirstLayerFlush));
+    return adoptRef(*new SuspendedPageProxy(page, WTF::move(process), WTF::move(mainFrame), WTF::move(browsingContextGroup), shouldDelayClosingUntilFirstLayerFlush));
 }
 
 SuspendedPageProxy::SuspendedPageProxy(WebPageProxy& page, Ref<WebProcessProxy>&& process, Ref<WebFrameProxy>&& mainFrame, Ref<BrowsingContextGroup>&& browsingContextGroup, ShouldDelayClosingUntilFirstLayerFlush shouldDelayClosingUntilFirstLayerFlush)
     : m_page(page)
     , m_webPageID(page.webPageIDInMainFrameProcess())
-    , m_process(WTFMove(process))
-    , m_mainFrame(WTFMove(mainFrame))
-    , m_browsingContextGroup(WTFMove(browsingContextGroup))
+    , m_process(WTF::move(process))
+    , m_mainFrame(WTF::move(mainFrame))
+    , m_browsingContextGroup(WTF::move(browsingContextGroup))
     , m_shouldDelayClosingUntilFirstLayerFlush(shouldDelayClosingUntilFirstLayerFlush)
     , m_suspensionTimeoutTimer(RunLoop::mainSingleton(), "SuspendedPageProxy::SuspensionTimeoutTimer"_s, this, &SuspendedPageProxy::suspensionTimedOut)
 #if USE(RUNNINGBOARD)
@@ -163,7 +163,7 @@ SuspendedPageProxy::~SuspendedPageProxy()
     allSuspendedPages().remove(*this);
 
     if (m_readyToUnsuspendHandler) {
-        RunLoop::mainSingleton().dispatch([readyToUnsuspendHandler = WTFMove(m_readyToUnsuspendHandler)]() mutable {
+        RunLoop::mainSingleton().dispatch([readyToUnsuspendHandler = WTF::move(m_readyToUnsuspendHandler)]() mutable {
             readyToUnsuspendHandler(nullptr);
         });
     }
@@ -200,7 +200,7 @@ void SuspendedPageProxy::waitUntilReadyToUnsuspend(CompletionHandler<void(Suspen
 
     switch (m_suspensionState) {
     case SuspensionState::Suspending:
-        m_readyToUnsuspendHandler = WTFMove(completionHandler);
+        m_readyToUnsuspendHandler = WTF::move(completionHandler);
         break;
     case SuspensionState::FailedToSuspend:
     case SuspensionState::Suspended:

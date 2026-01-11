@@ -29,7 +29,7 @@
 #include "FontCascade.h"
 #include "InlineSoftLineBreakItem.h"
 #include "RenderObjectInlines.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "Settings.h"
 #include "StyleResolver.h"
 #include "TextBreakingPositionCache.h"
@@ -106,8 +106,8 @@ void InlineItemsBuilder::build(InlineItemPosition startPosition)
         ASSERT(!startPosition || startPosition.index < inlineItemCache.content().size());
         auto isPopulatedFromCache = m_textContentPopulatedFromCache && *m_textContentPopulatedFromCache ? InlineContentCache::InlineItems::IsPopulatedFromCache::Yes : InlineContentCache::InlineItems::IsPopulatedFromCache::No;
         if (!startPosition || startPosition.index >= inlineItemCache.content().size())
-            return inlineItemCache.set(WTFMove(inlineItemList), contentAttributes, isPopulatedFromCache);
-        inlineItemCache.replace(startPosition.index, WTFMove(inlineItemList), contentAttributes, isPopulatedFromCache);
+            return inlineItemCache.set(WTF::move(inlineItemList), contentAttributes, isPopulatedFromCache);
+        inlineItemCache.replace(startPosition.index, WTF::move(inlineItemList), contentAttributes, isPopulatedFromCache);
     };
     adjustInlineContentCacheWithNewInlineItems();
 
@@ -186,7 +186,7 @@ void InlineItemsBuilder::computeInlineBoxBoundaryTextSpacings(const InlineItemLi
         processInlineBoxBoundary = false;
     }
     if (!spacings.isEmpty())
-        inlineContentCache().setInlineBoxBoundaryTextSpacings(WTFMove(spacings));
+        inlineContentCache().setInlineBoxBoundaryTextSpacings(WTF::move(spacings));
 }
 
 static inline bool isTextOrLineBreak(const Box& layoutBox)
@@ -787,6 +787,8 @@ InlineContentCache::InlineItems::ContentAttributes InlineItemsBuilder::computeCo
     TextSpacing::SpacingState spacingState;
     TrimmableTextSpacings trimmableTextSpacings;
     auto& inlineBoxBoundaryTextSpacings = inlineContentCache().inlineBoxBoundaryTextSpacings();
+    const InlineTextBox* currentInlineTextBox = nullptr;
+    auto currentInlineTextBoxMayHaveGlyphOverflow = false;
     for (size_t inlineItemIndex = 0; inlineItemIndex < inlineItemList.size(); ++inlineItemIndex) {
         auto extraInlineTextSpacing = 0.f;
         auto& inlineItem = inlineItemList[inlineItemIndex];
@@ -801,7 +803,24 @@ InlineContentCache::InlineItems::ContentAttributes InlineItemsBuilder::computeCo
                     if (auto inlineBoxBoundaryTextSpacing = inlineBoxBoundaryTextSpacings.find(potentialInlineBoxStartIndex); inlineBoxBoundaryTextSpacing != inlineBoxBoundaryTextSpacings.end())
                         extraInlineTextSpacing = inlineBoxBoundaryTextSpacing->value;
                 }
-                inlineTextItem->setWidth(TextUtil::width(*inlineTextItem, inlineTextItem->style().fontCascade(), start, start + inlineTextItem->length(), { }, TextUtil::UseTrailingWhitespaceMeasuringOptimization::Yes, spacingState) + extraInlineTextSpacing);
+                auto& fontCascade = inlineTextItem->style().fontCascade();
+                auto width = InlineLayoutUnit { };
+                auto mayHaveGlyphOverflow = [&] {
+                    if (currentInlineTextBox != &inlineTextItem->inlineTextBox()) {
+                        currentInlineTextBoxMayHaveGlyphOverflow = !inlineTextItem->inlineTextBox().canUseSimpleFontCodePath() || fontCascade.primaryFont()->origin() == FontOrigin::Remote;
+                        currentInlineTextBox = &inlineTextItem->inlineTextBox();
+                    }
+                    return currentInlineTextBoxMayHaveGlyphOverflow;
+                };
+                if (mayHaveGlyphOverflow()) {
+                    // We don’t need glyph overflow until after display boxes are created, but walking the content again is a major performance hit. See InlineDisplayContentBuilder::appendTextDisplayBox's addGlyphOverflow.
+                    GlyphOverflow glyphOverflow;
+                    glyphOverflow.computeBounds = true;
+                    width = TextUtil::width(*inlineTextItem, fontCascade, start, start + inlineTextItem->length(), { }, TextUtil::UseTrailingWhitespaceMeasuringOptimization::Yes, spacingState, &glyphOverflow);
+                    inlineTextItem->setGlyphOverflow(std::clamp(glyphOverflow.top, 0_lu, 31_lu), std::clamp(glyphOverflow.bottom, 0_lu, 7_lu));
+                } else
+                    width = TextUtil::width(*inlineTextItem, fontCascade, start, start + inlineTextItem->length(), { }, TextUtil::UseTrailingWhitespaceMeasuringOptimization::Yes, spacingState);
+                inlineTextItem->setWidth(width + extraInlineTextSpacing);
                 handleTextSpacing(spacingState, trimmableTextSpacings, *inlineTextItem, inlineItemIndex);
             }
             continue;
@@ -816,7 +835,7 @@ InlineContentCache::InlineItems::ContentAttributes InlineItemsBuilder::computeCo
         if (!inlineItem.isInlineBoxEnd())
             isTextAndForcedLineBreakOnlyContent = isTextAndForcedLineBreakOnlyContent && isTextOrLineBreak(inlineItem.layoutBox());
     }
-    inlineContentCache().setTrimmableTextSpacings(WTFMove(trimmableTextSpacings));
+    inlineContentCache().setTrimmableTextSpacings(WTF::move(trimmableTextSpacings));
 
     return { m_contentRequiresVisualReordering, isTextAndForcedLineBreakOnlyContent, m_hasTextAutospace, inlineBoxCount };
 }
@@ -1068,7 +1087,7 @@ void InlineItemsBuilder::populateBreakingPositionCache(const InlineItemList& inl
 
         ASSERT(!breakingPositionList.isEmpty());
         if (breakingPositionList.size() >= TextBreakingPositionCache::minimumRequiredContentBreaks)
-            breakingPositionCache.set({ inlineTextBox->content(), context, securityOrigin.data() }, WTFMove(breakingPositionList));
+            breakingPositionCache.set({ inlineTextBox->content(), context, securityOrigin.data() }, WTF::move(breakingPositionList));
         index += span.size();
     }
 }

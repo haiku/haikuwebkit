@@ -79,9 +79,7 @@ inline Node* EventPath::eventTargetRespectingTargetRules(Node& referenceNode)
 
     // Events sent to elements inside an SVG use element's shadow tree go to the use element.
     if (auto* svgElement = dynamicDowncast<SVGElement>(referenceNode)) {
-        // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
-        // as we merely return it right away (rdar://165602290).
-        SUPPRESS_UNCOUNTED_LOCAL if (auto* useElement = svgElement->correspondingUseElement())
+        if (auto* useElement = svgElement->correspondingUseElement())
             return useElement;
     }
 

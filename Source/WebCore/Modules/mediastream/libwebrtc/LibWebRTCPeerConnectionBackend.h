@@ -75,7 +75,6 @@ private:
 
     std::optional<bool> canTrickleIceCandidates() const final;
 
-    void emulatePlatformEvent(const String&) final { }
     void applyRotationForOutgoingVideoSources() final;
 
     friend class LibWebRTCMediaEndpoint;

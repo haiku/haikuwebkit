@@ -79,7 +79,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLImageElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLImageElement);
 
 using namespace HTMLNames;
 
@@ -247,7 +247,11 @@ const AtomString& HTMLImageElement::currentSrc()
 void HTMLImageElement::setBestFitURLAndDPRFromImageCandidate(const ImageCandidate& candidate)
 {
     m_bestFitImageURL = candidate.string.toAtomString();
-    m_currentURL = protectedDocument()->completeURL(imageSourceURL());
+
+    auto& sourceURL = imageSourceURL();
+    // Only complete the URL if it's non-empty to avoid resolving "" to the document base URL.
+    m_currentURL = sourceURL.isEmpty() ? URL() : protectedDocument()->completeURL(sourceURL);
+
     m_currentSrc = { };
     if (candidate.density >= 0)
         m_imageDevicePixelRatio = 1 / candidate.density;
@@ -305,7 +309,7 @@ ImageCandidate HTMLImageElement::bestFitSourceFromPictureElement()
 
         m_dynamicMediaQueryResults.appendVector(sizesParser.dynamicMediaQueryResults());
 
-        auto sourceSize = sizesParser.length();
+        auto sourceSize = sizesParser.effectiveSize();
 
         candidate = bestFitSourceForImageAttributes(document->deviceScaleFactor(), nullAtom(), srcset, sourceSize, [&](auto& candidate) {
             return m_imageLoader->shouldIgnoreCandidateWhenLoadingFromArchive(candidate);
@@ -328,7 +332,7 @@ void HTMLImageElement::setIsUserAgentShadowRootResource()
 void HTMLImageElement::evaluateDynamicMediaQueryDependencies()
 {
     RefPtr documentElement = document().documentElement();
-    MQ::MediaQueryEvaluator evaluator { document().printing() ? printAtom() : screenAtom(), document(), documentElement ? documentElement->computedStyle() : nullptr };
+    MQ::MediaQueryEvaluator evaluator { protectedDocument()->printing() ? printAtom() : screenAtom(), document(), documentElement ? documentElement->computedStyle() : nullptr };
 
     auto hasChanges = [&] {
         for (auto& results : m_dynamicMediaQueryResults) {
@@ -366,7 +370,7 @@ void HTMLImageElement::selectImageSource(RelevantMutation relevantMutation)
             // If we don't have a <picture> or didn't find a source, then we use our own attributes.
             SizesAttributeParser sizesParser(attributeWithoutSynchronization(sizesAttr).string(), document.get());
             m_dynamicMediaQueryResults.appendVector(sizesParser.dynamicMediaQueryResults());
-            auto sourceSize = sizesParser.length();
+            auto sourceSize = sizesParser.effectiveSize();
             candidate = bestFitSourceForImageAttributes(document->deviceScaleFactor(), srcAttribute, srcsetAttribute, sourceSize, [&](auto& candidate) {
                 return m_imageLoader->shouldIgnoreCandidateWhenLoadingFromArchive(candidate);
             });
@@ -475,9 +479,9 @@ const AtomString& HTMLImageElement::altText() const
 RenderPtr<RenderElement> HTMLImageElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
     if (style.hasContent())
-        return RenderElement::createFor(*this, WTFMove(style));
+        return RenderElement::createFor(*this, WTF::move(style));
 
-    return createRenderer<RenderImage>(RenderObject::Type::Image, *this, WTFMove(style), nullptr, m_imageDevicePixelRatio);
+    return createRenderer<RenderImage>(RenderObject::Type::Image, *this, WTF::move(style), nullptr, m_imageDevicePixelRatio);
 }
 
 bool HTMLImageElement::isReplaced(const RenderStyle* style) const
@@ -778,7 +782,7 @@ DecodingMode HTMLImageElement::decodingMode() const
     
 void HTMLImageElement::decode(Ref<DeferredPromise>&& promise)
 {
-    return m_imageLoader->decode(WTFMove(promise));
+    return m_imageLoader->decode(WTF::move(promise));
 }
 
 void HTMLImageElement::addSubresourceAttributeURLs(ListHashSet<URL>& urls) const
@@ -880,7 +884,7 @@ void HTMLImageElement::setAllowsAnimation(std::optional<bool> allowsAnimation)
 
 void HTMLImageElement::setAttachmentElement(Ref<HTMLAttachmentElement>&& attachment)
 {
-    AttachmentAssociatedElement::setAttachmentElement(WTFMove(attachment));
+    AttachmentAssociatedElement::setAttachmentElement(WTF::move(attachment));
 
 #if ENABLE(SERVICE_CONTROLS)
     bool shouldEnableImageMenu = true;

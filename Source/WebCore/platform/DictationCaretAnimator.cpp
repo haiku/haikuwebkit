@@ -277,7 +277,7 @@ void DictationCaretAnimator::fillCaretTail(const FloatRect& rect, GraphicsContex
     };
     context.setDropShadow(dropShadow);
     context.translate(-dropShadow.offset);
-    context.setFillGradient(WTFMove(gradient));
+    context.setFillGradient(WTF::move(gradient));
     context.fillPath(makeDictationTailConePath(rect));
 }
 

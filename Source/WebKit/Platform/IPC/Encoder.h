@@ -87,7 +87,7 @@ public:
 
     Encoder& operator<<(Attachment&& attachment)
     {
-        addAttachment(WTFMove(attachment));
+        addAttachment(WTF::move(attachment));
         return *this;
     }
 

@@ -253,7 +253,7 @@ static LayoutTestSpellChecker *swizzledInitializeTextChecker()
         }
         [finalResults setObject:resultsForWord.get() forKey:stringToCheck];
     }
-    _results = WTFMove(finalResults);
+    _results = WTF::move(finalResults);
 }
 
 #if PLATFORM(MAC)

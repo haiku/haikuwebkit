@@ -55,7 +55,7 @@ struct WebFoundTextRange {
     };
 
     Variant<DOMData, PDFData> data { DOMData { } };
-    Vector<size_t> pathToFrame;
+    Vector<uint64_t> pathToFrame;
     uint64_t order { 0 };
 
     unsigned hash() const;
@@ -105,7 +105,7 @@ public:
 template<> struct HashTraits<WebKit::WebFoundTextRange> : GenericHashTraits<WebKit::WebFoundTextRange> {
     static WebKit::WebFoundTextRange emptyValue() { return { }; }
 
-    static void constructDeletedValue(WebKit::WebFoundTextRange& slot) { slot.pathToFrame = Vector<size_t> { HashTableDeletedValue }; }
+    static void constructDeletedValue(WebKit::WebFoundTextRange& slot) { slot.pathToFrame = Vector<uint64_t> { HashTableDeletedValue }; }
     static bool isDeletedValue(const WebKit::WebFoundTextRange& range) { return range.pathToFrame.isHashTableDeletedValue(); }
 };
 

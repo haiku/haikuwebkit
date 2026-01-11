@@ -142,7 +142,7 @@ bool NetworkDataTaskBlob::erroredOrAborted() const
 
 void NetworkDataTaskBlob::didReceiveResponse(ResourceResponse&& response)
 {
-    NetworkDataTask::didReceiveResponse(WTFMove(response), NegotiatedLegacyTLS::No, PrivateRelayed::No, std::nullopt, [this, protectedThis = Ref { *this }](PolicyAction policyAction) {
+    NetworkDataTask::didReceiveResponse(WTF::move(response), NegotiatedLegacyTLS::No, PrivateRelayed::No, std::nullopt, [this, protectedThis = Ref { *this }](PolicyAction policyAction) {
         LOG(NetworkSession, "%p - NetworkDataTaskBlob::didReceiveResponse completionHandler (%s)", this, toString(policyAction).characters());
 
         if (m_state == State::Canceling || m_state == State::Completed) {
@@ -185,7 +185,7 @@ void NetworkDataTaskBlob::setPendingDownloadLocation(const String& filename, San
     NetworkDataTask::setPendingDownloadLocation(filename, { }, allowOverwrite);
 
     ASSERT(!m_sandboxExtension);
-    m_sandboxExtension = SandboxExtension::create(WTFMove(sandboxExtensionHandle));
+    m_sandboxExtension = SandboxExtension::create(WTF::move(sandboxExtensionHandle));
     if (RefPtr extension = m_sandboxExtension)
         extension->consume();
 

@@ -75,6 +75,18 @@ using namespace WTF;
     return self;
 }
 
+- (void)dealloc
+{
+    self.delegate = nil;
+    self.savedActiveProfileID = nil;
+    self.menu = nil;
+#if PLATFORM(IOS_FAMILY) && !PLATFORM(WATCHOS)
+    self.interaction = nil;
+#endif
+
+    [super dealloc];
+}
+
 - (void)rebuildMenu
 {
     [_menu removeAllItems];

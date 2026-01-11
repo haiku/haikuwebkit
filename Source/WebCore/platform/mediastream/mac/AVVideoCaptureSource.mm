@@ -233,7 +233,7 @@ CaptureSourceOrError AVVideoCaptureSource::create(const CaptureDevice& device, M
     if (!avDevice)
         return CaptureSourceOrError({ "No AVVideoCaptureSource device"_s , MediaAccessDenialReason::PermissionDenied });
 
-    Ref<RealtimeMediaSource> source = adoptRef(*new AVVideoCaptureSource(avDevice, device, WTFMove(hashSalts), pageIdentifier));
+    Ref<RealtimeMediaSource> source = adoptRef(*new AVVideoCaptureSource(avDevice, device, WTF::move(hashSalts), pageIdentifier));
 
     if (!source->capabilities().width().max() || !source->capabilities().height().max() || !source->capabilities().frameRate().max())
         return CaptureSourceOrError({ "AVVideoCaptureSource device has invalid width, height or frameRate capabilities"_s , MediaAccessDenialReason::PermissionDenied });
@@ -243,7 +243,7 @@ CaptureSourceOrError AVVideoCaptureSource::create(const CaptureDevice& device, M
             return CaptureSourceOrError(CaptureSourceError { result->invalidConstraint });
     }
 
-    return WTFMove(source);
+    return WTF::move(source);
 }
 
 static double cameraZoomScaleFactor(AVCaptureDeviceType deviceType)
@@ -258,7 +258,7 @@ static double cameraZoomScaleFactor(AVCaptureDeviceType deviceType)
 }
 
 AVVideoCaptureSource::AVVideoCaptureSource(AVCaptureDevice* avDevice, const CaptureDevice& device, MediaDeviceHashSalts&& hashSalts, std::optional<PageIdentifier> pageIdentifier)
-    : RealtimeVideoCaptureSource(device, WTFMove(hashSalts), pageIdentifier)
+    : RealtimeVideoCaptureSource(device, WTF::move(hashSalts), pageIdentifier)
     , m_objcObserver(adoptNS([[WebCoreAVVideoCaptureSourceObserver alloc] initWithCaptureSource:this]))
     , m_device(avDevice)
     , m_zoomScaleFactor(cameraZoomScaleFactor([avDevice deviceType]))
@@ -542,7 +542,7 @@ const RealtimeMediaSourceSettings& AVVideoCaptureSource::settings()
 #endif
     settings.setSupportedConstraints(supportedConstraints);
 
-    m_currentSettings = WTFMove(settings);
+    m_currentSettings = WTF::move(settings);
 
     return *m_currentSettings;
 }
@@ -576,7 +576,7 @@ const RealtimeMediaSourceCapabilities& AVVideoCaptureSource::capabilities()
     auto whiteBalanceModes = supportedWhiteBalanceModes(videoDevice);
     if (!whiteBalanceModes.isEmpty()) {
         supportedConstraints.setSupportsWhiteBalanceMode(true);
-        capabilities.setWhiteBalanceModes(WTFMove(whiteBalanceModes));
+        capabilities.setWhiteBalanceModes(WTF::move(whiteBalanceModes));
     }
 
     if ([videoDevice hasTorch]) {
@@ -594,7 +594,7 @@ const RealtimeMediaSourceCapabilities& AVVideoCaptureSource::capabilities()
     capabilities.setSupportedConstraints(supportedConstraints);
     updateCapabilities(capabilities);
 
-    m_capabilities = WTFMove(capabilities);
+    m_capabilities = WTF::move(capabilities);
 
     return *m_capabilities;
 }
@@ -630,7 +630,7 @@ void AVVideoCaptureSource::resolvePendingPhotoRequest(Vector<uint8_t>&& data, co
         return;
     }
 
-    m_photoProducer->resolve(std::make_pair(WTFMove(data), mimeType));
+    m_photoProducer->resolve(std::make_pair(WTF::move(data), mimeType));
     m_photoProducer = nullptr;
 }
 
@@ -742,7 +742,7 @@ auto AVVideoCaptureSource::takePhotoInternal(PhotoSettings&& photoSettings) -> R
         return TakePhotoNativePromise::createAndReject("Internal error"_s);
     }
 
-    photoQueueSingleton().dispatch([protectedThis = Ref { *this }, this, avPhotoSettings = WTFMove(avPhotoSettings), photoOutput = WTFMove(photoOutput), device = m_device] {
+    photoQueueSingleton().dispatch([protectedThis = Ref { *this }, this, avPhotoSettings = WTF::move(avPhotoSettings), photoOutput = WTF::move(photoOutput), device = m_device] {
         ASSERT(!isMainThread());
 
         if ([avPhotoSettings respondsToSelector:@selector(setMaxPhotoDimensions:)]) {
@@ -774,7 +774,7 @@ auto AVVideoCaptureSource::getPhotoCapabilities() -> Ref<PhotoCapabilitiesNative
     auto width = capabilities.width();
     photoCapabilities.imageWidth = { width.max(), width.min(), 1 };
 
-    m_photoCapabilities = WTFMove(photoCapabilities);
+    m_photoCapabilities = WTF::move(photoCapabilities);
 
     return PhotoCapabilitiesNativePromise::createAndResolve(*m_photoCapabilities);
 }
@@ -865,7 +865,7 @@ void AVVideoCaptureSource::applyFrameRateAndZoomWithPreset(double requestedFrame
 
     beginConfigurationForConstraintsIfNeeded();
 
-    m_currentPreset = WTFMove(preset);
+    m_currentPreset = WTF::move(preset);
     if (m_currentPreset)
         setIntrinsicSize({ m_currentPreset->size().width(), m_currentPreset->size().height() });
 
@@ -1298,14 +1298,14 @@ void AVVideoCaptureSource::captureOutputDidOutputSampleBufferFromConnection(AVCa
     setIntrinsicSize(expandedIntSize(videoFrame->presentationSize()));
     VideoFrameTimeMetadata metadata;
     metadata.captureTime = MonotonicTime::now().secondsSinceEpoch();
-    dispatchVideoFrameToObservers(WTFMove(videoFrame), metadata);
+    dispatchVideoFrameToObservers(WTF::move(videoFrame), metadata);
 }
 
 void AVVideoCaptureSource::captureOutputDidFinishProcessingPhoto(RetainPtr<AVCapturePhotoOutput>, RetainPtr<AVCapturePhoto> photo, RetainPtr<NSError> error)
 {
     if (error) {
         rejectPendingPhotoRequest("AVCapturePhotoOutput failed"_s);
-        RunLoop::mainSingleton().dispatch([protectedThis = Ref { *this }, logIdentifier = LOGIDENTIFIER, error = WTFMove(error)] {
+        RunLoop::mainSingleton().dispatch([protectedThis = Ref { *this }, logIdentifier = LOGIDENTIFIER, error = WTF::move(error)] {
             ASSERT(isMainThread());
             ALWAYS_LOG_WITH_THIS_IF_POSSIBLE(protectedThis, logIdentifier, "failed: ", [error code], ", ", error.get());
         });
@@ -1406,12 +1406,12 @@ void AVVideoCaptureSource::generatePresets()
         for (AVFrameRateRange* range in [format videoSupportedFrameRateRanges])
             frameRates.append({ range.minFrameRate, range.maxFrameRate});
 
-        VideoPreset preset { size, WTFMove(frameRates), computeMinZoom(), computeMaxZoom(format), isFormatPowerEfficient(format) };
+        VideoPreset preset { size, WTF::move(frameRates), computeMinZoom(), computeMaxZoom(format), isFormatPowerEfficient(format) };
         preset.setFormat(format);
-        presets.append(WTFMove(preset));
+        presets.append(WTF::move(preset));
     }
 
-    setSupportedPresets(WTFMove(presets));
+    setSupportedPresets(WTF::move(presets));
 }
 
 #if PLATFORM(IOS_FAMILY)

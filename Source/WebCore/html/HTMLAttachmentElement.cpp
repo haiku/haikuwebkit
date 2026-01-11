@@ -35,6 +35,7 @@
 #include "CSSPropertyNames.h"
 #include "CSSUnits.h"
 #include "DOMRectReadOnly.h"
+#include "DOMTokenList.h"
 #include "DOMURL.h"
 #include "Document.h"
 #include "Editor.h"
@@ -76,7 +77,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLAttachmentElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLAttachmentElement);
 
 using namespace HTMLNames;
 
@@ -274,6 +275,12 @@ static const AtomString& saveAtom()
     return identifier;
 }
 
+String HTMLAttachmentElement::shadowUserAgentStyleSheetText()
+{
+    static MainThreadNeverDestroyed<const String> shadowStyle(StringImpl::createWithoutCopying(attachmentElementShadowUserAgentStyleSheet));
+    return shadowStyle;
+}
+
 class AttachmentImageEventsListener final : public EventListener {
 public:
     static void addToImageForAttachment(HTMLImageElement& image, HTMLAttachmentElement& attachment)
@@ -310,7 +317,7 @@ static Ref<ElementType> createContainedElement(HTMLElement& container, const Ato
     Ref<ElementType> element = ElementType::create(container.protectedDocument());
     element->setIdAttribute(id);
     if (!textContent.isEmpty())
-        element->setTextContent(WTFMove(textContent));
+        element->setTextContent(WTF::move(textContent));
     container.appendChild(element);
     return element;
 }
@@ -322,10 +329,9 @@ void HTMLAttachmentElement::ensureWideLayoutShadowTree(ShadowRoot& root)
         return;
 
     Ref document = this->document();
-    static MainThreadNeverDestroyed<const String> shadowStyle(StringImpl::createWithoutCopying(attachmentElementShadowUserAgentStyleSheet));
     Ref style = HTMLStyleElement::create(HTMLNames::styleTag, document, false);
-    style->setTextContent(String { shadowStyle });
-    root.appendChild(WTFMove(style));
+    style->setTextContent(shadowUserAgentStyleSheetText());
+    root.appendChild(WTF::move(style));
 
     lazyInitialize(m_containerElement, HTMLDivElement::create(document));
     m_containerElement->setIdAttribute(attachmentContainerIdentifier());
@@ -359,6 +365,54 @@ void HTMLAttachmentElement::ensureWideLayoutShadowTree(ShadowRoot& root)
     m_subtitleElement->setAttributeWithoutSynchronization(HTMLNames::dirAttr, autoAtom());
 
     updateSaveButton(!attributeWithoutSynchronization(saveAttr).isNull());
+}
+
+static const AtomString& attachmentClassHasSelection()
+{
+    static MainThreadNeverDestroyed<const AtomString> identifier("attachment-has-selection"_s);
+    return identifier;
+}
+
+static const AtomString& attachmentClassSelectionContinuesLeft()
+{
+    static MainThreadNeverDestroyed<const AtomString> identifier("attachment-selection-continues-left"_s);
+    return identifier;
+}
+
+static const AtomString& attachmentClassSelectionContinuesRight()
+{
+    static MainThreadNeverDestroyed<const AtomString> identifier("attachment-selection-continues-right"_s);
+    return identifier;
+}
+
+void HTMLAttachmentElement::addSelectionClasses(HighlightState state)
+{
+    if (RefPtr container = m_containerElement) {
+        Ref classList = container->classList();
+        auto set = [&](bool add, const AtomString& className) {
+            if (add)
+                classList->add(className);
+            else
+                classList->remove(className);
+        };
+        auto setSelection = [&](bool selected) {
+            set(selected, attachmentClassHasSelection());
+        };
+        auto continuesLeft = [&](bool continues) {
+            set(continues, attachmentClassSelectionContinuesLeft());
+        };
+        auto continuesRight = [&](bool continues) {
+            set(continues, attachmentClassSelectionContinuesRight());
+        };
+
+        switch (state) {
+        case HighlightState::None:   setSelection(false); continuesLeft(false); continuesRight(false); break;
+        case HighlightState::Start:  setSelection(true);  continuesLeft(false); continuesRight(true);  break;
+        case HighlightState::Inside: setSelection(true);  continuesLeft(true);  continuesRight(true);  break;
+        case HighlightState::End:    setSelection(true);  continuesLeft(true);  continuesRight(false); break;
+        case HighlightState::Both:   setSelection(true);  continuesLeft(false); continuesRight(false); break;
+        }
+    }
 }
 
 class AttachmentSaveEventListener final : public EventListener {
@@ -460,7 +514,7 @@ HTMLElement* HTMLAttachmentElement::wideLayoutImageElement() const
 
 RenderPtr<RenderElement> HTMLAttachmentElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
-    return createRenderer<RenderAttachment>(*this, WTFMove(style));
+    return createRenderer<RenderAttachment>(*this, WTF::move(style));
 }
 
 void HTMLAttachmentElement::invalidateRendering()
@@ -485,7 +539,7 @@ String HTMLAttachmentElement::getAttachmentIdentifier(HTMLElement& element)
     auto identifier = attachment->ensureUniqueIdentifier();
 
     document->registerAttachmentIdentifier(identifier, *attachmentAssociatedElement);
-    attachmentAssociatedElement->setAttachmentElement(WTFMove(attachment));
+    attachmentAssociatedElement->setAttachmentElement(WTF::move(attachment));
 
     return identifier;
 }
@@ -515,7 +569,7 @@ URL HTMLAttachmentElement::blobURL() const
 
 void HTMLAttachmentElement::setFile(RefPtr<File>&& file, UpdateDisplayAttributes updateAttributes)
 {
-    m_file = WTFMove(file);
+    m_file = WTF::move(file);
 
     if (updateAttributes == UpdateDisplayAttributes::Yes) {
         if (m_file) {
@@ -894,7 +948,7 @@ void HTMLAttachmentElement::updateIconForWideLayout(Vector<uint8_t>&& iconSrcDat
         dispatchEvent(Event::create(eventNames().loadingerrorEvent, Event::CanBubble::No, Event::IsCancelable::No));
         return;
     }
-    m_iconForWideLayout = WTFMove(iconSrcData);
+    m_iconForWideLayout = WTF::move(iconSrcData);
     updateImage();
 }
 

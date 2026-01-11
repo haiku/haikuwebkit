@@ -33,16 +33,16 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRTransientInputHitTestSource);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebXRTransientInputHitTestSource);
 
 Ref<WebXRTransientInputHitTestSource> WebXRTransientInputHitTestSource::create(WebXRSession& session, PlatformXR::TransientInputHitTestSource&& source)
 {
-    return adoptRef(*new WebXRTransientInputHitTestSource(session, WTFMove(source)));
+    return adoptRef(*new WebXRTransientInputHitTestSource(session, WTF::move(source)));
 }
 
 WebXRTransientInputHitTestSource::WebXRTransientInputHitTestSource(WebXRSession& session, PlatformXR::TransientInputHitTestSource&& source)
     : m_session(session)
-    , m_source(WTFMove(source))
+    , m_source(WTF::move(source))
 {
 }
 

@@ -40,7 +40,7 @@ class Element;
 class RenderStyle;
 
 class StyleOriginatedAnimation : public WebAnimation {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(StyleOriginatedAnimation);
+    WTF_MAKE_TZONE_ALLOCATED(StyleOriginatedAnimation);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(StyleOriginatedAnimation);
 public:
     ~StyleOriginatedAnimation();
@@ -87,6 +87,7 @@ private:
     void invalidateDOMEvents(WebAnimationTime cancelationTime = 0_s);
     void enqueueDOMEvent(const AtomString&, WebAnimationTime elapsedTime, WebAnimationTime scheduledEffectTime);
 
+    WebAnimationTime computeCancelationTime() const;
     WebAnimationTime effectTimeAtStart() const;
     WebAnimationTime effectTimeAtIteration(double) const;
     WebAnimationTime effectTimeAtEnd() const;

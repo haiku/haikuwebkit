@@ -75,7 +75,7 @@ bool SVGFitToViewBox::parseAttribute(const QualifiedName& name, const AtomString
     if (name == SVGNames::viewBoxAttr) {
         if (!value.isNull()) {
             if (auto result = parseViewBox(value)) {
-                setViewBox(WTFMove(*result));
+                setViewBox(WTF::move(*result));
                 return true;
             }
         }

@@ -127,8 +127,8 @@ void TextExtractionFilter::shouldFilter(const String& text, CompletionHandler<vo
     if (text.length() <= chunkSize)
         return completionHandler(false);
 
-    m_modelQueue->dispatch([protectedThis = Ref { *this }, text = text.isolatedCopy(), completionHandler = WTFMove(completionHandler)] mutable {
-        RunLoop::mainSingleton().dispatch([completionHandler = WTFMove(completionHandler), result = protectedThis->shouldFilter(text)] mutable {
+    m_modelQueue->dispatch([protectedThis = Ref { *this }, text = text.isolatedCopy(), completionHandler = WTF::move(completionHandler)] mutable {
+        RunLoop::mainSingleton().dispatch([completionHandler = WTF::move(completionHandler), result = protectedThis->shouldFilter(text)] mutable {
             completionHandler(result);
         });
     });

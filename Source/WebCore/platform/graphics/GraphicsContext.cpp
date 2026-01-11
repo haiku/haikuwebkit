@@ -388,7 +388,7 @@ void GraphicsContext::drawConsumingImageBuffer(RefPtr<ImageBuffer> image, const 
     if (!image)
         return;
     auto imageLogicalSize = image->logicalSize();
-    drawConsumingImageBuffer(WTFMove(image), FloatRect(destination, imageLogicalSize), FloatRect({ }, imageLogicalSize), imagePaintingOptions);
+    drawConsumingImageBuffer(WTF::move(image), FloatRect(destination, imageLogicalSize), FloatRect({ }, imageLogicalSize), imagePaintingOptions);
 }
 
 void GraphicsContext::drawConsumingImageBuffer(RefPtr<ImageBuffer> image, const FloatRect& destination, ImagePaintingOptions imagePaintingOptions)
@@ -396,7 +396,7 @@ void GraphicsContext::drawConsumingImageBuffer(RefPtr<ImageBuffer> image, const 
     if (!image)
         return;
     auto imageLogicalSize = image->logicalSize();
-    drawConsumingImageBuffer(WTFMove(image), destination, FloatRect({ }, imageLogicalSize), imagePaintingOptions);
+    drawConsumingImageBuffer(WTF::move(image), destination, FloatRect({ }, imageLogicalSize), imagePaintingOptions);
 }
 
 void GraphicsContext::drawConsumingImageBuffer(RefPtr<ImageBuffer> image, const FloatRect& destination, const FloatRect& source, ImagePaintingOptions options)
@@ -407,7 +407,7 @@ void GraphicsContext::drawConsumingImageBuffer(RefPtr<ImageBuffer> image, const 
     InterpolationQualityMaintainer interpolationQualityForThisScope(*this, options.interpolationQuality());
     FloatRect scaledSource = source;
     scaledSource.scale(image->resolutionScale());
-    if (auto nativeImage = ImageBuffer::sinkIntoNativeImage(WTFMove(image)))
+    if (auto nativeImage = ImageBuffer::sinkIntoNativeImage(WTF::move(image)))
         drawNativeImage(*nativeImage, destination, scaledSource, options);
 }
 
@@ -416,8 +416,8 @@ void GraphicsContext::drawFilteredImageBuffer(ImageBuffer* sourceImage, const Fl
     auto result = filter.apply(sourceImage, sourceImageRect, results);
     if (!result)
         return;
-    
-    RefPtr imageBuffer = result->imageBuffer();
+
+    RefPtr imageBuffer = filter.filterResultBuffer(*result);
     if (!imageBuffer)
         return;
 

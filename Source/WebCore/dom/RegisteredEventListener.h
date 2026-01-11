@@ -51,7 +51,7 @@ public:
 
     static Ref<RegisteredEventListener> create(Ref<EventListener>&& listener, const Options& options)
     {
-        return adoptRef(*new RegisteredEventListener(WTFMove(listener), options));
+        return adoptRef(*new RegisteredEventListener(WTF::move(listener), options));
     }
 
     EventListener& callback() const { return m_callback; }
@@ -70,7 +70,7 @@ private:
         , m_isOnce(options.once)
         , m_wasRemoved(false)
         , m_trustedOnly(options.trustedOnly)
-        , m_callback(WTFMove(listener))
+        , m_callback(WTF::move(listener))
     {
     }
 

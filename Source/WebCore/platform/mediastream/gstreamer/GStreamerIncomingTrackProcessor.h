@@ -73,6 +73,8 @@ private:
     IntSize m_videoSize;
     double m_frameRate;
     uint64_t m_decodedVideoFrames { 0 };
+    uint64_t m_framesReceived { 0 };
+    uint64_t m_decodedKeyFrames { 0 };
     GRefPtr<GstElement> m_sink;
     GUniquePtr<GstStructure> m_stats;
     bool m_isReady { false };

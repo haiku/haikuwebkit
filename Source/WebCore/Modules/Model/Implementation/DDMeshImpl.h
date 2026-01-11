@@ -50,7 +50,7 @@ class DDMeshImpl final : public DDMesh {
 public:
     static Ref<DDMeshImpl> create(WebGPU::WebGPUPtr<WGPUDDMesh>&& ddMesh, Vector<UniqueRef<WebCore::IOSurface>>&& renderBuffers, ConvertToBackingContext& convertToBackingContext)
     {
-        return adoptRef(*new DDMeshImpl(WTFMove(ddMesh), WTFMove(renderBuffers), convertToBackingContext));
+        return adoptRef(*new DDMeshImpl(WTF::move(ddMesh), WTF::move(renderBuffers), convertToBackingContext));
     }
 
     virtual ~DDMeshImpl();

@@ -26,6 +26,8 @@
 #ifndef PAS_HEAP_CONFIG_UTILS_H
 #define PAS_HEAP_CONFIG_UTILS_H
 
+#include "pas_platform.h"
+
 PAS_IGNORE_WARNINGS_BEGIN("cast-align")
 
 #include "pas_basic_heap_config_root_data.h"

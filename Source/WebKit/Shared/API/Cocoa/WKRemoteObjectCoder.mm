@@ -132,7 +132,7 @@ static void ensureObjectStream(WKRemoteObjectEncoder *encoder)
     Ref<API::Array> objectStream = API::Array::create();
     encoder->_objectStream = objectStream.ptr();
 
-    encoder->_rootDictionary->set(objectStreamKey, WTFMove(objectStream));
+    encoder->_rootDictionary->set(objectStreamKey, WTF::move(objectStream));
 }
 
 static void encodeToObjectStream(WKRemoteObjectEncoder *encoder, id value)
@@ -145,7 +145,7 @@ static void encodeToObjectStream(WKRemoteObjectEncoder *encoder, id value)
 
     auto encodedObject = createEncodedObject(encoder, value);
     ASSERT(!objectStream->elements()[position]);
-    objectStream->elements()[position] = WTFMove(encodedObject);
+    objectStream->elements()[position] = WTF::move(encodedObject);
 }
 
 static void encodeInvocationArguments(WKRemoteObjectEncoder *encoder, NSInvocation *invocation, NSUInteger firstArgument)
@@ -507,7 +507,7 @@ static RefPtr<API::Dictionary> createEncodedObject(WKRemoteObjectEncoder *encode
 
     encodeObject(encoder, object);
 
-    return WTFMove(dictionary);
+    return WTF::move(dictionary);
 }
 
 - (void)encodeValueOfObjCType:(const char *)type at:(const void *)address
@@ -674,7 +674,7 @@ static NSString *escapeKey(NSString *key)
 
     _interface = interface;
 
-    lazyInitialize(_rootDictionary, WTFMove(rootObjectDictionary));
+    lazyInitialize(_rootDictionary, WTF::move(rootObjectDictionary));
     _currentDictionary = _rootDictionary;
 
     _replyToSelector = replyToSelector;

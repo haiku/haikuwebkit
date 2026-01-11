@@ -112,7 +112,7 @@ auto SectionParser::parseType() -> PartialResult
                 // group takes ownership of signature via types, and projection takes ownership of group.
                 RefPtr<TypeDefinition> group = TypeInformation::typeDefinitionForRecursionGroup(types);
                 RefPtr<TypeDefinition> projection = TypeInformation::typeDefinitionForProjection(group->index(), 0);
-                signature = WTFMove(projection);
+                signature = WTF::move(projection);
             }
             TypeInformation::registerCanonicalRTTForType(signature->index());
             m_info->rtts.append(TypeInformation::getCanonicalRTT(signature->index()));
@@ -175,14 +175,14 @@ auto SectionParser::parseImport() -> PartialResult
             kindIndex = m_info->tables.size();
             PartialResult result = parseTableHelper(isImport);
             if (!result) [[unlikely]]
-                return makeUnexpected(WTFMove(result.error()));
+                return makeUnexpected(WTF::move(result.error()));
             break;
         }
         case ExternalKind::Memory: {
             bool isImport = true;
             PartialResult result = parseMemoryHelper(isImport);
             if (!result) [[unlikely]]
-                return makeUnexpected(WTFMove(result.error()));
+                return makeUnexpected(WTF::move(result.error()));
             break;
         }
         case ExternalKind::Global: {
@@ -192,7 +192,7 @@ auto SectionParser::parseImport() -> PartialResult
             if (global.mutability == Mutability::Mutable)
                 global.bindingMode = GlobalInformation::BindingMode::Portable;
             kindIndex = m_info->globals.size();
-            m_info->globals.append(WTFMove(global));
+            m_info->globals.append(WTF::move(global));
             break;
         }
         case ExternalKind::Exception: {
@@ -213,7 +213,7 @@ auto SectionParser::parseImport() -> PartialResult
         }
         }
 
-        m_info->imports.append({ WTFMove(moduleString), WTFMove(fieldString), kind, kindIndex });
+        m_info->imports.append({ WTF::move(moduleString), WTF::move(fieldString), kind, kindIndex });
     }
 
     m_info->firstInternalGlobal = m_info->globals.size();
@@ -334,7 +334,7 @@ auto SectionParser::parseTableHelper(bool isImport) -> PartialResult
     PartialResult limits = parseResizableLimits<LimitsType::Table>(initial, maximum, isShared, isTable64);
     ASSERT(!isShared);
     if (!limits) [[unlikely]]
-        return makeUnexpected(WTFMove(limits.error()));
+        return makeUnexpected(WTF::move(limits.error()));
     WASM_PARSER_FAIL_IF(initial > maxTableEntries, "Table's initial page count of "_s, initial, " is too big, maximum "_s, maxTableEntries);
 
     ASSERT(!maximum || *maximum >= initial);
@@ -374,7 +374,7 @@ auto SectionParser::parseTable() -> PartialResult
         bool isImport = false;
         PartialResult result = parseTableHelper(isImport);
         if (!result) [[unlikely]]
-            return makeUnexpected(WTFMove(result.error()));
+            return makeUnexpected(WTF::move(result.error()));
     }
 
     return { };
@@ -393,7 +393,7 @@ auto SectionParser::parseMemoryHelper(bool isImport) -> PartialResult
         std::optional<uint64_t> maximum;
         PartialResult limits = parseResizableLimits<LimitsType::Memory>(initial, maximum, isShared, isMemory64);
         if (!limits) [[unlikely]]
-            return makeUnexpected(WTFMove(limits.error()));
+            return makeUnexpected(WTF::move(limits.error()));
         ASSERT(!maximum || *maximum >= initial);
         WASM_PARSER_FAIL_IF(!PageCount::isValid(initial), "Memory's initial page count of "_s, initial, " is invalid"_s);
 
@@ -465,7 +465,7 @@ auto SectionParser::parseGlobal() -> PartialResult
             m_info->addDeclaredFunction(FunctionSpaceIndex(global.initialBits.initialBitsOrImportNumber));
         }
 
-        m_info->globals.append(WTFMove(global));
+        m_info->globals.append(WTF::move(global));
     }
 
     return { };
@@ -524,7 +524,7 @@ auto SectionParser::parseExport() -> PartialResult
         }
         }
 
-        m_info->exports.append({ WTFMove(fieldString), kind, kindIndex });
+        m_info->exports.append({ WTF::move(fieldString), kind, kindIndex });
     }
 
     return { };
@@ -567,12 +567,12 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_FAIL_IF_HELPER_FAILS(parseIndexCountForElementSection(indexCount, elementNum));
             ASSERT(!!m_info->tables[tableIndex]);
 
-            Element element(Element::Kind::Active, nonNullFuncrefType(), tableIndex, WTFMove(initExpr));
+            Element element(Element::Kind::Active, nonNullFuncrefType(), tableIndex, WTF::move(initExpr));
             WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
             WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfIndexes(element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
-            m_info->elements.append(WTFMove(element));
+            m_info->elements.append(WTF::move(element));
             break;
         }
         case 0x01: {
@@ -586,7 +586,7 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfIndexes(element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
-            m_info->elements.append(WTFMove(element));
+            m_info->elements.append(WTF::move(element));
             break;
         }
         case 0x02: {
@@ -604,12 +604,12 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_FAIL_IF_HELPER_FAILS(parseIndexCountForElementSection(indexCount, elementNum));
             ASSERT(!!m_info->tables[tableIndex]);
 
-            Element element(Element::Kind::Active, nonNullFuncrefType(), tableIndex, WTFMove(initExpr));
+            Element element(Element::Kind::Active, nonNullFuncrefType(), tableIndex, WTF::move(initExpr));
             WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
             WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfIndexes(element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
-            m_info->elements.append(WTFMove(element));
+            m_info->elements.append(WTF::move(element));
             break;
         }
         case 0x03: {
@@ -623,7 +623,7 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfIndexes(element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
-            m_info->elements.append(WTFMove(element));
+            m_info->elements.append(WTF::move(element));
             break;
         }
         case 0x04: {
@@ -637,12 +637,12 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_FAIL_IF_HELPER_FAILS(parseIndexCountForElementSection(indexCount, elementNum));
             ASSERT(!!m_info->tables[tableIndex]);
 
-            Element element(Element::Kind::Active, funcrefType(), tableIndex, WTFMove(initExpr));
+            Element element(Element::Kind::Active, funcrefType(), tableIndex, WTF::move(initExpr));
             WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
             WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfExpressions(funcrefType(), element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
-            m_info->elements.append(WTFMove(element));
+            m_info->elements.append(WTF::move(element));
             break;
         }
         case 0x05: {
@@ -657,7 +657,7 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfExpressions(refType, element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
-            m_info->elements.append(WTFMove(element));
+            m_info->elements.append(WTF::move(element));
             break;
         }
         case 0x06: {
@@ -675,12 +675,12 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_FAIL_IF_HELPER_FAILS(parseIndexCountForElementSection(indexCount, elementNum));
             ASSERT(!!m_info->tables[tableIndex]);
 
-            Element element(Element::Kind::Active, refType, tableIndex, WTFMove(initExpr));
+            Element element(Element::Kind::Active, refType, tableIndex, WTF::move(initExpr));
             WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
             WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfExpressions(refType, element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
-            m_info->elements.append(WTFMove(element));
+            m_info->elements.append(WTF::move(element));
             break;
         }
         case 0x07: {
@@ -695,7 +695,7 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfExpressions(refType, element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
-            m_info->elements.append(WTFMove(element));
+            m_info->elements.append(WTF::move(element));
             break;
         }
         default:
@@ -1020,7 +1020,7 @@ auto SectionParser::parseRecursionGroup(uint32_t position, RefPtr<TypeDefinition
         m_info->rtts.append(TypeInformation::getCanonicalRTT(signatures[0]->index()));
         if (signatures[0]->is<Subtype>())
             WASM_FAIL_IF_HELPER_FAILS(checkSubtypeValidity(signatures[0]));
-        m_info->typeSignatures.append(WTFMove(signatures[0]));
+        m_info->typeSignatures.append(WTF::move(signatures[0]));
     } else {
         Vector<Ref<TypeDefinition>> projections;
         // Take ownership of all projections before unrolling since they can refer to each other.
@@ -1297,7 +1297,7 @@ auto SectionParser::parseData() -> PartialResult
 
             memcpySpan(segment->span(), source().subspan(m_offset, dataByteLength));
             m_offset += dataByteLength;
-            m_info->data.append(WTFMove(segment));
+            m_info->data.append(WTF::move(segment));
             continue;
         }
 
@@ -1314,7 +1314,7 @@ auto SectionParser::parseData() -> PartialResult
 
             memcpySpan(segment->span(), source().subspan(m_offset, dataByteLength));
             m_offset += dataByteLength;
-            m_info->data.append(WTFMove(segment));
+            m_info->data.append(WTF::move(segment));
             continue;
 
         }
@@ -1338,7 +1338,7 @@ auto SectionParser::parseData() -> PartialResult
 
             memcpySpan(segment->span(), source().subspan(m_offset, dataByteLength));
             m_offset += dataByteLength;
-            m_info->data.append(WTFMove(segment));
+            m_info->data.append(WTF::move(segment));
             continue;
         }
 
@@ -1403,18 +1403,18 @@ auto SectionParser::parseCustom() -> PartialResult
         NameSectionParser nameSectionParser(section.payload, m_info);
         auto nameSection = nameSectionParser.parse();
         if (nameSection)
-            m_info->nameSection = WTFMove(*nameSection);
+            m_info->nameSection = WTF::move(*nameSection);
         else
             dataLogLnIf(Options::dumpWasmWarnings(), "Could not parse name section: ", nameSection.error());
     } else if (WTF::Unicode::equal("metadata.code.branch_hint"_span8, section.name.span())) {
         BranchHintsSectionParser branchHintsSectionParser(section.payload, m_info);
-        branchHintsSectionParser.parse();
+        std::ignore = branchHintsSectionParser.parse();
     } else if (WTF::Unicode::equal("sourceMappingURL"_span8, section.name.span())) {
         SourceMappingURLSectionParser sourceMappingURLSectionParser(section.payload, m_info);
-        sourceMappingURLSectionParser.parse();
+        std::ignore = sourceMappingURLSectionParser.parse();
     }
 
-    m_info->customSections.append(WTFMove(section));
+    m_info->customSections.append(WTF::move(section));
 
     return { };
 }

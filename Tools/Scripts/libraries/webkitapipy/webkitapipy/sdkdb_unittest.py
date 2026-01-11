@@ -138,10 +138,10 @@ class TestSDKDB(TestCase):
     def tearDown(self):
         self.sdkdb.con.close()
 
-    def add_library(self):
+    def add_library(self, fixture=R, file=F, file_hash=F_Hash):
         with self.sdkdb:
-            self.sdkdb._cache_hit_preparing_to_insert(F, F_Hash)
-            self.sdkdb._add_api_report(R, F)
+            self.sdkdb._cache_hit_preparing_to_insert(file, file_hash)
+            self.sdkdb._add_api_report(fixture, file)
 
     def add_partial_sdkdb(self):
         with self.sdkdb:
@@ -156,8 +156,10 @@ class TestSDKDB(TestCase):
     def reconnect(self):
         self.sdkdb = SDKDB(Path(self.dbfile.name))
 
-    def audit_with(self, fixture: APIReport):
-        self.sdkdb.add_for_auditing(fixture)
+    def audit_with(self, fixture: APIReport, file_hash=54321):
+        self.sdkdb._cache_hit_preparing_to_insert(fixture.file, file_hash)
+        self.sdkdb._add_api_report(fixture, fixture.file)
+        self.sdkdb._add_imports(fixture)
         return self.sdkdb.audit()
 
     def assertEmpty(self, seq):
@@ -366,3 +368,51 @@ class TestSDKDB(TestCase):
         self.assertIn(UnnecessaryAllowedName(name='initWithData:',
                                              kind=OBJC_SEL, file=A_File,
                                              exported_in=F), diagnostics)
+
+    def test_audit_allow_different_fully_qualified_methods_same_name(self):
+        allowlist = AllowList.from_dict({'temporary-usage': [
+            {'request': 'rdar://12345',
+             'cleanup': 'rdar://12346',
+             'classes': ['WKDoesntExist'],
+             'selectors': [{'name': 'initWithData:', 'class': 'WKDoesntExist'}],
+             'symbols': ['WKDoesntExistLibraryVersion']}
+        ]})
+        self.add_allowlist(allowlist)
+        client = APIReport(file=F_Client, arch='arm64e',
+                           methods={APIReport.Selector('initWithData:',
+                                                       'UnrelatedClass')},
+                           imports={'_WKDoesntExistLibraryVersion',
+                                    '_OBJC_CLASS_$_WKDoesntExist'},
+                           selrefs={'initWithData:'})
+        self.assertEmpty(self.audit_with(client))
+
+    def test_audit_unnecessary_allow_unqualified_methods_same_name(self):
+        self.add_allowlist()
+        client = APIReport(file=F_Client, arch='arm64e',
+                           methods={APIReport.Selector('initWithData:',
+                                                       'UnrelatedClass')},
+                           imports={'_WKDoesntExistLibraryVersion',
+                                    '_OBJC_CLASS_$_WKDoesntExist'},
+                           selrefs={'initWithData:'})
+        self.assertIn(UnnecessaryAllowedName(name='initWithData:', file=A_File,
+                                             kind=OBJC_SEL,
+                                             exported_in=F_Client),
+                      self.audit_with(client))
+
+    def test_exported_in_nonnull(self):
+        # Add the same API declarations twice (i.e. two different SDKs loaded
+        # into the same cache).
+        self.add_library(file=Path('/some/other/sdk/libdoesntexist.dylib'))
+        self.add_library()
+
+        # Reconnect and load only the second source of our symbols.
+        self.reconnect()
+        self.add_library()
+
+        # Cause an UnnecessaryAllowedName. It should have a nonnull
+        # export_path.
+        self.add_allowlist()
+        self.assertIn(UnnecessaryAllowedName(name='initWithData:',
+                                             kind=OBJC_SEL, file=A_File,
+                                             exported_in=F),
+                      self.audit_with(R_Client))

@@ -55,7 +55,7 @@ NavigatorAudioSession* NavigatorAudioSession::from(Navigator& navigator)
     if (!supplement) {
         auto newSupplement = makeUnique<NavigatorAudioSession>();
         supplement = newSupplement.get();
-        provideTo(&navigator, supplementName(), WTFMove(newSupplement));
+        provideTo(&navigator, supplementName(), WTF::move(newSupplement));
     }
     return supplement;
 }

@@ -35,7 +35,7 @@
 #include "MediaList.h"
 #include "NodeDocument.h"
 #include "NodeRenderStyle.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderView.h"
 #include "StyleRule.h"
 #include "StyleScope.h"
@@ -56,6 +56,9 @@ bool ContainerQueryEvaluator::evaluate(const CQ::ContainerQuery& containerQuery)
     auto context = featureEvaluationContextForQuery(containerQuery);
     if (!context)
         return false;
+
+    if (containerQuery.condition.queries.isEmpty() && !containerQuery.name.isEmpty())
+        return true;
 
     return evaluateCondition(containerQuery.condition, *context) == MQ::EvaluationResult::True;
 }

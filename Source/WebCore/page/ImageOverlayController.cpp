@@ -45,7 +45,7 @@
 #include "PageOverlayController.h"
 #include "PlatformMouseEvent.h"
 #include "RenderElement.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "SimpleRange.h"
 #include "VisiblePosition.h"
 #include <wtf/TZoneMallocInlines.h>

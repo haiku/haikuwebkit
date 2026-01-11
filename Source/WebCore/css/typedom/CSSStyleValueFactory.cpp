@@ -159,7 +159,7 @@ ExceptionOr<Vector<Ref<CSSStyleValue>>> CSSStyleValueFactory::parseStyleValue(Do
     Vector<Ref<CSSStyleValue>> results;
 
     for (auto& cssValue : cssValues) {
-        auto reifiedValue = reifyValue(document, WTFMove(cssValue), propertyID);
+        auto reifiedValue = reifyValue(document, WTF::move(cssValue), propertyID);
         if (reifiedValue.hasException())
             return reifiedValue.releaseException();
 
@@ -296,7 +296,7 @@ ExceptionOr<Ref<CSSStyleValue>> CSSStyleValueFactory::reifyValue(Document& docum
     } else if (auto* substitutionValue = dynamicDowncast<CSSPendingSubstitutionValue>(cssValue)) {
         return Ref<CSSStyleValue> { CSSUnparsedValue::create(substitutionValue->shorthandValue().data().tokenRange()) };
     } else if (auto* customPropertyValue = dynamicDowncast<CSSCustomPropertyValue>(cssValue)) {
-        // FIXME: remove CSSStyleValue::create(WTFMove(cssValue)), add reification control flow
+        // FIXME: remove CSSStyleValue::create(WTF::move(cssValue)), add reification control flow
         return WTF::switchOn(customPropertyValue->value(),
             [&](const Ref<CSSVariableReferenceValue>& value) {
                 return reifyValue(document, value, propertyID);
@@ -374,9 +374,9 @@ ExceptionOr<Ref<CSSStyleValue>> CSSStyleValueFactory::reifyValue(Document& docum
 ExceptionOr<Vector<Ref<CSSStyleValue>>> CSSStyleValueFactory::vectorFromStyleValuesOrStrings(Document& document, const AtomString& property, FixedVector<Variant<RefPtr<CSSStyleValue>, String>>&& values)
 {
     Vector<Ref<CSSStyleValue>> styleValues;
-    for (auto&& value : WTFMove(values)) {
+    for (auto&& value : WTF::move(values)) {
         std::optional<Exception> exception;
-        switchOn(WTFMove(value), [&](RefPtr<CSSStyleValue>&& styleValue) {
+        switchOn(WTF::move(value), [&](RefPtr<CSSStyleValue>&& styleValue) {
             ASSERT(styleValue);
             styleValues.append(styleValue.releaseNonNull());
         }, [&](String&& string) {
@@ -389,9 +389,9 @@ ExceptionOr<Vector<Ref<CSSStyleValue>>> CSSStyleValueFactory::vectorFromStyleVal
             styleValues.appendVector(result.releaseReturnValue());
         });
         if (exception)
-            return { WTFMove(*exception) };
+            return { WTF::move(*exception) };
     }
-    return { WTFMove(styleValues) };
+    return { WTF::move(styleValues) };
 }
 
 CSSStyleValueFactory::~CSSStyleValueFactory() = default;

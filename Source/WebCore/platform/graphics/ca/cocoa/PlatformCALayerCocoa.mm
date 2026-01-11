@@ -555,7 +555,7 @@ void PlatformCALayerCocoa::addAnimationForKey(const String& key, PlatformCAAnima
     if (!m_delegate) {
         auto webAnimationDelegate = adoptNS([[WebAnimationDelegate alloc] init]);
         [webAnimationDelegate setOwner:this];
-        m_delegate = WTFMove(webAnimationDelegate);
+        m_delegate = WTF::move(webAnimationDelegate);
     }
     
     CAAnimation *propertyAnimation = static_cast<CAAnimation *>(downcast<PlatformCAAnimationCocoa>(animation).platformAnimation());
@@ -585,7 +585,7 @@ RefPtr<PlatformCAAnimation> PlatformCALayerCocoa::animationForKey(const String& 
 void PlatformCALayerCocoa::setMaskLayer(RefPtr<WebCore::PlatformCALayer>&& layer)
 {
     auto* caLayer = layer ? layer->platformLayer() : nil;
-    PlatformCALayer::setMaskLayer(WTFMove(layer));
+    PlatformCALayer::setMaskLayer(WTF::move(layer));
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
     [m_layer setMask:caLayer];

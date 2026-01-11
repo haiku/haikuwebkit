@@ -30,8 +30,10 @@
 #if ENABLE(ASSEMBLER) && CPU(ARM64)
 
 #include <JavaScriptCore/ARM64Assembler.h>
+#include <JavaScriptCore/ARM64EAssembler.h>
 #include <JavaScriptCore/AbstractMacroAssembler.h>
 #include <JavaScriptCore/JITOperationValidation.h>
+#include <JavaScriptCore/TargetAssemblerDefinitions.h>
 #include <wtf/MathExtras.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMalloc.h>
@@ -2791,10 +2793,6 @@ public:
 
     // Floating-point operations:
 
-    static bool supportsFloatingPoint() { return true; }
-    static bool supportsFloatingPointTruncate() { return true; }
-    static bool supportsFloatingPointSqrt() { return true; }
-    static bool supportsFloatingPointAbs() { return true; }
     static bool supportsFloatingPointRounding() { return true; }
     static bool supportsCountPopulation() { return true; }
 

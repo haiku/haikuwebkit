@@ -70,7 +70,7 @@ void RemoteBarcodeDetectorProxy::detect(const WebCore::NativeImage& image, Compl
         completionHandler({ });
         return;
     }
-    connection->sendWithAsyncReply(Messages::RemoteBarcodeDetector::Detect(image.renderingResourceIdentifier()), WTFMove(completionHandler), identifier());
+    connection->sendWithAsyncReply(Messages::RemoteBarcodeDetector::Detect(image.renderingResourceIdentifier()), WTF::move(completionHandler), identifier());
 }
 
 } // namespace WebKit::WebGPU

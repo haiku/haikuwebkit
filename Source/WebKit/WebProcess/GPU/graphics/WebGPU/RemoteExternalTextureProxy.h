@@ -66,7 +66,7 @@ private:
     template<typename T>
     WARN_UNUSED_RETURN IPC::Error send(T&& message)
     {
-        return root().protectedStreamClientConnection()->send(WTFMove(message), backing());
+        return root().protectedStreamClientConnection()->send(WTF::move(message), backing());
     }
 
     void setLabelInternal(const String&) final;

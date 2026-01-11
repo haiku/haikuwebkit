@@ -49,7 +49,7 @@ class AudioContext final
     , public MediaProducer
     , public MediaCanStartListener
     , private PlatformMediaSessionClient {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(AudioContext);
+    WTF_MAKE_TZONE_ALLOCATED(AudioContext);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(AudioContext);
 public:
     USING_CAN_MAKE_WEAKPTR(EventTarget);

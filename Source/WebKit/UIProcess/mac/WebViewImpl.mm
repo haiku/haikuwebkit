@@ -1290,7 +1290,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(WebViewImpl);
 WebViewImpl::WebViewImpl(WKWebView *view, WebProcessPool& processPool, Ref<API::PageConfiguration>&& configuration)
     : m_view(view)
     , m_pageClient(makeUniqueRefWithoutRefCountedCheck<PageClientImpl>(view, view))
-    , m_page(processPool.createWebPage(m_pageClient, WTFMove(configuration)))
+    , m_page(processPool.createWebPage(m_pageClient, WTF::move(configuration)))
     , m_needsViewFrameInWindowCoordinates(false)
     , m_intrinsicContentSize(CGSizeMake(NSViewNoIntrinsicMetric, NSViewNoIntrinsicMetric))
     , m_layoutStrategy([WKViewLayoutStrategy layoutStrategyWithPage:m_page.get() view:view viewImpl:*this mode:kWKLayoutModeViewSize])
@@ -1626,8 +1626,8 @@ void WebViewImpl::showWarningView(const BrowsingWarning& warning, CompletionHand
 
     m_page->logDiagnosticMessageWithValueDictionary("SafeBrowsing.ShowedWarning"_s, "Safari"_s, showedWarningDictionary, WebCore::ShouldSample::No);
 
-    m_warningView = adoptNS([[_WKWarningView alloc] initWithFrame:[m_view.get() bounds] browsingWarning:warning completionHandler:[weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)] (auto&& result) mutable {
-        completionHandler(WTFMove(result));
+    m_warningView = adoptNS([[_WKWarningView alloc] initWithFrame:[m_view.get() bounds] browsingWarning:warning completionHandler:[weakThis = WeakPtr { *this }, completionHandler = WTF::move(completionHandler)] (auto&& result) mutable {
+        completionHandler(WTF::move(result));
         if (!weakThis)
             return;
         bool navigatesFrame = WTF::switchOn(result,
@@ -1705,7 +1705,7 @@ void WebViewImpl::createPDFHUD(PDFPluginIdentifier identifier, WebCore::FrameIde
     removePDFHUD(identifier);
     RetainPtr hud = adoptNS([[WKPDFHUDView alloc] initWithFrame:rect pluginIdentifier:identifier frameIdentifier:frameID page:m_page.get()]);
     [m_view.get() addSubview:hud.get()];
-    _pdfHUDViews.add(identifier, WTFMove(hud));
+    _pdfHUDViews.add(identifier, WTF::move(hud));
 }
 
 void WebViewImpl::updatePDFHUDLocation(PDFPluginIdentifier identifier, const WebCore::IntRect& rect)
@@ -2602,7 +2602,7 @@ void WebViewImpl::prepareForMoveToWindow(NSWindow *targetWindow, WTF::Function<v
     m_shouldDeferViewInWindowChanges = false;
 
     WeakPtr weakThis { *this };
-    m_page->installActivityStateChangeCompletionHandler(WTFMove(completionHandler));
+    m_page->installActivityStateChangeCompletionHandler(WTF::move(completionHandler));
 
     flushPendingObscuredContentInsetChanges();
     m_page->activityStateDidChange(WebCore::ActivityState::IsInWindow, WebPageProxy::ActivityStateChangeDispatchMode::Immediate);
@@ -2624,7 +2624,7 @@ void WebViewImpl::setFontForWebView(NSFont *font, id sender)
     if (RetainPtr<NSString> textStyleAttribute = [retainPtr(font.fontDescriptor) objectForKey:(__bridge NSString *)kCTFontDescriptorTextStyleAttribute])
         changes.setFontFamily(textStyleAttribute.get());
 
-    m_page->changeFont(WTFMove(changes));
+    m_page->changeFont(WTF::move(changes));
 }
 
 void WebViewImpl::updateSecureInputState()
@@ -2824,7 +2824,7 @@ void WebViewImpl::executeEditCommandForSelector(SEL selector, const String& argu
 void WebViewImpl::registerEditCommand(Ref<WebEditCommandProxy>&& command, UndoOrRedo undoOrRedo)
 {
     auto actionName = command->label();
-    auto commandObjC = adoptNS([[WKEditCommand alloc] initWithWebEditCommandProxy:WTFMove(command)]);
+    auto commandObjC = adoptNS([[WKEditCommand alloc] initWithWebEditCommandProxy:WTF::move(command)]);
 
     RetainPtr undoManager = [m_view.get() undoManager];
     [undoManager registerUndoWithTarget:m_undoTarget.get() selector:((undoOrRedo == UndoOrRedo::Undo) ? @selector(undoEditing:) : @selector(redoEditing:)) object:commandObjC.get()];
@@ -2937,7 +2937,7 @@ void WebViewImpl::showShareSheet(WebCore::ShareDataWithParsedURL&& data, WTF::Co
     _shareSheet = adoptNS([[WKShareSheet alloc] initWithView:view]);
     [_shareSheet setDelegate:view];
 
-    [_shareSheet presentWithParameters:data inRect:std::nullopt completionHandler:WTFMove(completionHandler)];
+    [_shareSheet presentWithParameters:data inRect:std::nullopt completionHandler:WTF::move(completionHandler)];
 }
 
 void WebViewImpl::shareSheetDidDismiss(WKShareSheet *shareSheet)
@@ -2954,7 +2954,7 @@ void WebViewImpl::showDigitalCredentialsPicker(const WebCore::DigitalCredentials
     if (!_digitalCredentialsPicker)
         _digitalCredentialsPicker = adoptNS([[WKDigitalCredentialsPicker alloc] initWithView:webView page:m_page.ptr()]);
 
-    [_digitalCredentialsPicker presentWithRequestData:requestData completionHandler:WTFMove(completionHandler)];
+    [_digitalCredentialsPicker presentWithRequestData:requestData completionHandler:WTF::move(completionHandler)];
 }
 
 void WebViewImpl::dismissDigitalCredentialsPicker(CompletionHandler<void(bool)>&& completionHandler, WKWebView* webView)
@@ -2965,7 +2965,7 @@ void WebViewImpl::dismissDigitalCredentialsPicker(CompletionHandler<void(bool)>&
         return;
     }
 
-    [_digitalCredentialsPicker dismissWithCompletionHandler:WTFMove(completionHandler)];
+    [_digitalCredentialsPicker dismissWithCompletionHandler:WTF::move(completionHandler)];
 }
 #endif
 
@@ -3020,7 +3020,7 @@ void WebViewImpl::changeFontColorFromSender(id sender)
 
     WebCore::FontAttributeChanges changes;
     changes.setForegroundColor(WebCore::colorFromCocoaColor(color.get()));
-    m_page->changeFontAttributes(WTFMove(changes));
+    m_page->changeFontAttributes(WTF::move(changes));
 }
 
 void WebViewImpl::changeFontAttributesFromSender(id sender)
@@ -3843,8 +3843,8 @@ void WebViewImpl::accessibilityRegisterUIProcessTokens()
     // Initialize remote accessibility when the window connection has been established.
     RetainPtr remoteElementToken = [NSAccessibilityRemoteUIElement remoteTokenForLocalUIElement:m_view.get().get()];
     m_remoteAccessibilityTokenGeneratedByUIProcess = remoteElementToken.get();
-    RetainPtr remoteWindowToken = [NSAccessibilityRemoteUIElement remoteTokenForLocalUIElement:retainPtr([m_view.get() window]).get()];
-    m_page->registerUIProcessAccessibilityTokens(span(remoteElementToken.get()), span(remoteWindowToken.get()));
+    RetainPtr remoteWindowToken = [NSAccessibilityRemoteUIElement remoteTokenForLocalUIElement:[m_view.get() window]];
+    m_page->registerUIProcessAccessibilityTokens({ makeVector(remoteElementToken.get()) }, { makeVector(remoteWindowToken.get()) });
 }
 
 id WebViewImpl::accessibilityFocusedUIElement()
@@ -4320,7 +4320,7 @@ static void performDragWithLegacyFiles(WebPageProxy& page, Box<Vector<String>>&&
 
         page->createSandboxExtensionsIfNeeded(*fileNames, sandboxExtensionHandle, sandboxExtensionForUpload);
         dragData->setFileNames(*fileNames);
-        page->performDragOperation(*dragData, pasteboardName, WTFMove(sandboxExtensionHandle), WTFMove(sandboxExtensionForUpload));
+        page->performDragOperation(*dragData, pasteboardName, WTF::move(sandboxExtensionHandle), WTF::move(sandboxExtensionForUpload));
     });
 }
 
@@ -4348,11 +4348,11 @@ static bool handleLegacyFilesPromisePasteboard(id<NSDraggingInfo> draggingInfo, 
             if (errorOrNil)
                 return;
 
-            RunLoop::mainSingleton().dispatch([protectedPage = WTFMove(protectedPage), path = RetainPtr { fileURL.path }, fileNames, fileCount, dragData, pasteboardName] () mutable {
+            RunLoop::mainSingleton().dispatch([protectedPage = WTF::move(protectedPage), path = RetainPtr { fileURL.path }, fileNames, fileCount, dragData, pasteboardName] () mutable {
                 fileNames->append(path.get());
                 if (fileNames->size() != fileCount)
                     return;
-                performDragWithLegacyFiles(protectedPage, WTFMove(fileNames), WTFMove(dragData), pasteboardName);
+                performDragWithLegacyFiles(protectedPage, WTF::move(fileNames), WTF::move(dragData), pasteboardName);
             });
         }];
     }];
@@ -4378,7 +4378,7 @@ static bool handleLegacyFilesPasteboard(id<NSDraggingInfo> draggingInfo, Box<Web
         RetainPtr coordinator = adoptNS([[NSFileCoordinator alloc] initWithFilePresenter:nil]);
 
         NSError *prepareError = nil;
-        [coordinator prepareForReadingItemsAtURLs:originalFileURLs.get() options:0 writingItemsAtURLs:@[] options:0 error:&prepareError byAccessor:[coordinator, originalFileURLs, protectedPage = WTFMove(protectedPage), dragData, pasteboardName](void (^completionHandler)(void)) mutable {
+        [coordinator prepareForReadingItemsAtURLs:originalFileURLs.get() options:0 writingItemsAtURLs:@[] options:0 error:&prepareError byAccessor:[coordinator, originalFileURLs, protectedPage = WTF::move(protectedPage), dragData, pasteboardName](void (^completionHandler)(void)) mutable {
             auto fileNames = Box<Vector<String>>::create();
 
             for (NSURL *originalFileURL in originalFileURLs.get()) {
@@ -4390,8 +4390,8 @@ static bool handleLegacyFilesPasteboard(id<NSDraggingInfo> draggingInfo, Box<Web
                 RELEASE_LOG_ERROR_IF(error, DragAndDrop, "Failed to coordinate reading file: %@.", error.localizedDescription);
             }
 
-            RunLoop::mainSingleton().dispatch([protectedPage = WTFMove(protectedPage), fileNames, dragData, pasteboardName, completionHandler = makeBlockPtr(completionHandler)] mutable {
-                performDragWithLegacyFiles(protectedPage, WTFMove(fileNames), WTFMove(dragData), pasteboardName);
+            RunLoop::mainSingleton().dispatch([protectedPage = WTF::move(protectedPage), fileNames, dragData, pasteboardName, completionHandler = makeBlockPtr(completionHandler)] mutable {
+                performDragWithLegacyFiles(protectedPage, WTF::move(fileNames), WTF::move(dragData), pasteboardName);
                 completionHandler();
             });
         }];
@@ -4414,13 +4414,13 @@ bool WebViewImpl::performDragOperation(id<NSDraggingInfo> draggingInfo)
     Vector<SandboxExtension::Handle> sandboxExtensionForUpload;
 
     if (![types containsObject:PasteboardTypes::WebArchivePboardType] && [types containsObject:WebCore::legacyFilesPromisePasteboardTypeSingleton()])
-        return handleLegacyFilesPromisePasteboard(draggingInfo, WTFMove(dragData), page(), m_view.get());
+        return handleLegacyFilesPromisePasteboard(draggingInfo, WTF::move(dragData), page(), m_view.get());
 
     if ([types containsObject:WebCore::legacyFilenamesPasteboardTypeSingleton()])
-        return handleLegacyFilesPasteboard(draggingInfo, WTFMove(dragData), page());
+        return handleLegacyFilesPasteboard(draggingInfo, WTF::move(dragData), page());
 
     String draggingPasteboardName = draggingInfo.draggingPasteboard.name;
-    m_page->performDragOperation(*dragData, draggingPasteboardName, WTFMove(sandboxExtensionHandle), WTFMove(sandboxExtensionForUpload));
+    m_page->performDragOperation(*dragData, draggingPasteboardName, WTF::move(sandboxExtensionHandle), WTF::move(sandboxExtensionForUpload));
 
     return true;
 }
@@ -4505,7 +4505,7 @@ void WebViewImpl::startWindowDrag()
 
 void WebViewImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Handle&& dragImageHandle)
 {
-    auto dragImageAsBitmap = ShareableBitmap::create(WTFMove(dragImageHandle));
+    auto dragImageAsBitmap = ShareableBitmap::create(WTF::move(dragImageHandle));
     if (!dragImageAsBitmap) {
         m_page->dragCancelled();
         return;
@@ -4522,7 +4522,9 @@ void WebViewImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Hand
     auto protector = m_view.get();
 
     if (RefPtr frame = WebFrameProxy::webFrame(item.rootFrameID)) {
-        m_page->convertPointToMainFrameCoordinates(item.dragLocationInWindowCoordinates, item.rootFrameID, [weakThis = WeakPtr { *this }, promisedAttachmentInfo = item.promisedAttachmentInfo, dragNSImage = WTFMove(dragNSImage), size, lastMouseDownEvent = m_lastMouseDownEvent] (std::optional<FloatPoint> dragLocationInMainFrameCoordinates) mutable {
+        // FIXME: The `dragLocationInWindowCoordinates` is in window coordinates (equivalent to root view), but `convertPointToMainFrameCoordinates`
+        // expects the input to be in content coordinates of the frame corresponding to the given frame ID.
+        m_page->convertPointToMainFrameCoordinates(item.dragLocationInWindowCoordinates, item.rootFrameID, [weakThis = WeakPtr { *this }, promisedAttachmentInfo = item.promisedAttachmentInfo, dragNSImage = WTF::move(dragNSImage), size, lastMouseDownEvent = m_lastMouseDownEvent] (std::optional<FloatPoint> dragLocationInMainFrameCoordinates) mutable {
             CheckedPtr protectedThis = weakThis.get();
             if (!protectedThis || !dragLocationInMainFrameCoordinates)
                 return;
@@ -4764,14 +4766,14 @@ void WebViewImpl::requestDOMPasteAccess(WebCore::DOMPasteAccessCategory pasteAcc
     RetainPtr data = [pasteboardForAccessCategory(pasteAccessCategory).get() dataForType:RetainPtr { @(WebCore::PasteboardCustomData::cocoaType().characters()) }.get()];
     auto buffer = WebCore::SharedBuffer::create(data.get());
     if (requiresInteraction == WebCore::DOMPasteRequiresInteraction::No && WebCore::PasteboardCustomData::fromSharedBuffer(buffer.get()).origin() == originIdentifier) {
-        m_page->grantAccessToCurrentPasteboardData(pasteboardNameForAccessCategory(pasteAccessCategory), [completion = WTFMove(completion)] () mutable {
+        m_page->grantAccessToCurrentPasteboardData(pasteboardNameForAccessCategory(pasteAccessCategory), [completion = WTF::move(completion)] () mutable {
             completion(WebCore::DOMPasteAccessResponse::GrantedForGesture);
         });
         return;
     }
 
     m_domPasteMenuDelegate = adoptNS([[WKDOMPasteMenuDelegate alloc] initWithWebViewImpl:*this pasteAccessCategory:pasteAccessCategory]);
-    m_domPasteRequestHandler = WTFMove(completion);
+    m_domPasteRequestHandler = WTF::move(completion);
     m_domPasteMenu = adoptNS([[NSMenu alloc] initWithTitle:WebCore::contextMenuItemTagPaste().createNSString().get()]);
 
     [m_domPasteMenu setDelegate:m_domPasteMenuDelegate.get()];
@@ -4880,7 +4882,7 @@ RefPtr<ViewSnapshot> WebViewImpl::takeViewSnapshot(ForceSoftwareCapturingViewpor
     if (!surface)
         return nullptr;
 
-    return ViewSnapshot::create(WTFMove(surface));
+    return ViewSnapshot::create(WTF::move(surface));
 }
 
 void WebViewImpl::saveBackForwardSnapshotForCurrentItem()
@@ -5046,7 +5048,7 @@ RefPtr<ViewGestureController> WebViewImpl::protectedGestureController() const
 
 void WebViewImpl::setCustomSwipeViewsObscuredContentInsets(FloatBoxExtent&& insets)
 {
-    ensureProtectedGestureController()->setCustomSwipeViewsObscuredContentInsets(WTFMove(insets));
+    ensureProtectedGestureController()->setCustomSwipeViewsObscuredContentInsets(WTF::move(insets));
 }
 
 bool WebViewImpl::tryToSwipeWithEvent(NSEvent *event, bool ignoringPinnedState)
@@ -5071,7 +5073,7 @@ void WebViewImpl::setDidMoveSwipeSnapshotCallback(BlockPtr<void (CGRect)>&& call
     if (!m_allowsBackForwardNavigationGestures)
         return;
 
-    ensureProtectedGestureController()->setDidMoveSwipeSnapshotCallback(WTFMove(callback));
+    ensureProtectedGestureController()->setDidMoveSwipeSnapshotCallback(WTF::move(callback));
 }
 
 void WebViewImpl::scrollWheel(NSEvent *event)
@@ -5246,7 +5248,7 @@ Vector<WebCore::KeypressCommand> WebViewImpl::collectKeyboardLayoutCommandsForEv
     else
         [m_view.get() interpretKeyEvents:@[event]];
 
-    auto commands = WTFMove(*m_collectedKeypressCommands);
+    auto commands = WTF::move(*m_collectedKeypressCommands);
     m_collectedKeypressCommands = std::nullopt;
 
     if (RetainPtr<NSMenu> menu = NSApp.mainMenu; event.modifierFlags & NSEventModifierFlagFunction
@@ -5296,7 +5298,7 @@ void WebViewImpl::interpretKeyEvent(NSEvent *event, void(^completionHandler)(BOO
         Vector<WebCore::KeypressCommand> commands;
 #if PLATFORM(MAC)
         if (checkedThis->m_page->editorState().inputMethodUsesCorrectKeyEventOrder) {
-            commands = WTFMove(*checkedThis->m_collectedKeypressCommands);
+            commands = WTF::move(*checkedThis->m_collectedKeypressCommands);
             checkedThis->m_collectedKeypressCommands = std::nullopt;
             checkedThis->m_stagedMarkedRange = std::nullopt;
         }
@@ -5313,8 +5315,8 @@ void WebViewImpl::interpretKeyEvent(NSEvent *event, void(^completionHandler)(BOO
 
         LOG(TextInput, "... handleEventByInputMethod%s handled", handled ? "" : " not");
         if (handled) {
-            capturedBlock(YES, WTFMove(commands));
-            auto holdingTank = WTFMove(checkedThis->m_interpretKeyEventHoldingTank);
+            capturedBlock(YES, WTF::move(commands));
+            auto holdingTank = WTF::move(checkedThis->m_interpretKeyEventHoldingTank);
             for (auto& function : holdingTank)
                 function();
             return;
@@ -5326,7 +5328,7 @@ void WebViewImpl::interpretKeyEvent(NSEvent *event, void(^completionHandler)(BOO
 #if PLATFORM(MAC)
         ASSERT(checkedThis->m_page->editorState().inputMethodUsesCorrectKeyEventOrder || checkedThis->m_interpretKeyEventHoldingTank.isEmpty());
 #endif
-        auto holdingTank = WTFMove(checkedThis->m_interpretKeyEventHoldingTank);
+        auto holdingTank = WTF::move(checkedThis->m_interpretKeyEventHoldingTank);
         for (auto& function : holdingTank)
             function();
     }];
@@ -5403,14 +5405,14 @@ void WebViewImpl::insertText(id string, NSRange replacementRange)
     if (!dictationAlternatives.isEmpty()) {
         InsertTextOptions options;
         options.registerUndoGroup = registerUndoGroup;
-        m_page->insertDictatedTextAsync(eventText, replacementRange, dictationAlternatives, WTFMove(options));
+        m_page->insertDictatedTextAsync(eventText, replacementRange, dictationAlternatives, WTF::move(options));
     } else {
         InsertTextOptions options;
         options.registerUndoGroup = registerUndoGroup;
         options.editingRangeIsRelativeTo = m_isTextInsertionReplacingSoftSpace ? EditingRangeIsRelativeTo::Paragraph : EditingRangeIsRelativeTo::EditableRoot;
         options.suppressSelectionUpdate = m_isTextInsertionReplacingSoftSpace;
 
-        m_page->insertTextAsync(eventText, replacementRange, WTFMove(options));
+        m_page->insertTextAsync(eventText, replacementRange, WTF::move(options));
     }
 }
 
@@ -5719,7 +5721,7 @@ void WebViewImpl::setMarkedText(id string, NSRange selectedRange, NSRange replac
 
 #if PLATFORM(MAC)
     if (m_page->editorState().inputMethodUsesCorrectKeyEventOrder && m_collectedKeypressCommands) {
-        WebCore::KeypressCommand command("setMarkedText:"_s, text.get(), WTFMove(underlines), WTFMove(highlights),
+        WebCore::KeypressCommand command("setMarkedText:"_s, text.get(), WTF::move(underlines), WTF::move(highlights),
             EditingRange { selectedRange }.toCharacterRange(), EditingRange { replacementRange }.toCharacterRange());
         m_collectedKeypressCommands->append(command);
         m_stagedMarkedRange = selectedRange;
@@ -5729,7 +5731,7 @@ void WebViewImpl::setMarkedText(id string, NSRange selectedRange, NSRange replac
     }
 #endif
 
-    m_page->setCompositionAsync(text.get(), WTFMove(underlines), WTFMove(highlights), { }, selectedRange, replacementRange);
+    m_page->setCompositionAsync(text.get(), WTF::move(underlines), WTF::move(highlights), { }, selectedRange, replacementRange);
 }
 
 #if HAVE(INLINE_PREDICTIONS)
@@ -6980,9 +6982,9 @@ RetainPtr<CocoaImageAnalyzer> WebViewImpl::ensureProtectedImageAnalyzer()
 
 int32_t WebViewImpl::processImageAnalyzerRequest(CocoaImageAnalyzerRequest *request, CompletionHandler<void(RetainPtr<CocoaImageAnalysis>&&, NSError *)>&& completion)
 {
-    return [ensureProtectedImageAnalyzer() processRequest:request progressHandler:nil completionHandler:makeBlockPtr([completion = WTFMove(completion)](CocoaImageAnalysis *result, NSError *error) mutable {
-        callOnMainRunLoop([completion = WTFMove(completion), result = RetainPtr { result }, error = RetainPtr { error }] mutable {
-            completion(WTFMove(result), error.get());
+    return [ensureProtectedImageAnalyzer() processRequest:request progressHandler:nil completionHandler:makeBlockPtr([completion = WTF::move(completion)](CocoaImageAnalysis *result, NSError *error) mutable {
+        callOnMainRunLoop([completion = WTF::move(completion), result = RetainPtr { result }, error = RetainPtr { error }] mutable {
+            completion(WTF::move(result), error.get());
         });
     }).get()];
 }
@@ -7002,7 +7004,7 @@ void WebViewImpl::requestTextRecognition(const URL& imageURL, ShareableBitmap::H
         return;
     }
 
-    auto imageBitmap = ShareableBitmap::create(WTFMove(imageData));
+    auto imageBitmap = ShareableBitmap::create(WTF::move(imageData));
     if (!imageBitmap) {
         completion({ });
         return;
@@ -7012,7 +7014,7 @@ void WebViewImpl::requestTextRecognition(const URL& imageURL, ShareableBitmap::H
 
 #if ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)
     if (!targetLanguageIdentifier.isEmpty())
-        return requestVisualTranslation(ensureProtectedImageAnalyzer().get(), imageURL.createNSURL().get(), sourceLanguageIdentifier, targetLanguageIdentifier, cgImage.get(), WTFMove(completion));
+        return requestVisualTranslation(ensureProtectedImageAnalyzer().get(), imageURL.createNSURL().get(), sourceLanguageIdentifier, targetLanguageIdentifier, cgImage.get(), WTF::move(completion));
 #else
     UNUSED_PARAM(sourceLanguageIdentifier);
     UNUSED_PARAM(targetLanguageIdentifier);
@@ -7020,10 +7022,10 @@ void WebViewImpl::requestTextRecognition(const URL& imageURL, ShareableBitmap::H
 
     auto request = createImageAnalyzerRequest(cgImage.get(), imageURL, [NSURL _web_URLWithWTFString:m_page->currentURL()], VKAnalysisTypeText);
     auto startTime = MonotonicTime::now();
-    processImageAnalyzerRequest(request.get(), [completion = WTFMove(completion), startTime](RetainPtr<CocoaImageAnalysis>&& analysis, NSError *) mutable {
+    processImageAnalyzerRequest(request.get(), [completion = WTF::move(completion), startTime](RetainPtr<CocoaImageAnalysis>&& analysis, NSError *) mutable {
         auto result = makeTextRecognitionResult(analysis.get());
         RELEASE_LOG(ImageAnalysis, "Image analysis completed in %.0f ms (found text? %d)", (MonotonicTime::now() - startTime).milliseconds(), !result.isEmpty());
-        completion(WTFMove(result));
+        completion(WTF::move(result));
     });
 }
 
@@ -7037,10 +7039,10 @@ void WebViewImpl::computeHasVisualSearchResults(const URL& imageURL, ShareableBi
     RetainPtr cgImage = imageBitmap.createPlatformImage(DontCopyBackingStore);
     auto request = createImageAnalyzerRequest(cgImage.get(), imageURL, [NSURL _web_URLWithWTFString:m_page->currentURL()], VKAnalysisTypeVisualSearch);
     auto startTime = MonotonicTime::now();
-    [ensureProtectedImageAnalyzer() processRequest:request.get() progressHandler:nil completionHandler:makeBlockPtr([completion = WTFMove(completion), startTime] (CocoaImageAnalysis *analysis, NSError *) mutable {
+    [ensureProtectedImageAnalyzer() processRequest:request.get() progressHandler:nil completionHandler:makeBlockPtr([completion = WTF::move(completion), startTime] (CocoaImageAnalysis *analysis, NSError *) mutable {
         BOOL result = [analysis hasResultsForAnalysisTypes:VKAnalysisTypeVisualSearch];
         RetainPtr loop = CFRunLoopGetMain();
-        CFRunLoopPerformBlock(loop.get(), RetainPtr { bridge_cast(NSEventTrackingRunLoopMode) }.get(), makeBlockPtr([completion = WTFMove(completion), result, startTime] () mutable {
+        CFRunLoopPerformBlock(loop.get(), RetainPtr { bridge_cast(NSEventTrackingRunLoopMode) }.get(), makeBlockPtr([completion = WTF::move(completion), result, startTime] () mutable {
             RELEASE_LOG(ImageAnalysis, "Image analysis completed in %.0f ms (found visual search results? %d)", (MonotonicTime::now() - startTime).milliseconds(), result);
             completion(result);
         }).get());
@@ -7063,7 +7065,7 @@ bool WebViewImpl::imageAnalysisOverlayViewHasCursorAtPoint(NSPoint locationInVie
 void WebViewImpl::beginTextRecognitionForVideoInElementFullscreen(ShareableBitmap::Handle&& bitmapHandle, WebCore::FloatRect bounds)
 {
 #if ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)
-    auto imageBitmap = ShareableBitmap::create(WTFMove(bitmapHandle));
+    auto imageBitmap = ShareableBitmap::create(WTF::move(bitmapHandle));
     if (!imageBitmap)
         return;
 
@@ -7082,7 +7084,7 @@ void WebViewImpl::beginTextRecognitionForVideoInElementFullscreen(ShareableBitma
             return;
 
         checkedThis->m_imageAnalysisInteractionBounds = bounds;
-        checkedThis->installImageAnalysisOverlayView(WTFMove(result));
+        checkedThis->installImageAnalysisOverlayView(WTF::move(result));
     });
 #else
     UNUSED_PARAM(bitmapHandle);
@@ -7103,7 +7105,7 @@ void WebViewImpl::cancelTextRecognitionForVideoInElementFullscreen()
 
 void WebViewImpl::installImageAnalysisOverlayView(RetainPtr<VKCImageAnalysis>&& analysis)
 {
-    auto installTask = [weakThis = WeakPtr { *this }, analysis = WTFMove(analysis)] {
+    auto installTask = [weakThis = WeakPtr { *this }, analysis = WTF::move(analysis)] {
         CheckedPtr checkedThis = weakThis.get();
         if (!checkedThis)
             return;
@@ -7121,7 +7123,7 @@ void WebViewImpl::installImageAnalysisOverlayView(RetainPtr<VKCImageAnalysis>&& 
         [checkedThis->m_view.get() addSubview:checkedThis->m_imageAnalysisOverlayView.get()];
     };
 
-    performOrDeferImageAnalysisOverlayViewHierarchyTask(WTFMove(installTask));
+    performOrDeferImageAnalysisOverlayViewHierarchyTask(WTF::move(installTask));
 }
 
 void WebViewImpl::uninstallImageAnalysisOverlayView()
@@ -7138,13 +7140,13 @@ void WebViewImpl::uninstallImageAnalysisOverlayView()
         checkedThis->m_imageAnalysisInteractionBounds = { };
     };
 
-    performOrDeferImageAnalysisOverlayViewHierarchyTask(WTFMove(uninstallTask));
+    performOrDeferImageAnalysisOverlayViewHierarchyTask(WTF::move(uninstallTask));
 }
 
 void WebViewImpl::performOrDeferImageAnalysisOverlayViewHierarchyTask(std::function<void()>&& task)
 {
     if (m_lastMouseDownEvent)
-        m_imageAnalysisOverlayViewHierarchyDeferredTask = WTFMove(task);
+        m_imageAnalysisOverlayViewHierarchyDeferredTask = WTF::move(task);
     else
         task();
 }

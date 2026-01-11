@@ -64,7 +64,7 @@ struct ImageBitmapRenderingContextSettings;
 struct UncachedString;
 
 class HTMLCanvasElement final : public HTMLElement, public ActiveDOMObject, public CanvasBase {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLCanvasElement);
+    WTF_MAKE_TZONE_ALLOCATED(HTMLCanvasElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HTMLCanvasElement);
 public:
     USING_CAN_MAKE_WEAKPTR(HTMLElement);

@@ -116,7 +116,7 @@
 ;; bundle to find Info plists, so we jump through a few hoops here to provide
 ;; enough access to make it possible.
 
-(network-client (remote tcp) (remote udp))
+(network-client)
 
 ;; allow 3rd party applications to access nsurlstoraged's top level domain data cache
 (allow-well-known-system-group-container-subpath-read

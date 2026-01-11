@@ -287,7 +287,7 @@ id WebProcess::accessibilityFocusedUIElement()
         if (objectWrapper) {
             ALLOW_DEPRECATED_DECLARATIONS_BEGIN
             if (RetainPtr associatedParent = [objectWrapper accessibilityAttributeValue:@"_AXAssociatedPluginParent"])
-                objectWrapper = WTFMove(associatedParent);
+                objectWrapper = WTF::move(associatedParent);
             ALLOW_DEPRECATED_DECLARATIONS_END
         }
         return objectWrapper.autorelease();
@@ -389,7 +389,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
     unsetenv("BSServiceDomains");
 #endif
 
-    applyProcessCreationParameters(WTFMove(parameters.auxiliaryProcessParameters));
+    applyProcessCreationParameters(WTF::move(parameters.auxiliaryProcessParameters));
 
     setQOS(parameters.latencyQOS, parameters.throughputQOS);
 
@@ -398,7 +398,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
     _UIApplicationCatalystRequestViewServiceIdiomAndScaleFactor(static_cast<UIUserInterfaceIdiom>(overrideUserInterfaceIdiom), overrideScaleFactor);
 #endif
 
-    populateMobileGestaltCache(WTFMove(parameters.mobileGestaltExtensionHandle));
+    populateMobileGestaltCache(WTF::move(parameters.mobileGestaltExtensionHandle));
 
     m_uiProcessBundleIdentifier = parameters.uiProcessBundleIdentifier;
 
@@ -501,7 +501,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
 
 #if (PLATFORM(MAC) || PLATFORM(MACCATALYST)) && !ENABLE(LAUNCHSERVICES_SANDBOX_EXTENSION_BLOCKING)
     if (parameters.launchServicesExtensionHandle) {
-        RefPtr sandboxExtension = SandboxExtension::create(WTFMove(*parameters.launchServicesExtensionHandle));
+        RefPtr sandboxExtension = SandboxExtension::create(WTF::move(*parameters.launchServicesExtensionHandle));
         m_launchServicesExtension = sandboxExtension;
         if (sandboxExtension) {
             bool ok = sandboxExtension->consume();
@@ -565,7 +565,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
     setSystemHasAC(parameters.systemHasAC);
 
 #if PLATFORM(IOS_FAMILY)
-    RenderThemeIOS::setCSSValueToSystemColorMap(WTFMove(parameters.cssValueToSystemColorMap));
+    RenderThemeIOS::setCSSValueToSystemColorMap(WTF::move(parameters.cssValueToSystemColorMap));
     RenderThemeIOS::setFocusRingColor(parameters.focusRingColor);
 #endif
 
@@ -622,6 +622,9 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
 #if ENABLE(CLOSE_WEBCONTENT_XPC_CONNECTION_POST_LAUNCH)
     xpc_connection_cancel(parentProcessConnection()->xpcConnection());
 #endif
+
+    if (getenv("WEBKIT_PAUSE_WEB_PROCESS_ON_LAUNCH"))
+        WTF::sleep(5_s);
 }
 
 void WebProcess::platformSetWebsiteDataStoreParameters(WebProcessDataStoreParameters&& parameters)
@@ -637,8 +640,15 @@ void WebProcess::platformSetWebsiteDataStoreParameters(WebProcessDataStoreParame
 #endif
 #endif
 #if PLATFORM(IOS_FAMILY)
-    grantAccessToContainerTempDirectory(parameters.containerTemporaryDirectoryExtensionHandle);
-#endif
+#if !USE(EXTENSIONKIT)
+    SandboxExtension::consumePermanently(parameters.containerTemporaryDirectoryExtensionHandle);
+#endif // !USE(EXTENSIONKIT)
+#if ENABLE(LLVM_PROFILE_GENERATION)
+    WebKit::initializeLLVMProfiling();
+    WebCore::initializeLLVMProfiling();
+    JSC::initializeLLVMProfiling();
+#endif // ENABLE(LLVM_PROFILE_GENERATION)
+#endif // PLATFORM(IOS_FAMILY)
 
     if (!parameters.javaScriptConfigurationDirectory.isEmpty()) {
         auto javaScriptConfigFile = makeString(parameters.javaScriptConfigurationDirectory, "/JSC.config"_s);
@@ -707,7 +717,7 @@ void WebProcess::updateProcessName(IsInProcessInitialization isInProcessInitiali
         return;
     }
 #if ENABLE(LAUNCHSERVICES_SANDBOX_EXTENSION_BLOCKING)
-    m_pendingDisplayName = WTFMove(displayName);
+    m_pendingDisplayName = WTF::move(displayName);
     return;
 #endif
 #endif // ENABLE(SET_WEBCONTENT_PROCESS_INFORMATION_IN_NETWORK_PROCESS)
@@ -854,7 +864,7 @@ static void registerLogClient(bool isDebugLoggingEnabled, std::unique_ptr<LogCli
 #endif
 
     RELEASE_ASSERT(!logClient());
-    logClient() = WTFMove(newLogClient);
+    logClient() = WTF::move(newLogClient);
 
     // OS_LOG_TYPE_DEFAULT implies default, fault, and error.
     // OS_LOG_TYPE_DEBUG implies debug, info, default, fault, and error.
@@ -920,17 +930,17 @@ void WebProcess::initializeLogForwarding(const WebProcessCreationParameters& par
     auto connectionPair = IPC::StreamClientConnection::create(connectionBufferSizeLog2, 1_s);
     if (!connectionPair)
         CRASH();
-    auto [connection, handle] = WTFMove(*connectionPair);
+    auto [connection, handle] = WTF::move(*connectionPair);
     connection->open(*this, RunLoop::currentSingleton());
     std::unique_ptr newLogClient = makeUnique<LogClient>(Ref { connection });
-    parentConnection->sendWithAsyncReply(Messages::WebProcessProxy::CreateLogStream(WTFMove(handle), newLogClient->identifier()), [newLogClient = WTFMove(newLogClient), connection = WTFMove(connection), isDebugLoggingEnabled = parameters.isDebugLoggingEnabled] (IPC::Semaphore&& wakeUpSemaphore, IPC::Semaphore&& clientWaitSemaphore) mutable {
-        connection->setSemaphores(WTFMove(wakeUpSemaphore), WTFMove(clientWaitSemaphore));
-        registerLogClient(isDebugLoggingEnabled, WTFMove(newLogClient));
+    parentConnection->sendWithAsyncReply(Messages::WebProcessProxy::CreateLogStream(WTF::move(handle), newLogClient->identifier()), [newLogClient = WTF::move(newLogClient), connection = WTF::move(connection), isDebugLoggingEnabled = parameters.isDebugLoggingEnabled] (IPC::Semaphore&& wakeUpSemaphore, IPC::Semaphore&& clientWaitSemaphore) mutable {
+        connection->setSemaphores(WTF::move(wakeUpSemaphore), WTF::move(clientWaitSemaphore));
+        registerLogClient(isDebugLoggingEnabled, WTF::move(newLogClient));
     });
 #else
     std::unique_ptr newLogClient = makeUnique<LogClient>(*parentConnection);
-    parentConnection->sendWithAsyncReply(Messages::WebProcessProxy::CreateLogStream(newLogClient->identifier()), [newLogClient = WTFMove(newLogClient), isDebugLoggingEnabled = parameters.isDebugLoggingEnabled] mutable {
-        registerLogClient(isDebugLoggingEnabled, WTFMove(newLogClient));
+    parentConnection->sendWithAsyncReply(Messages::WebProcessProxy::CreateLogStream(newLogClient->identifier()), [newLogClient = WTF::move(newLogClient), isDebugLoggingEnabled = parameters.isDebugLoggingEnabled] mutable {
+        registerLogClient(isDebugLoggingEnabled, WTF::move(newLogClient));
     });
 #endif
 
@@ -1063,7 +1073,7 @@ void WebProcess::getProcessDisplayName(CompletionHandler<void(String&&)>&& compl
     auto auditToken = auditTokenForSelf();
     if (!auditToken)
         return completionHandler({ });
-    ensureNetworkProcessConnection().connection().sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::GetProcessDisplayName(*auditToken), WTFMove(completionHandler));
+    ensureNetworkProcessConnection().connection().sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::GetProcessDisplayName(*auditToken), WTF::move(completionHandler));
 #else
     completionHandler({ });
 #endif
@@ -1427,7 +1437,7 @@ void WebProcess::grantAccessToAssetServices(Vector<WebKit::SandboxExtensionHandl
     if (m_assetServicesExtensions.size())
         return;
     for (auto& handle : assetServicesHandles) {
-        auto extension = SandboxExtension::create(WTFMove(handle));
+        auto extension = SandboxExtension::create(WTF::move(handle));
         if (!extension)
             continue;
         extension->consume();
@@ -1503,8 +1513,8 @@ void WebProcess::updatePageScreenProperties()
 
 void WebProcess::unblockServicesRequiredByAccessibility(Vector<SandboxExtension::Handle>&& handles)
 {
-    auto extensions = WTF::compactMap(WTFMove(handles), [](SandboxExtension::Handle&& handle) -> RefPtr<SandboxExtension> {
-        auto extension = SandboxExtension::create(WTFMove(handle));
+    auto extensions = WTF::compactMap(WTF::move(handles), [](SandboxExtension::Handle&& handle) -> RefPtr<SandboxExtension> {
+        auto extension = SandboxExtension::create(WTF::move(handle));
         if (extension)
             extension->consume();
         return extension;
@@ -1563,19 +1573,19 @@ void WebProcess::systemDidWake()
 #if PLATFORM(MAC)
 void WebProcess::openDirectoryCacheInvalidated(SandboxExtension::Handle&& handle, SandboxExtension::Handle&& machBootstrapHandle)
 {
-    auto cacheInvalidationHandler = [handle = WTFMove(handle), machBootstrapHandle = WTFMove(machBootstrapHandle)] () mutable {
-        auto bootstrapExtension = SandboxExtension::create(WTFMove(machBootstrapHandle));
+    auto cacheInvalidationHandler = [handle = WTF::move(handle), machBootstrapHandle = WTF::move(machBootstrapHandle)] () mutable {
+        auto bootstrapExtension = SandboxExtension::create(WTF::move(machBootstrapHandle));
 
         if (bootstrapExtension)
             bootstrapExtension->consume();
 
-        AuxiliaryProcess::openDirectoryCacheInvalidated(WTFMove(handle));
+        AuxiliaryProcess::openDirectoryCacheInvalidated(WTF::move(handle));
 
         if (bootstrapExtension)
             bootstrapExtension->revoke();
     };
 
-    dispatch_async(globalDispatchQueueSingleton(QOS_CLASS_UTILITY, 0), makeBlockPtr(WTFMove(cacheInvalidationHandler)).get());
+    dispatch_async(globalDispatchQueueSingleton(QOS_CLASS_UTILITY, 0), makeBlockPtr(WTF::move(cacheInvalidationHandler)).get());
 }
 #endif
 
@@ -1669,8 +1679,8 @@ void WebProcess::registerFontMap(HashMap<String, URL>&& fontMap, HashMap<String,
     RELEASE_LOG(Process, "WebProcess::registerFontMap");
     SandboxExtension::consumePermanently(sandboxExtensions);
     Locker locker(userInstalledFontMapLock());
-    userInstalledFontMap() = WTFMove(fontMap);
-    userInstalledFontFamilyMap() = WTFMove(fontFamilyMap);
+    userInstalledFontMap() = WTF::move(fontMap);
+    userInstalledFontFamilyMap() = WTF::move(fontFamilyMap);
 }
 
 #if ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)
@@ -1683,8 +1693,8 @@ void WebProcess::initializeAccessibility(Vector<SandboxExtension::Handle>&& hand
 #endif
 
     RELEASE_LOG(Process, "WebProcess::initializeAccessibility, pid = %d", getpid());
-    auto extensions = WTF::compactMap(WTFMove(handles), [](SandboxExtension::Handle&& handle) -> RefPtr<SandboxExtension> {
-        auto extension = SandboxExtension::create(WTFMove(handle));
+    auto extensions = WTF::compactMap(WTF::move(handles), [](SandboxExtension::Handle&& handle) -> RefPtr<SandboxExtension> {
+        auto extension = SandboxExtension::create(WTF::move(handle));
         if (extension)
             extension->consume();
         return extension;

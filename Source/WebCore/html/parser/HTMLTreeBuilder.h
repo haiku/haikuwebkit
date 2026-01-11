@@ -74,7 +74,7 @@ public:
     const ScriptElement* scriptToProcess() const { return m_scriptToProcess.get(); }
     RefPtr<const ScriptElement> protectedScriptToProcess() const;
 
-    std::unique_ptr<CustomElementConstructionData> takeCustomElementConstructionData() { return WTFMove(m_customElementToConstruct); }
+    std::unique_ptr<CustomElementConstructionData> takeCustomElementConstructionData() { return WTF::move(m_customElementToConstruct); }
     void didCreateCustomOrFallbackElement(Ref<Element>&&, CustomElementConstructionData&);
 
     // Done, close any open tags, etc.

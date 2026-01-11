@@ -30,6 +30,7 @@ setConfiguration();
 if (!inFlatpakSandbox()) {
     push @ARGV, "--wpe";
 }
+maybeUseContainerSDKRootDir();
 
 my $launcherName;
 my $libPathQt5;

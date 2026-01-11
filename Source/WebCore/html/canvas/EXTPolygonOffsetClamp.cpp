@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(EXTPolygonOffsetClamp);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(EXTPolygonOffsetClamp);
 
 EXTPolygonOffsetClamp::EXTPolygonOffsetClamp(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::EXTPolygonOffsetClamp)

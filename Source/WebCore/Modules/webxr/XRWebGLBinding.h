@@ -57,7 +57,7 @@ struct XRQuadLayerInit;
 
 // https://immersive-web.github.io/layers/#XRWebGLBindingtype
 class XRWebGLBinding : public RefCounted<XRWebGLBinding> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(XRWebGLBinding);
+    WTF_MAKE_TZONE_ALLOCATED(XRWebGLBinding);
 public:
 
     using WebXRWebGLRenderingContext = Variant<

@@ -95,7 +95,7 @@ public:
     int numberOfBytes() const { return size().width() * size().height() * 32 >> 3; }
 
     RefPtr<const FilterOperation> filterOperation() const { return m_filterOperation; }
-    void setFilterOperation(RefPtr<const FilterOperation>&& filterOperation) { m_filterOperation = WTFMove(filterOperation); }
+    void setFilterOperation(RefPtr<const FilterOperation>&& filterOperation) { m_filterOperation = WTF::move(filterOperation); }
 
     ClipStack& clipStack() { return m_clipStack; }
 

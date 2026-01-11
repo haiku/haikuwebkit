@@ -14,7 +14,6 @@ mac/Misc/WebElementDictionary.mm
 [ Mac ] mac/Misc/WebNSPasteboardExtras.mm
 [ Mac ] mac/WebCoreSupport/WebContextMenuClient.mm
 mac/WebCoreSupport/WebFrameLoaderClient.mm
-mac/WebCoreSupport/WebFrameNetworkingContext.mm
 [ Mac ] mac/WebView/WebClipView.mm
 [ Mac ] mac/WebView/WebDynamicScrollBarsView.mm
 mac/WebView/WebFrame.mm

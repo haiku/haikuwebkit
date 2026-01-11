@@ -27,27 +27,68 @@
 
 namespace WebKit {
 
-OpenXRHitTestManager::OpenXRHitTestManager(XrSession session)
+std::unique_ptr<OpenXRHitTestManager> OpenXRHitTestManager::create(XrInstance instance, XrSystemId systemId, XrSession session)
+{
+#if defined(XR_ANDROID_trackables) && defined(XR_ANDROID_raycast)
+    if (!OpenXRExtensions::singleton().methods().xrCreateTrackableTrackerANDROID)
+        return nullptr;
+    if (!OpenXRExtensions::singleton().methods().xrRaycastANDROID)
+        return nullptr;
+    auto manager = makeUnique<OpenXRHitTestManager>(instance, systemId, session);
+    if (!manager->m_trackableTrackers.size())
+        return nullptr;
+    return manager;
+#else
+    return nullptr;
+#endif
+}
+
+OpenXRHitTestManager::OpenXRHitTestManager(XrInstance instance, XrSystemId systemId, XrSession session)
     : m_session(session)
 {
-#if defined(XR_ANDROID_raycast)
+#if defined(XR_ANDROID_trackables) && defined(XR_ANDROID_raycast)
+    uint32_t trackableTypeCapacity = 0;
+    uint32_t trackableTypeCountOutput = 0;
+    CHECK_XRCMD(OpenXRExtensions::singleton().methods().xrEnumerateRaycastSupportedTrackableTypesANDROID(instance, systemId, 0, &trackableTypeCapacity, nullptr));
+    Vector<XrTrackableTypeANDROID> types(trackableTypeCapacity);
+    CHECK_XRCMD(OpenXRExtensions::singleton().methods().xrEnumerateRaycastSupportedTrackableTypesANDROID(instance, systemId, trackableTypeCapacity, &trackableTypeCountOutput, types.mutableSpan().data()));
     auto createInfo = createOpenXRStruct<XrTrackableTrackerCreateInfoANDROID, XR_TYPE_TRACKABLE_TRACKER_CREATE_INFO_ANDROID>();
-    createInfo.trackableType = XR_TRACKABLE_TYPE_PLANE_ANDROID;
-    CHECK_XRCMD(OpenXRExtensions::singleton().methods().xrCreateTrackableTrackerANDROID(session, &createInfo, &m_trackableTracker));
+    for (auto type : types) {
+        switch (type) {
+        case XR_TRACKABLE_TYPE_PLANE_ANDROID:
+        case XR_TRACKABLE_TYPE_DEPTH_ANDROID: {
+            XrTrackableTrackerANDROID tracker = XR_NULL_HANDLE;
+            createInfo.trackableType = type;
+            CHECK_XRCMD(OpenXRExtensions::singleton().methods().xrCreateTrackableTrackerANDROID(session, &createInfo, &tracker));
+            m_trackableTrackers.append(tracker);
+            break;
+        }
+        default:
+            break;
+        }
+    }
+#endif
+}
+
+OpenXRHitTestManager::~OpenXRHitTestManager()
+{
+#if defined(XR_ANDROID_trackables) && defined(XR_ANDROID_raycast)
+    for (const auto& tracker : m_trackableTrackers)
+        CHECK_XRCMD(OpenXRExtensions::singleton().methods().xrDestroyTrackableTrackerANDROID(tracker));
 #endif
 }
 
 Vector<PlatformXR::FrameData::HitTestResult> OpenXRHitTestManager::requestHitTest(const PlatformXR::Ray& ray, XrSpace space, XrTime time)
 {
 #if defined(XR_ANDROID_raycast)
-    if (m_trackableTracker == XR_NULL_HANDLE)
+    if (space == XR_NULL_HANDLE)
         return { };
 
     constexpr int maxHitTestResults = 2;
     auto raycastInfo = createOpenXRStruct<XrRaycastInfoANDROID, XR_TYPE_RAYCAST_INFO_ANDROID>();
     raycastInfo.maxResults = maxHitTestResults;
-    raycastInfo.trackerCount = 1;
-    raycastInfo.trackers = &m_trackableTracker;
+    raycastInfo.trackerCount = m_trackableTrackers.size();
+    raycastInfo.trackers = m_trackableTrackers.span().data();
     raycastInfo.origin = XrVector3f { ray.origin.x(), ray.origin.y(), ray.origin.z() };
     raycastInfo.trajectory = XrVector3f { ray.direction.x(), ray.direction.y(), ray.direction.z() };
     raycastInfo.space = space;

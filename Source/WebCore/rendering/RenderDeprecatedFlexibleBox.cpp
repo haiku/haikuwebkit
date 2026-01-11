@@ -36,8 +36,9 @@
 #include "RenderLayer.h"
 #include "RenderLayoutState.h"
 #include "RenderObjectInlines.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderView.h"
+#include "StyleComputedStyle+InitialInlines.h"
 #include <ranges>
 #include <wtf/Scope.h>
 #include <wtf/StdLibExtras.h>
@@ -46,7 +47,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderDeprecatedFlexibleBox);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderDeprecatedFlexibleBox);
 
 class FlexBoxIterator {
 public:
@@ -132,7 +133,7 @@ private:
 };
 
 RenderDeprecatedFlexibleBox::RenderDeprecatedFlexibleBox(Element& element, RenderStyle&& style)
-    : RenderBlock(RenderObject::Type::DeprecatedFlexibleBox, element, WTFMove(style), { })
+    : RenderBlock(RenderObject::Type::DeprecatedFlexibleBox, element, WTF::move(style), { })
 {
     setChildrenInline(false); // All of our children must be block-level
     m_stretchingChildren = false;
@@ -184,7 +185,7 @@ static LayoutUnit contentHeightForChild(RenderBox* child)
     return std::max<LayoutUnit>(0, heightForChild(child) - child->borderAndPaddingLogicalHeight());
 }
 
-void RenderDeprecatedFlexibleBox::styleWillChange(StyleDifference diff, const RenderStyle& newStyle)
+void RenderDeprecatedFlexibleBox::styleWillChange(Style::Difference diff, const RenderStyle& newStyle)
 {
     auto shouldClearLineClamp = [&] {
         auto* oldStyle = hasInitializedStyle() ? &style() : nullptr;
@@ -316,7 +317,7 @@ bool RenderDeprecatedFlexibleBox::hasClampingAndNoFlexing() const
         return false;
     if (style.overflowX() != Overflow::Hidden || style.overflowY() != Overflow::Hidden)
         return false;
-    if (style.boxAlign() != RenderStyle::initialBoxAlign() || !style.isLeftToRightDirection())
+    if (style.boxAlign() != Style::ComputedStyle::initialBoxAlign() || !style.isLeftToRightDirection())
         return false;
     return true;
 }
@@ -372,7 +373,7 @@ void RenderDeprecatedFlexibleBox::layoutBlock(RelayoutChildren relayoutChildren,
         repaintChildrenDuringLayoutIfMoved(this, oldChildRects);
         ASSERT(view().frameView().layoutContext().layoutDeltaMatches(oldLayoutDelta));
 
-        LayoutUnit oldClientAfterEdge = clientLogicalBottom();
+        auto contentArea = flippedContentBoxRect();
         updateLogicalHeight();
 
         if (previousSize.height() != height())
@@ -385,7 +386,7 @@ void RenderDeprecatedFlexibleBox::layoutBlock(RelayoutChildren relayoutChildren,
 
         updateDescendantTransformsAfterLayout();
 
-        computeOverflow(oldClientAfterEdge);
+        computeOverflow(contentArea);
     }
 
     updateLayerTransform();
@@ -753,7 +754,7 @@ void RenderDeprecatedFlexibleBox::layoutSingleClampedFlexItem()
     setHeight(childBoxBottom + paddingBottom() + borderBottom());
     updateLogicalHeight();
 
-    computeOverflow({ });
+    computeOverflow(flippedContentBoxRect());
 
     endAndCommitUpdateScrollInfoAfterLayoutTransaction();
 
@@ -1047,7 +1048,7 @@ static RenderBlockFlow* blockContainerForLastFormattedLine(const RenderBlock& en
             continue;
         if (auto* descendantRoot = blockContainerForLastFormattedLine(*blockContainer))
             return descendantRoot;
-        if (CheckedPtr blockFlow = dynamicDowncast<RenderBlockFlow>(blockContainer.get()); blockFlow && blockFlow->hasContentfulInlineLine())
+        if (CheckedPtr blockFlow = dynamicDowncast<RenderBlockFlow>(*blockContainer); blockFlow && blockFlow->hasContentfulInlineLine())
             return blockFlow.unsafeGet();
     }
     return { };

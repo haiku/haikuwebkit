@@ -439,7 +439,7 @@ Heap::Heap(VM& vm, HeapType heapType)
         if (Options::optimizeParallelSlotVisitorsForStoppedMutator())
             visitor->optimizeForStoppedMutator();
         m_availableParallelSlotVisitors.append(visitor.get());
-        m_parallelSlotVisitors.append(WTFMove(visitor));
+        m_parallelSlotVisitors.append(WTF::move(visitor));
     }
     
     if (Options::useConcurrentGC()) {
@@ -616,7 +616,7 @@ void Heap::releaseDelayedReleasedObjects()
         while (!m_delayedReleaseObjects.isEmpty()) {
             ASSERT(vm().currentThreadIsHoldingAPILock());
 
-            auto objectsToRelease = WTFMove(m_delayedReleaseObjects);
+            auto objectsToRelease = WTF::move(m_delayedReleaseObjects);
 
             {
                 // We need to drop locks before calling out to arbitrary code.
@@ -1220,8 +1220,6 @@ void Heap::addToRememberedSet(const JSCell* constCell)
 
 void Heap::sweepSynchronously()
 {
-    RELEASE_ASSERT(vm().currentThreadIsHoldingAPILock());
-
     if (!Options::useGC()) [[unlikely]]
         return;
 
@@ -2068,7 +2066,7 @@ NEVER_INLINE void Heap::collectInMutatorThread()
                     }
                 }
             };
-            callWithCurrentThreadState(scopedLambda<void(CurrentThreadState&)>(WTFMove(lambda)));
+            callWithCurrentThreadState(scopedLambda<void(CurrentThreadState&)>(WTF::move(lambda)));
             return;
         }
     }
@@ -2678,12 +2676,12 @@ void Heap::collectNowFullIfNotDoneRecently(Synchronousness synchronousness)
 
 void Heap::setFullActivityCallback(RefPtr<GCActivityCallback>&& callback)
 {
-    m_fullActivityCallback = WTFMove(callback);
+    m_fullActivityCallback = WTF::move(callback);
 }
 
 void Heap::setEdenActivityCallback(RefPtr<GCActivityCallback>&& callback)
 {
-    m_edenActivityCallback = WTFMove(callback);
+    m_edenActivityCallback = WTF::move(callback);
 }
 
 void Heap::disableStopIfNecessaryTimer()
@@ -3109,7 +3107,7 @@ void Heap::addCoreConstraints()
         MAKE_MARKING_CONSTRAINT_EXECUTOR_PAIR(([this] (auto& visitor) {
             SetRootMarkReasonScope rootScope(visitor, RootMarkReason::WeakSets);
             RefPtr<SharedTask<void(decltype(visitor)&)>> task = m_objectSpace.forEachWeakInParallel<decltype(visitor)>(visitor);
-            visitor.addParallelConstraintTask(WTFMove(task));
+            visitor.addParallelConstraintTask(WTF::move(task));
         })),
         ConstraintVolatility::GreyedByMarking,
         ConstraintParallelism::Parallel);
@@ -3127,7 +3125,7 @@ void Heap::addCoreConstraints()
             
             auto add = [&] (auto& set) {
                 RefPtr<SharedTask<void(decltype(visitor)&)>> task = set.template forEachMarkedCellInParallel<decltype(visitor)>(callOutputConstraint);
-                visitor.addParallelConstraintTask(WTFMove(task));
+                visitor.addParallelConstraintTask(WTF::move(task));
             };
 
             {
@@ -3191,7 +3189,7 @@ void Heap::addCoreConstraints()
 void Heap::addMarkingConstraint(std::unique_ptr<MarkingConstraint> constraint)
 {
     PreventCollectionScope preventCollectionScope(*this);
-    m_constraintSet->add(WTFMove(constraint));
+    m_constraintSet->add(WTF::move(constraint));
 }
 
 void Heap::notifyIsSafeToCollect()
@@ -3428,7 +3426,7 @@ void Heap::scheduleOpportunisticFullCollection()
         ASSERT(!m_##name); \
         auto space = makeUnique<IsoSubspace> ISO_SUBSPACE_INIT(*this, heapCellType, type); \
         WTF::storeStoreFence(); \
-        m_##name = WTFMove(space); \
+        m_##name = WTF::move(space); \
         return m_##name.get(); \
     }
 
@@ -3442,7 +3440,7 @@ FOR_EACH_JSC_DYNAMIC_ISO_SUBSPACE(DEFINE_DYNAMIC_ISO_SUBSPACE_MEMBER_SLOW)
         ASSERT(!m_##name); \
         auto space = makeUnique<spaceType> ISO_SUBSPACE_INIT(*this, heapCellType, type); \
         WTF::storeStoreFence(); \
-        m_##name = WTFMove(space); \
+        m_##name = WTF::move(space); \
         return &m_##name->space; \
     }
 
@@ -3457,7 +3455,7 @@ DEFINE_DYNAMIC_SPACE_AND_SET_MEMBER_SLOW(moduleProgramExecutableSpace, destructi
         ASSERT(!m_##name); \
         auto space = makeUnique<SubspaceType>(ASCIILiteral(#SubspaceType " " #name), *this, heapCellType, fastMallocAllocator.get()); \
         WTF::storeStoreFence(); \
-        m_##name = WTFMove(space); \
+        m_##name = WTF::move(space); \
         return m_##name.get(); \
     }
 
@@ -3473,7 +3471,7 @@ void Heap::reportWasmCalleePendingDestruction(Ref<Wasm::Callee>&& callee)
     ASSERT_UNUSED(boxedCallee, boxedCallee == removeArrayPtrTag(boxedCallee));
 
     Locker locker(m_wasmCalleesPendingDestructionLock);
-    m_wasmCalleesPendingDestruction.add(WTFMove(callee));
+    m_wasmCalleesPendingDestruction.add(WTF::move(callee));
 }
 
 bool Heap::isWasmCalleePendingDestruction(Wasm::Callee& callee)
@@ -3517,7 +3515,7 @@ Heap::~Heap()
         JSC::IsoSubspace& serverSpace = *server().name<SubspaceAccess::OnMainThread>(); \
         auto space = makeUnique<IsoSubspace>(serverSpace); \
         WTF::storeStoreFence(); \
-        m_##name = WTFMove(space); \
+        m_##name = WTF::move(space); \
         return m_##name.get(); \
     }
 

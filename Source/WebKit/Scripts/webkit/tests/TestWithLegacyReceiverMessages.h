@@ -602,7 +602,7 @@ public:
     static constexpr bool deferSendingIfSuspended = false;
 
     DidCreateWebProcessConnection(MachSendRight&& connectionIdentifier, const OptionSet<WebKit::SelectionFlags>& flags)
-        : m_connectionIdentifier(WTFMove(connectionIdentifier))
+        : m_connectionIdentifier(WTF::move(connectionIdentifier))
         , m_flags(flags)
     {
     }
@@ -610,7 +610,7 @@ public:
     template<typename Encoder>
     void encode(Encoder& encoder)
     {
-        encoder << WTFMove(m_connectionIdentifier);
+        encoder << WTF::move(m_connectionIdentifier);
         SUPPRESS_FORWARD_DECL_ARG encoder << m_flags;
     }
 

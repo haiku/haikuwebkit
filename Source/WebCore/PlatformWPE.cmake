@@ -56,6 +56,7 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/glib/SelectionData.h
     platform/glib/SystemSettings.h
 
+    platform/graphics/android/BufferFormatAndroid.h
     platform/graphics/android/GraphicsContextGLTextureMapperAndroid.h
     platform/graphics/android/PlatformDisplayAndroid.h
 
@@ -76,9 +77,12 @@ list(APPEND WebCore_PRIVATE_LIBRARIES
 
 list(APPEND WebCore_LIBRARIES
     GLib::Module
-    WPE::libwpe
     ${UPOWERGLIB_LIBRARIES}
 )
+
+if (ENABLE_WPE_LEGACY_API)
+    list(APPEND WebCore_LIBRARIES WPE::libwpe)
+endif ()
 
 list(APPEND WebCore_SYSTEM_INCLUDE_DIRECTORIES
     ${UPOWERGLIB_INCLUDE_DIRS}

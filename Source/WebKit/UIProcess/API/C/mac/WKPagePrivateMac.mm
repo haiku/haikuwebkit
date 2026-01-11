@@ -60,7 +60,7 @@ static Ref<WebKit::WebPageProxy> protectedPage(WKObservablePageState *state)
     if (!(self = [super init]))
         return nil;
 
-    _page = WTFMove(page);
+    _page = WTF::move(page);
     Ref observer = WebKit::PageLoadStateObserver::create(self, @"URL");
     _observer = observer.get();
     protectedPage(self)->protectedPageLoadState()->addObserver(observer.get());
@@ -72,7 +72,7 @@ static Ref<WebKit::WebPageProxy> protectedPage(WKObservablePageState *state)
 {
     Ref { *_observer }->clearObject();
 
-    ensureOnMainRunLoop([page = WTFMove(_page), observer = std::exchange(_observer, nullptr)] {
+    ensureOnMainRunLoop([page = WTF::move(_page), observer = std::exchange(_observer, nullptr)] {
         page->protectedPageLoadState()->removeObserver(*observer);
     });
 
@@ -143,7 +143,7 @@ bool WKPageIsURLKnownHSTSHost(WKPageRef page, WKURLRef url)
 WKNavigation *WKPageLoadURLRequestReturningNavigation(WKPageRef pageRef, WKURLRequestRef urlRequestRef)
 {
     auto resourceRequest = WebKit::toImpl(urlRequestRef)->resourceRequest();
-    return WebKit::wrapper(WebKit::toProtectedImpl(pageRef)->loadRequest(WTFMove(resourceRequest))).autorelease();
+    return WebKit::wrapper(WebKit::toProtectedImpl(pageRef)->loadRequest(WTF::move(resourceRequest))).autorelease();
 }
 
 WKNavigation *WKPageLoadFileReturningNavigation(WKPageRef pageRef, WKURLRef fileURL, WKURLRef resourceDirectoryURL)

@@ -918,9 +918,9 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
                     parent.parserAppendChild(Text::create(m_document, result.tryUseWhitespaceCache()));
             } else if (!result.escapedText.isEmpty()) {
                 if (!parent.isConnected())
-                    parent.parserAppendChildIntoIsolatedTree(Text::create(m_document, WTFMove(result.escapedText)));
+                    parent.parserAppendChildIntoIsolatedTree(Text::create(m_document, WTF::move(result.escapedText)));
                 else
-                    parent.parserAppendChild(Text::create(m_document, WTFMove(result.escapedText)));
+                    parent.parserAppendChild(Text::create(m_document, WTF::move(result.escapedText)));
             }
 
             if (m_parsingBuffer.atEnd())
@@ -976,7 +976,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
                 hasDuplicateAttributes = true;
                 continue;
             }
-            m_attributeBuffer.append(Attribute { WTFMove(attributeName), WTFMove(attributeValue) });
+            m_attributeBuffer.append(Attribute { WTF::move(attributeName), WTF::move(attributeValue) });
         }
         parent.parserSetAttributes(m_attributeBuffer, Element::AttributeModificationReason::ParserFastPath);
         if (hasDuplicateAttributes) [[unlikely]]
@@ -1072,7 +1072,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     {
         parseAttributes(element);
         if (parsingFailed())
-            return WTFMove(element);
+            return WTF::move(element);
         if (!parent.isConnected())
             parent.parserAppendChildIntoIsolatedTree(element);
         else
@@ -1097,21 +1097,21 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
             return didFail(HTMLFastPathResult::FailedUnexpectedTagNameCloseState, element);
 
         element->finishParsingChildren();
-        return WTFMove(element);
+        return WTF::move(element);
     }
 
     template<typename HTMLElementType> Ref<HTMLElementType> parseVoidElement(Ref<HTMLElementType>&& element, ContainerNode& parent)
     {
         parseAttributes(element);
         if (parsingFailed())
-            return WTFMove(element);
+            return WTF::move(element);
         if (!parent.isConnected())
             parent.parserAppendChildIntoIsolatedTree(element);
         else
             parent.parserAppendChild(element);
         element->beginParsingChildren();
         element->finishParsingChildren();
-        return WTFMove(element);
+        return WTF::move(element);
     }
 };
 

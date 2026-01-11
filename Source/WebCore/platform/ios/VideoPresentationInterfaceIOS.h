@@ -30,11 +30,11 @@
 
 #include <WebCore/EventListener.h>
 #include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/ImmersiveVideoMetadata.h>
 #include <WebCore/MediaPlayerIdentifier.h>
 #include <WebCore/PlatformImage.h>
 #include <WebCore/PlatformLayer.h>
 #include <WebCore/PlaybackSessionInterfaceIOS.h>
-#include <WebCore/SpatialVideoMetadata.h>
 #include <WebCore/VideoFullscreenCaptions.h>
 #include <WebCore/VideoPresentationLayerProvider.h>
 #include <WebCore/VideoPresentationModel.h>

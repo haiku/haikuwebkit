@@ -135,7 +135,7 @@ void JSTestAsyncKeyValueIterablePrototype::finishCreation(VM& vm)
 const ClassInfo JSTestAsyncKeyValueIterable::s_info = { "TestAsyncKeyValueIterable"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSTestAsyncKeyValueIterable) };
 
 JSTestAsyncKeyValueIterable::JSTestAsyncKeyValueIterable(Structure* structure, JSDOMGlobalObject& globalObject, Ref<TestAsyncKeyValueIterable>&& impl)
-    : JSDOMWrapper<TestAsyncKeyValueIterable>(structure, globalObject, WTFMove(impl))
+    : JSDOMWrapper<TestAsyncKeyValueIterable>(structure, globalObject, WTF::move(impl))
 {
 }
 
@@ -205,7 +205,7 @@ public:
 
     static TestAsyncKeyValueIterableIterator* create(JSC::VM& vm, JSC::Structure* structure, JSTestAsyncKeyValueIterable& iteratedObject, IterationKind kind, InternalIterator&& iterator)
     {
-        auto* instance = new (NotNull, JSC::allocateCell<TestAsyncKeyValueIterableIterator>(vm)) TestAsyncKeyValueIterableIterator(structure, iteratedObject, kind, WTFMove(iterator));
+        auto* instance = new (NotNull, JSC::allocateCell<TestAsyncKeyValueIterableIterator>(vm)) TestAsyncKeyValueIterableIterator(structure, iteratedObject, kind, WTF::move(iterator));
         instance->finishCreation(vm);
         return instance;
     }
@@ -215,7 +215,7 @@ public:
     JSC::JSBoundFunction* createOnRejectedFunction(JSC::JSGlobalObject*);
 private:
     TestAsyncKeyValueIterableIterator(JSC::Structure* structure, JSTestAsyncKeyValueIterable& iteratedObject, IterationKind kind, InternalIterator&& iterator)
-        : Base(structure, iteratedObject, kind, WTFMove(iterator))
+        : Base(structure, iteratedObject, kind, WTF::move(iterator))
     {
     }
 };
@@ -341,7 +341,7 @@ JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlo
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestAsyncKeyValueIterable>(impl.ptr());
 #endif
-    return createWrapper<TestAsyncKeyValueIterable>(globalObject, WTFMove(impl));
+    return createWrapper<TestAsyncKeyValueIterable>(globalObject, WTF::move(impl));
 }
 
 JSC::JSValue toJS(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, TestAsyncKeyValueIterable& impl)

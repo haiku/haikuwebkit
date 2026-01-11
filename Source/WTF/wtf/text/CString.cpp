@@ -112,7 +112,7 @@ void CString::copyBufferIfNeeded()
     if (!m_buffer || m_buffer->hasOneRef())
         return;
 
-    RefPtr<CStringBuffer> buffer = WTFMove(m_buffer);
+    RefPtr<CStringBuffer> buffer = WTF::move(m_buffer);
     size_t length = buffer->length();
     m_buffer = CStringBuffer::createUninitialized(length);
     memcpySpan(m_buffer->mutableSpanIncludingNullTerminator(), buffer->spanIncludingNullTerminator());
@@ -129,7 +129,7 @@ void CString::grow(size_t newLength)
 
     auto newBuffer = CStringBuffer::createUninitialized(newLength);
     memcpySpan(newBuffer->mutableSpanIncludingNullTerminator(), m_buffer->spanIncludingNullTerminator());
-    m_buffer = WTFMove(newBuffer);
+    m_buffer = WTF::move(newBuffer);
 }
 
 bool operator==(const CString& a, const CString& b)

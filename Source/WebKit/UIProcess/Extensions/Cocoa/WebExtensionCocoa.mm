@@ -120,7 +120,7 @@ WebExtension::WebExtension(NSBundle *appExtensionBundle, NSURL *resourceURL, Ref
 
 WebExtension::WebExtension(NSDictionary *manifest, Resources&& resources)
     : m_manifestJSON(JSON::Value::null())
-    , m_resources(WTFMove(resources))
+    , m_resources(WTF::move(resources))
 {
     RELEASE_ASSERT(manifest);
 

@@ -69,7 +69,7 @@
 #include "RenderEmbeddedObject.h"
 #include "RenderImage.h"
 #include "RenderLayer.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderTreeBuilder.h"
 #include "RenderTreeUpdater.h"
 #include "RenderView.h"
@@ -95,7 +95,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLPlugInElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLPlugInElement);
 
 using namespace HTMLNames;
 
@@ -294,13 +294,13 @@ bool HTMLPlugInElement::supportsFocus() const
 RenderPtr<RenderElement> HTMLPlugInElement::createPluginRenderer(RenderStyle&& style, const RenderTreePosition& insertionPosition)
 {
     if (m_pluginReplacement && m_pluginReplacement->willCreateRenderer()) {
-        RenderPtr<RenderElement> renderer = m_pluginReplacement->createElementRenderer(*this, WTFMove(style), insertionPosition);
+        RenderPtr<RenderElement> renderer = m_pluginReplacement->createElementRenderer(*this, WTF::move(style), insertionPosition);
         if (renderer)
             renderer->markIsYouTubeReplacement();
         return renderer;
     }
 
-    return createRenderer<RenderEmbeddedObject>(*this, WTFMove(style));
+    return createRenderer<RenderEmbeddedObject>(*this, WTF::move(style));
 }
 
 RenderPtr<RenderElement> HTMLPlugInElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition& insertionPosition)
@@ -308,7 +308,7 @@ RenderPtr<RenderElement> HTMLPlugInElement::createElementRenderer(RenderStyle&& 
     ASSERT(document().backForwardCacheState() == Document::NotInBackForwardCache);
 
     if (displayState() >= DisplayState::PreparingPluginReplacement)
-        return createPluginRenderer(WTFMove(style), insertionPosition);
+        return createPluginRenderer(WTF::move(style), insertionPosition);
 
     // Once a plug-in element creates its renderer, it needs to be told when the document goes
     // inactive or reactivates so it can clear the renderer before going into the back/forward cache.
@@ -318,12 +318,12 @@ RenderPtr<RenderElement> HTMLPlugInElement::createElementRenderer(RenderStyle&& 
     }
 
     if (useFallbackContent())
-        return RenderElement::createFor(*this, WTFMove(style));
+        return RenderElement::createFor(*this, WTF::move(style));
 
     if (isImageType())
-        return createRenderer<RenderImage>(RenderObject::Type::Image, *this, WTFMove(style));
+        return createRenderer<RenderImage>(RenderObject::Type::Image, *this, WTF::move(style));
 
-    return createPluginRenderer(WTFMove(style), insertionPosition);
+    return createPluginRenderer(WTF::move(style), insertionPosition);
 }
 
 bool HTMLPlugInElement::isReplaced(const RenderStyle*) const
@@ -483,14 +483,14 @@ bool HTMLPlugInElement::canLoadScriptURL(const URL&) const
 void HTMLPlugInElement::pluginDestroyedWithPendingPDFTestCallback(RefPtr<VoidCallback>&& callback)
 {
     ASSERT(!m_pendingPDFTestCallback);
-    m_pendingPDFTestCallback = WTFMove(callback);
+    m_pendingPDFTestCallback = WTF::move(callback);
 }
 
 RefPtr<VoidCallback> HTMLPlugInElement::takePendingPDFTestCallback()
 {
     if (!m_pendingPDFTestCallback)
         return nullptr;
-    return WTFMove(m_pendingPDFTestCallback);
+    return WTF::move(m_pendingPDFTestCallback);
 }
 
 void HTMLPlugInElement::updateImageLoaderWithNewURLSoon()

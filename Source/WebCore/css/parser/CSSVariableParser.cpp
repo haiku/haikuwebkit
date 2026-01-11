@@ -249,7 +249,7 @@ static std::optional<VariableType> classifyVariableRange(CSSParserTokenRange ran
     if (!classifyBlockResult)
         return { };
 
-    return VariableType { { }, WTFMove(*classifyBlockResult) };
+    return VariableType { { }, WTF::move(*classifyBlockResult) };
 }
 
 bool CSSVariableParser::containsValidVariableReferences(CSSParserTokenRange range, const CSSParserContext& parserContext)

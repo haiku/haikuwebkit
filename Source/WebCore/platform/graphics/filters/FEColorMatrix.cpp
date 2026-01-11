@@ -41,13 +41,13 @@ namespace WebCore {
 
 Ref<FEColorMatrix> FEColorMatrix::create(ColorMatrixType type, Vector<float>&& values, DestinationColorSpace colorSpace)
 {
-    return adoptRef(*new FEColorMatrix(type, WTFMove(values), colorSpace));
+    return adoptRef(*new FEColorMatrix(type, WTF::move(values), colorSpace));
 }
 
 FEColorMatrix::FEColorMatrix(ColorMatrixType type, Vector<float>&& values, DestinationColorSpace colorSpace)
     : FilterEffect(FilterEffect::Type::FEColorMatrix, colorSpace)
     , m_type(type)
-    , m_values(WTFMove(values))
+    , m_values(WTF::move(values))
 {
 }
 

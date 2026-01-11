@@ -569,6 +569,8 @@ public:
         ASSERT(!isObsolete(candidate));
         TableSize capacity = Helper::capacity(candidate);
         TableIndex entryKeyIndex = entryDataStartIndex(dataTableStartIndex(capacity), from);
+        if (from >= capacity) [[unlikely]]
+            return { };
         for (Entry entry = from;; ++entry, entryKeyIndex += EntrySize) {
             JSValue key = get(candidate, entryKeyIndex);
             if (!key)

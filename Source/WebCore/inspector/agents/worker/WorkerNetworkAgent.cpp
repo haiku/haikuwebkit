@@ -85,7 +85,7 @@ ScriptExecutionContext* WorkerNetworkAgent::scriptExecutionContext(Inspector::Pr
 
 void WorkerNetworkAgent::addConsoleMessage(std::unique_ptr<Inspector::ConsoleMessage>&& message)
 {
-    Ref { m_globalScope.get() }->addConsoleMessage(WTFMove(message));
+    Ref { m_globalScope.get() }->addConsoleMessage(WTF::move(message));
 }
 
 } // namespace WebCore

@@ -63,7 +63,7 @@ private:
     GridArea gridAreaForDefiniteGridAxisItem(const RenderBox&) const;
 
     void placeMasonryItems(const GridTrackSizingAlgorithm&, GridMasonryLayout::MasonryLayoutPhase);
-    void setItemGridAxisContainingBlockToGridArea(const GridTrackSizingAlgorithm&, RenderBox&);
+    void setItemContainingBlockToGridArea(const GridTrackSizingAlgorithm&, RenderBox&);
     void insertIntoGridAndLayoutItem(const GridTrackSizingAlgorithm&, RenderBox&, const GridArea&, GridMasonryLayout::MasonryLayoutPhase);
     LayoutUnit calculateMasonryIntrinsicLogicalWidth(RenderBox&, GridMasonryLayout::MasonryLayoutPhase);
 

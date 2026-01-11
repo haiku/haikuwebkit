@@ -1,7 +1,5 @@
 [ Mac ] accessibility/cocoa/AXCoreObjectCocoa.mm
 bridge/objc/WebScriptObject.h
-page/EventHandler.h
-platform/graphics/cg/CGSubimageCacheWithTimer.cpp
 platform/ios/WebAVPlayerController.h
 platform/ios/WebAVPlayerController.mm
 [ iOS ] platform/cocoa/WebAVPlayerLayer.h

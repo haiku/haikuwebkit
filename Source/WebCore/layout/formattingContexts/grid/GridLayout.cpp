@@ -30,7 +30,7 @@
 #include "GridItemRect.h"
 #include "GridLayoutUtils.h"
 #include "ImplicitGrid.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "LayoutBoxGeometry.h"
 #include "LayoutElementBox.h"
 #include "NotImplemented.h"

@@ -30,7 +30,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGFEColorMatrixElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGFEColorMatrixElement);
 
 inline SVGFEColorMatrixElement::SVGFEColorMatrixElement(const QualifiedName& tagName, Document& document)
     : SVGFilterPrimitiveStandardAttributes(tagName, document, makeUniqueRef<PropertyRegistry>(*this))
@@ -151,7 +151,7 @@ RefPtr<FilterEffect> SVGFEColorMatrixElement::createFilterEffect(const FilterEff
         filterValues.shrinkToFit();
     }
 
-    return FEColorMatrix::create(filterType, WTFMove(filterValues));
+    return FEColorMatrix::create(filterType, WTF::move(filterValues));
 }
 
 } // namespace WebCore

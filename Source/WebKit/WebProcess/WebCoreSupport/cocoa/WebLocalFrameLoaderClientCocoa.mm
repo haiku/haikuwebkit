@@ -51,7 +51,7 @@ void WebLocalFrameLoaderClient::setIsolatedTree(Ref<WebCore::AXIsolatedTree>&& t
 {
     ASSERT(isMainRunLoop());
     if (RefPtr webPage = m_frame->page())
-        webPage->setIsolatedTree(WTFMove(tree));
+        webPage->setIsolatedTree(WTF::move(tree));
 }
 #endif
 

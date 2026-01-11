@@ -47,6 +47,7 @@
 #include "SVGAngle.h"
 #include "SVGDocumentExtensions.h"
 #include "SVGElementTypeHelpers.h"
+#include "SVGImage.h"
 #include "SVGLength.h"
 #include "SVGMatrix.h"
 #include "SVGNumber.h"
@@ -64,7 +65,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGSVGElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGSVGElement);
 
 inline SVGSVGElement::SVGSVGElement(const QualifiedName& tagName, Document& document)
     : SVGGraphicsElement(tagName, document, makeUniqueRef<PropertyRegistry>(*this), TypeFlag::HasDidMoveToNewDocument)
@@ -287,9 +288,9 @@ Ref<NodeList> SVGSVGElement::collectIntersectionOrEnclosureList(SVGRect& rect, S
     Vector<Ref<Element>> elements;
     for (Ref element : descendantsOfType<SVGElement>(referenceElement ? *referenceElement : *this)) {
         if (checkFunction(element, rect))
-            elements.append(WTFMove(element));
+            elements.append(WTF::move(element));
     }
-    return StaticElementList::create(WTFMove(elements));
+    return StaticElementList::create(WTF::move(elements));
 }
 
 static bool checkIntersectionWithoutUpdatingLayout(SVGElement& element, SVGRect& rect)
@@ -467,14 +468,14 @@ RenderPtr<RenderElement> SVGSVGElement::createElementRenderer(RenderStyle&& styl
     if (isOutermostSVGSVGElement()) {
         if (document().settings().layerBasedSVGEngineEnabled()) {
             protectedDocument()->setMayHaveRenderedSVGRootElements();
-            return createRenderer<RenderSVGRoot>(*this, WTFMove(style));
+            return createRenderer<RenderSVGRoot>(*this, WTF::move(style));
         }
-        return createRenderer<LegacyRenderSVGRoot>(*this, WTFMove(style));
+        return createRenderer<LegacyRenderSVGRoot>(*this, WTF::move(style));
     }
 
     if (document().settings().layerBasedSVGEngineEnabled())
-        return createRenderer<RenderSVGViewportContainer>(*this, WTFMove(style));
-    return createRenderer<LegacyRenderSVGViewportContainer>(*this, WTFMove(style));
+        return createRenderer<RenderSVGViewportContainer>(*this, WTF::move(style));
+    return createRenderer<LegacyRenderSVGViewportContainer>(*this, WTF::move(style));
 }
 
 bool SVGSVGElement::isReplaced(const RenderStyle*) const
@@ -573,6 +574,11 @@ bool SVGSVGElement::hasTransformRelatedAttributes() const
     return (hasAttribute(SVGNames::xAttr) || hasAttribute(SVGNames::yAttr)) || (hasAttribute(SVGNames::viewBoxAttr) && !hasEmptyViewBox());
 }
 
+static bool isEmbeddedThroughSVGImage(const SVGSVGElement& element)
+{
+    return element.document().documentElement() == &element && isInSVGImage(&element);
+}
+
 FloatRect SVGSVGElement::currentViewBoxRect() const
 {
     if (m_useCurrentView) {
@@ -585,24 +591,7 @@ FloatRect SVGSVGElement::currentViewBoxRect() const
     if (!viewBox.isEmpty())
         return viewBox;
 
-    auto isEmbeddedThroughSVGImage = [this](const RenderElement* renderer) -> bool {
-        auto isDocumentElement = document().documentElement() == this;
-        if (!isDocumentElement)
-            return false;
-
-        if (!renderer)
-            return false;
-
-        if (auto* svgRoot = dynamicDowncast<LegacyRenderSVGRoot>(renderer))
-            return svgRoot->isEmbeddedThroughSVGImage();
-
-        if (auto* svgRoot = dynamicDowncast<RenderSVGRoot>(renderer))
-            return svgRoot->isEmbeddedThroughSVGImage();
-
-        return false;
-    };
-
-    if (!isEmbeddedThroughSVGImage(checkedRenderer().get()))
+    if (!isEmbeddedThroughSVGImage(*this))
         return { };
 
     // If no viewBox is specified but non-relative width/height values, then we
@@ -668,8 +657,17 @@ float SVGSVGElement::intrinsicHeight() const
 
 AffineTransform SVGSVGElement::viewBoxToViewTransform(float viewWidth, float viewHeight) const
 {
-    if (!m_useCurrentView || !m_viewSpec)
-        return SVGFitToViewBox::viewBoxToViewTransform(currentViewBoxRect(), preserveAspectRatio(), viewWidth, viewHeight);
+    if (!m_useCurrentView || !m_viewSpec) {
+        auto currentViewBox = currentViewBoxRect();
+        // If we synthesized a viewBox (no explicit viewBox but embedded through SVGImage),
+        // we should also synthesize preserveAspectRatio="none" to allow stretching.
+        if (viewBox().isEmpty() && !currentViewBox.isEmpty() && isEmbeddedThroughSVGImage(*this)) {
+            auto preserveAspectRatio = SVGPreserveAspectRatioValue(SVGPreserveAspectRatioValue::SVG_PRESERVEASPECTRATIO_NONE, SVGPreserveAspectRatioValue::SVG_MEETORSLICE_MEET);
+            return SVGFitToViewBox::viewBoxToViewTransform(currentViewBox, preserveAspectRatio, viewWidth, viewHeight);
+        }
+
+        return SVGFitToViewBox::viewBoxToViewTransform(currentViewBox, preserveAspectRatio(), viewWidth, viewHeight);
+    }
 
     RefPtr viewSpec = m_viewSpec;
     AffineTransform transform = SVGFitToViewBox::viewBoxToViewTransform(currentViewBoxRect(), viewSpec->preserveAspectRatio(), viewWidth, viewHeight);

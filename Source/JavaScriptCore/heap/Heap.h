@@ -610,7 +610,7 @@ public:
 
     void appendPossiblyAccessedStringFromConcurrentThreads(String&& string)
     {
-        m_possiblyAccessedStringsFromConcurrentThreads.append(WTFMove(string));
+        m_possiblyAccessedStringsFromConcurrentThreads.append(WTF::move(string));
     }
 
     bool isInPhase(CollectorPhase phase) const { return m_currentPhase == phase; }

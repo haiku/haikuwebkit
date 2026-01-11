@@ -147,7 +147,7 @@ void RemoteGraphicsContext::setFillCachedGradient(RemoteGradientIdentifier ident
 
 void RemoteGraphicsContext::setFillGradient(Ref<Gradient>&& gradient, const AffineTransform& spaceTransform)
 {
-    context().setFillGradient(WTFMove(gradient), spaceTransform);
+    context().setFillGradient(WTF::move(gradient), spaceTransform);
 }
 
 void RemoteGraphicsContext::setFillPatternNativeImage(RenderingResourceIdentifier identifier, const PatternParameters& parameters)
@@ -188,7 +188,7 @@ void RemoteGraphicsContext::setStrokeCachedGradient(RemoteGradientIdentifier ide
 
 void RemoteGraphicsContext::setStrokeGradient(Ref<Gradient>&& gradient, const AffineTransform& spaceTransform)
 {
-    context().setStrokeGradient(WTFMove(gradient), spaceTransform);
+    context().setStrokeGradient(WTF::move(gradient), spaceTransform);
 }
 
 void RemoteGraphicsContext::setStrokePatternNativeImage(RenderingResourceIdentifier identifier, const PatternParameters& parameters)
@@ -360,7 +360,7 @@ void RemoteGraphicsContext::drawFilteredImageBufferInternal(std::optional<Render
 
         auto effectImage = sourceImage(feImage->sourceImage().imageIdentifier());
         MESSAGE_CHECK(effectImage);
-        feImage->setImageSource(WTFMove(*effectImage));
+        feImage->setImageSource(WTF::move(*effectImage));
     }
 
     context().drawFilteredImageBuffer(sourceImageBuffer.get(), sourceImageRect, filter, results);
@@ -381,7 +381,7 @@ void RemoteGraphicsContext::drawFilteredImageBuffer(std::optional<RenderingResou
     }
 
     RefPtr cachedFilter = resourceCache().cachedFilter(filter->renderingResourceIdentifier());
-    RefPtr cachedSVGFilter = dynamicDowncast<SVGFilterRenderer>(WTFMove(cachedFilter));
+    RefPtr cachedSVGFilter = dynamicDowncast<SVGFilterRenderer>(WTF::move(cachedFilter));
     MESSAGE_CHECK(cachedSVGFilter);
 
     cachedSVGFilter->mergeEffects(svgFilter->effects());
@@ -392,7 +392,7 @@ void RemoteGraphicsContext::drawFilteredImageBuffer(std::optional<RenderingResou
 #else
         auto allocator = makeUnique<ImageBufferShareableAllocator>(m_sharedResourceCache->resourceOwner());
 #endif
-        return makeUnique<FilterResults>(WTFMove(allocator));
+        return makeUnique<FilterResults>(WTF::move(allocator));
     });
 
     drawFilteredImageBufferInternal(sourceImageIdentifier, sourceImageRect, *cachedSVGFilter, results);
@@ -599,18 +599,18 @@ SharedVideoFrameReader& RemoteGraphicsContext::sharedVideoFrameReader()
 
 void RemoteGraphicsContext::drawVideoFrame(SharedVideoFrame&& frame, const FloatRect& destination, ImageOrientation orientation, bool shouldDiscardAlpha)
 {
-    if (auto videoFrame = sharedVideoFrameReader().read(WTFMove(frame)))
+    if (auto videoFrame = sharedVideoFrameReader().read(WTF::move(frame)))
         context().drawVideoFrame(*videoFrame, destination, orientation, shouldDiscardAlpha);
 }
 
 void RemoteGraphicsContext::setSharedVideoFrameSemaphore(IPC::Semaphore&& semaphore)
 {
-    sharedVideoFrameReader().setSemaphore(WTFMove(semaphore));
+    sharedVideoFrameReader().setSemaphore(WTF::move(semaphore));
 }
 
 void RemoteGraphicsContext::setSharedVideoFrameMemory(SharedMemory::Handle&& handle)
 {
-    sharedVideoFrameReader().setSharedMemory(WTFMove(handle));
+    sharedVideoFrameReader().setSharedMemory(WTF::move(handle));
 }
 #endif // PLATFORM(COCOA) && ENABLE(VIDEO)
 

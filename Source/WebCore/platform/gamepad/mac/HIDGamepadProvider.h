@@ -44,7 +44,7 @@ class GamepadProviderClient;
 
 class HIDGamepadProvider final : public GamepadProvider, public CanMakeCheckedPtr<HIDGamepadProvider> {
     WTF_MAKE_NONCOPYABLE(HIDGamepadProvider);
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HIDGamepadProvider);
+    WTF_MAKE_TZONE_ALLOCATED(HIDGamepadProvider);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HIDGamepadProvider);
     friend class NeverDestroyed<HIDGamepadProvider>;
 public:

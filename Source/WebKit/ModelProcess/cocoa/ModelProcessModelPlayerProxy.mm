@@ -101,15 +101,15 @@ class RKModelUSD final : public WebCore::REModel {
 public:
     static Ref<RKModelUSD> create(Ref<Model> model, RetainPtr<WKRKEntity> entity)
     {
-        return adoptRef(*new RKModelUSD(WTFMove(model), WTFMove(entity)));
+        return adoptRef(*new RKModelUSD(WTF::move(model), WTF::move(entity)));
     }
 
     virtual ~RKModelUSD() = default;
 
 private:
     RKModelUSD(Ref<Model> model, RetainPtr<WKRKEntity> entity)
-        : m_model { WTFMove(model) }
-        , m_entity { WTFMove(entity) }
+        : m_model { WTF::move(model) }
+        , m_entity { WTF::move(entity) }
     {
     }
 
@@ -168,7 +168,7 @@ private:
             return;
 
         if (auto strongClient = m_client.get())
-            strongClient->didFinishLoading(*this, RKModelUSD::create(WTFMove(m_model), entity));
+            strongClient->didFinishLoading(*this, RKModelUSD::create(WTF::move(m_model), entity));
     }
 
     void didFail(ResourceError error)
@@ -177,7 +177,7 @@ private:
             return;
 
         if (auto strongClient = m_client.get())
-            strongClient->didFailLoading(*this, WTFMove(error));
+            strongClient->didFailLoading(*this, WTF::move(error));
     }
 
     bool m_canceled { false };
@@ -201,7 +201,7 @@ void RKModelLoaderUSD::load(CompletionHandler<void()>&& completionHandler)
     RetainPtr<NSString> attributionID;
     if (m_attributionTaskID.has_value())
         attributionID = m_attributionTaskID.value().createNSString();
-    [getWKRKEntityClassSingleton() loadFromData:m_model->data()->createNSData().get() withAttributionTaskID:attributionID.get() entityMemoryLimit:(m_entityMemoryLimit ? *m_entityMemoryLimit : 0) completionHandler:makeBlockPtr([weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)] (WKRKEntity *entity) mutable {
+    [getWKRKEntityClassSingleton() loadFromData:m_model->data()->createNSData().get() withAttributionTaskID:attributionID.get() entityMemoryLimit:(m_entityMemoryLimit ? *m_entityMemoryLimit : 0) completionHandler:makeBlockPtr([weakThis = WeakPtr { *this }, completionHandler = WTF::move(completionHandler)] (WKRKEntity *entity) mutable {
         completionHandler();
 
         RefPtr protectedThis = weakThis.get();
@@ -281,12 +281,12 @@ uint64_t ModelProcessModelPlayerProxy::gObjectCountForTesting = 0;
 
 Ref<ModelProcessModelPlayerProxy> ModelProcessModelPlayerProxy::create(ModelProcessModelPlayerManagerProxy& manager, WebCore::ModelPlayerIdentifier identifier, Ref<IPC::Connection>&& connection, const std::optional<String>& attributionTaskID, std::optional<int> debugEntityMemoryLimit)
 {
-    return adoptRef(*new ModelProcessModelPlayerProxy(manager, identifier, WTFMove(connection), attributionTaskID, debugEntityMemoryLimit));
+    return adoptRef(*new ModelProcessModelPlayerProxy(manager, identifier, WTF::move(connection), attributionTaskID, debugEntityMemoryLimit));
 }
 
 ModelProcessModelPlayerProxy::ModelProcessModelPlayerProxy(ModelProcessModelPlayerManagerProxy& manager, WebCore::ModelPlayerIdentifier identifier, Ref<IPC::Connection>&& connection, const std::optional<String>& attributionTaskID, std::optional<int> debugEntityMemoryLimit)
     : m_id(identifier)
-    , m_webProcessConnection(WTFMove(connection))
+    , m_webProcessConnection(WTF::move(connection))
     , m_manager(manager)
     , m_attributionTaskID(attributionTaskID)
     , m_debugEntityMemoryLimit(debugEntityMemoryLimit)
@@ -372,8 +372,8 @@ void ModelProcessModelPlayerProxy::loadModel(Ref<WebCore::Model>&& model, WebCor
 
 void ModelProcessModelPlayerProxy::reloadModel(Ref<WebCore::Model>&& model, WebCore::LayoutSize layoutSize, std::optional<WebCore::TransformationMatrix> entityTransformToRestore, std::optional<WebCore::ModelPlayerAnimationState> animationStateToRestore)
 {
-    m_entityTransformToRestore = WTFMove(entityTransformToRestore);
-    m_animationStateToRestore = WTFMove(animationStateToRestore);
+    m_entityTransformToRestore = WTF::move(entityTransformToRestore);
+    m_animationStateToRestore = WTF::move(animationStateToRestore);
     if (m_animationStateToRestore) {
         m_autoplay = m_animationStateToRestore->autoplay();
         m_loop = m_animationStateToRestore->loop();
@@ -885,7 +885,7 @@ void ModelProcessModelPlayerProxy::setCurrentTime(Seconds currentTime, Completio
 
 void ModelProcessModelPlayerProxy::setEnvironmentMap(Ref<WebCore::SharedBuffer>&& data)
 {
-    m_transientEnvironmentMapData = WTFMove(data);
+    m_transientEnvironmentMapData = WTF::move(data);
     if (m_modelRKEntity)
         applyEnvironmentMapDataAndRelease([] { });
 }
@@ -961,7 +961,7 @@ void ModelProcessModelPlayerProxy::applyEnvironmentMapDataAndRelease(CompletionH
 #if HAVE(MODEL_MEMORY_ATTRIBUTION)
                 setIBLAssetOwnership(*(protectedThis->m_attributionTaskID), coreEnvironmentResourceAsset);
 #endif
-            }).get() withCompletion:makeBlockPtr([weakThis = WeakPtr { *this }, completion = WTFMove(completion)] (BOOL succeeded) mutable {
+            }).get() withCompletion:makeBlockPtr([weakThis = WeakPtr { *this }, completion = WTF::move(completion)] (BOOL succeeded) mutable {
                 completion();
                 RefPtr protectedThis = weakThis.get();
                 if (!protectedThis)
@@ -1053,7 +1053,7 @@ void ModelProcessModelPlayerProxy::applyDefaultIBL()
 void ModelProcessModelPlayerProxy::ensureImmersivePresentation(CompletionHandler<void(std::optional<WebCore::LayerHostingContextIdentifier>)>&& completion)
 {
     setImmersivePresentation(true);
-    ensureModelLoaded([weakThis = WeakPtr { *this }, completion = WTFMove(completion)] (bool loaded) mutable {
+    ensureModelLoaded([weakThis = WeakPtr { *this }, completion = WTF::move(completion)] (bool loaded) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return completion(std::nullopt);
@@ -1095,7 +1095,7 @@ void ModelProcessModelPlayerProxy::ensureModelLoaded(CompletionHandler<void(bool
         return;
     }
 
-    m_modelLoadedCallbacks.append(WTFMove(completion));
+    m_modelLoadedCallbacks.append(WTF::move(completion));
 }
 
 void ModelProcessModelPlayerProxy::triggerModelLoadedCallbacks(bool result)

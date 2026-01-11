@@ -44,8 +44,8 @@
 #include "RenderLayerCompositor.h"
 #include "RenderObjectInlines.h"
 #include "RenderStyle.h"
-#include "RenderStyleInlines.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+GettersInlines.h"
+#include "RenderStyle+SettersInlines.h"
 #include "RenderView.h"
 #include "StyleBuilderState.h"
 #include "StyleScope.h"
@@ -285,7 +285,7 @@ void AnchorPositionEvaluator::captureScrollSnapshots(RenderBox& anchored, bool i
         || anchored.style().positionVisibility().contains(PositionVisibilityValue::NoOverflow))
         adjuster.setFallbackLimits(anchored);
 
-    auto captureDiff = anchored.layoutContext().registerAnchorScrollAdjuster(WTFMove(adjuster));
+    auto captureDiff = anchored.layoutContext().registerAnchorScrollAdjuster(WTF::move(adjuster));
     if (invalidateStyleForScrollPositionChanges && AnchorScrollAdjuster::SnapshotsDiffer == captureDiff && anchored.style().usesAnchorFunctions()) {
         // Scroll positions changed since the last capture, which means anchor() resolution needs updating.
         if (CheckedPtr element = anchored.element())
@@ -437,7 +437,7 @@ static LayoutSize offsetFromAncestorContainer(const RenderElement& descendantCon
 
         offset += currentOffset;
         referencePoint.move(currentOffset);
-        currentContainer = WTFMove(nextContainer);
+        currentContainer = WTF::move(nextContainer);
     } while (currentContainer != maxContainer);
 
     if (CheckedPtr descendantInline = dynamicDowncast<RenderInline>(&descendantContainer)) {
@@ -738,7 +738,7 @@ static LayoutUnit computeInsetValue(CSSPropertyID insetPropertyID, CheckedRef<co
 
 CheckedPtr<RenderBoxModelObject> AnchorPositionEvaluator::findAnchorForAnchorFunctionAndAttemptResolution(BuilderState& builderState, std::optional<ScopedName> anchorNameArgument)
 {
-    auto& style = builderState.style();
+    auto& style = builderState.renderStyle();
     style.setUsesAnchorFunctions();
 
     if (!builderState.anchorPositionedStates())
@@ -828,7 +828,7 @@ bool AnchorPositionEvaluator::propertyAllowsAnchorFunction(CSSPropertyID propert
 
 std::optional<double> AnchorPositionEvaluator::evaluate(BuilderState& builderState, std::optional<ScopedName> elementName, Side side)
 {
-    auto& style = builderState.style();
+    auto& style = builderState.renderStyle();
 
     auto propertyID = builderState.cssPropertyID();
     auto physicalAxis = mapInsetPropertyToPhysicalAxis(propertyID, style.writingMode());
@@ -952,7 +952,7 @@ bool AnchorPositionEvaluator::propertyAllowsAnchorSizeFunction(CSSPropertyID pro
 std::optional<double> AnchorPositionEvaluator::evaluateSize(BuilderState& builderState, std::optional<ScopedName> elementName, std::optional<AnchorSizeDimension> dimension)
 {
     auto propertyID = builderState.cssPropertyID();
-    const auto& style = builderState.style();
+    const auto& style = builderState.renderStyle();
 
     auto isValidAnchorSize = [&] {
         // It’s being used in a sizing property, an inset property, or a margin property...
@@ -1295,7 +1295,7 @@ void AnchorPositionEvaluator::updateAnchorPositioningStatesAfterInterleavedLayou
                 }
                 document.styleScope().anchorPositionedToAnchorMap().set(*element, AnchorPositionedToAnchorEntry {
                     .pseudoElementIdentifier = elementAndState.key.second,
-                    .anchors = WTFMove(anchors)
+                    .anchors = WTF::move(anchors)
                 });
             }
             state.stage = renderer && renderer->style().usesAnchorFunctions() ? AnchorPositionResolutionStage::ResolveAnchorFunctions : AnchorPositionResolutionStage::Resolved;

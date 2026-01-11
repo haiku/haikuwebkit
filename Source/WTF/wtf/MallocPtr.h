@@ -62,7 +62,7 @@ public:
         return m_ptr;
     }
 
-    T *leakPtr() WARN_UNUSED_RETURN
+    WARN_UNUSED_RETURN T* leakPtr()
     {
         return std::exchange(m_ptr, nullptr);
     }
@@ -90,7 +90,7 @@ public:
 
     MallocPtr& operator=(MallocPtr&& other)
     {
-        MallocPtr ptr = WTFMove(other);
+        MallocPtr ptr = WTF::move(other);
         swap(ptr);
 
         return *this;

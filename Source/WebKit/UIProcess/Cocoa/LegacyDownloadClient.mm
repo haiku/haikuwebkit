@@ -151,7 +151,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 ALLOW_DEPRECATED_DECLARATIONS_END
         completionHandler(allowOverwrite ? AllowOverwrite::Yes : AllowOverwrite::No, destination.get());
     } else {
-        [m_delegate.get() _download:[_WKDownload downloadWithDownload:RetainPtr { wrapper(downloadProxy) }.get()] decideDestinationWithSuggestedFilename:filename.createNSString().get() completionHandler:makeBlockPtr([checker = CompletionHandlerCallChecker::create(m_delegate.get().get(), @selector(_download:decideDestinationWithSuggestedFilename:completionHandler:)), completionHandler = WTFMove(completionHandler)] (BOOL allowOverwrite, NSString *destination) mutable {
+        [m_delegate.get() _download:[_WKDownload downloadWithDownload:RetainPtr { wrapper(downloadProxy) }.get()] decideDestinationWithSuggestedFilename:filename.createNSString().get() completionHandler:makeBlockPtr([checker = CompletionHandlerCallChecker::create(m_delegate.get().get(), @selector(_download:decideDestinationWithSuggestedFilename:completionHandler:)), completionHandler = WTF::move(completionHandler)] (BOOL allowOverwrite, NSString *destination) mutable {
             if (checker->completionHandlerHasBeenCalled())
                 return;
             checker->didCallCompletionHandler();
@@ -183,7 +183,7 @@ void LegacyDownloadClient::willSendRequest(DownloadProxy& downloadProxy, WebCore
     if (m_delegateMethods.downloadDidReceiveServerRedirectToURL)
         [m_delegate.get() _download:[_WKDownload downloadWithDownload:RetainPtr { wrapper(downloadProxy) }.get()] didReceiveServerRedirectToURL:request.url().createNSURL().get()];
 
-    completionHandler(WTFMove(request));
+    completionHandler(WTF::move(request));
 }
 
 ALLOW_DEPRECATED_DECLARATIONS_END

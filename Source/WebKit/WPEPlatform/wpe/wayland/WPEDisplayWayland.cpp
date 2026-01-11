@@ -272,7 +272,7 @@ const struct wl_registry_listener registryListener = {
         else if (interfaceName == "wl_output"_s) {
             GRefPtr<WPEScreen> screen = adoptGRef(wpeScreenWaylandCreate(name, static_cast<struct wl_output*>(wl_registry_bind(registry, name, &wl_output_interface, std::min<uint32_t>(version, 2)))));
             auto* screenPtr = screen.get();
-            priv->screens.append(WTFMove(screen));
+            priv->screens.append(WTF::move(screen));
             wpe_display_screen_added(WPE_DISPLAY(display), screenPtr);
         } else if (interfaceName == "wl_shm"_s)
             priv->wlSHM = static_cast<struct wl_shm*>(wl_registry_bind(registry, name, &wl_shm_interface, 1));

@@ -58,7 +58,8 @@
 #include "Page.h"
 #include "PathOperation.h"
 #include "RenderBox.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+GettersInlines.h"
+#include "RenderStyle+SettersInlines.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
 #include "SVGElement.h"
@@ -69,6 +70,7 @@
 #include "Settings.h"
 #include "ShadowRoot.h"
 #include "StylableInlines.h"
+#include "StyleComputedStyle+InitialInlines.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StyleSelfAlignmentData.h"
 #include "StyleTextDecorationLine.h"
@@ -290,10 +292,10 @@ static Style::TouchAction computeUsedTouchAction(const RenderStyle& style, Style
 
     bool hasDefaultTouchBehavior = isScrollableOverflow(style.overflowX()) || isScrollableOverflow(style.overflowY());
     if (hasDefaultTouchBehavior)
-        usedTouchAction = RenderStyle::initialTouchAction();
+        usedTouchAction = Style::ComputedStyle::initialTouchAction();
 
     auto touchAction = style.touchAction();
-    if (touchAction == RenderStyle::initialTouchAction())
+    if (touchAction == Style::ComputedStyle::initialTouchAction())
         return usedTouchAction;
 
     if (usedTouchAction.isNone() || touchAction.isNone())
@@ -832,7 +834,7 @@ void Adjuster::adjust(RenderStyle& style) const
 
     // If the inherited value of justify-items includes the 'legacy' keyword (plus 'left', 'right' or
     // 'center'), 'legacy' computes to the the inherited value. Otherwise, 'auto' computes to 'normal'.
-    if (m_parentBoxStyle.justifyItems().resolve().positionType() == ItemPositionType::Legacy && style.justifyItems().resolve().position() == ItemPosition::Legacy)
+    if (m_parentBoxStyle.justifyItems().isLegacy() && style.justifyItems().isLegacyNone())
         style.setJustifyItems(m_parentBoxStyle.justifyItems());
 
 #if HAVE(CORE_MATERIAL)
@@ -962,7 +964,7 @@ void Adjuster::adjustSVGElementStyle(RenderStyle& style, const SVGElement& svgEl
 {
     // Only the root <svg> element in an SVG document fragment tree honors css position
     if (!svgElement.isOutermostSVGSVGElement())
-        style.setPosition(RenderStyle::initialPosition());
+        style.setPosition(Style::ComputedStyle::initialPosition());
 
     // SVG2: A new stacking context must be established at an SVG element for its descendants if:
     // - it is the root element
@@ -998,7 +1000,7 @@ void Adjuster::adjustSVGElementStyle(RenderStyle& style, const SVGElement& svgEl
     // (Legacy)RenderSVGRoot handles zooming for the whole SVG subtree, so foreignObject content should
     // not be scaled again.
     if (svgElement.hasTagName(SVGNames::foreignObjectTag))
-        style.setUsedZoom(Style::evaluate<float>(RenderStyle::initialZoom()));
+        style.setUsedZoom(Style::evaluate<float>(Style::ComputedStyle::initialZoom()));
 
     // SVG text layout code expects us to be a block-level style element.
     // While in theory any block level element would work (flex, grid etc), since we construct RenderBlockFlow for both foreign object and svg text,
@@ -1153,8 +1155,8 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         menuFadeInAnimation.setFillMode(AnimationFillMode::Forwards);
 
         auto& animations = style.ensureAnimations();
-        animations.append(WTFMove(menuGrowLeftAnimation));
-        animations.append(WTFMove(menuFadeInAnimation));
+        animations.append(WTF::move(menuGrowLeftAnimation));
+        animations.append(WTF::move(menuFadeInAnimation));
     }
 
 #if PLATFORM(IOS_FAMILY)
@@ -1171,6 +1173,9 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
             style.setBackgroundColor({ WebCore::Color::transparentBlack });
     }
 #endif
+
+    if (documentQuirks.needsInstagramResizingReelsQuirk(*m_element, style, m_parentStyle))
+        style.setFlexGrow(1);
 }
 
 void Adjuster::propagateToDocumentElementAndInitialContainingBlock(Update& update, const Document& document)
@@ -1196,7 +1201,7 @@ void Adjuster::propagateToDocumentElementAndInitialContainingBlock(Update& updat
             return bodyStyle->writingMode().computedWritingMode();
         if (documentElementStyle->hasExplicitlySetWritingMode())
             return documentElementStyle->writingMode().computedWritingMode();
-        return RenderStyle::initialWritingMode();
+        return Style::ComputedStyle::initialWritingMode();
     }();
 
     auto direction = [&] {
@@ -1204,7 +1209,7 @@ void Adjuster::propagateToDocumentElementAndInitialContainingBlock(Update& updat
             return documentElementStyle->writingMode().computedTextDirection();
         if (shouldPropagateFromBody && bodyStyle && bodyStyle->hasExplicitlySetDirection())
             return bodyStyle->writingMode().computedTextDirection();
-        return RenderStyle::initialDirection();
+        return Style::ComputedStyle::initialDirection();
     }();
 
     // https://drafts.csswg.org/css-writing-modes-3/#icb
@@ -1214,7 +1219,7 @@ void Adjuster::propagateToDocumentElementAndInitialContainingBlock(Update& updat
         newRootStyle->setWritingMode(writingMode);
         newRootStyle->setDirection(direction);
         newRootStyle->setColumnStylesFromPaginationMode(document.view()->pagination().mode);
-        update.addInitialContainingBlockUpdate(WTFMove(newRootStyle));
+        update.addInitialContainingBlockUpdate(WTF::move(newRootStyle));
     }
 
     // https://drafts.csswg.org/css-writing-modes-3/#principal-flow
@@ -1232,14 +1237,14 @@ void Adjuster::propagateToDocumentElementAndInitialContainingBlock(Update& updat
 
 std::unique_ptr<RenderStyle> Adjuster::restoreUsedDocumentElementStyleToComputed(const RenderStyle& style)
 {
-    if (style.writingMode().computedWritingMode() == RenderStyle::initialWritingMode() && style.writingMode().computedTextDirection() == RenderStyle::initialDirection())
+    if (style.writingMode().computedWritingMode() == Style::ComputedStyle::initialWritingMode() && style.writingMode().computedTextDirection() == Style::ComputedStyle::initialDirection())
         return { };
 
     auto adjusted = RenderStyle::clonePtr(style);
     if (!style.hasExplicitlySetWritingMode())
-        adjusted->setWritingMode(RenderStyle::initialWritingMode());
+        adjusted->setWritingMode(Style::ComputedStyle::initialWritingMode());
     if (!style.hasExplicitlySetDirection())
-        adjusted->setDirection(RenderStyle::initialDirection());
+        adjusted->setDirection(Style::ComputedStyle::initialDirection());
 
     return adjusted;
 }
@@ -1280,7 +1285,7 @@ auto Adjuster::adjustmentForTextAutosizing(const RenderStyle& style, const Eleme
 
         constexpr static float boostFactor = 1.25;
         auto minimumLineHeight = boostFactor * computedFontSize;
-        if (auto fixedLineHeight = lineHeight.tryFixed(); !fixedLineHeight || fixedLineHeight->resolveZoom(ZoomFactor { 1.0f, style.deviceScaleFactor() }) >= minimumLineHeight)
+        if (auto fixedLineHeight = lineHeight.tryFixed(); !fixedLineHeight || fixedLineHeight->resolveZoom(ZoomFactor { 1.0f }) >= minimumLineHeight)
             return;
 
         if (AutosizeStatus::probablyContainsASmallFixedNumberOfLines(style))
@@ -1320,7 +1325,7 @@ bool Adjuster::adjustForTextAutosizing(RenderStyle& style, AdjustmentForTextAuto
     if (auto newFontSize = adjustment.newFontSize) {
         auto fontDescription = style.fontDescription();
         fontDescription.setComputedSize(*newFontSize);
-        style.setFontDescription(WTFMove(fontDescription));
+        style.setFontDescription(WTF::move(fontDescription));
     }
     if (auto newLineHeight = adjustment.newLineHeight)
         style.setLineHeight(LineHeight::Fixed { *newLineHeight });

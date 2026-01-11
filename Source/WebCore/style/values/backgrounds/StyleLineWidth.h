@@ -62,6 +62,12 @@ using LineWidthBox = MinimallySerializingSpaceSeparatedRectEdges<Style::LineWidt
 
 template<> struct CSSValueConversion<LineWidth> { auto operator()(BuilderState&, const CSSValue&) -> LineWidth; };
 
+// MARK: - Blending
+
+template<> struct Blending<LineWidth> {
+    auto blend(const LineWidth&, const LineWidth&, const RenderStyle&, const RenderStyle&, const Interpolation::Context&) -> LineWidth;
+};
+
 // MARK: - Evaluate
 
 template<typename Result> struct Evaluation<LineWidth, Result> {

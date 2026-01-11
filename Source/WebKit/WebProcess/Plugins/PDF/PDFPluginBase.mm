@@ -181,7 +181,7 @@ void PDFPluginBase::teardown()
         std::optional<FrameInfoData> frameInfo;
         if (RefPtr frame = m_frame.get())
             frameInfo = frame->info();
-        existingCompletionHandler({ }, WTFMove(frameInfo), { });
+        existingCompletionHandler({ }, WTF::move(frameInfo), { });
     }
 #endif // ENABLE(PDF_HUD)
 
@@ -190,7 +190,7 @@ void PDFPluginBase::teardown()
 
     if (m_pdfTestCallback) {
         if (RefPtr element = m_element.get())
-            element->pluginDestroyedWithPendingPDFTestCallback(WTFMove(m_pdfTestCallback));
+            element->pluginDestroyedWithPendingPDFTestCallback(WTF::move(m_pdfTestCallback));
     }
 }
 
@@ -548,10 +548,10 @@ void PDFPluginBase::streamDidFinishLoading()
 
 #if ENABLE(PDF_HUD)
     if (auto existingCompletionHandler = std::exchange(m_pendingSaveCompletionHandler, { }))
-        save(WTFMove(existingCompletionHandler));
+        save(WTF::move(existingCompletionHandler));
 
     if (auto existingCompletionHandler = std::exchange(m_pendingOpenCompletionHandler, { }))
-        openWithPreview(WTFMove(existingCompletionHandler));
+        openWithPreview(WTF::move(existingCompletionHandler));
 #endif // ENABLE(PDF_HUD)
 }
 
@@ -583,7 +583,7 @@ void PDFPluginBase::adoptBackgroundThreadDocument(RetainPtr<PDFDocument>&& backg
     incrementalLoaderLog("Adopting PDFDocument from background thread"_s);
 #endif
 
-    m_pdfDocument = WTFMove(backgroundThreadDocument);
+    m_pdfDocument = WTF::move(backgroundThreadDocument);
     // FIXME: Can we throw away the m_incrementalLoader?
 
     // If the plugin is being destroyed, no point in doing any more PDF work
@@ -625,8 +625,8 @@ void PDFPluginBase::startByteRangeRequest(NetscapePlugInStreamLoaderClient& stre
     resourceRequest.setHTTPHeaderField(HTTPHeaderName::Range, makeString("bytes="_s, position, '-', position + count - 1));
     resourceRequest.setCachePolicy(ResourceRequestCachePolicy::DoNotUseAnyCache);
 
-    WebProcess::singleton().protectedWebLoaderStrategy()->schedulePluginStreamLoad(*coreFrame, streamLoaderClient, WTFMove(resourceRequest), [incrementalLoader = Ref { *m_incrementalLoader }, requestIdentifier] (RefPtr<NetscapePlugInStreamLoader>&& streamLoader) {
-        incrementalLoader->streamLoaderDidStart(requestIdentifier, WTFMove(streamLoader));
+    WebProcess::singleton().protectedWebLoaderStrategy()->schedulePluginStreamLoad(*coreFrame, streamLoaderClient, WTF::move(resourceRequest), [incrementalLoader = Ref { *m_incrementalLoader }, requestIdentifier] (RefPtr<NetscapePlugInStreamLoader>&& streamLoader) {
+        incrementalLoader->streamLoaderDidStart(requestIdentifier, WTF::move(streamLoader));
     });
 }
 
@@ -1221,7 +1221,7 @@ void PDFPluginBase::writeItemsToGeneralPasteboard(Vector<PasteboardItem>&& paste
         return content;
     };
 
-    for (auto&& [data, type] : WTFMove(pasteboardItems)) {
+    for (auto&& [data, type] : WTF::move(pasteboardItems)) {
         if (![data length]) {
             ASSERT_NOT_REACHED();
             continue;
@@ -1286,7 +1286,7 @@ bool PDFPluginBase::hudEnabled() const
 void PDFPluginBase::save(CompletionHandler<void(const String&, const URL&, std::span<const uint8_t>)>&& completionHandler)
 {
     if (!m_documentFinishedLoading) {
-        if (auto existingCompletionHandler = std::exchange(m_pendingSaveCompletionHandler, WTFMove(completionHandler)))
+        if (auto existingCompletionHandler = std::exchange(m_pendingSaveCompletionHandler, WTF::move(completionHandler)))
             existingCompletionHandler({ }, { }, { });
         return;
     }
@@ -1305,15 +1305,15 @@ void PDFPluginBase::openWithPreview(CompletionHandler<void(const String&, std::o
         frameInfo = frame->info();
 
     if (!m_documentFinishedLoading) {
-        if (auto existingCompletionHandler = std::exchange(m_pendingOpenCompletionHandler, WTFMove(completionHandler))) {
+        if (auto existingCompletionHandler = std::exchange(m_pendingOpenCompletionHandler, WTF::move(completionHandler))) {
             // FrameInfo can't be default-constructed; the receiving process will ASSERT if it is.
-            existingCompletionHandler({ }, WTFMove(frameInfo), { });
+            existingCompletionHandler({ }, WTF::move(frameInfo), { });
         }
         return;
     }
 
     RetainPtr data = liveData();
-    completionHandler(m_suggestedFilename, WTFMove(frameInfo), span(data.get()));
+    completionHandler(m_suggestedFilename, WTF::move(frameInfo), span(data.get()));
 }
 
 #endif // ENABLE(PDF_HUD)
@@ -1397,7 +1397,7 @@ void PDFPluginBase::navigateToURL(const URL& url, std::optional<PlatformMouseEve
 
     RefPtr<Event> coreEvent;
     if (event || m_lastMouseEvent) {
-        auto platformEvent = event ? WTFMove(*event) : platform(CheckedRef { *m_lastMouseEvent }.get());
+        auto platformEvent = event ? WTF::move(*event) : platform(CheckedRef { *m_lastMouseEvent }.get());
         coreEvent = MouseEvent::create(eventNames().clickEvent, &coreFrame->windowProxy(), platformEvent, { }, { }, 0, 0);
     }
 
@@ -1500,7 +1500,7 @@ void PDFPluginBase::incrementalLoaderLog(const String& message)
         byteCount = byteCount.or_else([&protectedThis] {
             return protectedThis->streamedBytesForDebugLogging();
         });
-        incrementalLoaderLogWithBytes(message, WTFMove(byteCount));
+        incrementalLoaderLogWithBytes(message, WTF::move(byteCount));
     });
 #else
     UNUSED_PARAM(message);
@@ -1510,7 +1510,7 @@ void PDFPluginBase::incrementalLoaderLog(const String& message)
 void PDFPluginBase::incrementalLoaderLogWithBytes(const String& message, std::optional<uint64_t>&& streamedBytes)
 {
     LOG_WITH_STREAM(IncrementalPDF, stream << message);
-    verboseLog(m_incrementalLoader.get(), WTFMove(streamedBytes), m_documentFinishedLoading);
+    verboseLog(m_incrementalLoader.get(), WTF::move(streamedBytes), m_documentFinishedLoading);
     LOG_WITH_STREAM(IncrementalPDFVerbose, stream << message);
 }
 
@@ -1523,7 +1523,7 @@ void PDFPluginBase::registerPDFTest(RefPtr<WebCore::VoidCallback>&& callback)
     if (m_pdfDocument && callback)
         callback->invoke();
     else
-        m_pdfTestCallback = WTFMove(callback);
+        m_pdfTestCallback = WTF::move(callback);
 }
 
 std::optional<FrameIdentifier> PDFPluginBase::rootFrameID() const

@@ -57,7 +57,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLTextAreaElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLTextAreaElement);
 
 using namespace HTMLNames;
 
@@ -204,7 +204,7 @@ void HTMLTextAreaElement::attributeChanged(const QualifiedName& name, const Atom
 
 RenderPtr<RenderElement> HTMLTextAreaElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
-    return createRenderer<RenderTextControlMultiLine>(*this, WTFMove(style));
+    return createRenderer<RenderTextControlMultiLine>(*this, WTF::move(style));
 }
 
 bool HTMLTextAreaElement::appendFormData(DOMFormData& formData)
@@ -418,7 +418,7 @@ String HTMLTextAreaElement::defaultValue() const
 
 void HTMLTextAreaElement::setDefaultValue(String&& defaultValue)
 {
-    setTextContent(WTFMove(defaultValue));
+    setTextContent(WTF::move(defaultValue));
 }
 
 String HTMLTextAreaElement::validationMessage() const

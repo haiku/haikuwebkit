@@ -163,7 +163,7 @@ private:
     inline Identifier(VM&, StringImpl*);
 
     Identifier(VM&, Ref<AtomStringImpl>&& impl)
-        : m_string(WTFMove(impl))
+        : m_string(WTF::move(impl))
     { }
 
     Identifier(SymbolImpl& uid)

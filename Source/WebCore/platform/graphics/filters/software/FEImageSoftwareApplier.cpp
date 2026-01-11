@@ -57,11 +57,13 @@ bool FEImageSoftwareApplier::apply(const Filter& filter, std::span<const Ref<Fil
     }
 
     if (auto imageBuffer = sourceImage.imageBufferIfExists()) {
-        auto imageRect = primitiveSubregion;
-        imageRect.moveBy(m_effect->sourceImageRect().location());
-        imageRect.scale(filter.filterScale());
-        imageRect = IntRect(imageRect) - result.absoluteImageRect().location();
-        context.drawImageBuffer(*imageBuffer, imageRect.location());
+        auto destRect = m_effect->sourceImageRect();
+        destRect.moveBy(primitiveSubregion.location());
+        destRect.scale(filter.filterScale());
+        destRect.moveBy(-result.absoluteImageRect().location());
+
+        auto bufferBounds = FloatRect { { }, imageBuffer->logicalSize() };
+        context.drawImageBuffer(*imageBuffer, destRect, bufferBounds);
         return true;
     }
     

@@ -41,7 +41,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGFELightElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGFELightElement);
 
 SVGFELightElement::SVGFELightElement(const QualifiedName& tagName, Document& document)
     : SVGElement(tagName, document, makeUniqueRef<PropertyRegistry>(*this))
@@ -65,8 +65,8 @@ SVGFELightElement::SVGFELightElement(const QualifiedName& tagName, Document& doc
 SVGFELightElement* SVGFELightElement::findLightElement(const SVGElement* svgElement)
 {
     for (auto& child : childrenOfType<SVGElement>(*svgElement)) {
-        if (is<SVGFEDistantLightElement>(child) || is<SVGFEPointLightElement>(child) || is<SVGFESpotLightElement>(child))
-            return static_cast<SVGFELightElement*>(const_cast<SVGElement*>(&child));
+        if (auto* element = dynamicDowncast<SVGFELightElement>(child))
+            return const_cast<SVGFELightElement*>(element);
     }
     return nullptr;
 }
@@ -150,4 +150,4 @@ void SVGFELightElement::childrenChanged(const ChildChange& change)
     SVGFilterPrimitiveStandardAttributes::invalidateFilterPrimitiveParent(this);
 }
 
-}
+} // namespace WebCore

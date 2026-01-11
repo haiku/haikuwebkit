@@ -70,17 +70,17 @@ void RemoteLayerTreeTransaction::layerPropertiesChanged(PlatformCALayerRemote& r
 
 void RemoteLayerTreeTransaction::setCreatedLayers(Vector<LayerCreationProperties> createdLayers)
 {
-    m_createdLayers = WTFMove(createdLayers);
+    m_createdLayers = WTF::move(createdLayers);
 }
 
 void RemoteLayerTreeTransaction::setDestroyedLayerIDs(Vector<WebCore::PlatformLayerIdentifier> destroyedLayerIDs)
 {
-    m_destroyedLayerIDs = WTFMove(destroyedLayerIDs);
+    m_destroyedLayerIDs = WTF::move(destroyedLayerIDs);
 }
 
 void RemoteLayerTreeTransaction::setLayerIDsWithNewlyUnreachableBackingStore(Vector<WebCore::PlatformLayerIdentifier> layerIDsWithNewlyUnreachableBackingStore)
 {
-    m_layerIDsWithNewlyUnreachableBackingStore = WTFMove(layerIDsWithNewlyUnreachableBackingStore);
+    m_layerIDsWithNewlyUnreachableBackingStore = WTF::move(layerIDsWithNewlyUnreachableBackingStore);
 }
 
 #if !defined(NDEBUG) || !LOG_DISABLED
@@ -346,7 +346,7 @@ ChangedLayers::ChangedLayers(ChangedLayers&&) = default;
 ChangedLayers& ChangedLayers::operator=(ChangedLayers&&) = default;
 
 ChangedLayers::ChangedLayers(LayerPropertiesMap&& changedLayerProperties)
-    : changedLayerProperties(WTFMove(changedLayerProperties)) { }
+    : changedLayerProperties(WTF::move(changedLayerProperties)) { }
 
 RemoteLayerTreeTransaction::LayerCreationProperties::LayerCreationProperties() = default;
 
@@ -359,8 +359,8 @@ RemoteLayerBackingStoreOrProperties::~RemoteLayerBackingStoreOrProperties() = de
 RemoteLayerTreeTransaction::LayerCreationProperties::LayerCreationProperties(Markable<WebCore::PlatformLayerIdentifier> layerID, WebCore::PlatformCALayer::LayerType type, std::optional<RemoteLayerTreeTransaction::LayerCreationProperties::VideoElementData>&& videoElementData, RemoteLayerTreeTransaction::LayerCreationProperties::AdditionalData&& additionalData)
     : layerID(layerID)
     , type(type)
-    , videoElementData(WTFMove(videoElementData))
-    , additionalData(WTFMove(additionalData)) { }
+    , videoElementData(WTF::move(videoElementData))
+    , additionalData(WTF::move(additionalData)) { }
 
 std::optional<WebCore::LayerHostingContextIdentifier> RemoteLayerTreeTransaction::LayerCreationProperties::hostIdentifier() const
 {

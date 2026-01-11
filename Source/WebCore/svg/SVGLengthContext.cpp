@@ -31,8 +31,9 @@
 #include "FontMetrics.h"
 #include "LegacyRenderSVGRoot.h"
 #include "LocalFrame.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderView.h"
+#include "SVGElement.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGSVGElement.h"
 #include "StyleLengthResolution.h"
@@ -421,6 +422,8 @@ std::optional<FloatSize> SVGLengthContext::viewportSize() const
 
 std::optional<FloatSize> SVGLengthContext::computeViewportSize() const
 {
+    using ViewportElementType = SVGElement::ViewportElementType;
+
     ASSERT(m_context);
 
     // Root <svg> element lengths are resolved against the top level viewport,
@@ -432,8 +435,8 @@ std::optional<FloatSize> SVGLengthContext::computeViewportSize() const
     if (m_context->isOutermostSVGSVGElement())
         return downcast<SVGSVGElement>(*protectedContext()).currentViewportSizeExcludingZoom();
 
-    // Take size from nearest viewport element.
-    RefPtr svg = dynamicDowncast<SVGSVGElement>(m_context->viewportElement());
+    // Take size from nearest SVGSVGElement, skipping over <symbol> elements.
+    RefPtr svg = dynamicDowncast<SVGSVGElement>(m_context->viewportElement(ViewportElementType::SVGSVGOnly));
     if (!svg)
         return std::nullopt;
 

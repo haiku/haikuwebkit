@@ -44,7 +44,7 @@ struct BufferFormat {
     BufferFormat& operator=(const BufferFormat&) = delete;
     BufferFormat(BufferFormat&& other)
         : fourcc(other.fourcc)
-        , modifiers(WTFMove(other.modifiers))
+        , modifiers(WTF::move(other.modifiers))
     {
     }
 
@@ -64,7 +64,7 @@ struct BufferFormatsGroup {
     BufferFormatsGroup(BufferFormatsGroup&& other)
         : device(other.device)
         , usage(other.usage)
-        , formats(WTFMove(other.formats))
+        , formats(WTF::move(other.formats))
     {
         other.device = nullptr;
         other.usage = WPE_BUFFER_FORMAT_USAGE_RENDERING;
@@ -345,8 +345,8 @@ WPEBufferFormats* wpe_buffer_formats_builder_end(WPEBufferFormatsBuilder* builde
     g_return_val_if_fail(builder, nullptr);
 
     auto* formats = WPE_BUFFER_FORMATS(g_object_new(WPE_TYPE_BUFFER_FORMATS, nullptr));
-    formats->priv->device = WTFMove(builder->device);
-    formats->priv->groups = WTFMove(builder->groups);
+    formats->priv->device = WTF::move(builder->device);
+    formats->priv->groups = WTF::move(builder->groups);
     wpe_buffer_formats_builder_unref(builder);
 
     return formats;

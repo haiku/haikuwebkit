@@ -91,7 +91,7 @@ bool AXGeometryManager::cacheRectIfNeeded(AXID axID, IntRect&& rect)
     RefPtr tree = AXIsolatedTree::treeForFrameID(*m_cache->frameID());
     if (!tree)
         return false;
-    tree->updateFrame(axID, WTFMove(rect));
+    tree->updateFrame(axID, WTF::move(rect));
     return true;
 }
 

@@ -54,7 +54,7 @@ void IDBStorageRegistry::removeConnectionToClient(IPC::Connection::UniqueID conn
     auto allConnectionsToClient = std::exchange(m_connectionsToClient, { });
     for (auto& [identifier, connectionToClient] : allConnectionsToClient) {
         if (connectionToClient->ipcConnection() != connection) {
-            m_connectionsToClient.add(identifier, WTFMove(connectionToClient));
+            m_connectionsToClient.add(identifier, WTF::move(connectionToClient));
             continue;
         }
         connectionToClient->connectionToClient().connectionToClientClosed();

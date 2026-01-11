@@ -172,8 +172,8 @@ bool TextTrackLoader::load(const URL& url, HTMLTrackElement& element)
     if (RefPtr mediaElement = element.mediaElement())
         resourceRequest.setInspectorInitiatorNodeIdentifier(InspectorInstrumentation::identifierForNode(*mediaElement));
 
-    auto cueRequest = createPotentialAccessControlRequest(WTFMove(resourceRequest), WTFMove(options), *document, element.mediaElementCrossOriginAttribute());
-    m_resource = document->protectedCachedResourceLoader()->requestTextTrack(WTFMove(cueRequest)).value_or(nullptr);
+    auto cueRequest = createPotentialAccessControlRequest(WTF::move(resourceRequest), WTF::move(options), *document, element.mediaElementCrossOriginAttribute());
+    m_resource = document->protectedCachedResourceLoader()->requestTextTrack(WTF::move(cueRequest)).value_or(nullptr);
     if (CachedResourceHandle resource = m_resource) {
         resource->addClient(*this);
         return true;
@@ -225,7 +225,7 @@ Vector<Ref<VTTCue>> TextTrackLoader::getNewCues()
         return { };
 
     return map(m_cueParser->takeCues(), [&](auto&& cueData) {
-        return VTTCue::create(*document, WTFMove(cueData));
+        return VTTCue::create(*document, WTF::move(cueData));
     });
 }
 

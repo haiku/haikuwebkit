@@ -66,7 +66,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLSelectElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLSelectElement);
 
 using namespace WTF::Unicode;
 
@@ -257,7 +257,7 @@ ExceptionOr<void> HTMLSelectElement::add(const OptionOrOptGroupElement& element,
         [](const auto& htmlElement) -> HTMLElement& { return *htmlElement; }
     );
 
-    return parent->insertBefore(toInsert, WTFMove(beforeElement));
+    return parent->insertBefore(toInsert, WTF::move(beforeElement));
 }
 
 void HTMLSelectElement::remove(int optionIndex)
@@ -367,10 +367,10 @@ RenderPtr<RenderElement> HTMLSelectElement::createElementRenderer(RenderStyle&& 
 {
 #if !PLATFORM(IOS_FAMILY)
     if (usesMenuList())
-        return createRenderer<RenderMenuList>(*this, WTFMove(style));
-    return createRenderer<RenderListBox>(*this, WTFMove(style));
+        return createRenderer<RenderMenuList>(*this, WTF::move(style));
+    return createRenderer<RenderListBox>(*this, WTF::move(style));
 #else
-    return createRenderer<RenderMenuList>(*this, WTFMove(style));
+    return createRenderer<RenderMenuList>(*this, WTF::move(style));
 #endif
 }
 
@@ -424,7 +424,7 @@ CompletionHandlerCallingScope HTMLSelectElement::optionToSelectFromChildChangeSc
     } else if (parentOptGroup && change.type == ContainerNode::ChildChange::Type::AllChildrenReplaced)
         optionToSelect = getLastSelectedOption(*parentOptGroup);
 
-    return CompletionHandlerCallingScope { [optionToSelect = WTFMove(optionToSelect), isInsertion = change.isInsertion(), select = Ref { *this }] {
+    return CompletionHandlerCallingScope { [optionToSelect = WTF::move(optionToSelect), isInsertion = change.isInsertion(), select = Ref { *this }] {
         if (optionToSelect)
             select->optionSelectionStateChanged(*optionToSelect, true);
         else if (isInsertion)
@@ -1037,7 +1037,7 @@ void HTMLSelectElement::dispatchFocusEvent(RefPtr<Element>&& oldFocusedElement, 
     // dispatching change events during blur event dispatch.
     if (usesMenuList())
         saveLastSelection();
-    HTMLFormControlElement::dispatchFocusEvent(WTFMove(oldFocusedElement), options);
+    HTMLFormControlElement::dispatchFocusEvent(WTF::move(oldFocusedElement), options);
 }
 
 void HTMLSelectElement::dispatchBlurEvent(RefPtr<Element>&& newFocusedElement)
@@ -1047,7 +1047,7 @@ void HTMLSelectElement::dispatchBlurEvent(RefPtr<Element>&& newFocusedElement)
     // This matches other browsers' behavior.
     if (usesMenuList())
         dispatchChangeEventForMenuList();
-    HTMLFormControlElement::dispatchBlurEvent(WTFMove(newFocusedElement));
+    HTMLFormControlElement::dispatchBlurEvent(WTF::move(newFocusedElement));
 }
 
 void HTMLSelectElement::deselectItemsWithoutValidation(HTMLElement* excludeElement)
@@ -1184,7 +1184,7 @@ void HTMLSelectElement::reset()
             option->setSelectedState(false);
 
         if (!firstOption && !option->isDisabledFormControl())
-            firstOption = WTFMove(option);
+            firstOption = WTF::move(option);
     }
 
     if (!selectedOption && firstOption && !m_multiple && m_size <= 1)

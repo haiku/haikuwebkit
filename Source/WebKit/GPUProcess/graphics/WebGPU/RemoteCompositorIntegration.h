@@ -70,7 +70,7 @@ class RemoteCompositorIntegration final : public IPC::StreamMessageReceiver {
 public:
     static Ref<RemoteCompositorIntegration> create(WebCore::WebGPU::CompositorIntegration& compositorIntegration, WebGPU::ObjectHeap& objectHeap, Ref<IPC::StreamServerConnection>&& streamConnection, RemoteGPU& gpu, WebGPUIdentifier identifier)
     {
-        return adoptRef(*new RemoteCompositorIntegration(compositorIntegration, objectHeap, WTFMove(streamConnection), gpu, identifier));
+        return adoptRef(*new RemoteCompositorIntegration(compositorIntegration, objectHeap, WTF::move(streamConnection), gpu, identifier));
     }
 
     virtual ~RemoteCompositorIntegration();

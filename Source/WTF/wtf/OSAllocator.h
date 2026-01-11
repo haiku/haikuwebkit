@@ -26,6 +26,8 @@
 #pragma once
 
 #include <algorithm>
+#include <wtf/FastMalloc.h>
+#include <wtf/Platform.h>
 #include <wtf/VMTags.h>
 
 namespace WTF {

@@ -34,7 +34,7 @@
 #include "RenderBox.h"
 #include "RenderInline.h"
 #include "RenderLineBreak.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "TextBoxPainter.h"
 #include <wtf/Assertions.h>
 

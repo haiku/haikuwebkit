@@ -76,7 +76,7 @@ public:
 
     class InlineStyleOverrideScope {
     public:
-        InlineStyleOverrideScope(SecurityContext& context)
+        explicit InlineStyleOverrideScope(SecurityContext& context)
             : m_contentSecurityPolicy(context.contentSecurityPolicy())
         {
             m_contentSecurityPolicy->setOverrideAllowInlineStyle(true);

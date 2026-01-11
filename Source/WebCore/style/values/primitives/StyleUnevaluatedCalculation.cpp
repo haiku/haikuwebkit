@@ -36,7 +36,7 @@ UnevaluatedCalculationBase::UnevaluatedCalculationBase(Calculation::Value& value
 }
 
 UnevaluatedCalculationBase::UnevaluatedCalculationBase(Ref<Calculation::Value>&& value)
-    : calc { WTFMove(value) }
+    : calc { WTF::move(value) }
 {
 }
 
@@ -45,7 +45,7 @@ UnevaluatedCalculationBase::UnevaluatedCalculationBase(Calculation::Child&& root
         Calculation::Value::create(
             category,
             CSS::Range { range.min, range.max },
-            Calculation::Tree { WTFMove(root) }
+            Calculation::Tree { WTF::move(root) }
         )
     }
 {

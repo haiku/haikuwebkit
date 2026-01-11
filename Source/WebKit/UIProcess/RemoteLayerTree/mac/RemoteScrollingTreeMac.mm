@@ -238,7 +238,7 @@ void RemoteScrollingTreeMac::scrollingTreeNodeDidScroll(ScrollingTreeScrollingNo
         return;
 
     auto scrollUpdate = ScrollUpdate { node.scrollingNodeID(), node.currentScrollPosition(), layoutViewportOrigin, ScrollUpdateType::PositionUpdate, action };
-    addPendingScrollUpdate(WTFMove(scrollUpdate));
+    addPendingScrollUpdate(WTF::move(scrollUpdate));
 
     // Happens when the this is called as a result of the scrolling tree commmit.
     if (RunLoop::isMain()) {
@@ -256,7 +256,7 @@ void RemoteScrollingTreeMac::scrollingTreeNodeDidScroll(ScrollingTreeScrollingNo
 void RemoteScrollingTreeMac::scrollingTreeNodeDidStopAnimatedScroll(ScrollingTreeScrollingNode& node)
 {
     auto scrollUpdate = ScrollUpdate { node.scrollingNodeID(), { }, { }, ScrollUpdateType::AnimatedScrollDidEnd };
-    addPendingScrollUpdate(WTFMove(scrollUpdate));
+    addPendingScrollUpdate(WTF::move(scrollUpdate));
 
     // Happens when the this is called as a result of the scrolling tree commmit.
     if (RunLoop::isMain()) {
@@ -276,7 +276,7 @@ void RemoteScrollingTreeMac::scrollingTreeNodeDidStopWheelEventScroll(WebCore::S
     ASSERT(ScrollingThread::isCurrentThread());
 
     auto scrollUpdate = ScrollUpdate { node.scrollingNodeID(), { }, { }, ScrollUpdateType::WheelEventScrollDidEnd };
-    addPendingScrollUpdate(WTFMove(scrollUpdate));
+    addPendingScrollUpdate(WTF::move(scrollUpdate));
 
     RunLoop::mainSingleton().dispatch([protectedThis = Ref { *this }, nodeID = node.scrollingNodeID()] {
         if (CheckedPtr scrollingCoordinatorProxy = protectedThis->scrollingCoordinatorProxy())
@@ -287,7 +287,7 @@ void RemoteScrollingTreeMac::scrollingTreeNodeDidStopWheelEventScroll(WebCore::S
 void RemoteScrollingTreeMac::scrollingTreeNodeDidStopProgrammaticScroll(WebCore::ScrollingTreeScrollingNode& node)
 {
     auto scrollUpdate = ScrollUpdate { node.scrollingNodeID(), { }, { }, ScrollUpdateType::ProgrammaticScrollDidEnd };
-    addPendingScrollUpdate(WTFMove(scrollUpdate));
+    addPendingScrollUpdate(WTF::move(scrollUpdate));
 
     if (RunLoop::isMain()) {
         if (CheckedPtr scrollingCoordinatorProxy = this->scrollingCoordinatorProxy())

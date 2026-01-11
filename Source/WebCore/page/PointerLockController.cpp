@@ -119,7 +119,7 @@ void PointerLockController::requestPointerLock(Element* target, std::optional<Po
             return;
         }
         m_element = target;
-        m_options = WTFMove(options);
+        m_options = WTF::move(options);
         if (m_lockPending) {
             // m_lockPending means an answer from the ChromeClient for a previous requestPointerLock on the page is pending. It's currently unknown which way that will go, whether the request will be approved or rejected. Therefore queue the promise for later when that's known and don't send out any pointerlockchangeEvent yet.
             if (promise)
@@ -136,7 +136,7 @@ void PointerLockController::requestPointerLock(Element* target, std::optional<Po
     } else {
         m_lockPending = true;
         m_element = target;
-        m_options = WTFMove(options);
+        m_options = WTF::move(options);
         if (promise)
             m_promises.append(promise.releaseNonNull());
 

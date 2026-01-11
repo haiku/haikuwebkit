@@ -26,8 +26,9 @@
 #pragma once
 
 #import "BindableResource.h"
-#import "WebGPU.h"
-#import "WebGPUExt.h"
+#import <WebGPU/WGPUQuerySetImpl.h>
+#import <WebGPU/WebGPU.h>
+#import <WebGPU/WebGPUExt.h>
 #import <optional>
 #import <wtf/FastMalloc.h>
 #import <wtf/Range.h>
@@ -39,11 +40,6 @@
 #import <wtf/Vector.h>
 #import <wtf/WeakHashSet.h>
 #import <wtf/WeakPtr.h>
-
-// FIXME(rdar://155970441): this annotation should be in WebGPU.h, move it once we support
-// annotating incomplete types
-struct SWIFT_SHARED_REFERENCE(wgpuQuerySetReference, wgpuQuerySetRelease) WGPUQuerySetImpl {
-};
 
 namespace WebGPU {
 
@@ -66,7 +62,7 @@ public:
     }
     static Ref<QuerySet> create(CounterSampleBuffer&& counterSampleBuffer, uint32_t count, WGPUQueryType type, Device& device)
     {
-        return adoptRef(*new QuerySet(WTFMove(counterSampleBuffer), count, type, device));
+        return adoptRef(*new QuerySet(WTF::move(counterSampleBuffer), count, type, device));
     }
     static Ref<QuerySet> createInvalid(Device& device)
     {

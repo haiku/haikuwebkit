@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <head>
 <style>
-body {
+body.done {
     white-space: pre-wrap;
 }
 </style>
@@ -22,6 +22,13 @@ body {
     <li>bar</li>
     <li>baz</li>
 </ul>
+On sale for
+<p>
+    <sup>£</sup>
+    10
+    <sup>99</sup>
+    This <strike>text</strike> has a <del>line through it</del>. The price <s>was ~~$50</s>
+</p>
 <script>
 addEventListener("load", async () => {
     if (!window.testRunner)
@@ -30,7 +37,11 @@ addEventListener("load", async () => {
     testRunner.dumpAsText();
     testRunner.waitUntilDone();
 
-    document.body.textContent = await UIHelper.requestDebugText({ outputFormat: "markdown" });
+    document.body.textContent = await UIHelper.requestDebugText({
+        includeURLs: true,
+        outputFormat: "markdown",
+    });
+    document.body.classList.add("done");
 
     testRunner.notifyDone();
 });

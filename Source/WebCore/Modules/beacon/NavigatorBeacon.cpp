@@ -69,7 +69,7 @@ Ref<NavigatorBeacon> NavigatorBeacon::from(Navigator& navigator)
     if (!supplement) {
         auto newSupplement = makeUniqueWithoutRefCountedCheck<NavigatorBeacon>(navigator);
         supplement = newSupplement.get();
-        provideTo(&navigator, supplementName(), WTFMove(newSupplement));
+        provideTo(&navigator, supplementName(), WTF::move(newSupplement));
     }
     return supplement.releaseNonNull();
 }
@@ -128,7 +128,7 @@ ExceptionOr<bool> NavigatorBeacon::sendBeacon(Document& document, const String& 
         return true;
     }
 
-    ResourceRequest request(WTFMove(parsedUrl));
+    ResourceRequest request(WTF::move(parsedUrl));
     request.setHTTPMethod("POST"_s);
     request.setRequester(ResourceRequestRequester::Beacon);
     if (RefPtr documentLoader = document.loader())
@@ -143,7 +143,7 @@ ExceptionOr<bool> NavigatorBeacon::sendBeacon(Document& document, const String& 
     if (body) {
         options.mode = FetchOptions::Mode::NoCors;
         String mimeType;
-        auto result = FetchBody::extract(WTFMove(body.value()), mimeType);
+        auto result = FetchBody::extract(WTF::move(body.value()), mimeType);
         if (result.hasException())
             return result.releaseException();
         auto fetchBody = result.releaseReturnValue();
@@ -160,7 +160,7 @@ ExceptionOr<bool> NavigatorBeacon::sendBeacon(Document& document, const String& 
         }
     }
 
-    auto cachedResource = document.protectedCachedResourceLoader()->requestBeaconResource({ WTFMove(request), options });
+    auto cachedResource = document.protectedCachedResourceLoader()->requestBeaconResource({ WTF::move(request), options });
     if (!cachedResource) {
         logError(cachedResource.error());
         return false;
@@ -174,7 +174,7 @@ ExceptionOr<bool> NavigatorBeacon::sendBeacon(Document& document, const String& 
 
 ExceptionOr<bool> NavigatorBeacon::sendBeacon(Navigator& navigator, Document& document, const String& url, std::optional<FetchBody::Init>&& body)
 {
-    return NavigatorBeacon::from(navigator)->sendBeacon(document, url, WTFMove(body));
+    return NavigatorBeacon::from(navigator)->sendBeacon(document, url, WTF::move(body));
 }
 
 }

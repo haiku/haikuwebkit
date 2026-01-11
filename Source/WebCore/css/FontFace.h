@@ -39,6 +39,9 @@ class ArrayBufferView;
 
 namespace WebCore {
 
+class Document;
+class WebCoreOpaqueRoot;
+
 template<typename IDLType> class DOMPromiseProxyWithResolveCallback;
 template<typename> class ExceptionOr;
 
@@ -53,9 +56,6 @@ public:
         String display;
         String sizeAdjust;
     };
-
-    using RefCounted::ref;
-    using RefCounted::deref;
     
     using Source = Variant<String, RefPtr<JSC::ArrayBuffer>, RefPtr<JSC::ArrayBufferView>>;
     static Ref<FontFace> create(ScriptExecutionContext&, const String& family, Source&&, const Descriptors&);
@@ -113,5 +113,7 @@ private:
     const UniqueRef<LoadedPromise> m_loadedPromise;
     bool m_mayLoadedPromiseBeScriptObservable { false };
 };
+
+WebCoreOpaqueRoot root(FontFace*);
 
 }

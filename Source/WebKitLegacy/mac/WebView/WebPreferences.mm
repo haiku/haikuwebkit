@@ -52,12 +52,12 @@
 #import <wtf/BlockPtr.h>
 #import <wtf/Compiler.h>
 #import <wtf/MainThread.h>
-#import <wtf/OSObjectPtr.h>
 #import <wtf/OptionSet.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/RunLoop.h>
 #import <wtf/RuntimeApplicationChecks.h>
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
+#import <wtf/darwin/DispatchOSObject.h>
 
 using namespace WebCore;
 

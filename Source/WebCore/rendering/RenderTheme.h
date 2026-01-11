@@ -25,7 +25,7 @@
 #include <WebCore/GraphicsContext.h>
 #include <WebCore/PaintInfo.h>
 #include <WebCore/PopupMenuStyle.h>
-#include <WebCore/RenderStyleInlines.h>
+#include <WebCore/RenderStyle+GettersInlines.h>
 #include <WebCore/ScrollTypes.h>
 #include <WebCore/StyleColor.h>
 #include <WebCore/StyleMinimumSize.h>
@@ -39,7 +39,7 @@ namespace WebCore {
 enum class DocumentMarkerLineStyleMode : uint8_t;
 
 struct AttachmentLayout;
-class BorderData;
+struct BorderData;
 class Element;
 class FileList;
 class HTMLInputElement;

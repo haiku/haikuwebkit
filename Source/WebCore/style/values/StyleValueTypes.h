@@ -417,7 +417,7 @@ template<TupleLike StyleType> struct CSSValueCreation<StyleType> {
             );
             WTF::apply([&](const auto& ...x) { (..., caller(x)); }, value);
 
-            return CSS::makeListCSSValue<SerializationSeparator<StyleType>>(WTFMove(list));
+            return CSS::makeListCSSValue<SerializationSeparator<StyleType>>(WTF::move(list));
         }
     }
 };
@@ -430,7 +430,7 @@ template<RangeLike StyleType> struct CSSValueCreation<StyleType> {
         for (const auto& element : value)
             list.append(createCSSValue(pool, style, element, rest...));
 
-        return CSS::makeListCSSValue<SerializationSeparator<StyleType>>(WTFMove(list));
+        return CSS::makeListCSSValue<SerializationSeparator<StyleType>>(WTF::move(list));
     }
 };
 
@@ -1269,7 +1269,7 @@ template<typename StyleType, size_t inlineCapacity> struct Blending<SpaceSeparat
         result.reserveInitialCapacity(size);
         for (size_t i = 0; i < size; ++i)
             result.append(WebCore::Style::blend(a[i], b[i], context));
-        return { WTFMove(result) };
+        return { WTF::move(result) };
     }
     auto blend(const SpaceSeparatedVector<StyleType, inlineCapacity>& a, const SpaceSeparatedVector<StyleType, inlineCapacity>& b, const RenderStyle& aStyle, const RenderStyle& bStyle, const auto& context) -> SpaceSeparatedVector<StyleType, inlineCapacity>
     {
@@ -1278,7 +1278,7 @@ template<typename StyleType, size_t inlineCapacity> struct Blending<SpaceSeparat
         result.reserveInitialCapacity(size);
         for (size_t i = 0; i < size; ++i)
             result.append(WebCore::Style::blend(a[i], b[i], aStyle, bStyle, context));
-        return { WTFMove(result) };
+        return { WTF::move(result) };
     }
 };
 
@@ -1351,7 +1351,7 @@ template<typename StyleType, size_t inlineCapacity> struct Blending<CommaSeparat
         result.reserveInitialCapacity(size);
         for (size_t i = 0; i < size; ++i)
             result.append(WebCore::Style::blend(a[i], b[i], context));
-        return { WTFMove(result) };
+        return { WTF::move(result) };
     }
     auto blend(const CommaSeparatedVector<StyleType, inlineCapacity>& a, const CommaSeparatedVector<StyleType, inlineCapacity>& b, const RenderStyle& aStyle, const RenderStyle& bStyle, const auto& context) -> CommaSeparatedVector<StyleType, inlineCapacity>
     {
@@ -1360,7 +1360,7 @@ template<typename StyleType, size_t inlineCapacity> struct Blending<CommaSeparat
         result.reserveInitialCapacity(size);
         for (size_t i = 0; i < size; ++i)
             result.append(WebCore::Style::blend(a[i], b[i], aStyle, bStyle, context));
-        return { WTFMove(result) };
+        return { WTF::move(result) };
     }
 };
 

@@ -26,6 +26,7 @@
 #pragma once
 
 #include <JavaScriptCore/JSCBuiltins.h>
+#include <cstdint>
 
 namespace JSC {
 
@@ -50,7 +51,6 @@ class JSGlobalObject;
     v(setIterationEntryKey, nullptr) \
     v(setIteratorNext, nullptr) \
     v(setIteratorKey, nullptr) \
-    v(setClone, nullptr) \
     v(setPrototypeDirect, nullptr) \
     v(setPrototypeDirectOrThrow, nullptr) \
     v(copyDataProperties, nullptr) \
@@ -58,15 +58,14 @@ class JSGlobalObject;
     v(resolvePromise, nullptr) \
     v(rejectPromise, nullptr) \
     v(fulfillPromise, nullptr) \
-    v(resolveWithoutPromise, nullptr) \
-    v(rejectWithoutPromise, nullptr) \
-    v(fulfillWithoutPromise, nullptr) \
     v(resolvePromiseWithFirstResolvingFunctionCallCheck, nullptr) \
     v(rejectPromiseWithFirstResolvingFunctionCallCheck, nullptr) \
     v(fulfillPromiseWithFirstResolvingFunctionCallCheck, nullptr) \
-    v(resolveWithoutPromiseForAsyncAwait, nullptr) \
+    v(resolveWithInternalMicrotaskForAsyncAwait, nullptr) \
+    v(asyncGeneratorQueueEnqueue, nullptr) \
+    v(asyncGeneratorQueueDequeueResolve, nullptr) \
+    v(asyncGeneratorQueueDequeueReject, nullptr) \
     v(driveAsyncFunction, nullptr) \
-    v(awaitValue, nullptr) \
     v(newHandledRejectedPromise, nullptr) \
     v(promiseEmptyOnFulfilled, nullptr) \
     v(promiseEmptyOnRejected, nullptr) \

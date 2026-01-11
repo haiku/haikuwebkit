@@ -122,7 +122,7 @@ static RetainPtr<NSUUID> uuidFromPushPartition(NSString *pushPartition)
         return nil;
     }
 
-    result.coreNotificationData = WTFMove(notificationData);
+    result.coreNotificationData = WTF::move(notificationData);
 
     return result;
 #else

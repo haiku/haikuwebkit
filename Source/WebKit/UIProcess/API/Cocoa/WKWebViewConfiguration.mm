@@ -1096,7 +1096,7 @@ static WebKit::AttributionOverrideTesting toAttributionOverrideTesting(_WKAttrib
     HashSet<String> set;
     for (NSString *scheme in schemes)
         set.add(scheme);
-    self._protectedPageConfiguration->setMaskedURLSchemes(WTFMove(set));
+    self._protectedPageConfiguration->setMaskedURLSchemes(WTF::move(set));
 }
 
 - (void)_setLoadsFromNetwork:(BOOL)loads
@@ -1116,7 +1116,7 @@ static WebKit::AttributionOverrideTesting toAttributionOverrideTesting(_WKAttrib
     MemoryCompactLookupOnlyRobinHoodHashSet<String> set;
     for (NSString *host in hosts)
         set.add(host);
-    self._protectedPageConfiguration->setAllowedNetworkHosts(WTFMove(set));
+    self._protectedPageConfiguration->setAllowedNetworkHosts(WTF::move(set));
 }
 
 - (NSSet<NSString *> *)_allowedNetworkHosts

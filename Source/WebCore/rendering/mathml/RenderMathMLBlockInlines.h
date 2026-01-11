@@ -28,15 +28,16 @@
 
 #if ENABLE(MATHML)
 
+#include "FontMetrics.h"
 #include "RenderBoxInlines.h"
 #include "RenderMathMLBlock.h"
 #include "RenderTableInlines.h"
-#include "StyleInheritedData.h"
+#include "Settings.h"
 
 namespace WebCore {
 
 inline RenderMathMLTable::RenderMathMLTable(MathMLElement& element, RenderStyle&& style)
-    : RenderTable(Type::MathMLTable, element, WTFMove(style))
+    : RenderTable(Type::MathMLTable, element, WTF::move(style))
     , m_mathMLStyle(MathMLStyle::create())
 {
     ASSERT(isRenderMathMLTable());
@@ -44,7 +45,8 @@ inline RenderMathMLTable::RenderMathMLTable(MathMLElement& element, RenderStyle&
 
 inline LayoutUnit RenderMathMLBlock::ascentForChild(const RenderBox& child)
 {
-    return child.firstLineBaseline().value_or(child.logicalHeight().toInt());
+    auto logicalHeight = child.settings().subpixelInlineLayoutEnabled() ? child.logicalHeight() : LayoutUnit(child.logicalHeight().toInt());
+    return child.firstLineBaseline().value_or(logicalHeight);
 }
 
 inline LayoutUnit RenderMathMLBlock::mirrorIfNeeded(LayoutUnit horizontalOffset, const RenderBox& child) const

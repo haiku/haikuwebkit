@@ -84,7 +84,7 @@ static ApplePayPayment convert(unsigned version, PKPayment *payment)
 Payment::Payment() = default;
 
 Payment::Payment(RetainPtr<PKPayment>&& pkPayment)
-    : m_pkPayment { WTFMove(pkPayment) }
+    : m_pkPayment { WTF::move(pkPayment) }
 {
 }
 

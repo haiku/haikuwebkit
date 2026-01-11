@@ -28,6 +28,7 @@
 #include "ActiveDOMObject.h"
 #include "ContextDestructionObserver.h"
 #include "EventTarget.h"
+#include "EventTargetInterfaces.h"
 #include "ScriptExecutionContext.h"
 #include "ServiceWorkerData.h"
 #include <JavaScriptCore/Strong.h>
@@ -47,7 +48,7 @@ class SWClientConnection;
 struct StructuredSerializeOptions;
 
 class ServiceWorker final : public RefCounted<ServiceWorker>, public EventTarget, public ActiveDOMObject {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED_EXPORT(ServiceWorker, WEBCORE_EXPORT);
+    WTF_MAKE_TZONE_ALLOCATED_EXPORT(ServiceWorker, WEBCORE_EXPORT);
 public:
     using State = ServiceWorkerState;
     static Ref<ServiceWorker> getOrCreate(ScriptExecutionContext&, ServiceWorkerData&&);
@@ -100,3 +101,5 @@ inline ServiceWorker* ScriptExecutionContext::serviceWorker(ServiceWorkerIdentif
 }
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_EVENTTARGET(ServiceWorker)

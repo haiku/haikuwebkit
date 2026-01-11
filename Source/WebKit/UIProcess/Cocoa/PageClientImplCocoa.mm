@@ -49,6 +49,8 @@
 
 namespace WebKit {
 
+WTF_MAKE_TZONE_ALLOCATED_IMPL(PageClientImplCocoa);
+
 PageClientImplCocoa::PageClientImplCocoa(WKWebView *webView)
     : m_webView { webView }
     , m_alternativeTextUIController { makeUnique<WebCore::AlternativeTextUIController>() }
@@ -115,17 +117,17 @@ void PageClientImplCocoa::spatialBackdropSourceDidChange()
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
 void PageClientImplCocoa::allowImmersiveElementFromURL(const URL& url, CompletionHandler<void(bool)>&& completion) const
 {
-    [webView() _allowImmersiveElementFromURL:url completion:WTFMove(completion)];
+    [webView() _allowImmersiveElementFromURL:url completion:WTF::move(completion)];
 }
 
 void PageClientImplCocoa::presentImmersiveElement(const WebCore::LayerHostingContextIdentifier contextID, CompletionHandler<void(bool)>&& completion) const
 {
-    [webView() _presentImmersiveElement:contextID completion:WTFMove(completion)];
+    [webView() _presentImmersiveElement:contextID completion:WTF::move(completion)];
 }
 
 void PageClientImplCocoa::dismissImmersiveElement(CompletionHandler<void()>&& completion) const
 {
-    [webView() _dismissImmersiveElement:WTFMove(completion)];
+    [webView() _dismissImmersiveElement:WTF::move(completion)];
 }
 #endif
 
@@ -464,7 +466,7 @@ void PageClientImplCocoa::processDidUpdateThrottleState()
 #if ENABLE(FULLSCREEN_API)
 void PageClientImplCocoa::setFullScreenClientForTesting(std::unique_ptr<WebFullScreenManagerProxyClient>&& client)
 {
-    m_fullscreenClientForTesting = WTFMove(client);
+    m_fullscreenClientForTesting = WTF::move(client);
 }
 #endif
 

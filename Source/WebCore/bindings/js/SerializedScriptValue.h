@@ -138,7 +138,7 @@ public:
     IDBValue writeBlobsToDiskForIndexedDBSynchronously(bool isEphemeral);
     static Ref<SerializedScriptValue> createFromWireBytes(Vector<uint8_t>&& data)
     {
-        return adoptRef(*new SerializedScriptValue(WTFMove(data)));
+        return adoptRef(*new SerializedScriptValue(WTF::move(data)));
     }
     const Vector<uint8_t>& wireBytes() const { return m_internals.data; }
 
@@ -244,7 +244,7 @@ private:
 
     static Ref<SerializedScriptValue> create(Internals&& internals)
     {
-        return adoptRef(*new SerializedScriptValue(WTFMove(internals)));
+        return adoptRef(*new SerializedScriptValue(WTF::move(internals)));
     }
 
     WEBCORE_EXPORT explicit SerializedScriptValue(Internals&&);

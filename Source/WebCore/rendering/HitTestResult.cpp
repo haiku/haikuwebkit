@@ -51,7 +51,7 @@
 #include "RenderImage.h"
 #include "RenderInline.h"
 #include "RenderObjectStyle.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "SVGAElement.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGImageElement.h"
@@ -194,7 +194,7 @@ void HitTestResult::setURLElement(Element* n)
 
 void HitTestResult::setScrollbar(RefPtr<Scrollbar>&& scrollbar)
 {
-    m_scrollbar = WTFMove(scrollbar);
+    m_scrollbar = WTF::move(scrollbar);
 }
 
 LocalFrame* HitTestResult::innerNodeFrame() const
@@ -204,6 +204,11 @@ LocalFrame* HitTestResult::innerNodeFrame() const
     if (m_innerNode)
         return m_innerNode->document().frame();
     return 0;
+}
+
+void HitTestResult::setLocalPoint(const LayoutPoint& p)
+{
+    m_localPoint = m_pseudoElementIdentifier ? LayoutPoint() : p;
 }
 
 std::optional<Style::PseudoElementIdentifier> HitTestResult::pseudoElementIdentifier() const

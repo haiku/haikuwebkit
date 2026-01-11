@@ -167,7 +167,7 @@ void InspectorScriptProfilerAgent::addEvent(Seconds startTime, Seconds endTime, 
         .setType(toProtocol(reason))
         .release();
 
-    m_frontendDispatcher->trackingUpdate(WTFMove(event));
+    m_frontendDispatcher->trackingUpdate(WTF::move(event));
 }
 
 #if ENABLE(SAMPLING_PROFILER)
@@ -190,20 +190,20 @@ static Ref<Protocol::ScriptProfiler::Samples> buildSamples(VM& vm, Vector<Sampli
                     .setLine(stackFrame.lineNumber())
                     .setColumn(stackFrame.columnNumber())
                     .release();
-                frameObject->setExpressionLocation(WTFMove(expressionLocation));
+                frameObject->setExpressionLocation(WTF::move(expressionLocation));
             }
 
-            frames->addItem(WTFMove(frameObject));
+            frames->addItem(WTF::move(frameObject));
         }
         Ref<Protocol::ScriptProfiler::StackTrace> inspectorStackTrace = Protocol::ScriptProfiler::StackTrace::create()
             .setTimestamp(stackTrace.stopwatchTimestamp.seconds())
-            .setStackFrames(WTFMove(frames))
+            .setStackFrames(WTF::move(frames))
             .release();
-        stackTraces->addItem(WTFMove(inspectorStackTrace));
+        stackTraces->addItem(WTF::move(inspectorStackTrace));
     }
 
     return Protocol::ScriptProfiler::Samples::create()
-        .setStackTraces(WTFMove(stackTraces))
+        .setStackTraces(WTF::move(stackTraces))
         .release();
 }
 #endif // ENABLE(SAMPLING_PROFILER)
@@ -225,11 +225,11 @@ void InspectorScriptProfilerAgent::trackingComplete()
         Vector<SamplingProfiler::StackTrace> stackTraces = samplingProfiler->releaseStackTraces();
         locker.unlockEarly();
 
-        Ref<Protocol::ScriptProfiler::Samples> samples = buildSamples(vm, WTFMove(stackTraces));
+        Ref<Protocol::ScriptProfiler::Samples> samples = buildSamples(vm, WTF::move(stackTraces));
 
         m_enabledSamplingProfiler = false;
 
-        m_frontendDispatcher->trackingComplete(stopwatchTimestamp, WTFMove(samples));
+        m_frontendDispatcher->trackingComplete(stopwatchTimestamp, WTF::move(samples));
     } else
         m_frontendDispatcher->trackingComplete(stopwatchTimestamp, nullptr);
 #else

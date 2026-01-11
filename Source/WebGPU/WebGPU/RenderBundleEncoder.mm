@@ -68,7 +68,7 @@ static bool setCommandEncoder(auto& buffer, auto& renderPassEncoder)
     _depthBiasClamp = depthBiasClamp;
     _fragmentDynamicOffsetsBuffer = fragmentDynamicOffsetsBuffer;
     _pipeline = pipeline;
-    _minVertexCountForDrawCommand = WTFMove(*minVertexCounts);
+    _minVertexCountForDrawCommand = WTF::move(*minVertexCounts);
 
     return self;
 }
@@ -988,8 +988,8 @@ static Vector<WebGPU::BindableResources> makeBindableResources(RenderBundle::Res
             auto &u = stageResourceUsages[stage][i];
             if (v.size()) {
                 result.append(BindableResources {
-                    .mtlResources = WTFMove(v),
-                    .resourceUsages = WTFMove(u),
+                    .mtlResources = WTF::move(v),
+                    .resourceUsages = WTF::move(u),
                     .usage = static_cast<MTLResourceUsage>(i + 1),
                     .renderStages = static_cast<MTLRenderStages>(stage + 1)
                 });
@@ -1013,12 +1013,12 @@ Ref<RenderBundle> RenderBundleEncoder::finish(const WGPURenderBundleDescriptor& 
 
     auto createRenderBundle = ^{
         if (m_requiresCommandReplay)
-            return RenderBundle::create(nil, makeBindableResources(m_resources), this, m_descriptor, m_currentCommandIndex, m_makeSubmitInvalid, WTFMove(m_allBindGroups), device);
+            return RenderBundle::create(nil, makeBindableResources(m_resources), this, m_descriptor, m_currentCommandIndex, m_makeSubmitInvalid, WTF::move(m_allBindGroups), device);
 
         auto commandCount = m_currentCommandIndex;
         endCurrentICB();
         if (m_requiresCommandReplay)
-            return RenderBundle::create(nil, makeBindableResources(m_resources), this, m_descriptor, m_currentCommandIndex, m_makeSubmitInvalid, WTFMove(m_allBindGroups), device);
+            return RenderBundle::create(nil, makeBindableResources(m_resources), this, m_descriptor, m_currentCommandIndex, m_makeSubmitInvalid, WTF::move(m_allBindGroups), device);
 
         m_vertexBuffers.clear();
         m_fragmentBuffers.clear();
@@ -1028,7 +1028,7 @@ Ref<RenderBundle> RenderBundleEncoder::finish(const WGPURenderBundleDescriptor& 
 
         RELEASE_ASSERT(m_icbArray || m_lastErrorString);
         if (m_icbArray)
-            return RenderBundle::create(m_icbArray, makeBindableResources(m_resources), nullptr, m_descriptor, commandCount, m_makeSubmitInvalid, WTFMove(m_allBindGroups), device);
+            return RenderBundle::create(m_icbArray, makeBindableResources(m_resources), nullptr, m_descriptor, commandCount, m_makeSubmitInvalid, WTF::move(m_allBindGroups), device);
 
         device->generateAValidationError(m_lastErrorString);
         return RenderBundle::createInvalid(device, m_lastErrorString);
@@ -1146,8 +1146,8 @@ void RenderBundleEncoder::setBindGroup(uint32_t groupIndex, const BindGroup* gro
                 m_icbDescriptor.maxFragmentBufferBindCount = std::max<NSUInteger>(m_icbDescriptor.maxFragmentBufferBindCount, 2 + groupIndex);
         }
 
-        recordCommand([groupIndex, group = RefPtr { groupPtr }, protectedThis = Ref { *this }, dynamicOffsets = WTFMove(dynamicOffsets)]() mutable {
-            protectedThis->setBindGroup(groupIndex, group.get(), WTFMove(dynamicOffsets));
+        recordCommand([groupIndex, group = RefPtr { groupPtr }, protectedThis = Ref { *this }, dynamicOffsets = WTF::move(dynamicOffsets)]() mutable {
+            protectedThis->setBindGroup(groupIndex, group.get(), WTF::move(dynamicOffsets));
             return false;
         });
         return;
@@ -1161,7 +1161,7 @@ void RenderBundleEncoder::setBindGroup(uint32_t groupIndex, const BindGroup* gro
     auto& group = *groupPtr;
     uint32_t dynamicOffsetCount = dynamicOffsets ? dynamicOffsets->size() : 0;
     if (dynamicOffsetCount && m_bindGroupDynamicOffsets)
-        m_bindGroupDynamicOffsets->set(groupIndex, WTFMove(*dynamicOffsets));
+        m_bindGroupDynamicOffsets->set(groupIndex, WTF::move(*dynamicOffsets));
 
     for (const auto& resource : group.resources()) {
         ASSERT(resource.mtlResources.size() == resource.resourceUsages.size());
@@ -1282,7 +1282,7 @@ void RenderBundleEncoder::recordCommand(WTF::Function<bool(void)>&& function)
 
     ASSERT(!m_renderPassEncoder || m_renderPassEncoder->renderCommandEncoder());
     RELEASE_ASSERT(!m_dynamicOffsetsFragmentBuffer);
-    m_recordedCommands.append(WTFMove(function));
+    m_recordedCommands.append(WTF::move(function));
 }
 
 void RenderBundleEncoder::splitICB(bool needsPipelineReset)
@@ -1513,7 +1513,7 @@ void wgpuRenderBundleEncoderSetBindGroup(WGPURenderBundleEncoder, uint32_t, WGPU
 
 void wgpuRenderBundleEncoderSetBindGroupWithDynamicOffsets(WGPURenderBundleEncoder renderBundleEncoder, uint32_t groupIndex, WGPUBindGroup group, std::optional<Vector<uint32_t>>&& dynamicOffsets)
 {
-    WebGPU::protectedFromAPI(renderBundleEncoder)->setBindGroup(groupIndex, group ? WebGPU::protectedFromAPI(group).ptr() : nullptr, WTFMove(dynamicOffsets));
+    WebGPU::protectedFromAPI(renderBundleEncoder)->setBindGroup(groupIndex, group ? WebGPU::protectedFromAPI(group).ptr() : nullptr, WTF::move(dynamicOffsets));
 }
 
 void wgpuRenderBundleEncoderSetIndexBuffer(WGPURenderBundleEncoder renderBundleEncoder, WGPUBuffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size)

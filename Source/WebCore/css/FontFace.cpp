@@ -33,8 +33,11 @@
 #include "CSSValueList.h"
 #include "CSSValuePool.h"
 #include "DOMPromiseProxy.h"
+#include "EventLoop.h"
 #include "JSFontFace.h"
+#include "ScriptExecutionContextInlines.h"
 #include "TrustedFonts.h"
+#include "WebCoreOpaqueRoot.h"
 #include <JavaScriptCore/ArrayBuffer.h>
 #include <JavaScriptCore/ArrayBufferView.h>
 #include <JavaScriptCore/JSCInlines.h>
@@ -43,8 +46,8 @@ namespace WebCore {
 
 static bool populateFontFaceWithArrayBuffer(CSSFontFace& fontFace, Ref<JSC::ArrayBufferView>&& arrayBufferView)
 {
-    auto source = makeUnique<CSSFontFaceSource>(fontFace, WTFMove(arrayBufferView));
-    fontFace.adoptSource(WTFMove(source));
+    auto source = makeUniqueWithoutRefCountedCheck<CSSFontFaceSource>(fontFace, WTF::move(arrayBufferView));
+    fontFace.adoptSource(WTF::move(source));
     return false;
 }
 
@@ -94,8 +97,8 @@ Ref<FontFace> FontFace::create(ScriptExecutionContext& context, const String& fa
                 return { };
 
             unsigned byteLength = arrayBuffer->byteLength();
-            auto arrayBufferView = JSC::Uint8Array::create(WTFMove(arrayBuffer), 0, byteLength);
-            dataRequiresAsynchronousLoading = populateFontFaceWithArrayBuffer(result->backing(), WTFMove(arrayBufferView));
+            auto arrayBufferView = JSC::Uint8Array::create(WTF::move(arrayBuffer), 0, byteLength);
+            dataRequiresAsynchronousLoading = populateFontFaceWithArrayBuffer(result->backing(), WTF::move(arrayBufferView));
             return { };
         }
     );
@@ -143,9 +146,11 @@ Ref<FontFace> FontFace::create(ScriptExecutionContext& context, const String& fa
     }
 
     if (!dataRequiresAsynchronousLoading) {
-        result->backing().load();
-        auto status = result->backing().status();
-        ASSERT_UNUSED(status, status == CSSFontFace::Status::Success || status == CSSFontFace::Status::Failure);
+        // https://drafts.csswg.org/css-font-loading/#font-face-constructor
+        // If font face’s [[Data]] slot is not null, queue a task to run the following steps...
+        context.checkedEventLoop()->queueTask(TaskSource::DOMManipulation, [fontFace = result]() {
+            fontFace->backing().load();
+        });
     }
 
     return result;
@@ -379,6 +384,11 @@ FontFace& FontFace::loadedPromiseResolve()
 bool FontFace::virtualHasPendingActivity() const
 {
     return m_mayLoadedPromiseBeScriptObservable && !m_loadedPromise->isFulfilled();
+}
+
+WebCoreOpaqueRoot root(FontFace* port)
+{
+    return WebCoreOpaqueRoot { port };
 }
 
 }

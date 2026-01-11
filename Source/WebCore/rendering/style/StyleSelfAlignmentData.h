@@ -60,11 +60,21 @@ public:
     ItemPositionType positionType() const { return static_cast<ItemPositionType>(m_positionType); }
     OverflowAlignment overflow() const { return static_cast<OverflowAlignment>(m_overflow); }
 
-    bool isNormal(ItemPosition autoAlignment = ItemPosition::Normal) const
+    bool isNormal() const
     {
-        if (position() == ItemPosition::Auto)
-            return autoAlignment == ItemPosition::Normal;
         return position() == ItemPosition::Normal;
+    }
+
+    bool isStretch() const
+    {
+        return position() == ItemPosition::Stretch;
+    }
+
+    bool isStretchy(ItemPosition normal) const
+    {
+        if (isNormal())
+            return normal == ItemPosition::Stretch;
+        return position() == ItemPosition::Stretch;
     }
 
     // Must resolve Auto before calling. Normal treated as Start.

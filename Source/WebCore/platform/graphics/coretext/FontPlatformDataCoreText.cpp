@@ -77,7 +77,7 @@ FontPlatformData::FontPlatformData(RetainPtr<CTFontRef>&& font, float size, bool
     : FontPlatformData(size, syntheticBold, syntheticOblique, orientation, widthVariant, textRenderingMode, customPlatformData)
 {
     ASSERT_ARG(font, font);
-    m_font = WTFMove(font);
+    m_font = WTF::move(font);
     m_isColorBitmapFont = CTFontGetSymbolicTraits(m_font.get()) & kCTFontColorGlyphsTrait;
     m_isSystemFont = WebCore::isSystemFont(m_font.get());
     auto variations = adoptCF(checked_cf_cast<CFDictionaryRef>(CTFontCopyAttribute(m_font.get(), kCTFontVariationAttribute)));
@@ -98,7 +98,7 @@ FontPlatformData::FontPlatformData(RetainPtr<CTFontRef>&& font, float size, bool
         RetainPtr<CTFontRef> newFont = adoptCF(CTFontCreateWithFontDescriptor(newDescriptor.get(), m_size, 0));
 
         if (newFont)
-            m_font = WTFMove(newFont);
+            m_font = WTF::move(newFont);
     }
 }
 
@@ -290,7 +290,7 @@ FontPlatformData::IPCData FontPlatformData::toIPCData() const
     RetainPtr referenceURL = adoptCF(checked_cf_cast<CFURLRef>(CTFontCopyAttribute(font.get(), kCTFontReferenceURLAttribute)));
     RetainPtr urlString = retainPtr(CFURLGetString(referenceURL.get()));
     RetainPtr postScriptName = adoptCF(CTFontCopyPostScriptName(font.get())).get();
-    return FontPlatformSerializedData { options, WTFMove(urlString), WTFMove(postScriptName), FontPlatformSerializedAttributes::fromCF(attributes.get()) };
+    return FontPlatformSerializedData { options, WTF::move(urlString), WTF::move(postScriptName), FontPlatformSerializedAttributes::fromCF(attributes.get()) };
 }
 
 #define EXTRACT_TYPED_VALUE(key, cfType, target) { \
@@ -353,7 +353,7 @@ std::optional<FontPlatformSerializedAttributes> FontPlatformSerializedAttributes
             vector.append({ key, value });
         }
 
-        return WTFMove(vector);
+        return WTF::move(vector);
     };
 
     RetainPtr paletteColors = checked_cf_cast<CFDictionaryRef>(CFDictionaryGetValue(dictionary, kCTFontPaletteColorsAttribute));
@@ -414,7 +414,7 @@ std::optional<FontPlatformSerializedAttributes> FontPlatformSerializedAttributes
         }
         result.featureSettings = featureSettings;
     }
-    return WTFMove(result);
+    return WTF::move(result);
 }
 
 #define INJECT_STRING_VALUE(key, value) { \
@@ -488,7 +488,7 @@ RetainPtr<CFDictionaryRef> FontPlatformSerializedAttributes::toCFDictionary() co
     if (traits)
         CFDictionaryAddValue(result.get(), kCTFontTraitsAttribute, traits->toCFDictionary().get());
 
-    return WTFMove(result);
+    return WTF::move(result);
 }
 
 std::optional<FontPlatformSerializedTraits> FontPlatformSerializedTraits::fromCF(CFDictionaryRef dictionary)
@@ -504,7 +504,7 @@ std::optional<FontPlatformSerializedTraits> FontPlatformSerializedTraits::fromCF
     EXTRACT_TYPED_VALUE(kCTFontSymbolicTrait, CFNumber, result.symbolic);
     EXTRACT_TYPED_VALUE(kCTFontGradeTrait, CFNumber, result.grade);
 
-    return WTFMove(result);
+    return WTF::move(result);
 }
 
 RetainPtr<CFDictionaryRef> FontPlatformSerializedTraits::toCFDictionary() const
@@ -517,7 +517,7 @@ RetainPtr<CFDictionaryRef> FontPlatformSerializedTraits::toCFDictionary() const
     INJECT_CF_VALUE(kCTFontSymbolicTrait, symbolic);
     INJECT_CF_VALUE(kCTFontGradeTrait, grade);
 
-    return WTFMove(result);
+    return WTF::move(result);
 }
 
 std::optional<FontPlatformOpticalSize> FontPlatformOpticalSize::fromCF(CFTypeRef type)

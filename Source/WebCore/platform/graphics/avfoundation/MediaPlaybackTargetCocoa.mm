@@ -36,7 +36,7 @@ namespace WebCore {
 
 MediaPlaybackTargetCocoa::MediaPlaybackTargetCocoa(RetainPtr<AVOutputContext>&& outputContext)
     : MediaPlaybackTarget { Type::AVOutputContext }
-    , m_outputContext { WTFMove(outputContext) }
+    , m_outputContext { WTF::move(outputContext) }
 {
     ASSERT(m_outputContext);
 }
@@ -81,7 +81,7 @@ bool MediaPlaybackTargetCocoa::supportsRemoteVideoPlayback() const
 
 Ref<MediaPlaybackTargetCocoa> MediaPlaybackTargetCocoa::create(RetainPtr<AVOutputContext>&& outputContext)
 {
-    return adoptRef(*new MediaPlaybackTargetCocoa(WTFMove(outputContext)));
+    return adoptRef(*new MediaPlaybackTargetCocoa(WTF::move(outputContext)));
 }
 
 #if PLATFORM(IOS_FAMILY) && !PLATFORM(IOS_FAMILY_SIMULATOR) && !PLATFORM(MACCATALYST)

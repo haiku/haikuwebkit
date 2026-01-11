@@ -179,8 +179,6 @@ list(APPEND WebCore_SOURCES
 
     loader/cocoa/PrivateClickMeasurementCocoa.mm
 
-    page/PageDebuggable.cpp
-
     page/mac/EventHandlerMac.mm
     page/mac/ServicesOverlayController.mm
     page/mac/TextIndicatorWindow.mm

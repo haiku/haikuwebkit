@@ -189,7 +189,7 @@ WTF::MachSendRightAnnotated LayerHostingContext::sendRightAnnotated() const
         sendRight = MachSendRight::adopt(copiedPort);
         dataRepresentation = data;
     }];
-    return { WTFMove(sendRight), FixedVector<uint8_t> { span(dataRepresentation.get()) } };
+    return { WTF::move(sendRight), FixedVector<uint8_t> { span(dataRepresentation.get()) } };
 }
 
 RetainPtr<BELayerHierarchyHostingTransactionCoordinator> LayerHostingContext::createHostingUpdateCoordinator(WTF::MachSendRightAnnotated&& sendRightAnnotated)
@@ -210,7 +210,7 @@ WTF::MachSendRightAnnotated LayerHostingContext::fence(BELayerHierarchyHostingTr
         sendRight = MachSendRight::adopt(copiedPort);
         dataRepresentation = data;
     }];
-    return { WTFMove(sendRight), FixedVector<uint8_t> { span(dataRepresentation.get()) } };
+    return { WTF::move(sendRight), FixedVector<uint8_t> { span(dataRepresentation.get()) } };
 }
 
 RetainPtr<BELayerHierarchyHandle> LayerHostingContext::createHostingHandle(WTF::MachSendRightAnnotated&& sendRightAnnotated)

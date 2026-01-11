@@ -72,6 +72,7 @@ enum class RuleMatchingBehavior: uint8_t {
 
 namespace Style {
 
+class CustomFunctionRegistry;
 struct BuilderContext;
 struct CachedMatchResult;
 struct ResolvedStyle;
@@ -92,7 +93,7 @@ struct ResolutionContext {
 using KeyframesRuleMap = HashMap<AtomString, RefPtr<StyleRuleKeyframes>>;
 
 class Resolver : public RefCounted<Resolver>, public CanMakeSingleThreadWeakPtr<Resolver> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(Resolver);
+    WTF_MAKE_TZONE_ALLOCATED(Resolver);
 public:
     // Style resolvers are shared between shadow trees with identical styles. That's why we don't simply provide a Style::Scope.
     enum class ScopeType : bool { Document, ShadowTree };
@@ -117,7 +118,7 @@ public:
 
     ScopeType scopeType() const { return m_scopeType; }
 
-    void appendAuthorStyleSheets(std::span<const RefPtr<CSSStyleSheet>>);
+    void appendAuthorStyleSheets(std::span<const Ref<CSSStyleSheet>>);
 
     ScopeRuleSets& ruleSets() { return m_ruleSets; }
     const ScopeRuleSets& ruleSets() const { return m_ruleSets; }
@@ -153,6 +154,9 @@ public:
     void addKeyframeStyle(Ref<StyleRuleKeyframes>&&);
     Vector<Ref<StyleRuleKeyframe>> keyframeRulesForName(const AtomString&, const TimingFunction*) const;
 
+    const CustomFunctionRegistry* customFunctionRegistry() const;
+    CustomFunctionRegistry& ensureCustomFunctionRegistry();
+
     RefPtr<StyleRuleViewTransition> viewTransitionRule() const;
 
     bool usesFirstLineRules() const { return m_ruleSets.features().usesFirstLineRules; }
@@ -187,6 +191,8 @@ private:
     ScopeRuleSets m_ruleSets;
 
     KeyframesRuleMap m_keyframesRuleMap;
+
+    std::unique_ptr<Style::CustomFunctionRegistry> m_customFunctionRegistry;
 
     MQ::MediaQueryEvaluator m_mediaQueryEvaluator;
     std::unique_ptr<RenderStyle> m_rootDefaultStyle;

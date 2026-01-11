@@ -44,7 +44,7 @@ ExceptionOr<RefPtr<Uint8Array>> CompressionStreamEncoder::encode(const BufferSou
     if (!compressedData->byteLength())
         return nullptr;
 
-    return RefPtr { Uint8Array::create(WTFMove(compressedData)) };
+    return RefPtr { Uint8Array::create(WTF::move(compressedData)) };
 }
 
 ExceptionOr<RefPtr<Uint8Array>> CompressionStreamEncoder::flush()
@@ -59,7 +59,7 @@ ExceptionOr<RefPtr<Uint8Array>> CompressionStreamEncoder::flush()
     if (!compressedData->byteLength())
         return nullptr;
 
-    return RefPtr { Uint8Array::create(WTFMove(compressedData)) };
+    return RefPtr { Uint8Array::create(WTF::move(compressedData)) };
 }
 
 // The compression algorithm is broken up into 2 steps.

@@ -327,11 +327,11 @@ protected:
     }
     
     NumericConstraint(MediaConstraint&& mediaConstraint, std::optional<ValueType>&& min, std::optional<ValueType>&& max, std::optional<ValueType>&& exact, std::optional<ValueType>&& ideal)
-        : MediaConstraint(WTFMove(mediaConstraint))
-        , m_min(WTFMove(min))
-        , m_max(WTFMove(max))
-        , m_exact(WTFMove(exact))
-        , m_ideal(WTFMove(ideal))
+        : MediaConstraint(WTF::move(mediaConstraint))
+        , m_min(WTF::move(min))
+        , m_max(WTF::move(max))
+        , m_exact(WTF::move(exact))
+        , m_ideal(WTF::move(ideal))
     {
     }
 
@@ -389,7 +389,7 @@ private:
     friend struct IPC::ArgumentCoder<IntConstraint>;
     
     IntConstraint(MediaConstraint&& mediaConstraint, std::optional<int>&& min, std::optional<int>&& max,                   std::optional<int>&& exact, std::optional<int>&& ideal)
-        : NumericConstraint<int>(WTFMove(mediaConstraint), WTFMove(min), WTFMove(max), WTFMove(exact), WTFMove(ideal))
+        : NumericConstraint<int>(WTF::move(mediaConstraint), WTF::move(min), WTF::move(max), WTF::move(exact), WTF::move(ideal))
     {
     }
 };
@@ -412,7 +412,7 @@ private:
     friend struct IPC::ArgumentCoder<DoubleConstraint>;
     
     DoubleConstraint(MediaConstraint&& mediaConstraint, std::optional<double>&& min, std::optional<double>&& max,                   std::optional<double>&& exact, std::optional<double>&& ideal)
-        : NumericConstraint<double>(WTFMove(mediaConstraint), WTFMove(min), WTFMove(max), WTFMove(exact), WTFMove(ideal))
+        : NumericConstraint<double>(WTF::move(mediaConstraint), WTF::move(min), WTF::move(max), WTF::move(exact), WTF::move(ideal))
     {
     }
 };
@@ -492,9 +492,9 @@ private:
     friend struct IPC::ArgumentCoder<BooleanConstraint>;
     
     BooleanConstraint(MediaConstraint&& mediaConstraint, std::optional<bool>&& exact, std::optional<bool>&& ideal)
-        : MediaConstraint(WTFMove(mediaConstraint))
-        , m_exact(WTFMove(exact))
-        , m_ideal(WTFMove(ideal))
+        : MediaConstraint(WTF::move(mediaConstraint))
+        , m_exact(WTF::move(exact))
+        , m_ideal(WTF::move(ideal))
     {
     }
 
@@ -576,9 +576,9 @@ private:
     friend struct IPC::ArgumentCoder<StringConstraint>;
     
     StringConstraint(MediaConstraint&& mediaConstraint, Vector<String>&& exact, Vector<String>&& ideal)
-        : MediaConstraint(WTFMove(mediaConstraint))
-        , m_exact(WTFMove(exact))
-        , m_ideal(WTFMove(ideal))
+        : MediaConstraint(WTF::move(mediaConstraint))
+        , m_exact(WTF::move(exact))
+        , m_ideal(WTF::move(ideal))
     {
     }
 
@@ -603,9 +603,9 @@ public:
         , m_displaySurface(displaySurface)
         , m_logicalSurface(logicalSurface)
         , m_facingMode(facingMode)
-        , m_deviceId(WTFMove(deviceId))
-        , m_groupId(WTFMove(groupId))
-        , m_whiteBalanceMode(WTFMove(whiteBalanceMode))
+        , m_deviceId(WTF::move(deviceId))
+        , m_groupId(WTF::move(groupId))
+        , m_whiteBalanceMode(WTF::move(whiteBalanceMode))
         , m_zoom(zoom)
         , m_torch(torch)
         , m_backgroundBlur(backgroundBlur)

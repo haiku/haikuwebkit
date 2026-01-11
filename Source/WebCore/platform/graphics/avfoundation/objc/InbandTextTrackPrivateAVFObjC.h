@@ -43,7 +43,7 @@ class InbandTextTrackPrivateAVFObjC final : public InbandTextTrackPrivateAVF {
 public:
     static Ref<InbandTextTrackPrivateAVFObjC> create(AVMediaSelectionGroup *group, AVMediaSelectionOption *selection, TrackID trackID, InbandTextTrackPrivate::CueFormat format, ModeChangedCallback&& callback)
     {
-        return adoptRef(*new InbandTextTrackPrivateAVFObjC(group, selection, trackID, format, WTFMove(callback)));
+        return adoptRef(*new InbandTextTrackPrivateAVFObjC(group, selection, trackID, format, WTF::move(callback)));
     }
     static Ref<InbandTextTrackPrivateAVFObjC> create(AVAssetTrack* track, TrackID trackID, InbandTextTrackPrivate::CueFormat format)
     {

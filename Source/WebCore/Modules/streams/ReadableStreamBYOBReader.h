@@ -45,7 +45,7 @@ class ReadableStreamReadIntoRequest;
 template<typename IDLType> class DOMPromiseProxy;
 
 class ReadableStreamBYOBReader : public ScriptWrappable, public RefCountedAndCanMakeWeakPtr<ReadableStreamBYOBReader> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(ReadableStreamBYOBReader);
+    WTF_MAKE_TZONE_ALLOCATED(ReadableStreamBYOBReader);
 public:
     static ExceptionOr<Ref<ReadableStreamBYOBReader>> create(JSDOMGlobalObject&, ReadableStream&);
     ~ReadableStreamBYOBReader();

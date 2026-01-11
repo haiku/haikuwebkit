@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012 Google Inc. All rights reserved.
- * Copyright (C) 2013-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -152,6 +152,7 @@
 #include "LocalizedStrings.h"
 #include "Location.h"
 #include "MallocStatistics.h"
+#include "MediaControlsHost.h"
 #include "MediaDevices.h"
 #include "MediaEngineConfigurationFactory.h"
 #include "MediaKeySession.h"
@@ -429,6 +430,11 @@
 #include "ImageControlsMac.h"
 #endif
 
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+#import "MediaDeviceRouteController.h"
+#import "MockMediaDeviceRouteController.h"
+#endif
+
 using JSC::CallData;
 using JSC::CodeBlock;
 using JSC::FunctionExecutable;
@@ -464,7 +470,7 @@ private:
     void bringToFront() final { }
     void setForcedAppearance(InspectorFrontendClient::Appearance) final { }
     String localizedStringsURL() const final { return String(); }
-    DebuggableType debuggableType() const final { return DebuggableType::Page; }
+    DebuggableType debuggableType() const final { return DebuggableType::WebPage; }
     String targetPlatformName() const { return "Unknown"_s; }
     String targetBuildVersion() const { return "Unknown"_s; }
     String targetProductVersion() const { return "Unknown"_s; }
@@ -639,6 +645,7 @@ void Internals::resetToConsistentState(Page& page)
 #if ENABLE(VIDEO)
     page.group().ensureCaptionPreferences().setCaptionDisplayMode(CaptionUserPreferences::CaptionDisplayMode::ForcedOnly);
     page.group().ensureCaptionPreferences().setCaptionsStyleSheetOverride(emptyString());
+    page.group().ensureCaptionPreferences().setPreferredLanguage(emptyString());
 
     sessionManager->resetHaveEverRegisteredAsNowPlayingApplicationForTesting();
     sessionManager->resetRestrictions();
@@ -684,7 +691,7 @@ void Internals::resetToConsistentState(Page& page)
 #if ENABLE(WEB_RTC)
     auto& rtcProvider = page.webRTCProvider();
 #if USE(LIBWEBRTC)
-    auto& webRTCProvider = reinterpret_cast<LibWebRTCProvider&>(rtcProvider);
+    auto& webRTCProvider = downcast<LibWebRTCProvider>(rtcProvider);
     WebCore::useRealRTCPeerConnectionFactory(webRTCProvider);
     webRTCProvider.disableNonLocalhostConnections();
     webRTCProvider.setVP9HardwareSupportForTesting({ });
@@ -738,6 +745,13 @@ void Internals::resetToConsistentState(Page& page)
 #if ENABLE(DAMAGE_TRACKING)
     page.chrome().client().resetDamageHistoryForTesting();
 #endif
+
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+#if HAVE(AVROUTING_FRAMEWORK)
+    MediaDeviceRouteController::singleton().setClient(nullptr);
+#endif
+    setMockMediaDeviceRouteControllerEnabled(false);
+#endif
 }
 
 Internals::Internals(Document& document)
@@ -768,7 +782,7 @@ Internals::Internals(Document& document)
     auto* frame = document.frame();
     if (frame && frame->page() && frame->isMainFrame()) {
         auto mockPaymentCoordinator = MockPaymentCoordinator::create(*frame->page());
-        frame->page()->setPaymentCoordinator(PaymentCoordinator::create(WTFMove(mockPaymentCoordinator)));
+        frame->page()->setPaymentCoordinator(PaymentCoordinator::create(WTF::move(mockPaymentCoordinator)));
     }
 #endif
 
@@ -788,6 +802,13 @@ Internals::Internals(Document& document)
 
 #if ENABLE(DAMAGE_TRACKING)
     document.page()->chrome().client().resetDamageHistoryForTesting();
+#endif
+
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+    if (RefPtr mockMediaDeviceRouteController = m_mockMediaDeviceRouteController) {
+        m_mockMediaDeviceRouteController->setEnabled(false);
+        m_mockMediaDeviceRouteController = nullptr;
+    }
 #endif
 }
 
@@ -1609,11 +1630,6 @@ void Internals::setUserAgentPart(Element& element, const AtomString& part)
     return element.setUserAgentPart(part);
 }
 
-int Internals::timerNestingLevel()
-{
-    return scriptExecutionContext()->timerNestingLevel();
-}
-
 ExceptionOr<bool> Internals::isTimerThrottled(int timeoutId)
 {
     auto* timer = scriptExecutionContext()->findTimeout(timeoutId);
@@ -1806,18 +1822,18 @@ void Internals::enableMockSpeechSynthesizer()
     if (!synthesis)
         return;
 
-    auto mock = PlatformSpeechSynthesizerMock::create(*synthesis);
-    m_platformSpeechSynthesizer = static_cast<PlatformSpeechSynthesizerMock*>(mock.ptr());
-    synthesis->setPlatformSynthesizer(WTFMove(mock));
+    Ref mock = PlatformSpeechSynthesizerMock::create(*synthesis);
+    m_platformSpeechSynthesizer = mock.copyRef();
+    synthesis->setPlatformSynthesizer(WTF::move(mock));
 }
 
 void Internals::enableMockSpeechSynthesizerForMediaElement(HTMLMediaElement& element)
 {
     auto& synthesis = element.speechSynthesis();
-    auto mock = PlatformSpeechSynthesizerMock::create(synthesis);
+    Ref mock = PlatformSpeechSynthesizerMock::create(synthesis);
 
-    m_platformSpeechSynthesizer = static_cast<PlatformSpeechSynthesizerMock*>(mock.ptr());
-    synthesis.setPlatformSynthesizer(WTFMove(mock));
+    m_platformSpeechSynthesizer = mock.copyRef();
+    synthesis.setPlatformSynthesizer(WTF::move(mock));
 }
 
 ExceptionOr<void> Internals::setSpeechUtteranceDuration(double duration)
@@ -1845,14 +1861,6 @@ unsigned Internals::minimumExpectedVoiceCount()
 
 #if ENABLE(WEB_RTC)
 
-void Internals::emulateRTCPeerConnectionPlatformEvent(RTCPeerConnection& connection, const String& action)
-{
-    if (!WebRTCProvider::webRTCAvailable())
-        return;
-
-    connection.emulatePlatformEvent(action);
-}
-
 void Internals::useMockRTCPeerConnectionFactory(const String& testCase)
 {
     if (!WebRTCProvider::webRTCAvailable())
@@ -1860,7 +1868,7 @@ void Internals::useMockRTCPeerConnectionFactory(const String& testCase)
 
 #if USE(LIBWEBRTC)
     Document* document = contextDocument();
-    auto* provider = (document && document->page()) ? &static_cast<LibWebRTCProvider&>(document->page()->webRTCProvider()) : nullptr;
+    auto* provider = (document && document->page()) ? &downcast<LibWebRTCProvider>(document->page()->webRTCProvider()) : nullptr;
     WebCore::useMockRTCPeerConnectionFactory(provider, testCase);
 #else
     UNUSED_PARAM(testCase);
@@ -1887,7 +1895,7 @@ void Internals::setEnumeratingAllNetworkInterfacesEnabled(bool enabled)
     auto* page = document->page();
     if (!page)
         return;
-    auto& rtcProvider = static_cast<LibWebRTCProvider&>(page->webRTCProvider());
+    auto& rtcProvider = downcast<LibWebRTCProvider>(page->webRTCProvider());
     if (enabled)
         rtcProvider.enableEnumeratingAllNetworkInterfaces();
     else
@@ -1934,7 +1942,7 @@ void Internals::disableWebRTCHardwareVP9()
 {
 #if USE(LIBWEBRTC)
     if (auto* page = contextDocument()->page()) {
-        auto& rtcProvider = static_cast<LibWebRTCProvider&>(page->webRTCProvider());
+        auto& rtcProvider = downcast<LibWebRTCProvider>(page->webRTCProvider());
         rtcProvider.setVP9HardwareSupportForTesting(false);
         rtcProvider.clearFactory();
     }
@@ -1945,7 +1953,7 @@ bool Internals::isSupportingVP9HardwareDecoder() const
 {
 #if USE(LIBWEBRTC)
     if (auto* page = contextDocument()->page()) {
-        auto& rtcProvider = static_cast<LibWebRTCProvider&>(page->webRTCProvider());
+        auto& rtcProvider = downcast<LibWebRTCProvider>(page->webRTCProvider());
         return rtcProvider.isSupportingVP9HardwareDecoder();
     }
 #endif
@@ -1954,7 +1962,7 @@ bool Internals::isSupportingVP9HardwareDecoder() const
 
 void Internals::isVP9HardwareDecoderUsed(RTCPeerConnection& connection, DOMPromiseDeferred<IDLBoolean>&& promise)
 {
-    connection.gatherDecoderImplementationName([promise = WTFMove(promise)](auto&& name) mutable {
+    connection.gatherDecoderImplementationName([promise = WTF::move(promise)](auto&& name) mutable {
         promise.resolve(!name.contains("fallback from:"_s) && !name.contains("libvpx"_s));
     });
 }
@@ -2191,7 +2199,7 @@ ExceptionOr<RefPtr<ImageData>> Internals::snapshotNode(Node& node)
 
     SnapshotOptions options { { SnapshotFlags::DraggableElement }, PixelFormat::BGRA8, DestinationColorSpace::SRGB() };
 
-    RefPtr imageBuffer = WebCore::snapshotNode(*document->frame(), node, WTFMove(options));
+    RefPtr imageBuffer = WebCore::snapshotNode(*document->frame(), node, WTF::move(options));
     if (!imageBuffer)
         return Exception { ExceptionCode::InvalidStateError, "Failed to create snapshot"_s };
 
@@ -2213,7 +2221,7 @@ ExceptionOr<RefPtr<ImageData>> Internals::snapshotNode(Node& node)
     if (!byteArrayPixelBuffer)
         return Exception { ExceptionCode::InvalidStateError, "Pixel buffer is not a ByteArrayPixelBuffer"_s };
 
-    RefPtr imageData = ImageData::create(WTFMove(byteArrayPixelBuffer));
+    RefPtr imageData = ImageData::create(WTF::move(byteArrayPixelBuffer));
     if (!imageData)
         return Exception { ExceptionCode::InvalidStateError, "Failed to create ImageData"_s };
 
@@ -2421,7 +2429,7 @@ ExceptionOr<void> Internals::setUnderPageBackgroundColorOverride(const String& c
     if (!color.isValid())
         return Exception { ExceptionCode::SyntaxError };
 
-    document->page()->setUnderPageBackgroundColorOverride(WTFMove(color));
+    document->page()->setUnderPageBackgroundColorOverride(WTF::move(color));
     return { };
 }
 
@@ -2657,7 +2665,7 @@ static String join(Vector<String>&& strings)
 {
     StringBuilder result;
     for (auto& string : strings)
-        result.append(WTFMove(string));
+        result.append(WTF::move(string));
     return result.toString();
 }
 
@@ -2669,7 +2677,7 @@ String Internals::rangeAsTextUsingBackwardsTextIterator(const Range& liveRange)
     for (SimplifiedBackwardsTextIterator backwardsIterator(range); !backwardsIterator.atEnd(); backwardsIterator.advance())
         strings.append(backwardsIterator.text().toString());
     strings.reverse();
-    return join(WTFMove(strings));
+    return join(WTF::move(strings));
 }
 
 Ref<Range> Internals::subrange(Range& liveRange, unsigned rangeLocation, unsigned rangeLength)
@@ -2881,7 +2889,7 @@ ExceptionOr<RefPtr<NodeList>> Internals::nodesFromRect(Document& document, int c
 
     document.hitTest(request, hitTestResult);
     auto matches = WTF::map(hitTestResult.listBasedTestResult(), [](const auto& node) { return node.copyRef(); });
-    return RefPtr<NodeList> { StaticNodeList::create(WTFMove(matches)) };
+    return RefPtr<NodeList> { StaticNodeList::create(WTF::move(matches)) };
 }
 
 class GetCallerCodeBlockFunctor {
@@ -3150,10 +3158,11 @@ void Internals::toggleOverwriteModeEnabled()
 
 static ExceptionOr<FindOptions> parseFindOptions(const Vector<String>& optionList)
 {
-    const struct {
+    struct FlagListEntry {
         ASCIILiteral name;
         FindOption value;
-    } flagList[] = {
+    };
+    static constexpr auto flagList = std::to_array<FlagListEntry>({
         { "CaseInsensitive"_s, FindOption::CaseInsensitive },
         { "AtWordStarts"_s, FindOption::AtWordStarts },
         { "TreatMedialCapitalAsWordStart"_s, FindOption::TreatMedialCapitalAsWordStart },
@@ -3163,7 +3172,7 @@ static ExceptionOr<FindOptions> parseFindOptions(const Vector<String>& optionLis
         { "DoNotRevealSelection"_s, FindOption::DoNotRevealSelection },
         { "AtWordEnds"_s, FindOption::AtWordEnds },
         { "DoNotTraverseFlatTree"_s, FindOption::DoNotTraverseFlatTree },
-    };
+    });
     FindOptions result;
     for (auto& option : optionList) {
         bool found = false;
@@ -3919,7 +3928,7 @@ ExceptionOr<void> Internals::insertAuthorCSS(const String& css) const
     auto parsedSheet = StyleSheetContents::create(*document);
     parsedSheet.get().setIsUserStyleSheet(false);
     parsedSheet.get().parseString(css);
-    document->extensionStyleSheets().addAuthorStyleSheetForTesting(WTFMove(parsedSheet));
+    document->extensionStyleSheets().addAuthorStyleSheetForTesting(WTF::move(parsedSheet));
     return { };
 }
 
@@ -3932,7 +3941,7 @@ ExceptionOr<void> Internals::insertUserCSS(const String& css) const
     auto parsedSheet = StyleSheetContents::create(*document);
     parsedSheet.get().setIsUserStyleSheet(true);
     parsedSheet.get().parseString(css);
-    document->extensionStyleSheets().addUserStyleSheet(WTFMove(parsedSheet));
+    document->extensionStyleSheets().addUserStyleSheet(WTF::move(parsedSheet));
     return { };
 }
 
@@ -4838,6 +4847,27 @@ ExceptionOr<void> Internals::setCaptionDisplayMode(const String& mode)
     return { };
 }
 
+String Internals::captionDisplayMode() const
+{
+    Document* document = contextDocument();
+    if (!document || !document->page())
+        return emptyString();
+
+#if ENABLE(VIDEO)
+    switch (document->page()->group().ensureCaptionPreferences().captionDisplayMode()) {
+    case CaptionUserPreferences::CaptionDisplayMode::Automatic:
+        return "automatic"_s;
+    case CaptionUserPreferences::CaptionDisplayMode::ForcedOnly:
+        return "forcedonly"_s;
+    case CaptionUserPreferences::CaptionDisplayMode::AlwaysOn:
+        return "alwayson"_s;
+    case CaptionUserPreferences::CaptionDisplayMode::Manual:
+        return "manual"_s;
+    }
+#endif
+    return emptyString();
+}
+
 #if ENABLE(VIDEO)
 RefPtr<TextTrackCueGeneric> Internals::createGenericCue(double startTime, double endTime, String text)
 {
@@ -4883,7 +4913,7 @@ void Internals::setMockCaptionDisplaySettingsClientCallback(RefPtr<MockCaptionDi
     if (m_mockCaptionDisplaySettingsClientCallback == callback)
         return;
 
-    m_mockCaptionDisplaySettingsClientCallback = WTFMove(callback);
+    m_mockCaptionDisplaySettingsClientCallback = WTF::move(callback);
 
     auto frame = this->frame();
     if (!frame)
@@ -4903,6 +4933,10 @@ MockCaptionDisplaySettingsClientCallback* Internals::mockCaptionDisplaySettingsC
     return m_mockCaptionDisplaySettingsClientCallback.get();
 }
 
+RefPtr<MediaControlsHost> Internals::controlsHostForMediaElement(HTMLMediaElement& mediaElement)
+{
+    return mediaElement.mediaControlsHost();
+}
 #endif
 
 ExceptionOr<Ref<DOMRect>> Internals::selectionBounds()
@@ -4951,30 +4985,30 @@ void Internals::initializeMockMediaSource()
 
 void Internals::setMaximumSourceBufferSize(SourceBuffer& buffer, uint64_t maximumSize, DOMPromiseDeferred<void>&& promise)
 {
-    buffer.setMaximumSourceBufferSize(maximumSize)->whenSettled(RunLoop::currentSingleton(), [promise = WTFMove(promise)]() mutable {
+    buffer.setMaximumSourceBufferSize(maximumSize)->whenSettled(RunLoop::currentSingleton(), [promise = WTF::move(promise)]() mutable {
         promise.resolve();
     });
 }
 
 void Internals::bufferedSamplesForTrackId(SourceBuffer& buffer, const AtomString& trackId, BufferedSamplesPromise&& promise)
 {
-    buffer.bufferedSamplesForTrackId(parseInteger<uint64_t>(trackId).value_or(0))->whenSettled(RunLoop::currentSingleton(), [promise = WTFMove(promise)](auto&& samples) mutable {
+    buffer.bufferedSamplesForTrackId(parseInteger<uint64_t>(trackId).value_or(0))->whenSettled(RunLoop::currentSingleton(), [promise = WTF::move(promise)](auto&& samples) mutable {
         if (!samples) {
             promise.reject(Exception { ExceptionCode::OperationError, makeString("Error "_s, samples.error()) });
             return;
         }
-        promise.resolve(WTFMove(*samples));
+        promise.resolve(WTF::move(*samples));
     });
 }
 
 void Internals::enqueuedSamplesForTrackID(SourceBuffer& buffer, const AtomString& trackID, BufferedSamplesPromise&& promise)
 {
-    buffer.enqueuedSamplesForTrackID(parseInteger<uint64_t>(trackID).value_or(0))->whenSettled(RunLoop::currentSingleton(), [promise = WTFMove(promise)](auto&& samples) mutable {
+    buffer.enqueuedSamplesForTrackID(parseInteger<uint64_t>(trackID).value_or(0))->whenSettled(RunLoop::currentSingleton(), [promise = WTF::move(promise)](auto&& samples) mutable {
         if (!samples) {
             promise.reject(Exception { ExceptionCode::OperationError, makeString("Error "_s, samples.error()) });
             return;
         }
-        promise.resolve(WTFMove(*samples));
+        promise.resolve(WTF::move(*samples));
     });
 }
 
@@ -5411,6 +5445,13 @@ ExceptionOr<Internals::NowPlayingState> Internals::nowPlayingState() const
 #endif
 }
 
+void Internals::setNowPlayingUpdateInterval(double interval)
+{
+    if (RefPtr manager = sessionManager())
+        manager->setNowPlayingUpdateInterval(interval);
+}
+
+
 #if ENABLE(VIDEO)
 RefPtr<HTMLMediaElement> Internals::bestMediaElementForRemoteControls(Internals::PlaybackControlsPurpose purpose)
 {
@@ -5496,7 +5537,7 @@ void Internals::setMediaElementVolumeLocked(HTMLMediaElement& element, bool volu
 }
 
 #if ENABLE(SPEECH_SYNTHESIS)
-ExceptionOr<RefPtr<SpeechSynthesisUtterance>> Internals::speechSynthesisUtteranceForCue(const VTTCue& cue)
+SpeechSynthesisUtterance* Internals::speechSynthesisUtteranceForCue(const VTTCue& cue)
 {
     return cue.speechUtterance();
 }
@@ -5747,7 +5788,7 @@ void Internals::asyncCreateFile(const String& path, DOMPromiseDeferred<IDLInterf
 
     if (auto* page = document->page()) {
         auto fileSystemPath = url.fileSystemPath();
-        page->chrome().client().registerBlobPathForTesting(fileSystemPath, [promise = WTFMove(promise), weakDocument = WeakPtr { *document }, url = WTFMove(url)] () mutable {
+        page->chrome().client().registerBlobPathForTesting(fileSystemPath, [promise = WTF::move(promise), weakDocument = WeakPtr { *document }, url = WTF::move(url)] () mutable {
             if (!weakDocument) {
                 promise.reject(ExceptionCode::InvalidStateError);
                 return;
@@ -5959,6 +6000,16 @@ void Internals::setShowAllPlugins(bool show)
 bool Internals::isReadableStreamDisturbed(ReadableStream& stream)
 {
     return stream.isDisturbed();
+}
+
+void Internals::observeReadableStreamLifetime(ReadableStream& stream)
+{
+    m_observedLiveReadableStreams.add(stream);
+}
+
+unsigned Internals::observedLiveReadableStreamCount()
+{
+    return m_observedLiveReadableStreams.computeSize();
 }
 
 JSValue Internals::cloneArrayBuffer(JSC::JSGlobalObject& lexicalGlobalObject, JSValue buffer, JSValue srcByteOffset, JSValue srcLength)
@@ -6221,7 +6272,7 @@ void Internals::postTask(Ref<VoidCallback>&& callback)
         return;
     }
 
-    document->postTask([callback = WTFMove(callback)](ScriptExecutionContext&) {
+    document->postTask([callback = WTF::move(callback)](ScriptExecutionContext&) {
         callback->invoke();
     });
 }
@@ -6239,7 +6290,7 @@ ExceptionOr<void> Internals::queueTask(ScriptExecutionContext& context, const St
     if (!source)
         return Exception { ExceptionCode::NotSupportedError };
 
-    context.eventLoop().queueTask(*source, [callback = WTFMove(callback)] {
+    context.eventLoop().queueTask(*source, [callback = WTF::move(callback)] {
         callback->invoke();
     });
 
@@ -6253,9 +6304,9 @@ ExceptionOr<void> Internals::queueTaskToQueueMicrotask(Document& document, const
         return Exception { ExceptionCode::NotSupportedError };
 
     ScriptExecutionContext& context = document; // This avoids unnecessarily exporting Document::eventLoop.
-    context.eventLoop().queueTask(*source, [movedCallback = WTFMove(callback), protectedDocument = Ref { document }]() mutable {
+    context.eventLoop().queueTask(*source, [movedCallback = WTF::move(callback), protectedDocument = Ref { document }]() mutable {
         ScriptExecutionContext& context = protectedDocument.get();
-        context.eventLoop().queueMicrotask([callback = WTFMove(movedCallback)] {
+        context.eventLoop().queueMicrotask([callback = WTF::move(movedCallback)] {
             callback->invoke();
         });
     });
@@ -6495,7 +6546,7 @@ void Internals::simulateMediaStreamTrackCaptureSourceFailure(MediaStreamTrack& t
 
 void Internals::setMediaStreamTrackIdentifier(MediaStreamTrack& track, String&& id)
 {
-    track.setIdForTesting(WTFMove(id));
+    track.setIdForTesting(WTF::move(id));
 }
 
 void Internals::setMediaStreamSourceInterrupted(MediaStreamTrack& track, bool interrupted)
@@ -6662,7 +6713,7 @@ void Internals::storeRegistrationsOnDisk(DOMPromiseDeferred<void>&& promise)
         return;
 
     auto& connection = ServiceWorkerProvider::singleton().serviceWorkerConnection();
-    connection.storeRegistrationsOnDiskForTesting([promise = WTFMove(promise)]() mutable {
+    connection.storeRegistrationsOnDiskForTesting([promise = WTF::move(promise)]() mutable {
         promise.resolve();
     });
 }
@@ -6681,7 +6732,7 @@ void Internals::sendH2Ping(String url, DOMPromiseDeferred<IDLDouble>&& promise)
         return;
     }
 
-    frame->loader().client().sendH2Ping(URL { url }, [promise = WTFMove(promise)] (Expected<Seconds, ResourceError>&& result) mutable {
+    frame->loader().client().sendH2Ping(URL { url }, [promise = WTF::move(promise)] (Expected<Seconds, ResourceError>&& result) mutable {
         if (result.has_value())
             promise.resolve(result.value().value());
         else
@@ -6702,7 +6753,7 @@ void Internals::clearCacheStorageMemoryRepresentation(DOMPromiseDeferred<void>&&
             return;
     }
 
-    document->enqueueTaskWhenSettled(m_cacheStorageConnection->clearMemoryRepresentation(ClientOrigin { document->topOrigin().data(), document->securityOrigin().data() }), TaskSource::DOMManipulation, [promise = WTFMove(promise)] (auto&&) mutable {
+    document->enqueueTaskWhenSettled(m_cacheStorageConnection->clearMemoryRepresentation(ClientOrigin { document->topOrigin().data(), document->securityOrigin().data() }), TaskSource::DOMManipulation, [promise = WTF::move(promise)] (auto&&) mutable {
         promise.resolve();
     });
 }
@@ -6719,12 +6770,12 @@ void Internals::cacheStorageEngineRepresentation(DOMPromiseDeferred<IDLDOMString
         if (!m_cacheStorageConnection)
             return;
     }
-    document->enqueueTaskWhenSettled(m_cacheStorageConnection->engineRepresentation(), TaskSource::DOMManipulation, [promise = WTFMove(promise)](auto&& result) mutable {
+    document->enqueueTaskWhenSettled(m_cacheStorageConnection->engineRepresentation(), TaskSource::DOMManipulation, [promise = WTF::move(promise)](auto&& result) mutable {
         if (!result) {
             promise.reject(Exception { ExceptionCode::InvalidStateError, "internal error"_s });
             return;
         }
-        promise.resolve(WTFMove(result.value()));
+        promise.resolve(WTF::move(result.value()));
     });
 }
 
@@ -6750,7 +6801,7 @@ void Internals::setConsoleMessageListener(RefPtr<StringCallback>&& listener)
         return;
 
     if (RefPtr page = contextDocument()->page())
-        page->setConsoleMessageListenerForTesting(WTFMove(listener));
+        page->setConsoleMessageListenerForTesting(WTF::move(listener));
 }
 
 void Internals::setResponseSizeWithPadding(FetchResponse& response, uint64_t size)
@@ -6775,21 +6826,21 @@ void Internals::hasServiceWorkerRegistration(const String& clientURL, HasRegistr
 
     URL parsedURL = contextDocument()->completeURL(clientURL);
 
-    return ServiceWorkerProvider::singleton().serviceWorkerConnection().matchRegistration(SecurityOriginData { contextDocument()->topOrigin().data() }, parsedURL, [promise = WTFMove(promise)] (auto&& result) mutable {
+    return ServiceWorkerProvider::singleton().serviceWorkerConnection().matchRegistration(SecurityOriginData { contextDocument()->topOrigin().data() }, parsedURL, [promise = WTF::move(promise)] (auto&& result) mutable {
         promise.resolve(!!result);
     });
 }
 
 void Internals::terminateServiceWorker(ServiceWorker& worker, DOMPromiseDeferred<void>&& promise)
 {
-    ServiceWorkerProvider::singleton().terminateWorkerForTesting(worker.identifier(), [promise = WTFMove(promise)]() mutable {
+    ServiceWorkerProvider::singleton().terminateWorkerForTesting(worker.identifier(), [promise = WTF::move(promise)]() mutable {
         promise.resolve();
     });
 }
 
 void Internals::whenServiceWorkerIsTerminated(ServiceWorker& worker, DOMPromiseDeferred<void>&& promise)
 {
-    return ServiceWorkerProvider::singleton().serviceWorkerConnection().whenServiceWorkerIsTerminatedForTesting(worker.identifier(), [promise = WTFMove(promise)]() mutable {
+    return ServiceWorkerProvider::singleton().serviceWorkerConnection().whenServiceWorkerIsTerminatedForTesting(worker.identifier(), [promise = WTF::move(promise)]() mutable {
         promise.resolve();
     });
 }
@@ -6847,7 +6898,7 @@ void Internals::requestTextRecognition(Element& element, Ref<VoidCallback>&& cal
     if (!page)
         callback->invoke();
 
-    page->chrome().client().requestTextRecognition(element, { }, [callback = WTFMove(callback)] (auto&&) {
+    page->chrome().client().requestTextRecognition(element, { }, [callback = WTF::move(callback)] (auto&&) {
         callback->invoke();
     });
 }
@@ -7127,7 +7178,7 @@ void Internals::setCookie(CookieData&& cookieData)
     if (!page)
         return;
 
-    page->cookieJar().setRawCookie(*document, CookieData::toCookie(WTFMove(cookieData)), ShouldPartitionCookie::No);
+    page->cookieJar().setRawCookie(*document, CookieData::toCookie(WTF::move(cookieData)), ShouldPartitionCookie::No);
 }
 
 auto Internals::getCookies() const -> Vector<CookieData>
@@ -7524,7 +7575,7 @@ ExceptionOr<unsigned> Internals::createSleepDisabler(const String& reason, bool 
 
     static unsigned lastUsedIdentifier = 0;
     auto sleepDisabler = makeUnique<WebCore::SleepDisabler>(reason, display ? PAL::SleepDisabler::Type::Display : PAL::SleepDisabler::Type::System, *document->pageID());
-    m_sleepDisablers.add(++lastUsedIdentifier, WTFMove(sleepDisabler));
+    m_sleepDisablers.add(++lastUsedIdentifier, WTF::move(sleepDisabler));
     return lastUsedIdentifier;
 }
 
@@ -7584,12 +7635,19 @@ void Internals::setContentSizeCategory(Internals::ContentSizeCategory category)
 #endif
 }
 
-#if ENABLE(ATTACHMENT_ELEMENT) && ENABLE(SERVICE_CONTROLS)
+#if ENABLE(ATTACHMENT_ELEMENT)
+#if ENABLE(SERVICE_CONTROLS)
 bool Internals::hasImageControls(const HTMLImageElement& element) const
 {
     return ImageControlsMac::hasImageControls(element);
 }
-#endif // ENABLE(ATTACHMENT_ELEMENT) && ENABLE(SERVICE_CONTROLS)
+#endif // ENABLE(SERVICE_CONTROLS)
+
+String Internals::attachmentElementShadowUserAgentStyleSheet() const
+{
+    return HTMLAttachmentElement::shadowUserAgentStyleSheetText();
+}
+#endif // ENABLE(ATTACHMENT_ELEMENT)
 
 #if ENABLE(MEDIA_SESSION)
 ExceptionOr<double> Internals::currentMediaSessionPosition(const MediaSession& session)
@@ -7618,7 +7676,7 @@ void Internals::loadArtworkImage(String&& url, ArtworkImagePromise&& promise)
         promise.reject(Exception { ExceptionCode::InvalidStateError, "Another download is currently pending."_s });
         return;
     }
-    m_artworkImagePromise = makeUnique<ArtworkImagePromise>(WTFMove(promise));
+    m_artworkImagePromise = makeUnique<ArtworkImagePromise>(WTF::move(promise));
     m_artworkLoader = ArtworkImageLoader::create(*contextDocument(), url, [weakThis = WeakPtr { *this }](Image* image) {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
@@ -7670,9 +7728,9 @@ ExceptionOr<void> Internals::registerMockMediaSessionCoordinator(ScriptExecution
         return Exception { ExceptionCode::InvalidAccessError };
 
     auto& session = NavigatorMediaSession::mediaSession(document->window()->navigator());
-    auto mock = MockMediaSessionCoordinator::create(context, WTFMove(listener));
+    auto mock = MockMediaSessionCoordinator::create(context, WTF::move(listener));
     m_mockMediaSessionCoordinator = mock.ptr();
-    session.coordinator().setMediaSessionCoordinatorPrivate(WTFMove(mock));
+    session.coordinator().setMediaSessionCoordinatorPrivate(WTF::move(mock));
 
     return { };
 }
@@ -7826,11 +7884,11 @@ void Internals::modelInlinePreviewUUIDs(ModelInlinePreviewUUIDsPromise&& promise
         return;
     }
 
-    CompletionHandler<void(Vector<String>&&)> completionHandler = [promise = WTFMove(promise)] (Vector<String> uuids) mutable {
+    CompletionHandler<void(Vector<String>&&)> completionHandler = [promise = WTF::move(promise)] (Vector<String> uuids) mutable {
         promise.resolve(uuids);
     };
 
-    frame->loader().client().modelInlinePreviewUUIDs(WTFMove(completionHandler));
+    frame->loader().client().modelInlinePreviewUUIDs(WTF::move(completionHandler));
 }
 
 String Internals::modelInlinePreviewUUIDForModelElement(const HTMLModelElement& modelElement) const
@@ -7857,7 +7915,7 @@ Internals::SelectorFilterHashCounts Internals::selectorFilterHashCounts(const St
     if (!selectorList)
         return { };
     
-    auto hashes = SelectorFilter::collectHashesForTesting(*selectorList->first());
+    auto hashes = SelectorFilter::collectHashesForTesting(selectorList->first());
 
     return { hashes.ids.size(), hashes.classes.size(), hashes.tags.size(), hashes.attributes.size() };
 }
@@ -8000,7 +8058,7 @@ void Internals::registerPDFTest(Ref<VoidCallback>&& callback, Element& element)
         return;
 
     if (RefPtr pluginViewBase = pluginElement->pluginWidget())
-        pluginViewBase->registerPDFTestCallback(WTFMove(callback));
+        pluginViewBase->registerPDFTestCallback(WTF::move(callback));
 }
 
 String Internals::defaultSpatialTrackingLabel() const
@@ -8049,7 +8107,7 @@ void Internals::getImageBufferResourceLimits(ImageBufferResourceLimitsPromise&& 
         return;
     }
 
-    document->page()->chrome().client().getImageBufferResourceLimitsForTesting([promise = WTFMove(promise)](auto&& limits) mutable {
+    document->page()->chrome().client().getImageBufferResourceLimitsForTesting([promise = WTF::move(promise)](auto&& limits) mutable {
         if (!limits) {
             promise.reject(Exception { ExceptionCode::InvalidStateError });
             return;
@@ -8130,7 +8188,7 @@ ExceptionOr<Vector<Internals::FrameDamage>> Internals::getFrameDamageHistory() c
         details.rects = regionRects.map([](const IntRect& rect) -> Ref<DOMRectReadOnly> {
             return DOMRectReadOnly::create(rect.x(), rect.y(), rect.width(), rect.height());
         });
-        damageDetails.append(WTFMove(details));
+        damageDetails.append(WTF::move(details));
     });
 
     return damageDetails;
@@ -8186,6 +8244,39 @@ String Internals::modelElementState(HTMLModelElement& element)
 bool Internals::isModelElementIntersectingViewport(HTMLModelElement& element)
 {
     return element.isIntersectingViewport();
+}
+#endif
+
+// FIXME: Implement this method for iOS.
+ExceptionOr<void> Internals::copyImageAtLocation(int x, int y)
+{
+#if !PLATFORM(IOS_FAMILY)
+    RefPtr document = contextDocument();
+    if (!document || !document->frame())
+        return Exception { ExceptionCode::InvalidAccessError };
+
+    document->updateLayout(LayoutOptions::IgnorePendingStylesheets);
+
+    constexpr OptionSet<HitTestRequest::Type> hitType { HitTestRequest::Type::ReadOnly, HitTestRequest::Type::Active, HitTestRequest::Type::DisallowUserAgentShadowContent, HitTestRequest::Type::AllowChildFrameContent };
+
+    RefPtr localFrame = dynamicDowncast<LocalFrame>(document->frame()->mainFrame());
+    if (!localFrame)
+        return Exception { ExceptionCode::InvalidAccessError };
+
+    auto hitTestResult = localFrame->eventHandler().hitTestResultAtPoint(IntPoint(x, y), hitType);
+    localFrame->protectedEditor()->copyImage(hitTestResult);
+#endif
+    UNUSED_PARAM(x);
+    UNUSED_PARAM(y);
+    return { };
+}
+
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+MockMediaDeviceRouteController& Internals::mockMediaDeviceRouteController()
+{
+    if (!m_mockMediaDeviceRouteController)
+        m_mockMediaDeviceRouteController = MockMediaDeviceRouteController::create();
+    return *m_mockMediaDeviceRouteController;
 }
 #endif
 

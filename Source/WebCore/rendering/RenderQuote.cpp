@@ -36,7 +36,7 @@
 namespace WebCore {
 using namespace WTF::Unicode;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderQuote);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderQuote);
 
 // These strings need to be compared according to "Extended Filtering", as in Section 3.3.2 in RFC4647.
 // https://tools.ietf.org/html/rfc4647#page-10
@@ -213,7 +213,7 @@ static constexpr std::array quoteTable {
 };
 
 RenderQuote::RenderQuote(Document& document, RenderStyle&& style, QuoteType quote)
-    : RenderInline(Type::Quote, document, WTFMove(style))
+    : RenderInline(Type::Quote, document, WTF::move(style))
     , m_type(quote)
     , m_text(emptyString())
 {
@@ -235,10 +235,10 @@ void RenderQuote::willBeRemovedFromTree()
     RenderInline::willBeRemovedFromTree();
 }
 
-void RenderQuote::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)
+void RenderQuote::styleDidChange(Style::Difference diff, const RenderStyle* oldStyle)
 {
     RenderInline::styleDidChange(diff, oldStyle);
-    if (diff >= StyleDifference::Layout) {
+    if (diff >= Style::DifferenceResult::Layout) {
         m_needsTextUpdate = true;
         view().setHasQuotesNeedingUpdate(true);
     }

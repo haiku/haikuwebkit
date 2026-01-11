@@ -36,4 +36,5 @@ NOTRUN Add candidate for media stream 2 with null usernameFragment should succee
 NOTRUN Add candidate with invalid usernameFragment should reject with OperationError
 NOTRUN Add candidate with invalid candidate string should reject with OperationError
 NOTRUN Add candidate with sdpMid belonging to different usernameFragment should reject with OperationError
+NOTRUN addIceCandidate should not recognize relayProtocol or url
 

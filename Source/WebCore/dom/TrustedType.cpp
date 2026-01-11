@@ -131,11 +131,12 @@ Variant<std::monostate, Exception, Ref<TrustedHTML>, Ref<TrustedScript>, Ref<Tru
         return std::monostate();
 
     VM& vm = scriptExecutionContext.vm();
+    JSC::JSLockHolder locker(vm);
 
     auto jsExpectedType = JSC::jsString(vm, String(trustedTypeToString(expectedType)));
     auto jsSink = JSC::jsString(vm, sink);
     FixedVector<JSC::Strong<JSC::Unknown>> arguments({ { vm, jsExpectedType }, { vm, jsSink } });
-    auto policyValueHolder = protectedPolicy->getPolicyValue(expectedType, input, WTFMove(arguments), IfMissing::ReturnNull);
+    auto policyValueHolder = protectedPolicy->getPolicyValue(expectedType, input, WTF::move(arguments), IfMissing::ReturnNull);
     if (policyValueHolder.hasException())
         return { policyValueHolder.releaseException() };
 
@@ -179,7 +180,7 @@ ExceptionOr<String> trustedTypeCompliantString(TrustedType expectedType, ScriptE
 
     auto convertedInput = processValueWithDefaultPolicy(scriptExecutionContext, expectedType, stringValue, sink);
     if (std::holds_alternative<Exception>(convertedInput))
-        return WTFMove(std::get<Exception>(convertedInput));
+        return WTF::move(std::get<Exception>(convertedInput));
 
     if (!std::holds_alternative<std::monostate>(convertedInput)) {
         stringValue = WTF::visit(TrustedTypeVisitor { }, convertedInput);
@@ -200,7 +201,7 @@ ExceptionOr<String> trustedTypeCompliantString(TrustedType expectedType, ScriptE
 ExceptionOr<String> trustedTypeCompliantString(ScriptExecutionContext& scriptExecutionContext, Variant<RefPtr<TrustedHTML>, String>&& input, const String& sink)
 {
     return WTF::switchOn(
-        WTFMove(input),
+        WTF::move(input),
         [&scriptExecutionContext, &sink](const String& string) -> ExceptionOr<String> {
             return trustedTypeCompliantString(TrustedType::TrustedHTML, scriptExecutionContext, string, sink);
         },
@@ -213,7 +214,7 @@ ExceptionOr<String> trustedTypeCompliantString(ScriptExecutionContext& scriptExe
 ExceptionOr<String> trustedTypeCompliantString(ScriptExecutionContext& scriptExecutionContext, Variant<RefPtr<TrustedScript>, String>&& input, const String& sink)
 {
     return WTF::switchOn(
-        WTFMove(input),
+        WTF::move(input),
         [&scriptExecutionContext, &sink](const String& string) -> ExceptionOr<String> {
             return trustedTypeCompliantString(TrustedType::TrustedScript, scriptExecutionContext, string, sink);
         },
@@ -226,7 +227,7 @@ ExceptionOr<String> trustedTypeCompliantString(ScriptExecutionContext& scriptExe
 ExceptionOr<String> trustedTypeCompliantString(ScriptExecutionContext& scriptExecutionContext, Variant<RefPtr<TrustedScriptURL>, String>&& input, const String& sink)
 {
     return WTF::switchOn(
-        WTFMove(input),
+        WTF::move(input),
         [&scriptExecutionContext, &sink](const String& string) -> ExceptionOr<String> {
             return trustedTypeCompliantString(TrustedType::TrustedScriptURL, scriptExecutionContext, string, sink);
         },

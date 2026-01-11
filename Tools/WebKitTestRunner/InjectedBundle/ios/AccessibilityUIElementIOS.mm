@@ -153,6 +153,7 @@ typedef void (*AXPostedNotificationCallback)(id element, NSString* notification,
 - (id)lineEndMarkerForMarker:(id)marker;
 - (NSArray *)misspellingTextMarkerRange:(NSArray *)startTextMarkerRange forward:(BOOL)forward;
 - (NSArray *)textMarkerRangeFromMarkers:(NSArray *)markers withText:(NSString *)text;
+- (NSAttributedString *)_attributedStringForTextMarkerRangeForTesting:(NSArray *)markers;
 @end
 
 @interface NSObject (WebAccessibilityObjectWrapperPrivate)
@@ -1394,7 +1395,11 @@ RefPtr<AccessibilityUIElement> AccessibilityUIElement::accessibilityElementForTe
 
 JSRetainPtr<JSStringRef> AccessibilityUIElement::attributedStringForTextMarkerRange(AccessibilityTextMarkerRange* markerRange)
 {
-    return nullptr;
+    if (!markerRange)
+        return nullptr;
+
+    NSAttributedString *stringForRange = [m_element _attributedStringForTextMarkerRangeForTesting:markerRange->platformTextMarkerRange()];
+    return [[stringForRange description] createJSStringRef];
 }
 
 JSRetainPtr<JSStringRef> AccessibilityUIElement::attributedStringForTextMarkerRangeWithDidSpellCheck(AccessibilityTextMarkerRange* markerRange)

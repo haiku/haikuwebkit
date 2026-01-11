@@ -52,7 +52,6 @@ $(PROJECT_DIR)/builtins/DisposableStackPrototype.js
 $(PROJECT_DIR)/builtins/FunctionPrototype.js
 $(PROJECT_DIR)/builtins/GeneratorPrototype.js
 $(PROJECT_DIR)/builtins/GlobalOperations.js
-$(PROJECT_DIR)/builtins/InternalPromiseConstructor.js
 $(PROJECT_DIR)/builtins/IteratorHelpers.js
 $(PROJECT_DIR)/builtins/JSIteratorConstructor.js
 $(PROJECT_DIR)/builtins/JSIteratorHelperPrototype.js
@@ -64,7 +63,6 @@ $(PROJECT_DIR)/builtins/ModuleLoader.js
 $(PROJECT_DIR)/builtins/ObjectConstructor.js
 $(PROJECT_DIR)/builtins/PromiseConstructor.js
 $(PROJECT_DIR)/builtins/PromiseOperations.js
-$(PROJECT_DIR)/builtins/PromisePrototype.js
 $(PROJECT_DIR)/builtins/ProxyHelpers.js
 $(PROJECT_DIR)/builtins/ReflectObject.js
 $(PROJECT_DIR)/builtins/RegExpPrototype.js

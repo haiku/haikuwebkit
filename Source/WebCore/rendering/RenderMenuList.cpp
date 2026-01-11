@@ -50,7 +50,7 @@
 #include "RenderElementInlines.h"
 #include "RenderObjectInlines.h"
 #include "RenderScrollbar.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+SettersInlines.h"
 #include "RenderText.h"
 #include "RenderTheme.h"
 #include "RenderTreeBuilder.h"
@@ -69,7 +69,7 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderMenuList);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderMenuList);
 
 #if PLATFORM(IOS_FAMILY)
 static size_t selectedOptionCount(const RenderMenuList& renderMenuList)
@@ -88,7 +88,7 @@ static size_t selectedOptionCount(const RenderMenuList& renderMenuList)
 #endif
 
 RenderMenuList::RenderMenuList(HTMLSelectElement& element, RenderStyle&& style)
-    : RenderFlexibleBox(Type::MenuList, element, WTFMove(style))
+    : RenderFlexibleBox(Type::MenuList, element, WTF::move(style))
     , m_needsOptionsWidthUpdate(true)
     , m_optionsWidth(0)
 #if !PLATFORM(IOS_FAMILY)
@@ -139,7 +139,7 @@ void RenderMenuList::adjustInnerStyle()
     if (!writingMode().isHorizontal())
         paddingBox = { paddingBox.left(), paddingBox.top(), paddingBox.right(), paddingBox.bottom() };
 
-    innerStyle.setPaddingBox(WTFMove(paddingBox));
+    innerStyle.setPaddingBox(WTF::move(paddingBox));
 
     if (document().page()->chrome().selectItemWritingDirectionIsNatural()) {
         // Items in the popup will not respect the CSS text-align and direction properties,
@@ -181,7 +181,7 @@ void RenderMenuList::adjustInnerStyle()
         if (auto* inlineFormattingContextRoot = dynamicDowncast<RenderBlockFlow>(*m_innerBlock); inlineFormattingContextRoot && inlineFormattingContextRoot->inlineLayout())
             inlineFormattingContextRoot->inlineLayout()->rootStyleWillChange(*inlineFormattingContextRoot, innerStyle);
         if (auto* lineLayout = LayoutIntegration::LineLayout::containing(*m_innerBlock))
-            lineLayout->styleWillChange(*m_innerBlock, innerStyle, StyleDifference::Layout);
+            lineLayout->styleWillChange(*m_innerBlock, innerStyle, Style::DifferenceResult::Layout);
         LayoutIntegration::LineLayout::updateStyle(*m_innerBlock);
         for (auto& child : childrenOfType<RenderText>(*m_innerBlock))
             LayoutIntegration::LineLayout::updateStyle(child);
@@ -199,7 +199,7 @@ void RenderMenuList::didAttachChild(RenderObject& child, RenderObject*)
         cache->childrenChanged(*this, &child);
 }
 
-void RenderMenuList::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)
+void RenderMenuList::styleDidChange(Style::Difference diff, const RenderStyle* oldStyle)
 {
     RenderBlock::styleDidChange(diff, oldStyle);
 
@@ -295,9 +295,9 @@ void RenderMenuList::setText(const String& s)
         m_buttonText = *newButtonText;
         // FIXME: This mutation should go through the normal RenderTreeBuilder path.
         if (RenderTreeBuilder::current())
-            RenderTreeBuilder::current()->attach(*this, WTFMove(newButtonText));
+            RenderTreeBuilder::current()->attach(*this, WTF::move(newButtonText));
         else
-            RenderTreeBuilder(*document().renderView()).attach(*this, WTFMove(newButtonText));
+            RenderTreeBuilder(*document().renderView()).attach(*this, WTF::move(newButtonText));
     }
 
     adjustInnerStyle();
@@ -509,16 +509,10 @@ bool RenderMenuList::itemIsEnabled(unsigned listIndex) const
 PopupMenuStyle RenderMenuList::itemStyle(unsigned listIndex) const
 {
     const auto& listItems = selectElement().listItems();
-    if (listIndex >= listItems.size()) {
-        // If we are making an out of bounds access, then we want to use the style
-        // of a different option element (index 0). However, if there isn't an option element
-        // before at index 0, we fall back to the menu's style.
-        if (!listIndex)
-            return menuStyle();
-
-        // Try to retrieve the style of an option element we know exists (index 0).
+    if (!listItems.size())
+        return menuStyle();
+    if (listIndex >= listItems.size())
         listIndex = 0;
-    }
     HTMLElement* element = listItems[listIndex].get();
 
     Color itemBackgroundColor;
@@ -530,7 +524,7 @@ PopupMenuStyle RenderMenuList::itemStyle(unsigned listIndex) const
         return menuStyle();
 
     return PopupMenuStyle(
-        style->visitedDependentColorWithColorFilter(CSSPropertyColor),
+        style->visitedDependentColorApplyingColorFilter(),
         itemBackgroundColor,
         style->fontCascade(),
         element->getAttribute(langAttr),
@@ -547,7 +541,7 @@ void RenderMenuList::getItemBackgroundColor(unsigned listIndex, Color& itemBackg
 {
     const auto& listItems = selectElement().listItems();
     if (listIndex >= listItems.size()) {
-        itemBackgroundColor = style().visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor);
+        itemBackgroundColor = style().visitedDependentBackgroundColorApplyingColorFilter();
         itemHasCustomBackgroundColor = false;
         return;
     }
@@ -555,7 +549,7 @@ void RenderMenuList::getItemBackgroundColor(unsigned listIndex, Color& itemBackg
 
     Color backgroundColor;
     if (auto* style = element->computedStyleForEditability())
-        backgroundColor = style->visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor);
+        backgroundColor = style->visitedDependentBackgroundColorApplyingColorFilter();
 
     itemHasCustomBackgroundColor = backgroundColor.isValid() && backgroundColor.isVisible();
     // If the item has an opaque background color, return that.
@@ -565,7 +559,7 @@ void RenderMenuList::getItemBackgroundColor(unsigned listIndex, Color& itemBackg
     }
 
     // Otherwise, the item's background is overlayed on top of the menu background.
-    backgroundColor = blendSourceOver(style().visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor), backgroundColor);
+    backgroundColor = blendSourceOver(style().visitedDependentBackgroundColorApplyingColorFilter(), backgroundColor);
     if (backgroundColor.isOpaque()) {
         itemBackgroundColor = backgroundColor;
         return;
@@ -580,8 +574,8 @@ PopupMenuStyle RenderMenuList::menuStyle() const
     auto& styleToUse = m_innerBlock ? m_innerBlock->style() : style();
     auto absBounds = absoluteBoundingBoxRectIgnoringTransforms();
     return PopupMenuStyle(
-        styleToUse.visitedDependentColorWithColorFilter(CSSPropertyColor),
-        styleToUse.visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor),
+        styleToUse.visitedDependentColorApplyingColorFilter(),
+        styleToUse.visitedDependentBackgroundColorApplyingColorFilter(),
         styleToUse.fontCascade(),
         nullString(),
         styleToUse.usedVisibility() == Visibility::Visible,

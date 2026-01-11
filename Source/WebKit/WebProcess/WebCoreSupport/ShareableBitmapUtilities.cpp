@@ -59,11 +59,11 @@ RefPtr<ShareableBitmap> createShareableBitmap(RenderImage& renderImage, CreateSh
         if (!imageBuffer)
             return { };
 
-        auto snapshotImage = ImageBuffer::sinkIntoNativeImage(WTFMove(imageBuffer));
+        auto snapshotImage = ImageBuffer::sinkIntoNativeImage(WTF::move(imageBuffer));
         if (!snapshotImage)
             return { };
 
-        auto bitmap = ShareableBitmap::create({ snapshotImage->size(), WTFMove(colorSpaceForBitmap) });
+        auto bitmap = ShareableBitmap::create({ snapshotImage->size(), WTF::move(colorSpaceForBitmap) });
         if (!bitmap)
             return { };
 
@@ -86,7 +86,7 @@ RefPtr<ShareableBitmap> createShareableBitmap(RenderImage& renderImage, CreateSh
         if (imageSize.isEmpty() || imageSize.width() <= 1 || imageSize.height() <= 1)
             return { };
 
-        auto bitmap = ShareableBitmap::create({ imageSize, WTFMove(colorSpaceForBitmap) });
+        auto bitmap = ShareableBitmap::create({ imageSize, WTF::move(colorSpaceForBitmap) });
         if (!bitmap)
             return { };
 
@@ -117,7 +117,7 @@ RefPtr<ShareableBitmap> createShareableBitmap(RenderImage& renderImage, CreateSh
     }
 
     // FIXME: Only select ExtendedColor on images known to need wide gamut.
-    auto sharedBitmap = ShareableBitmap::create({ IntSize(bitmapSize), WTFMove(colorSpaceForBitmap) });
+    auto sharedBitmap = ShareableBitmap::create({ IntSize(bitmapSize), WTF::move(colorSpaceForBitmap) });
     if (!sharedBitmap)
         return { };
 

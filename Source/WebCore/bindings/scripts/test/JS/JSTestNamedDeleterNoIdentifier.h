@@ -32,7 +32,7 @@ public:
     static JSTestNamedDeleterNoIdentifier* create(JSC::Structure* structure, JSDOMGlobalObject* globalObject, Ref<TestNamedDeleterNoIdentifier>&& impl)
     {
         SUPPRESS_UNCOUNTED_LOCAL auto& vm = globalObject->vm();
-        JSTestNamedDeleterNoIdentifier* ptr = new (NotNull, JSC::allocateCell<JSTestNamedDeleterNoIdentifier>(vm)) JSTestNamedDeleterNoIdentifier(structure, *globalObject, WTFMove(impl));
+        JSTestNamedDeleterNoIdentifier* ptr = new (NotNull, JSC::allocateCell<JSTestNamedDeleterNoIdentifier>(vm)) JSTestNamedDeleterNoIdentifier(structure, *globalObject, WTF::move(impl));
         ptr->finishCreation(vm);
         return ptr;
     }

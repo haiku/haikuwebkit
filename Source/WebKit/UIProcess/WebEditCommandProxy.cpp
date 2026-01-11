@@ -39,7 +39,7 @@ using namespace WebCore;
 
 WebEditCommandProxy::WebEditCommandProxy(WebUndoStepID commandID, String&& label, WebPageProxy& page)
     : m_commandID(commandID)
-    , m_label(WTFMove(label))
+    , m_label(WTF::move(label))
     , m_page(page)
 {
     page.addEditCommand(*this);

@@ -80,6 +80,7 @@ public:
     void setNetworkState(MediaPlayer::NetworkState);
     void readyStateFromMediaSourceChanged() final;
     void mediaSourceHasRetrievedAllData() final;
+    void characteristicsFromMediaSourceChanged() final;
 
     void setInitialVideoSize(const FloatSize&);
 

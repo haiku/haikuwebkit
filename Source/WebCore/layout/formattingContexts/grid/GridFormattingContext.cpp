@@ -32,7 +32,7 @@
 #include "LayoutBoxGeometry.h"
 #include "LayoutChildIterator.h"
 #include "PlacedGridItem.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "StyleGapGutter.h"
 #include "StylePrimitiveNumeric.h"
 #include "UnplacedGridItem.h"

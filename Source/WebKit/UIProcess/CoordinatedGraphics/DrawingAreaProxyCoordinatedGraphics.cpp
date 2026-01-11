@@ -131,7 +131,7 @@ void DrawingAreaProxyCoordinatedGraphics::incorporateUpdate(UpdateInfo&& updateI
         m_backingStore = makeUnique<BackingStore>(updateInfo.viewSize, updateInfo.deviceScaleFactor);
 
     if (m_inForceUpdate) {
-        m_backingStore->incorporateUpdate(WTFMove(updateInfo));
+        m_backingStore->incorporateUpdate(WTF::move(updateInfo));
         return;
     }
 
@@ -146,7 +146,7 @@ void DrawingAreaProxyCoordinatedGraphics::incorporateUpdate(UpdateInfo&& updateI
     } else
         damageRegion = IntRect(IntPoint(), page->viewSize());
 
-    m_backingStore->incorporateUpdate(WTFMove(updateInfo));
+    m_backingStore->incorporateUpdate(WTF::move(updateInfo));
     page->setViewNeedsDisplay(damageRegion);
 }
 #endif
@@ -179,7 +179,7 @@ void DrawingAreaProxyCoordinatedGraphics::deviceScaleFactorDidChange(CompletionH
         completionHandler();
         return;
     }
-    sendWithAsyncReply(Messages::DrawingArea::SetDeviceScaleFactor(page()->deviceScaleFactor()), WTFMove(completionHandler));
+    sendWithAsyncReply(Messages::DrawingArea::SetDeviceScaleFactor(page()->deviceScaleFactor()), WTF::move(completionHandler));
 }
 
 void DrawingAreaProxyCoordinatedGraphics::setBackingStoreIsDiscardable(bool isBackingStoreDiscardable)
@@ -218,7 +218,7 @@ void DrawingAreaProxyCoordinatedGraphics::update(uint64_t, UpdateInfo&& updateIn
     // FIXME: Handle the case where the view is hidden.
 
 #if !PLATFORM(WPE)
-    incorporateUpdate(WTFMove(updateInfo));
+    incorporateUpdate(WTF::move(updateInfo));
 #endif
 
     if (!m_isWaitingForDidUpdateGeometry)
@@ -234,7 +234,7 @@ void DrawingAreaProxyCoordinatedGraphics::exitAcceleratedCompositingMode(uint64_
 {
     exitAcceleratedCompositingMode();
 #if !PLATFORM(WPE)
-    incorporateUpdate(WTFMove(updateInfo));
+    incorporateUpdate(WTF::move(updateInfo));
 #endif
 }
 
@@ -354,7 +354,7 @@ DrawingAreaProxyCoordinatedGraphics::DrawingMonitor::~DrawingMonitor()
 
 void DrawingAreaProxyCoordinatedGraphics::DrawingMonitor::start(CompletionHandler<void()>&& callback)
 {
-    m_callback = WTFMove(callback);
+    m_callback = WTF::move(callback);
     m_timer.startOneShot(0_s);
 }
 
@@ -375,7 +375,7 @@ void DrawingAreaProxyCoordinatedGraphics::dispatchAfterEnsuringDrawing(Completio
 
     if (!m_drawingMonitor)
         m_drawingMonitor = makeUnique<DrawingAreaProxyCoordinatedGraphics::DrawingMonitor>(*page);
-    m_drawingMonitor->start(WTFMove(callbackFunction));
+    m_drawingMonitor->start(WTF::move(callbackFunction));
 }
 
 } // namespace WebKit

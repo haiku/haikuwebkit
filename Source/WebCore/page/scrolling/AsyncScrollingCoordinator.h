@@ -96,10 +96,10 @@ public:
 protected:
     WEBCORE_EXPORT AsyncScrollingCoordinator(Page*);
 
-    void setScrollingTree(Ref<ScrollingTree>&& scrollingTree) { m_scrollingTree = WTFMove(scrollingTree); }
+    void setScrollingTree(Ref<ScrollingTree>&& scrollingTree) { m_scrollingTree = WTF::move(scrollingTree); }
     const SmallMap<FrameIdentifier, UniqueRef<ScrollingStateTree>>& scrollingStateTrees() const { return m_scrollingStateTrees; }
 
-    RefPtr<ScrollingTree> releaseScrollingTree() { return WTFMove(m_scrollingTree); }
+    RefPtr<ScrollingTree> releaseScrollingTree() { return WTF::move(m_scrollingTree); }
 
     WEBCORE_EXPORT String scrollingStateTreeAsText(OptionSet<ScrollingStateTreeAsTextBehavior> = { }) const override;
     WEBCORE_EXPORT String scrollingTreeAsText(OptionSet<ScrollingStateTreeAsTextBehavior> = { }) const override;

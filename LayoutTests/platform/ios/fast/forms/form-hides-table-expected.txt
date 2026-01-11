@@ -16,14 +16,13 @@ layer at (0,0) size 800x694
           text run at (147,0) width 5: "."
       RenderBlock {DIV} at (0,72) size 784x26
         RenderInline {DIV} at (0,0) size 784x26
-          RenderBlock (anonymous) at (0,0) size 784x26
-            RenderBlock {FORM} at (0,0) size 784x26
-              RenderTable {TABLE} at (0,0) size 98x26
-                RenderTableSection {TBODY} at (0,0) size 98x26
-                  RenderTableRow {TR} at (0,2) size 98x22
-                    RenderTableCell {TD} at (2,2) size 94x22 [r=0 c=0 rs=1 cs=1]
-                      RenderText {#text} at (1,1) size 92x19
-                        text run at (1,1) width 92: "display: inline"
+          RenderBlock {FORM} at (0,0) size 784x26
+            RenderTable {TABLE} at (0,0) size 98x26
+              RenderTableSection {TBODY} at (0,0) size 98x26
+                RenderTableRow {TR} at (0,2) size 98x22
+                  RenderTableCell {TD} at (2,2) size 94x22 [r=0 c=0 rs=1 cs=1]
+                    RenderText {#text} at (1,1) size 92x19
+                      text run at (1,1) width 92: "display: inline"
       RenderBlock {DIV} at (0,114) size 784x26
         RenderBlock {DIV} at (0,0) size 784x26
           RenderBlock {FORM} at (0,0) size 784x26

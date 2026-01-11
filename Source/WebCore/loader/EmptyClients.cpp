@@ -466,8 +466,8 @@ private:
 
     std::optional<String> validatedPaymentNetwork(const String&) const final { return std::nullopt; }
     bool canMakePayments() final { return false; }
-    void canMakePaymentsWithActiveCard(const String&, const String&, CompletionHandler<void(bool)>&& completionHandler) final { callOnMainThread([completionHandler = WTFMove(completionHandler)]() mutable { completionHandler(false); }); }
-    void openPaymentSetup(const String&, const String&, CompletionHandler<void(bool)>&& completionHandler) final { callOnMainThread([completionHandler = WTFMove(completionHandler)]() mutable { completionHandler(false); }); }
+    void canMakePaymentsWithActiveCard(const String&, const String&, CompletionHandler<void(bool)>&& completionHandler) final { callOnMainThread([completionHandler = WTF::move(completionHandler)]() mutable { completionHandler(false); }); }
+    void openPaymentSetup(const String&, const String&, CompletionHandler<void(bool)>&& completionHandler) final { callOnMainThread([completionHandler = WTF::move(completionHandler)]() mutable { completionHandler(false); }); }
     bool showPaymentUI(const URL&, const Vector<URL>&, const ApplePaySessionPaymentRequest&) final { return false; }
     void completeMerchantValidation(const PaymentMerchantSession&) final { }
     void completeShippingMethodSelection(std::optional<ApplePayShippingMethodUpdate>&&) final { }
@@ -496,14 +496,14 @@ public:
 
     void showDigitalCredentialsPicker(Vector<WebCore::UnvalidatedDigitalCredentialRequest>&&, const DigitalCredentialsRequestData&, CompletionHandler<void(Expected<DigitalCredentialsResponseData, ExceptionData>&&)>&& completionHandler)
     {
-        callOnMainThread([completionHandler = WTFMove(completionHandler)]() mutable {
+        callOnMainThread([completionHandler = WTF::move(completionHandler)]() mutable {
             completionHandler(makeUnexpected(ExceptionData { ExceptionCode::NotSupportedError, "Empty client."_s }));
         });
     }
 
     void dismissDigitalCredentialsPicker(CompletionHandler<void(bool)>&& completionHandler) final
     {
-        callOnMainThread([completionHandler = WTFMove(completionHandler)]() mutable {
+        callOnMainThread([completionHandler = WTF::move(completionHandler)]() mutable {
             completionHandler(false);
         });
     }
@@ -672,7 +672,7 @@ void EmptyFrameLoaderClient::dispatchDecidePolicyForNewWindowAction(const Naviga
 {
 }
 
-void EmptyFrameLoaderClient::dispatchDecidePolicyForNavigationAction(const NavigationAction&, const ResourceRequest&, const ResourceResponse&, FormState*, const String&, std::optional<NavigationIdentifier>, std::optional<HitTestResult>&&, bool, IsPerformingHTTPFallback, SandboxFlags, PolicyDecisionMode, FramePolicyFunction&&)
+void EmptyFrameLoaderClient::dispatchDecidePolicyForNavigationAction(const NavigationAction&, const ResourceRequest&, const ResourceResponse&, FormState*, const String&, std::optional<NavigationIdentifier>, std::optional<HitTestResult>&&, bool, NavigationUpgradeToHTTPSBehavior, SandboxFlags, PolicyDecisionMode, FramePolicyFunction&&)
 {
 }
 
@@ -680,7 +680,7 @@ void EmptyFrameLoaderClient::updateSandboxFlags(SandboxFlags)
 {
 }
 
-void EmptyFrameLoaderClient::updateOpener(const Frame&)
+void EmptyFrameLoaderClient::updateOpener(std::optional<FrameIdentifier>)
 {
 }
 
@@ -699,7 +699,7 @@ void EmptyFrameLoaderClient::dispatchWillSubmitForm(FormState&, URL&&, String&&,
 
 Ref<DocumentLoader> EmptyFrameLoaderClient::createDocumentLoader(ResourceRequest&& request, SubstituteData&& substituteData)
 {
-    return DocumentLoader::create(WTFMove(request), WTFMove(substituteData));
+    return DocumentLoader::create(WTF::move(request), WTF::move(substituteData));
 }
 
 RefPtr<LocalFrame> EmptyFrameLoaderClient::createFrame(const AtomString&, HTMLFrameOwnerElement&)

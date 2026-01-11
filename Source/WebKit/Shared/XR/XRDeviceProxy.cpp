@@ -39,7 +39,7 @@ namespace WebKit {
 
 Ref<XRDeviceProxy> XRDeviceProxy::create(XRDeviceInfo&& deviceInfo, PlatformXRSystemProxy& xrSystem)
 {
-    return adoptRef(*new XRDeviceProxy(WTFMove(deviceInfo), xrSystem));
+    return adoptRef(*new XRDeviceProxy(WTF::move(deviceInfo), xrSystem));
 }
 
 XRDeviceProxy::XRDeviceProxy(XRDeviceInfo&& deviceInfo, PlatformXRSystemProxy& xrSystem)
@@ -86,7 +86,7 @@ void XRDeviceProxy::initializeTrackingAndRendering(const WebCore::SecurityOrigin
     if (!xrSystem)
         return;
 
-    xrSystem->initializeTrackingAndRendering(WTFMove(init));
+    xrSystem->initializeTrackingAndRendering(WTF::move(init));
 
     // This is called from the constructor of WebXRSession. Since sessionDidInitializeInputSources()
     // ends up calling queueTaskKeepingObjectAlive() which refs the WebXRSession object, we
@@ -127,7 +127,7 @@ Vector<PlatformXR::Device::ViewData> XRDeviceProxy::views(SessionMode mode) cons
 void XRDeviceProxy::requestFrame(std::optional<PlatformXR::RequestData>&& requestData, PlatformXR::Device::RequestFrameCallback&& callback)
 {
     if (RefPtr xrSystem = m_xrSystem.get())
-        xrSystem->requestFrame(WTFMove(requestData), WTFMove(callback));
+        xrSystem->requestFrame(WTF::move(requestData), WTF::move(callback));
     else
         callback({ });
 }
@@ -142,7 +142,7 @@ void XRDeviceProxy::submitFrame(Vector<PlatformXR::Device::Layer>&& layers)
 {
     if (RefPtr xrSystem = m_xrSystem.get()) {
 #if USE(OPENXR)
-        xrSystem->submitFrame(WTFMove(layers));
+        xrSystem->submitFrame(WTF::move(layers));
 #else
         UNUSED_PARAM(layers);
         xrSystem->submitFrame();
@@ -158,7 +158,7 @@ void XRDeviceProxy::requestHitTestSource(const PlatformXR::HitTestOptions& init,
         completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError });
         return;
     }
-    xrSystem->requestHitTestSource(init, WTFMove(completionHandler));
+    xrSystem->requestHitTestSource(init, WTF::move(completionHandler));
 }
 
 void XRDeviceProxy::deleteHitTestSource(PlatformXR::HitTestSource source)
@@ -176,7 +176,7 @@ void XRDeviceProxy::requestTransientInputHitTestSource(const PlatformXR::Transie
         completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError });
         return;
     }
-    xrSystem->requestTransientInputHitTestSource(init, WTFMove(completionHandler));
+    xrSystem->requestTransientInputHitTestSource(init, WTF::move(completionHandler));
 }
 
 void XRDeviceProxy::deleteTransientInputHitTestSource(PlatformXR::TransientInputHitTestSource source)

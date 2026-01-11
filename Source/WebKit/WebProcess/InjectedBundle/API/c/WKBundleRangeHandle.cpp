@@ -43,7 +43,7 @@ WKTypeID WKBundleRangeHandleGetTypeID()
 WKBundleRangeHandleRef WKBundleRangeHandleCreate(JSContextRef contextRef, JSObjectRef objectRef)
 {
     RefPtr<WebKit::InjectedBundleRangeHandle> rangeHandle = WebKit::InjectedBundleRangeHandle::getOrCreate(contextRef, objectRef);
-    return toAPILeakingRef(WTFMove(rangeHandle));
+    return toAPILeakingRef(WTF::move(rangeHandle));
 }
 
 WKRect WKBundleRangeHandleGetBoundingRectInWindowCoordinates(WKBundleRangeHandleRef rangeHandleRef)
@@ -55,11 +55,11 @@ WKRect WKBundleRangeHandleGetBoundingRectInWindowCoordinates(WKBundleRangeHandle
 WKImageRef WKBundleRangeHandleCopySnapshotWithOptions(WKBundleRangeHandleRef rangeHandleRef, WKSnapshotOptions options)
 {
     RefPtr<WebKit::WebImage> image = WebKit::toProtectedImpl(rangeHandleRef)->renderedImage(WebKit::toSnapshotOptions(options));
-    return toAPILeakingRef(WTFMove(image));
+    return toAPILeakingRef(WTF::move(image));
 }
 
 WKBundleFrameRef WKBundleRangeHandleCopyDocumentFrame(WKBundleRangeHandleRef rangeHandleRef)
 {
     RefPtr frame = WebKit::toProtectedImpl(rangeHandleRef)->document()->documentFrame();
-    return toAPILeakingRef(WTFMove(frame));
+    return toAPILeakingRef(WTF::move(frame));
 }

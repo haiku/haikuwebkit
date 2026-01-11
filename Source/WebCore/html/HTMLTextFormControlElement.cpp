@@ -59,7 +59,7 @@
 #include "PseudoClassChangeInvalidation.h"
 #include "RenderLineBreak.h"
 #include "RenderObjectInlines.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+SettersInlines.h"
 #include "RenderTextControlSingleLine.h"
 #include "RenderTheme.h"
 #include "ScriptDisallowedScope.h"
@@ -72,7 +72,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLTextFormControlElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLTextFormControlElement);
 
 using namespace HTMLNames;
 
@@ -100,7 +100,7 @@ Node::InsertedIntoAncestorResult HTMLTextFormControlElement::insertedIntoAncesto
     InsertedIntoAncestorResult InsertedIntoAncestorResult = HTMLFormControlElement::insertedIntoAncestor(insertionType, parentOfInsertedTree);
     if (insertionType.connectedToDocument) {
         String initialValue = value();
-        setTextAsOfLastFormControlChangeEvent(initialValue.isNull() ? String(emptyString()) : WTFMove(initialValue));
+        setTextAsOfLastFormControlChangeEvent(initialValue.isNull() ? String(emptyString()) : WTF::move(initialValue));
     }
     return InsertedIntoAncestorResult;
 }
@@ -135,7 +135,7 @@ void HTMLTextFormControlElement::dispatchFocusEvent(RefPtr<Element>&& oldFocused
     if (supportsPlaceholder())
         updatePlaceholderVisibility();
     handleFocusEvent(oldFocusedElement.get(), options.direction);
-    HTMLFormControlElement::dispatchFocusEvent(WTFMove(oldFocusedElement), options);
+    HTMLFormControlElement::dispatchFocusEvent(WTF::move(oldFocusedElement), options);
 }
 
 void HTMLTextFormControlElement::dispatchBlurEvent(RefPtr<Element>&& newFocusedElement)
@@ -144,7 +144,7 @@ void HTMLTextFormControlElement::dispatchBlurEvent(RefPtr<Element>&& newFocusedE
         updatePlaceholderVisibility();
     // Match the order in Document::setFocusedElement.
     handleBlurEvent();
-    HTMLFormControlElement::dispatchBlurEvent(WTFMove(newFocusedElement));
+    HTMLFormControlElement::dispatchBlurEvent(WTF::move(newFocusedElement));
 }
 
 void HTMLTextFormControlElement::dispatchUserTextInputEvent()
@@ -722,7 +722,7 @@ void HTMLTextFormControlElement::setInnerTextValue(String&& value)
             ScriptDisallowedScope::EventAllowedScope allowedScope(*protectedUserAgentShadowRoot());
 
             bool endsWithNewLine = value.endsWith('\n') || value.endsWith('\r');
-            innerText->setInnerText(WTFMove(value));
+            innerText->setInnerText(WTF::move(value));
 
             if (endsWithNewLine)
                 innerText->appendChild(HTMLBRElement::create(document()));

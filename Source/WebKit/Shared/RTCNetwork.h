@@ -91,7 +91,7 @@ struct SocketAddress {
     explicit SocketAddress(uint16_t port, int scopeID, String&& hostname, std::optional<IPAddress> ipAddress)
         : port(port)
         , scopeID(scopeID)
-        , hostname(WTFMove(hostname))
+        , hostname(WTF::move(hostname))
         , ipAddress(ipAddress) { }
 
     webrtc::SocketAddress rtcAddress() const;

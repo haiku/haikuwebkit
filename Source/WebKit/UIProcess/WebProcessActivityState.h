@@ -47,6 +47,7 @@ public:
     void takeCapturingActivity();
     void takeMutedCaptureAssertion();
     void takeNetworkActivity();
+    void takeTextExtractionAssertion();
 
     void reset();
     void dropVisibleActivity();
@@ -54,6 +55,7 @@ public:
     void dropCapturingActivity();
     void dropMutedCaptureAssertion();
     void dropNetworkActivity();
+    void dropTextExtractionAssertion();
 
     bool hasValidVisibleActivity() const;
     bool hasValidAudibleActivity() const;
@@ -95,7 +97,7 @@ private:
     RefPtr<ProcessThrottlerActivity> m_openingAppLinkActivity;
 #endif
     RefPtr<ProcessThrottlerActivity> m_networkActivity;
-
+    RefPtr<ProcessAssertion> m_textExtractionAssertion;
 };
 
 } // namespace WebKit

@@ -148,7 +148,7 @@ inline LengthWrapperData::LengthWrapperData(const LengthWrapperData& other)
 
 inline LengthWrapperData::LengthWrapperData(LengthWrapperData&& other)
 {
-    initialize(WTFMove(other));
+    initialize(WTF::move(other));
 }
 
 inline LengthWrapperData& LengthWrapperData::operator=(const LengthWrapperData& other)
@@ -171,7 +171,7 @@ inline LengthWrapperData& LengthWrapperData::operator=(LengthWrapperData&& other
     if (m_kind == LengthWrapperDataKind::Calculation)
         deref();
 
-    initialize(WTFMove(other));
+    initialize(WTF::move(other));
     return *this;
 }
 

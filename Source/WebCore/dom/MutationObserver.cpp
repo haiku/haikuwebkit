@@ -51,18 +51,18 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(MutationObserver);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(MutationObserver);
 
 static unsigned s_observerPriority = 0;
 
 Ref<MutationObserver> MutationObserver::create(Ref<MutationCallback>&& callback)
 {
     ASSERT(isMainThread());
-    return adoptRef(*new MutationObserver(WTFMove(callback)));
+    return adoptRef(*new MutationObserver(WTF::move(callback)));
 }
 
 MutationObserver::MutationObserver(Ref<MutationCallback>&& callback)
-    : m_callback(WTFMove(callback))
+    : m_callback(WTF::move(callback))
     , m_priority(s_observerPriority++)
 {
 }
@@ -116,7 +116,7 @@ ExceptionOr<void> MutationObserver::observe(Node& node, const Init& init)
 
 auto MutationObserver::takeRecords() -> TakenRecords
 {
-    return { WTFMove(m_records), WTFMove(m_pendingTargets) };
+    return { WTF::move(m_records), WTF::move(m_pendingTargets) };
 }
 
 void MutationObserver::disconnect()
@@ -147,10 +147,10 @@ void MutationObserver::enqueueMutationRecord(Ref<MutationRecord>&& mutation)
     Ref document = mutation->target()->document();
 
     m_pendingTargets.add(*mutation->target());
-    m_records.append(WTFMove(mutation));
+    m_records.append(WTF::move(mutation));
 
     Ref eventLoop = document->windowEventLoop();
-    eventLoop->activeMutationObservers().add(this);
+    eventLoop->activeMutationObservers().add(*this);
     eventLoop->queueMutationObserverCompoundMicrotask();
 }
 
@@ -179,7 +179,7 @@ void MutationObserver::enqueueShadowRootAttachedEvent(Element& element)
 void MutationObserver::setHasTransientRegistration(Document& document)
 {
     Ref eventLoop = document.windowEventLoop();
-    eventLoop->activeMutationObservers().add(this);
+    eventLoop->activeMutationObservers().add(*this);
     eventLoop->queueMutationObserverCompoundMicrotask();
 }
 
@@ -210,7 +210,7 @@ void MutationObserver::deliver()
     pendingTargets.swap(m_pendingTargets);
     for (Ref registration : m_registrations) {
         if (registration->hasTransientRegistrations())
-            transientRegistrations.append(WTFMove(registration));
+            transientRegistrations.append(WTF::move(registration));
     }
     for (auto& registration : transientRegistrations)
         nodesToKeepAlive.append(registration->takeTransientRegistrations());

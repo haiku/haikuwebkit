@@ -172,7 +172,7 @@ void RemoteAudioSession::configurationChanged(RemoteAudioSessionConfiguration&& 
     bool isActiveChanged = !m_configuration || configuration.isActive != (*m_configuration).isActive;
     bool routingContextUIDChanged = !m_configuration || configuration.routingContextUID != (*m_configuration).routingContextUID;
 
-    m_configuration = WTFMove(configuration);
+    m_configuration = WTF::move(configuration);
 
     m_configurationChangeObservers.forEach([&](auto& observer) {
         if (mutedStateChanged)

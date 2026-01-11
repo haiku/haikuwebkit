@@ -48,8 +48,8 @@
 #include "RenderFlexibleBox.h"
 #include "RenderObjectInlines.h"
 #include "RenderSlider.h"
-#include "RenderStyleInlines.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+GettersInlines.h"
+#include "RenderStyle+SettersInlines.h"
 #include "RenderTheme.h"
 #include "ResolvedStyle.h"
 #include "ScriptDisallowedScope.h"
@@ -69,8 +69,8 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SliderThumbElement);
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SliderContainerElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SliderThumbElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SliderContainerElement);
 
 inline static Decimal sliderPosition(HTMLInputElement& element)
 {
@@ -90,11 +90,11 @@ inline static bool hasVerticalAppearance(HTMLInputElement& input)
 // FIXME: Find a way to cascade appearance and adjust heights, and get rid of this class.
 // http://webkit.org/b/62535
 class RenderSliderContainer final : public RenderFlexibleBox {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderSliderContainer);
+    WTF_MAKE_TZONE_ALLOCATED(RenderSliderContainer);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderSliderContainer);
 public:
     RenderSliderContainer(SliderContainerElement& element, RenderStyle&& style)
-        : RenderFlexibleBox(Type::SliderContainer, element, WTFMove(style))
+        : RenderFlexibleBox(Type::SliderContainer, element, WTF::move(style))
     {
     }
 
@@ -106,7 +106,7 @@ private:
     bool isFlexibleBoxImpl() const override { return true; }
 };
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderSliderContainer);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderSliderContainer);
 
 RenderBox::LogicalExtentComputedValues RenderSliderContainer::computeLogicalHeight(LayoutUnit logicalHeight, LayoutUnit logicalTop) const
 {
@@ -614,7 +614,7 @@ Ref<SliderContainerElement> SliderContainerElement::create(Document& document)
 
 RenderPtr<RenderElement> SliderContainerElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
-    return createRenderer<RenderSliderContainer>(*this, WTFMove(style));
+    return createRenderer<RenderSliderContainer>(*this, WTF::move(style));
 }
 
 }

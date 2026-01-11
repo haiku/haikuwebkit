@@ -165,7 +165,7 @@ std::optional<DestinationColorSpace> DestinationColorSpace::asExtended() const
 #if USE(CG)
     // Avoid refing color space here as this is performance-sensitive.
     SUPPRESS_UNRETAINED_ARG if (RetainPtr colorSpace = adoptCF(CGColorSpaceCreateExtended(platformColorSpace())))
-        return DestinationColorSpace(WTFMove(colorSpace));
+        return DestinationColorSpace(WTF::move(colorSpace));
 #endif
     return std::nullopt;
 }

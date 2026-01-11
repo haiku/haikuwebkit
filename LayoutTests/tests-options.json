@@ -3086,6 +3086,12 @@
     "imported/w3c/web-platform-tests/fetch/redirect-navigate/preserve-fragment.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/fetch/security/dangling-markup/dangling-markup-mitigation-allowed-apis.https.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/fetch/security/dangling-markup/dangling-markup-mitigation.tentative.https.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/focus/activeelement-after-calling-window-focus.sub.html": [
         "slow"
     ],
@@ -3635,6 +3641,129 @@
     "imported/w3c/web-platform-tests/html/dom/reflection-text.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-001.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-002.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-003.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-004.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-005.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-006.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-007.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-008.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-009.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-010.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-011.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-012.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-013.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-014.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-015.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-016.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-017.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-018.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-019.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-020.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-021.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-022.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-023.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-024.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-025.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-026.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-027.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-028.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-029.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-030.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-031.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-032.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-033.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-034.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-035.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-036.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-037.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-038.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-039.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-040.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/dom/render-blocking/element-render-blocking-041.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/html/editing/the-hidden-attribute/beforematch-scroll-to-text-fragment.html": [
         "slow"
     ],
@@ -3702,6 +3831,9 @@
         "slow"
     ],
     "imported/w3c/web-platform-tests/html/select/options-length-too-large.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/semantics/disabled-elements/disabled-event-dispatch-additional.tentative.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/html/semantics/disabled-elements/disabled-event-dispatch.tentative.html": [
@@ -6530,10 +6662,13 @@
     "imported/w3c/web-platform-tests/webrtc/RTCDataChannel-iceRestart.html": [
         "slow"
     ],
-    "imported/w3c/web-platform-tests/webrtc/RTCDataChannel-send-close.html": [
+    "imported/w3c/web-platform-tests/webrtc/RTCDataChannel-id.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/webrtc/RTCDataChannel-send.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/webrtc/RTCDataChannel-worker-GC.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/webrtc/RTCIceConnectionState-candidate-pair.https.html": [
@@ -6552,6 +6687,9 @@
         "slow"
     ],
     "imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-addTcpIceCandidate.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-addTransceiver-renegotiation.https.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-capture-video.https.html": [
@@ -6674,6 +6812,9 @@
     "imported/w3c/web-platform-tests/webrtc/protocol/h264-profile-levels.https.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/webrtc/protocol/h265-loopback.https.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/webrtc/protocol/ice-state.https.html": [
         "slow"
     ],
@@ -6690,6 +6831,9 @@
         "slow"
     ],
     "imported/w3c/web-platform-tests/webrtc/protocol/vp8-fmtp.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/webrtc/rtp-stats-lifetime.https.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/webrtc/simulcast/av1.https.html": [

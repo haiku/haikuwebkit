@@ -128,7 +128,7 @@ void RenderTreeBuilder::List::updateItemMarker(RenderListItem& listItemRenderer)
 
     auto newStyle = listItemRenderer.computeMarkerStyle();
     if (auto* markerRenderer = listItemRenderer.markerRenderer()) {
-        markerRenderer->setStyle(WTFMove(newStyle));
+        markerRenderer->setStyle(WTF::move(newStyle));
         auto* currentParent = markerRenderer->parent();
         if (!currentParent) {
             ASSERT_NOT_REACHED();
@@ -157,7 +157,7 @@ void RenderTreeBuilder::List::updateItemMarker(RenderListItem& listItemRenderer)
         return;
     }
 
-    RenderPtr<RenderListMarker> newMarkerRenderer = WebCore::createRenderer<RenderListMarker>(listItemRenderer, WTFMove(newStyle));
+    RenderPtr<RenderListMarker> newMarkerRenderer = WebCore::createRenderer<RenderListMarker>(listItemRenderer, WTF::move(newStyle));
     newMarkerRenderer->initializeStyle();
     listItemRenderer.setMarkerRenderer(*newMarkerRenderer);
     auto* newParent = parentCandidateForMarker(listItemRenderer, *newMarkerRenderer);
@@ -170,7 +170,7 @@ void RenderTreeBuilder::List::updateItemMarker(RenderListItem& listItemRenderer)
         if (auto* multiColumnFlow = listItemRenderer.multiColumnFlow())
             newParent = multiColumnFlow;
     }
-    m_builder.attach(*newParent, WTFMove(newMarkerRenderer), firstNonMarkerChild(*newParent));
+    m_builder.attach(*newParent, WTF::move(newMarkerRenderer), firstNonMarkerChild(*newParent));
 }
 
 }

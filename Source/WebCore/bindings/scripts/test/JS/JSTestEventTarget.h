@@ -35,7 +35,7 @@ public:
     {
         SUPPRESS_UNCOUNTED_LOCAL auto& vm = globalObject->vm();
         globalObject->masqueradesAsUndefinedWatchpointSet().fireAll(vm, "Allocated masquerading object");
-        JSTestEventTarget* ptr = new (NotNull, JSC::allocateCell<JSTestEventTarget>(vm)) JSTestEventTarget(structure, *globalObject, WTFMove(impl));
+        JSTestEventTarget* ptr = new (NotNull, JSC::allocateCell<JSTestEventTarget>(vm)) JSTestEventTarget(structure, *globalObject, WTF::move(impl));
         ptr->finishCreation(vm);
         return ptr;
     }

@@ -55,7 +55,7 @@ template<typename T> struct ActionWithoutMetadata {
 template<typename T> struct ActionWithStringMetadata {
     String string;
     T isolatedCopy() const & { return { { string.isolatedCopy() } }; }
-    T isolatedCopy() && { return { { WTFMove(string).isolatedCopy() } }; }
+    T isolatedCopy() && { return { { WTF::move(string).isolatedCopy() } }; }
     friend bool operator==(const ActionWithStringMetadata&, const ActionWithStringMetadata&) = default;
     void serialize(Vector<uint8_t>& vector) const { serializeString(vector, string); }
     static T deserialize(std::span<const uint8_t> span) { return { { deserializeString(span) } }; }
@@ -79,7 +79,7 @@ struct WEBCORE_EXPORT ModifyHeadersAction {
             String value;
 
             AppendOperation isolatedCopy() const & { return { header.isolatedCopy(), value.isolatedCopy() }; }
-            AppendOperation isolatedCopy() && { return { WTFMove(header).isolatedCopy(), WTFMove(value).isolatedCopy() }; }
+            AppendOperation isolatedCopy() && { return { WTF::move(header).isolatedCopy(), WTF::move(value).isolatedCopy() }; }
             friend bool operator==(const AppendOperation&, const AppendOperation&) = default;
         };
         struct SetOperation {
@@ -87,14 +87,14 @@ struct WEBCORE_EXPORT ModifyHeadersAction {
             String value;
 
             SetOperation isolatedCopy() const & { return { header.isolatedCopy(), value.isolatedCopy() }; }
-            SetOperation isolatedCopy() && { return { WTFMove(header).isolatedCopy(), WTFMove(value).isolatedCopy() }; }
+            SetOperation isolatedCopy() && { return { WTF::move(header).isolatedCopy(), WTF::move(value).isolatedCopy() }; }
             friend bool operator==(const SetOperation&, const SetOperation&) = default;
         };
         struct RemoveOperation {
             String header;
 
             RemoveOperation isolatedCopy() const & { return { header.isolatedCopy() }; }
-            RemoveOperation isolatedCopy() && { return { WTFMove(header).isolatedCopy() }; }
+            RemoveOperation isolatedCopy() && { return { WTF::move(header).isolatedCopy() }; }
             friend bool operator==(const RemoveOperation&, const RemoveOperation&) = default;
         };
         using OperationVariant = Variant<AppendOperation, SetOperation, RemoveOperation>;
@@ -117,8 +117,8 @@ struct WEBCORE_EXPORT ModifyHeadersAction {
 
     ModifyHeadersAction(Vector<ModifyHeaderInfo>&& requestHeaders, Vector<ModifyHeaderInfo>&& responseHeaders, uint32_t priority)
         : hashTableType(HashTableType::Full)
-        , requestHeaders(WTFMove(requestHeaders))
-        , responseHeaders(WTFMove(responseHeaders))
+        , requestHeaders(WTF::move(requestHeaders))
+        , responseHeaders(WTF::move(responseHeaders))
         , priority(priority) { }
 
     enum EmptyValueTag { EmptyValue };
@@ -143,7 +143,7 @@ struct WEBCORE_EXPORT RedirectAction {
         String extensionPath;
 
         ExtensionPathAction isolatedCopy() const & { return { extensionPath.isolatedCopy() }; }
-        ExtensionPathAction isolatedCopy() && { return { WTFMove(extensionPath).isolatedCopy() }; }
+        ExtensionPathAction isolatedCopy() && { return { WTF::move(extensionPath).isolatedCopy() }; }
         friend bool operator==(const ExtensionPathAction&, const ExtensionPathAction&) = default;
     };
     struct RegexSubstitutionAction {
@@ -151,7 +151,7 @@ struct WEBCORE_EXPORT RedirectAction {
         String regexFilter;
 
         RegexSubstitutionAction isolatedCopy() const & { return { regexSubstitution.isolatedCopy(), regexFilter.isolatedCopy() }; }
-        RegexSubstitutionAction isolatedCopy() && { return { WTFMove(regexSubstitution).isolatedCopy(), WTFMove(regexFilter).isolatedCopy() }; }
+        RegexSubstitutionAction isolatedCopy() && { return { WTF::move(regexSubstitution).isolatedCopy(), WTF::move(regexFilter).isolatedCopy() }; }
         void serialize(Vector<uint8_t>&) const;
         static RegexSubstitutionAction deserialize(std::span<const uint8_t>);
         friend bool operator==(const RegexSubstitutionAction&, const RegexSubstitutionAction&) = default;
@@ -166,7 +166,7 @@ struct WEBCORE_EXPORT RedirectAction {
 
                 static Expected<QueryKeyValue, std::error_code> parse(const JSON::Value&);
                 QueryKeyValue isolatedCopy() const & { return { key.isolatedCopy(), replaceOnly, value.isolatedCopy() }; }
-                QueryKeyValue isolatedCopy() && { return { WTFMove(key).isolatedCopy(), replaceOnly, WTFMove(value).isolatedCopy() }; }
+                QueryKeyValue isolatedCopy() && { return { WTF::move(key).isolatedCopy(), replaceOnly, WTF::move(value).isolatedCopy() }; }
                 friend bool operator==(const QueryKeyValue&, const QueryKeyValue&) = default;
                 void serialize(Vector<uint8_t>&) const;
                 static QueryKeyValue deserialize(std::span<const uint8_t>);
@@ -209,7 +209,7 @@ struct WEBCORE_EXPORT RedirectAction {
         String url;
 
         URLAction isolatedCopy() const & { return { url.isolatedCopy() }; }
-        URLAction isolatedCopy() && { return { WTFMove(url).isolatedCopy() }; }
+        URLAction isolatedCopy() && { return { WTF::move(url).isolatedCopy() }; }
         friend bool operator==(const URLAction&, const URLAction&) = default;
     };
 
@@ -219,7 +219,7 @@ struct WEBCORE_EXPORT RedirectAction {
 
     RedirectAction(ActionVariant&& action)
         : hashTableType(HashTableType::Full)
-        , action(WTFMove(action)) { }
+        , action(WTF::move(action)) { }
 
     enum EmptyValueTag { EmptyValue };
     enum DeletedValueTag { DeletedValue };
@@ -243,19 +243,19 @@ struct ReportIdentifierAction : public ActionWithStringMetadata<ReportIdentifier
     double identifier;
 
     ReportIdentifierAction(String string)
-    : ActionWithStringMetadata<ReportIdentifierAction> { { WTFMove(string) } }
+    : ActionWithStringMetadata<ReportIdentifierAction> { { WTF::move(string) } }
     , identifier(0)
     {
     }
 
     ReportIdentifierAction(String string, double identifier)
-    : ActionWithStringMetadata<ReportIdentifierAction> { { WTFMove(string) } }
+    : ActionWithStringMetadata<ReportIdentifierAction> { { WTF::move(string) } }
     , identifier(identifier)
     {
     }
 
     ReportIdentifierAction isolatedCopy() const & { return { string.isolatedCopy(), identifier }; }
-    ReportIdentifierAction isolatedCopy() && { return { WTFMove(string).isolatedCopy(), identifier }; }
+    ReportIdentifierAction isolatedCopy() && { return { WTF::move(string).isolatedCopy(), identifier }; }
     friend bool operator==(const ReportIdentifierAction&, const ReportIdentifierAction&) = default;
 
     void serialize(Vector<uint8_t>& vector) const

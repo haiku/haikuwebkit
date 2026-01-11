@@ -163,6 +163,7 @@ public:
             bool showExtendedGridLines;
             bool showTrackSizes;
             bool showAreaNames;
+            bool showOrderNumbers;
         };
 
         WeakPtr<Node, WeakPtrImplWithEventTargetData> gridNode;

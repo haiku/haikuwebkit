@@ -478,7 +478,7 @@ Node* LocalFrame::approximateNodeAtViewportLocationLegacy(const FloatPoint& view
         return nullptr;
     };
 
-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToClickEvents), ShouldApproximate::Yes);
+    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTF::move(ancestorRespondingToClickEvents), ShouldApproximate::Yes);
 }
 
 static inline NodeQualifier ancestorRespondingToClickEventsNodeQualifier(SecurityOrigin* securityOrigin = nullptr)
@@ -539,7 +539,7 @@ Node* LocalFrame::nodeRespondingToDoubleClickEvent(const FloatPoint& viewportLoc
         return nullptr;
     };
 
-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToDoubleClickEvent), ShouldApproximate::Yes);
+    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTF::move(ancestorRespondingToDoubleClickEvent), ShouldApproximate::Yes);
 }
 
 Node* LocalFrame::nodeRespondingToInteraction(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
@@ -577,7 +577,7 @@ Node* LocalFrame::nodeRespondingToScrollWheelEvents(const FloatPoint& viewportLo
     };
 
     FloatPoint adjustedViewportLocation;
-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToScrollWheelEvents), ShouldApproximate::No);
+    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTF::move(ancestorRespondingToScrollWheelEvents), ShouldApproximate::No);
 }
 
 int LocalFrame::preferredHeight() const

@@ -59,7 +59,7 @@ Ref<const DisplayList> RecorderImpl::takeDisplayList()
 {
     appendStateChangeItemIfNecessary();
     m_items.shrinkToFit();
-    return DisplayList::create(WTFMove(m_items));
+    return DisplayList::create(WTF::move(m_items));
 }
 
 Ref<const DisplayList> RecorderImpl::copyDisplayList()
@@ -498,7 +498,7 @@ void RecorderImpl::appendStateChangeItemIfNecessary()
 
 void RecorderImpl::drawPlaceholder(Function<void(GraphicsContext&)>&& function)
 {
-    m_items.append(DrawPlaceholder(WTFMove(function)));
+    m_items.append(DrawPlaceholder(WTF::move(function)));
 }
 
 } // namespace DisplayList

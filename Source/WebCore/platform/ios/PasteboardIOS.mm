@@ -55,7 +55,7 @@
 namespace WebCore {
 
 Pasteboard::Pasteboard(std::unique_ptr<PasteboardContext>&& context, const String& pasteboardName)
-    : m_context(WTFMove(context))
+    : m_context(WTF::move(context))
     , m_pasteboardName(pasteboardName)
     , m_changeCount(platformStrategies()->pasteboardStrategy()->changeCount(pasteboardName, m_context.get()))
 {
@@ -75,7 +75,7 @@ String Pasteboard::nameOfDragPasteboard()
 
 std::unique_ptr<Pasteboard> Pasteboard::createForDragAndDrop(std::unique_ptr<PasteboardContext>&& context)
 {
-    return makeUnique<Pasteboard>(WTFMove(context), Pasteboard::nameOfDragPasteboard());
+    return makeUnique<Pasteboard>(WTF::move(context), Pasteboard::nameOfDragPasteboard());
 }
 
 std::unique_ptr<Pasteboard> Pasteboard::create(const DragData& dragData)
@@ -96,13 +96,13 @@ NSString *UIColorPboardType = @"com.apple.uikit.color";
 NSString *UIImagePboardType = @"com.apple.uikit.image";
 
 Pasteboard::Pasteboard(std::unique_ptr<PasteboardContext>&& context)
-    : m_context(WTFMove(context))
+    : m_context(WTF::move(context))
     , m_changeCount(0)
 {
 }
 
 Pasteboard::Pasteboard(std::unique_ptr<PasteboardContext>&& context, int64_t changeCount)
-    : m_context(WTFMove(context))
+    : m_context(WTF::move(context))
     , m_changeCount(changeCount)
 {
 }
@@ -113,7 +113,7 @@ void Pasteboard::writeMarkup(const String&)
 
 std::unique_ptr<Pasteboard> Pasteboard::createForCopyAndPaste(std::unique_ptr<PasteboardContext>&& context)
 {
-    return makeUnique<Pasteboard>(WTFMove(context), PAL::get_UIKit_UIPasteboardNameGeneralSingleton());
+    return makeUnique<Pasteboard>(WTF::move(context), PAL::get_UIKit_UIPasteboardNameGeneralSingleton());
 }
 
 void Pasteboard::write(const PasteboardWebContent& content)
@@ -425,7 +425,7 @@ void Pasteboard::readRespectingUTIFidelities(PasteboardWebContentReader& reader,
         auto contentType = info->contentTypeForHighestFidelityItem();
         if (canReadAttachment && prefersAttachmentRepresentation(*info)) {
             readURLAlongsideAttachmentIfNecessary(reader, *strategy, contentType, m_pasteboardName, index, context());
-            reader.readFilePath(WTFMove(attachmentFilePath), info->preferredPresentationSize, contentType);
+            reader.readFilePath(WTF::move(attachmentFilePath), info->preferredPresentationSize, contentType);
             continue;
         }
 #endif
@@ -445,7 +445,7 @@ void Pasteboard::readRespectingUTIFidelities(PasteboardWebContentReader& reader,
         }
 #if ENABLE(ATTACHMENT_ELEMENT)
         if (canReadAttachment && result == ReaderResult::DidNotReadType)
-            reader.readFilePath(WTFMove(attachmentFilePath), info->preferredPresentationSize, contentType);
+            reader.readFilePath(WTF::move(attachmentFilePath), info->preferredPresentationSize, contentType);
 #endif
     }
 }
@@ -599,7 +599,7 @@ Vector<String> Pasteboard::readFilePaths()
 
         auto filePath = info->pathForHighestFidelityItem();
         if (!filePath.isEmpty())
-            filePaths.append(WTFMove(filePath));
+            filePaths.append(WTF::move(filePath));
     }
     return filePaths;
 }

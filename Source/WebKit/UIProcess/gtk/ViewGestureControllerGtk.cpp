@@ -79,6 +79,10 @@ void ViewGestureController::platformTeardown()
     cancelSwipe();
 }
 
+void ViewGestureController::platformDisconnectFromProcess()
+{
+}
+
 bool ViewGestureController::PendingSwipeTracker::scrollEventCanStartSwipe(PlatformGtkScrollData*)
 {
     return true;
@@ -113,7 +117,7 @@ bool ViewGestureController::handleScrollWheelEvent(PlatformGtkScrollData* event)
 
 void ViewGestureController::trackSwipeGesture(PlatformScrollEvent event, SwipeDirection direction, RefPtr<WebBackForwardListItem> targetItem)
 {
-    m_swipeProgressTracker.startTracking(WTFMove(targetItem), direction);
+    m_swipeProgressTracker.startTracking(WTF::move(targetItem), direction);
     m_swipeProgressTracker.handleEvent(event);
 }
 

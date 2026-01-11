@@ -100,8 +100,8 @@ public:
 
     void clearTarget() { m_target = { }; }
     void setReferrer(const String& referrer) { m_referrer = referrer; }
-    void setReferrer(String&& referrer) { m_referrer = WTFMove(referrer); }
-    void setOrigin(String&& origin) { m_origin = WTFMove(origin); }
+    void setReferrer(String&& referrer) { m_referrer = WTF::move(referrer); }
+    void setOrigin(String&& origin) { m_origin = WTF::move(origin); }
 
     void cancel() { m_wasCancelled = true; }
     bool wasCancelled() const { return m_wasCancelled; }

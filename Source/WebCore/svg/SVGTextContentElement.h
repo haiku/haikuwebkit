@@ -63,7 +63,7 @@ template<> struct SVGPropertyTraits<SVGLengthAdjustType> {
 };
 
 class SVGTextContentElement : public SVGGraphicsElement {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(SVGTextContentElement);
+    WTF_MAKE_TZONE_ALLOCATED(SVGTextContentElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(SVGTextContentElement);
 public:
     enum {

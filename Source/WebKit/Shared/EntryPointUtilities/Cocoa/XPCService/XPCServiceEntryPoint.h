@@ -80,7 +80,7 @@ protected:
 template<typename XPCServiceType>
 void initializeAuxiliaryProcess(AuxiliaryProcessInitializationParameters&& parameters)
 {
-    XPCServiceType::singleton().initialize(WTFMove(parameters));
+    XPCServiceType::singleton().initialize(WTF::move(parameters));
 }
 
 #if !USE(RUNNINGBOARD)
@@ -96,7 +96,7 @@ void disableJSC(NOESCAPE WTF::CompletionHandler<void(void)>&& beforeFinalizeHand
 template<typename XPCServiceType, typename XPCServiceInitializerDelegateType, bool isWebContentProcess = false>
 void XPCServiceInitializer(XPCObjectPtr<xpc_connection_t> connection, xpc_object_t initializerMessage)
 {
-    XPCServiceInitializerDelegateType delegate(WTFMove(connection), initializerMessage);
+    XPCServiceInitializerDelegateType delegate(WTF::move(connection), initializerMessage);
 
     // We don't want XPC to be in charge of whether the process should be terminated or not,
     // so ensure that we have an outstanding transaction here. This is not needed when using
@@ -163,7 +163,7 @@ void XPCServiceInitializer(XPCObjectPtr<xpc_connection_t> connection, xpc_object
         Thread::setGlobalMaxQOSClass(QOS_CLASS_UTILITY);
 #endif
 
-    initializeAuxiliaryProcess<XPCServiceType>(WTFMove(parameters));
+    initializeAuxiliaryProcess<XPCServiceType>(WTF::move(parameters));
 }
 
 int XPCServiceMain(int, const char**);

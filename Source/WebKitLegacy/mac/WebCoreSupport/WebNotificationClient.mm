@@ -65,7 +65,7 @@ bool WebNotificationClient::show(ScriptExecutionContext&, NotificationData&& not
         return false;
 
     auto notificationID = notification.notificationID;
-    RetainPtr<WebNotification> webNotification = adoptNS([[WebNotification alloc] initWithCoreNotification:WTFMove(notification)]);
+    RetainPtr<WebNotification> webNotification = adoptNS([[WebNotification alloc] initWithCoreNotification:WTF::move(notification)]);
     m_notificationMap.set(notificationID, webNotification);
 
     [[m_webView _notificationProvider] showNotification:webNotification.get() fromWebView:m_webView];
@@ -119,7 +119,7 @@ void WebNotificationClient::requestPermission(ScriptExecutionContext& context, W
 void WebNotificationClient::requestPermission(ScriptExecutionContext& context, PermissionHandler&& permissionHandler)
 {
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    auto listener = adoptNS([[WebNotificationPolicyListener alloc] initWithPermissionHandler:WTFMove(permissionHandler)]);
+    auto listener = adoptNS([[WebNotificationPolicyListener alloc] initWithPermissionHandler:WTF::move(permissionHandler)]);
     requestPermission(context, listener.get());
     END_BLOCK_OBJC_EXCEPTIONS
 }
@@ -157,7 +157,7 @@ NotificationClient::Permission WebNotificationClient::checkPermission(ScriptExec
     if (!(self = [super init]))
         return nil;
 
-    _permissionHandler = WTFMove(permissionHandler);
+    _permissionHandler = WTF::move(permissionHandler);
     return self;
 }
 

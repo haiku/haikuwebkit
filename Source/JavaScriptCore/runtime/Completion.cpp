@@ -312,7 +312,7 @@ UncheckedKeyHashMap<RefPtr<UniquedStringImpl>, String> retrieveImportAttributesF
         String valueString = value.toWTFString(globalObject);
         RETURN_IF_EXCEPTION(scope, { });
 
-        result.add(key.impl(), WTFMove(valueString));
+        result.add(key.impl(), WTF::move(valueString));
     }
 
     for (auto& [key, value] : result) {

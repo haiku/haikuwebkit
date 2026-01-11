@@ -188,8 +188,8 @@ void Connection::platformOpen()
         initializeSendSource();
         if (m_sendPort != MACH_PORT_DEAD) {
             auto encoder = makeUniqueRef<Encoder>(MessageName::InitializeConnection, 0);
-            encoder.get() << WTFMove(serverSendRight);
-            sendMessage(WTFMove(encoder), { });
+            encoder.get() << WTF::move(serverSendRight);
+            sendMessage(WTF::move(encoder), { });
         }
         // When send port is already dead, the serverSendRight goes out of scope and triggers
         // MACH_NOTIFY_NO_SENDERS. This way the connectionDidClose logic will be invoked for
@@ -233,7 +233,7 @@ bool Connection::sendMessage(std::unique_ptr<MachMessage> message)
 
     case MACH_SEND_TIMED_OUT:
         // We timed out, stash away the message for later.
-        m_pendingOutgoingMachMessage = WTFMove(message);
+        m_pendingOutgoingMachMessage = WTF::move(message);
         return false;
 
     case MACH_SEND_INVALID_DEST:
@@ -334,7 +334,7 @@ bool Connection::sendOutgoingMessage(UniqueRef<Encoder>&& encoder)
     if (!messageBodyIsOOL)
         memcpySpan(messageSpan, encoder->span());
 
-    return sendMessage(WTFMove(message));
+    return sendMessage(WTF::move(message));
 }
 
 void Connection::initializeSendSource()
@@ -374,7 +374,7 @@ void Connection::initializeSendSource()
 void Connection::resumeSendSource()
 {
     if (m_pendingOutgoingMachMessage)
-        sendMessage(WTFMove(m_pendingOutgoingMachMessage));
+        sendMessage(WTF::move(m_pendingOutgoingMachMessage));
     sendOutgoingMessages();
 }
 
@@ -428,7 +428,7 @@ static std::unique_ptr<Decoder> createMessageDecoder(mach_msg_header_t* header, 
         ASSERT(descriptor.disposition == MACH_MSG_TYPE_PORT_SEND);
         MachSendRight right = MachSendRight::adopt(descriptor.name);
 
-        attachments[numberOfAttachments - i - 1] = Attachment { WTFMove(right) };
+        attachments[numberOfAttachments - i - 1] = Attachment { WTF::move(right) };
     }
 
     if (messageBodyIsOOL) {
@@ -444,7 +444,7 @@ static std::unique_ptr<Decoder> createMessageDecoder(mach_msg_header_t* header, 
         return Decoder::create(unsafeMakeSpan(messageBody, messageBodySize), [](auto buffer) {
             // FIXME: <rdar://problem/62086358> bufferDeallocator block ignores mach_msg_ool_descriptor_t->deallocate
             vm_deallocate(mach_task_self(), reinterpret_cast<vm_address_t>(buffer.data()), buffer.size_bytes());
-        }, WTFMove(attachments));
+        }, WTF::move(attachments));
     }
 
     ASSERT(std::to_address(message.subspan(sizeWithPortDescriptors.value()).begin()) == std::to_address(remaining.begin()));
@@ -455,7 +455,7 @@ static std::unique_ptr<Decoder> createMessageDecoder(mach_msg_header_t* header, 
         return nullptr;
     }
 
-    return Decoder::create(remaining.first(messageBodySize), WTFMove(attachments));
+    return Decoder::create(remaining.first(messageBodySize), WTF::move(attachments));
 }
 
 // The receive buffer size should always include the maximum trailer size.
@@ -569,7 +569,7 @@ void Connection::receiveSourceEventHandler()
     if (shouldLogIncomingMessageHandling()) [[unlikely]]
         RELEASE_LOG(IPCMessages, "Connection::processIncomingMessage(%p) received %" PUBLIC_LOG_STRING " from port 0x%08x", this, description(decoder->messageName()).characters(), m_receivePort);
 
-    processIncomingMessage(makeUniqueRefFromNonNullUniquePtr(WTFMove(decoder)));
+    processIncomingMessage(makeUniqueRefFromNonNullUniquePtr(WTF::move(decoder)));
 }
 
 IPC::Connection::Identifier Connection::identifier() const
@@ -588,7 +588,7 @@ std::optional<audit_token_t> Connection::getAuditToken()
     audit_token_t auditToken;
     xpc_connection_get_audit_token(m_xpcConnection.get(), &auditToken);
     m_auditToken = auditToken;
-    return WTFMove(auditToken);
+    return WTF::move(auditToken);
 }
 
 #if !USE(EXTENSIONKIT_PROCESS_TERMINATION)

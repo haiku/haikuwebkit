@@ -34,11 +34,11 @@
 #include <WebCore/AudioSession.h>
 #include <WebCore/CocoaView.h>
 #include <WebCore/HostingContext.h>
+#include <WebCore/ImmersiveVideoMetadata.h>
 #include <WebCore/MediaPlayerIdentifier.h>
 #include <WebCore/PlatformLayer.h>
 #include <WebCore/PlatformVideoPresentationInterface.h>
 #include <WebCore/ShareableBitmap.h>
-#include <WebCore/SpatialVideoMetadata.h>
 #include <WebCore/VideoPresentationModel.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>

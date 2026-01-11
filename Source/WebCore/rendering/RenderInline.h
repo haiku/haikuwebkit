@@ -32,7 +32,7 @@ class Position;
 class RenderFragmentContainer;
 
 class RenderInline : public RenderBoxModelObject {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderInline);
+    WTF_MAKE_TZONE_ALLOCATED(RenderInline);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderInline);
 public:
     RenderInline(Type, Element&, RenderStyle&&);
@@ -92,8 +92,8 @@ public:
 protected:
     void willBeDestroyed() override;
 
-    void styleWillChange(StyleDifference, const RenderStyle& newStyle) override;
-    void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;
+    void styleWillChange(Style::Difference, const RenderStyle& newStyle) override;
+    void styleDidChange(Style::Difference, const RenderStyle* oldStyle) override;
 
     void updateFromStyle() override;
 

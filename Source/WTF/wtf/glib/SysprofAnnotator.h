@@ -75,7 +75,7 @@ public:
         va_end(args);
         WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-        auto value = std::make_pair(SYSPROF_CAPTURE_CURRENT_TIME, WTFMove(buffer));
+        auto value = std::make_pair(SYSPROF_CAPTURE_CURRENT_TIME, WTF::move(buffer));
 
         Locker locker { m_lock };
         m_ongoingMarks.set(key, value);
@@ -91,7 +91,7 @@ public:
 
             TimestampAndString v = m_ongoingMarks.take(key);
             if (v.first)
-                value = WTFMove(v);
+                value = WTF::move(v);
         }
 
         if (value) {
@@ -145,7 +145,7 @@ public:
         case BuildTransactionStart:
         case WaitForCompositionCompletionStart:
         case RenderLayerTreeStart:
-        case UpdateRenderingStart:
+        case LayerTreeHostRenderingUpdateStart:
         case SyncMessageStart:
         case SyncTouchEventStart:
         case InitializeWebProcessStart:
@@ -167,6 +167,8 @@ public:
         case WakeUpAndApplyDisplayListStart:
         case ThreadTimersStart:
         case TimerFiredStart:
+        case CoreImageRenderStart:
+        case TextExtractionStart:
             beginMark(nullptr, tracePointCodeName(code).spanIncludingNullTerminator(), "%s", "");
             break;
 
@@ -208,7 +210,7 @@ public:
         case BackingStoreFlushEnd:
         case WaitForCompositionCompletionEnd:
         case RenderLayerTreeEnd:
-        case UpdateRenderingEnd:
+        case LayerTreeHostRenderingUpdateEnd:
         case BuildTransactionEnd:
         case SyncMessageEnd:
         case SyncTouchEventEnd:
@@ -231,6 +233,8 @@ public:
         case WakeUpAndApplyDisplayListEnd:
         case ThreadTimersEnd:
         case TimerFiredEnd:
+        case CoreImageRenderEnd:
+        case TextExtractionEnd:
             endMark(nullptr, tracePointCodeName(code).spanIncludingNullTerminator(), "%s", "");
             break;
 
@@ -418,6 +422,9 @@ private:
         case TimerFiredStart:
         case TimerFiredEnd:
             return "WebCoreTimerExecution"_s;
+        case CoreImageRenderStart:
+        case CoreImageRenderEnd:
+            return "CoreImageRender"_s;
 
         case WebHTMLViewPaintStart:
         case WebHTMLViewPaintEnd:
@@ -495,12 +502,17 @@ private:
         case WakeUpAndApplyDisplayListEnd:
             return "WakeUpAndApplyDisplayList"_s;
 
-        case UpdateRenderingStart:
-        case UpdateRenderingEnd:
-            return "UpdateRendering"_s;
+        case LayerTreeHostRenderingUpdateStart:
+        case LayerTreeHostRenderingUpdateEnd:
+            return "LayerTreeHostRenderingUpdate"_s;
         case WaitForCompositionCompletionStart:
         case WaitForCompositionCompletionEnd:
             return "WaitForCompositionCompletion"_s;
+
+        case TextExtractionStart:
+        case TextExtractionEnd:
+            return "TextExtraction"_s;
+
         case RenderLayerTreeStart:
         case RenderLayerTreeEnd:
             return "RenderLayerTree"_s;

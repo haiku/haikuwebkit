@@ -373,7 +373,7 @@ public:
 
         ConcurrentJSLocker locker(m_lock);
         WTF::storeStoreFence(); // This is probably not needed because the lock will also do something similar, but it's good to be paranoid.
-        m_jitCode = WTFMove(code);
+        m_jitCode = WTF::move(code);
     }
 
     RefPtr<JSC::JITCode> jitCode() { return m_jitCode; }
@@ -961,7 +961,7 @@ private:
         if (!m_rareData) {
             auto rareData = makeUnique<RareData>();
             WTF::storeStoreFence();
-            m_rareData = WTFMove(rareData);
+            m_rareData = WTF::move(rareData);
         }
     }
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2023-2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2026 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -220,7 +221,7 @@ void BoxGeometryUpdater::setListMarkerOffsetForMarkerOutside(const RenderListMar
         // the large negative margin (i.e. this ensures that logical left of the list content stays at the line start)
         listMarkerGeometry.setHorizontalMargin({ listMarkerGeometry.marginStart() + offsetFromParentListItem, listMarkerGeometry.marginEnd() - offsetFromParentListItem });
         if (auto nestedOffset = offsetFromAssociatedListItem - offsetFromParentListItem)
-            m_nestedListMarkerOffsets.set(WTFMove(layoutBox), nestedOffset);
+            m_nestedListMarkerOffsets.set(WTF::move(layoutBox), nestedOffset);
     }
 }
 
@@ -266,7 +267,7 @@ Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalBorder(const RenderBoxMode
 {
     auto& style = renderer.style();
 
-    auto borderWidths = RectEdges<LayoutUnit>::map(style.borderWidth(), [&](auto width) {
+    auto borderWidths = RectEdges<LayoutUnit>::map(style.usedBorderWidths(), [&](auto width) {
         return Style::evaluate<LayoutUnit>(width, Style::ZoomNeeded { });
     });
 
@@ -458,8 +459,8 @@ static std::optional<LayoutUnit> baselineForBox(const RenderBox& renderBox)
             auto baseline = LayoutUnit { };
             if (innerTextRenderer->inlineLayout()) {
                 auto marginBoxLogicalHeight = innerTextRenderer->marginBoxLogicalHeight(writingMode);
-                auto lastLineBaseline = snapToInt(innerTextRenderer->inlineLayout()->lastLineBaseline(), *innerTextRenderer, SnapDirection::Floor);
-                baseline = std::min<LayoutUnit>(marginBoxLogicalHeight, lastLineBaseline);
+                auto lastLineBaseline = innerTextRenderer->inlineLayout()->lastLineBaseline().value_or(0_lu);
+                baseline = std::min(marginBoxLogicalHeight, lastLineBaseline);
             } else
                 baseline = fontMetricsBasedBaseline(*innerTextRenderer);
             baseline = snapToInt(innerTextRenderer->logicalTop() + baseline, *innerTextRenderer, SnapDirection::Floor);
@@ -473,7 +474,7 @@ static std::optional<LayoutUnit> baselineForBox(const RenderBox& renderBox)
 
     if (CheckedPtr fileUpload = dynamicDowncast<RenderFileUploadControl>(renderBox)) {
         if (auto* inlineLayout = fileUpload->inlineLayout())
-            return std::min<LayoutUnit>(marginBoxBottom, snapToInt(inlineLayout->lastLineBaseline(), *fileUpload, SnapDirection::Floor));
+            return std::min(marginBoxBottom, inlineLayout->lastLineBaseline().value_or(0_lu));
         return { };
     }
 
@@ -501,7 +502,7 @@ static std::optional<LayoutUnit> baselineForBox(const RenderBox& renderBox)
         if (CheckedPtr blockFlow = dynamicDowncast<RenderBlockFlow>(renderBox)) {
             // <fieldset> with no legend.
             if (CheckedPtr inlineLayout = blockFlow->inlineLayout())
-                return snapToInt(inlineLayout->lastLineBaseline(), *blockFlow, SnapDirection::Floor);
+                return inlineLayout->lastLineBaseline().value_or(0_lu);
             return lastInflowBoxBaseline(*blockFlow);
         }
         return { };
@@ -526,7 +527,7 @@ static std::optional<LayoutUnit> baselineForBox(const RenderBox& renderBox)
         auto lastBaseline = std::optional<LayoutUnit> { };
         if (CheckedPtr blockFlow = dynamicDowncast<RenderBlockFlow>(renderBox)) {
             if (auto* inlineLayout = blockFlow->inlineLayout())
-                lastBaseline = snapToInt(inlineLayout->lastLineBaseline(), *blockFlow, SnapDirection::Floor);
+                lastBaseline = inlineLayout->lastLineBaseline().value_or(0_lu);
         }
         if (!lastBaseline)
             lastBaseline = snapToInt(fontMetricsBasedBaseline(renderBox) + (writingMode.isHorizontal() ? renderBox.borderTop() + renderBox.paddingTop() : renderBox.borderRight() + renderBox.paddingRight()), renderBox, SnapDirection::Floor);
@@ -566,7 +567,7 @@ static std::optional<LayoutUnit> baselineForBox(const RenderBox& renderBox)
         }
 
         if (auto* inlineLayout = blockFlow->inlineLayout())
-            return snapToInt(inlineLayout->lastLineBaseline(), *blockFlow, SnapDirection::Floor);
+            return inlineLayout->lastLineBaseline().value_or(0_lu);
 
         if (blockFlow->svgTextLayout()) {
             auto& style = blockFlow->firstLineStyle();

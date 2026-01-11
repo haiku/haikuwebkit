@@ -149,9 +149,9 @@ void JSWebAssemblyInstance::finishCreation(VM& vm)
     for (unsigned i = 0; i < m_moduleInformation->typeCount(); ++i) {
         Ref rtt = m_moduleInformation->rtts[i];
         if (rtt->kind() == RTTKind::Array)
-            gcObjectStructureID(i).set(vm, this, JSWebAssemblyArray::createStructure(vm, globalObject, m_moduleInformation->typeSignatures[i]->expand(), WTFMove(rtt)));
+            gcObjectStructureID(i).set(vm, this, JSWebAssemblyArray::createStructure(vm, globalObject, m_moduleInformation->typeSignatures[i], WTF::move(rtt)));
         else if (rtt->kind() == RTTKind::Struct)
-            gcObjectStructureID(i).set(vm, this, JSWebAssemblyStruct::createStructure(vm, globalObject, m_moduleInformation->typeSignatures[i]->expand(), WTFMove(rtt)));
+            gcObjectStructureID(i).set(vm, this, JSWebAssemblyStruct::createStructure(vm, globalObject, m_moduleInformation->typeSignatures[i], WTF::move(rtt)));
     }
 
     m_vm->traps().registerMirror(m_stackMirror);
@@ -181,6 +181,9 @@ JSWebAssemblyInstance::~JSWebAssemblyInstance()
         m_anchor->tearDown();
         m_anchor = nullptr;
     }
+
+    if (Options::enableWasmDebugger()) [[unlikely]]
+        Wasm::DebugServer::singleton().untrackInstance(this);
 }
 
 void JSWebAssemblyInstance::destroy(JSCell* cell)
@@ -266,7 +269,7 @@ void JSWebAssemblyInstance::finalizeCreation(VM& vm, JSGlobalObject* globalObjec
             auto callLinkInfo = makeUnique<DataOnlyCallLinkInfo>();
             callLinkInfo->initialize(vm, nullptr, CallLinkInfo::CallType::Call, CodeOrigin { });
             WTF::storeStoreFence(); // CallLinkInfo is visited by concurrent GC already, thus, when we add it, we must ensure that it is fully initialized.
-            info->callLinkInfo = WTFMove(callLinkInfo);
+            info->callLinkInfo = WTF::move(callLinkInfo);
             vm.writeBarrier(this); // Materialized CallLinkInfo and we need rescan of JSWebAssemblyInstance.
         } else {
             // the import is a Wasm function or a builtin
@@ -328,7 +331,7 @@ JSWebAssemblyInstance* JSWebAssemblyInstance::tryCreate(VM& vm, Structure* insta
         return nullptr;
     }
 
-    auto* jsInstance = new (NotNull, cell) JSWebAssemblyInstance(vm, instanceStructure, jsModule, moduleRecord, WTFMove(provider));
+    auto* jsInstance = new (NotNull, cell) JSWebAssemblyInstance(vm, instanceStructure, jsModule, moduleRecord, WTF::move(provider));
     jsInstance->finishCreation(vm);
     RETURN_IF_EXCEPTION(throwScope, nullptr);
 
@@ -377,8 +380,8 @@ JSWebAssemblyInstance* JSWebAssemblyInstance::tryCreate(VM& vm, Structure* insta
         // Make sure we have a dummy memory, so that wasm -> wasm thunks avoid checking for a nullptr Memory when trying to set pinned registers.
         // When there is a memory import, this will be replaced later in the module record import initialization.
         auto* jsMemory = JSWebAssemblyMemory::create(vm, globalObject->webAssemblyMemoryStructure());
-        jsMemory->adopt(Memory::create(vm));
-        jsInstance->setMemory(vm, jsMemory);
+        jsMemory->adopt(Memory::create());
+        jsInstance->setDummyMemory(vm, jsMemory);
         RETURN_IF_EXCEPTION(throwScope, nullptr);
     }
     
@@ -720,7 +723,7 @@ void JSWebAssemblyInstance::setTable(unsigned i, Ref<Table>&& table)
             update = true;
         }
     }
-    tables()[i] = WTFMove(table);
+    tables()[i] = WTF::move(table);
     if (update)
         updateCachedTable0();
 }
@@ -738,12 +741,12 @@ void JSWebAssemblyInstance::updateCachedTable0()
 void JSWebAssemblyInstance::linkGlobal(unsigned i, Ref<Global>&& global)
 {
     m_globals[i].m_pointer = global->valuePointer();
-    m_linkedGlobals.set(i, WTFMove(global));
+    m_linkedGlobals.set(i, WTF::move(global));
 }
 
 void JSWebAssemblyInstance::setTag(unsigned index, Ref<const Tag>&& tag)
 {
-    m_tags[index] = WTFMove(tag);
+    m_tags[index] = WTF::move(tag);
 }
 
 Wasm::BaselineData& JSWebAssemblyInstance::ensureBaselineData(Wasm::FunctionCodeIndex index)
@@ -752,7 +755,7 @@ Wasm::BaselineData& JSWebAssemblyInstance::ensureBaselineData(Wasm::FunctionCode
     if (!slot) [[unlikely]] {
         auto result = Wasm::BaselineData::create(m_module->ipintCallees().at(index.rawIndex()));
         WTF::storeStoreFence(); // Fully initialize BaselineData before exposing it to the concurrent compiler.
-        slot = WTFMove(result);
+        slot = WTF::move(result);
     }
     return *slot;
 }

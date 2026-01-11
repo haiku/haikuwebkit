@@ -107,7 +107,7 @@ public:
 
     void set(UniqueRef<T>&& ref)
     {
-        UniqueRef<T> local = WTFMove(ref);
+        UniqueRef<T> local = WTF::move(ref);
         m_pointer = std::bit_cast<uintptr_t>(local.moveToUniquePtr().release());
     }
 

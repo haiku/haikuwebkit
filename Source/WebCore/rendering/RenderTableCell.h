@@ -37,7 +37,7 @@ static const unsigned maxColumnIndex = 0x1FFFFFE; // 33554430
 enum IncludeBorderColorOrNot { DoNotIncludeBorderColor, IncludeBorderColor };
 
 class RenderTableCell final : public RenderBlockFlow {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderTableCell);
+    WTF_MAKE_TZONE_ALLOCATED(RenderTableCell);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderTableCell);
 public:
     RenderTableCell(Element&, RenderStyle&&);
@@ -142,7 +142,7 @@ protected:
     LogicalExtentComputedValues computeLogicalHeight(LayoutUnit logicalHeight, LayoutUnit logicalTop) const override;
 
 private:
-    void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;
+    void styleDidChange(Style::Difference, const RenderStyle* oldStyle) override;
     void computePreferredLogicalWidths() override;
 
     LayoutRect frameRectForStickyPositioning() const override;

@@ -79,7 +79,7 @@ void DeviceOrientationAndMotionAccessController::shouldAllowAccess(const Documen
         return callback(accessState);
 
     bool mayPrompt = UserGestureIndicator::processingUserGesture(&document);
-    page->chrome().client().shouldAllowDeviceOrientationAndMotionAccess(document.protectedFrame().releaseNonNull(), mayPrompt, [weakThis = WeakPtr { *this }, securityOrigin = Ref { document.securityOrigin() }, callback = WTFMove(callback)](DeviceOrientationOrMotionPermissionState permissionState) mutable {
+    page->chrome().client().shouldAllowDeviceOrientationAndMotionAccess(document.protectedFrame().releaseNonNull(), mayPrompt, [weakThis = WeakPtr { *this }, securityOrigin = Ref { document.securityOrigin() }, callback = WTF::move(callback)](DeviceOrientationOrMotionPermissionState permissionState) mutable {
         {
             CheckedPtr checkedThis = weakThis.get();
             if (!checkedThis)

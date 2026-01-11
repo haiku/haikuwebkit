@@ -74,7 +74,7 @@ public:
     }
     static Ref<XMLDocumentParser> create(DocumentFragment& fragment, HashMap<AtomString, AtomString>&& prefixToNamespaceMap, const AtomString& defaultNamespaceURI, OptionSet<ParserContentPolicy> parserContentPolicy)
     {
-        return adoptRef(*new XMLDocumentParser(fragment, WTFMove(prefixToNamespaceMap), defaultNamespaceURI, parserContentPolicy));
+        return adoptRef(*new XMLDocumentParser(fragment, WTF::move(prefixToNamespaceMap), defaultNamespaceURI, parserContentPolicy));
     }
 
     XMLDocumentParser() = delete;

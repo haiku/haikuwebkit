@@ -70,12 +70,12 @@ void WebProcessProxy::platformGetLaunchOptions(ProcessLauncher::LaunchOptions& l
 void WebProcessProxy::sendMessageToWebContextWithReply(UserMessage&& message, CompletionHandler<void(UserMessage&&)>&& completionHandler)
 {
     if (const auto& userMessageHandler = m_processPool->userMessageHandler())
-        userMessageHandler(WTFMove(message), WTFMove(completionHandler));
+        userMessageHandler(WTF::move(message), WTF::move(completionHandler));
 }
 
 void WebProcessProxy::sendMessageToWebContext(UserMessage&& message)
 {
-    sendMessageToWebContextWithReply(WTFMove(message), [](UserMessage&&) { });
+    sendMessageToWebContextWithReply(WTF::move(message), [](UserMessage&&) { });
 }
 
 void WebProcessProxy::platformSuspendProcess()

@@ -52,15 +52,15 @@ ExceptionOr<Ref<WritableStream>> WebTransportDatagramsWritable::create(ScriptExe
     if (internal.hasException())
         return internal.releaseException();
 
-    Ref result = adoptRef(*new WebTransportDatagramsWritable(internal.releaseReturnValue(), WTFMove(options)));
+    Ref result = adoptRef(*new WebTransportDatagramsWritable(internal.releaseReturnValue(), WTF::move(options)));
     datagramSink->attachTo(result);
     if (transport)
         transport->datagramsWritableCreated(result);
-    return { WTFMove(result) };
+    return { WTF::move(result) };
 }
 
 WebTransportDatagramsWritable::WebTransportDatagramsWritable(Ref<InternalWritableStream>&& stream, WebTransportSendOptions&& options)
-    : WritableStream(WTFMove(stream))
+    : WritableStream(WTF::move(stream))
     , m_sendGroup(options.sendGroup)
     , m_sendOrder(options.sendOrder) { }
 

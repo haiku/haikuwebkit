@@ -208,7 +208,7 @@ CachedResource* MemoryCache::resourceForRequestImpl(const ResourceRequest& reque
     ASSERT(isMainThread());
     URL url = removeFragmentIdentifierIfNeeded(request.url());
 
-    auto key = std::make_pair(WTFMove(url), request.cachePartition());
+    auto key = std::make_pair(WTF::move(url), request.cachePartition());
     return resources.get(key);
 }
 

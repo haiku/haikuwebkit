@@ -39,6 +39,7 @@
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
 #include "StylableInlines.h"
+#include "StyleComputedStyle+InitialInlines.h"
 #include "StyleSingleAnimationRange.h"
 #include "WebAnimation.h"
 
@@ -211,7 +212,7 @@ ScrollTimeline::ResolvedScrollDirection ScrollTimeline::resolvedScrollDirection(
                 return renderer->style().writingMode();
         }
 
-        return { RenderStyle::initialWritingMode(), RenderStyle::initialDirection(), RenderStyle::initialTextOrientation() };
+        return { Style::ComputedStyle::initialWritingMode(), Style::ComputedStyle::initialDirection(), Style::ComputedStyle::initialTextOrientation() };
     }();
 
     auto isVertical = [&] {
@@ -419,9 +420,11 @@ bool ScrollTimeline::computeCanBeAccelerated() const
 
 void ScrollTimeline::scheduleAcceleratedRepresentationUpdate()
 {
-    if (CheckedPtr controller = this->controller()) {
-        if (auto* acceleratedEffectStackUpdater = controller->existingAcceleratedEffectStackUpdater())
-            acceleratedEffectStackUpdater->scrollTimelineDidChange(*this);
+    if (auto source = m_source.styleable()) {
+        if (RefPtr page = source->element.protectedDocument()->page()) {
+            if (auto* acceleratedTimelinesUpdater = page->acceleratedTimelinesUpdater())
+                acceleratedTimelinesUpdater->scrollTimelineDidChange(*this);
+        }
     }
 }
 

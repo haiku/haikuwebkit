@@ -68,7 +68,7 @@ ExceptionOr<Ref<ViewTimeline>> ViewTimeline::create(Document& document, ViewTime
     if (!isValidInset(specifiedInsets.start) || !isValidInset(specifiedInsets.end))
         return Exception { ExceptionCode::TypeError };
 
-    viewTimeline->m_specifiedInsets = WTFMove(specifiedInsets);
+    viewTimeline->m_specifiedInsets = WTF::move(specifiedInsets);
     viewTimeline->setSubject(options.subject.get());
     if (auto subject = options.subject)
         subject->protectedDocument()->updateLayoutIgnorePendingStylesheets();

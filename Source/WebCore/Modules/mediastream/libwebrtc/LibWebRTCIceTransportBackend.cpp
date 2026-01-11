@@ -80,7 +80,7 @@ static inline RTCIceGatheringState toRTCIceGatheringState(webrtc::IceGatheringSt
 
 class LibWebRTCIceTransportBackendObserver final : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<LibWebRTCIceTransportBackendObserver>, public sigslot::has_slots<> {
 public:
-    static Ref<LibWebRTCIceTransportBackendObserver> create(RTCIceTransportBackendClient& client, Ref<webrtc::IceTransportInterface> backend) { return adoptRef(*new LibWebRTCIceTransportBackendObserver(client, WTFMove(backend))); }
+    static Ref<LibWebRTCIceTransportBackendObserver> create(RTCIceTransportBackendClient& client, Ref<webrtc::IceTransportInterface> backend) { return adoptRef(*new LibWebRTCIceTransportBackendObserver(client, WTF::move(backend))); }
 
     void start();
     void stop();
@@ -99,7 +99,7 @@ private:
 };
 
 LibWebRTCIceTransportBackendObserver::LibWebRTCIceTransportBackendObserver(RTCIceTransportBackendClient& client, Ref<webrtc::IceTransportInterface>&& backend)
-    : m_backend(WTFMove(backend))
+    : m_backend(WTF::move(backend))
     , m_client(client)
 {
 }
@@ -180,16 +180,16 @@ void LibWebRTCIceTransportBackendObserver::processSelectedCandidatePairChanged(c
         if (!client)
             return;
 
-        auto local = RTCIceCandidate::create(localSdp, emptyString(), WTFMove(localFields));
-        auto remote = RTCIceCandidate::create(remoteSdp, emptyString(), WTFMove(remoteFields));
-        client->onSelectedCandidatePairChanged(WTFMove(local), WTFMove(remote));
+        auto local = RTCIceCandidate::create(localSdp, emptyString(), WTF::move(localFields));
+        auto remote = RTCIceCandidate::create(remoteSdp, emptyString(), WTF::move(remoteFields));
+        client->onSelectedCandidatePairChanged(WTF::move(local), WTF::move(remote));
     });
 }
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(LibWebRTCIceTransportBackend);
 
 LibWebRTCIceTransportBackend::LibWebRTCIceTransportBackend(webrtc::scoped_refptr<webrtc::IceTransportInterface>&& backend)
-    : m_backend(toRef(WTFMove(backend)))
+    : m_backend(toRef(WTF::move(backend)))
 {
 }
 

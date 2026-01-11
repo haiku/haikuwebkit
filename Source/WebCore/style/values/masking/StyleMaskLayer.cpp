@@ -48,7 +48,7 @@ MaskLayer::MaskLayer()
 MaskLayer::MaskLayer(ImageOrNone&& image)
     : MaskLayer { }
 {
-    setImage(WTFMove(image));
+    setImage(WTF::move(image));
 }
 
 MaskLayer::MaskLayer(CSS::Keyword::None keyword)
@@ -57,7 +57,7 @@ MaskLayer::MaskLayer(CSS::Keyword::None keyword)
 }
 
 MaskLayer::MaskLayer(RefPtr<StyleImage>&& image)
-    : MaskLayer { ImageOrNone { WTFMove(image) } }
+    : MaskLayer { ImageOrNone { WTF::move(image) } }
 {
 }
 

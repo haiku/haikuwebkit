@@ -89,8 +89,8 @@ void UserContentProvider::invalidateAllRegisteredUserMessageHandlerInvalidationC
 
 void UserContentProvider::invalidateInjectedStyleSheetCacheInAllFramesInAllPages()
 {
-    for (auto& page : m_pages)
-        page.invalidateInjectedStyleSheetCacheInAllFrames();
+    for (Ref page : m_pages)
+        page->invalidateInjectedStyleSheetCacheInAllFrames();
 }
 
 #if ENABLE(CONTENT_EXTENSIONS)

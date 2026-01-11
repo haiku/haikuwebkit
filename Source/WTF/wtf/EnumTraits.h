@@ -57,8 +57,10 @@
 #pragma once
 
 #include <algorithm>
+#include <concepts>
 #include <span>
 #include <type_traits>
+#include <utility>
 #include <wtf/Compiler.h>
 
 namespace WTF {

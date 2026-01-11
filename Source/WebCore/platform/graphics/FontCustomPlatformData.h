@@ -78,7 +78,7 @@ public:
 #elif USE(CORE_TEXT)
     FontCustomPlatformData(CTFontDescriptorRef fontDescriptor, FontPlatformData::CreationData&& creationData)
         : fontDescriptor(fontDescriptor)
-        , creationData(WTFMove(creationData))
+        , creationData(WTF::move(creationData))
         , m_renderingResourceIdentifier(RenderingResourceIdentifier::generate())
     {
     }

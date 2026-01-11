@@ -46,7 +46,7 @@ struct ImageBufferFormat;
 enum class RenderingMode : uint8_t;
 
 class HTMLVideoElement final : public HTMLMediaElement, public Supplementable<HTMLVideoElement> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLVideoElement);
+    WTF_MAKE_TZONE_ALLOCATED(HTMLVideoElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HTMLVideoElement);
 public:
     WEBCORE_EXPORT static Ref<HTMLVideoElement> create(Document&);
@@ -199,7 +199,7 @@ private:
         WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(VideoFrameRequest);
         VideoFrameRequest(unsigned identifier, Ref<VideoFrameRequestCallback>&& callback)
             : identifier(identifier)
-            , callback(WTFMove(callback))
+            , callback(WTF::move(callback))
         {
         }
 

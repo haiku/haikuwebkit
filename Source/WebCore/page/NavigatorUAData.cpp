@@ -87,7 +87,7 @@ Ref<NavigatorUAData> NavigatorUAData::create()
 
 Ref<NavigatorUAData> NavigatorUAData::create(Ref<UserAgentStringData>&& userAgentStringData)
 {
-    return adoptRef(*new NavigatorUAData(WTFMove(userAgentStringData)));
+    return adoptRef(*new NavigatorUAData(WTF::move(userAgentStringData)));
 }
 
 const Vector<NavigatorUABrandVersion>& NavigatorUAData::brands() const
@@ -192,7 +192,7 @@ void NavigatorUAData::getHighEntropyValues(const Vector<String>& hints, Navigato
             values->wow64 = false;
     }
 
-    promise.resolve(WTFMove(values));
+    promise.resolve(WTF::move(values));
 }
 
 String NavigatorUAData::createArbitraryVersion()

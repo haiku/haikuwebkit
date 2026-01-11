@@ -23,7 +23,7 @@
 #include "SVGTextChunk.h"
 
 #include "RenderSVGInlineText.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "SVGInlineTextBoxInlines.h"
 #include "SVGTextContentElement.h"
 #include "SVGTextFragment.h"

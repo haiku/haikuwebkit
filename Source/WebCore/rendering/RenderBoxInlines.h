@@ -20,6 +20,7 @@
 #pragma once
 
 #include <WebCore/DocumentView.h>
+#include <WebCore/RenderBlock.h>
 #include <WebCore/RenderBox.h>
 #include <WebCore/RenderBoxModelObjectInlines.h>
 #include <WebCore/RenderElementInlines.h>
@@ -153,6 +154,19 @@ inline LayoutRect RenderBox::contentBoxRect() const
     return { location, size };
 }
 
+inline LayoutRect RenderBox::flippedContentBoxRect() const
+{
+    auto rect = flippedClientBoxRect();
+    auto padding = this->padding();
+    if (!padding.isZero()) {
+        if (writingMode().isBlockFlipped())
+            padding = padding.blockFlippedCopy(writingMode());
+        rect.contract(padding);
+        rect.floorSize();
+    }
+    return rect;
+}
+
 inline LayoutRect RenderBox::marginBoxRect() const
 {
     auto zoomFactor = style().usedZoomForLength();
@@ -194,6 +208,31 @@ inline void RenderBox::setLogicalWidth(LayoutUnit size)
     else
         setHeight(size);
 }
+
+inline bool RenderBox::hasStretchedLogicalHeight(StretchingMode mode) const
+{
+    CheckedPtr containingBlock = this->containingBlock();
+    if (!containingBlock)
+        return false;
+
+    auto containingAxis = writingMode().isOrthogonal(containingBlock->writingMode())
+        ? LogicalBoxAxis::Inline : LogicalBoxAxis::Block;
+
+    return containingBlock->willStretchItem(*this, containingAxis, mode);
+}
+
+inline bool RenderBox::hasStretchedLogicalWidth(StretchingMode mode) const
+{
+    CheckedPtr containingBlock = this->containingBlock();
+    if (!containingBlock)
+        return false;
+
+    auto containingAxis = writingMode().isOrthogonal(containingBlock->writingMode())
+        ? LogicalBoxAxis::Block : LogicalBoxAxis::Inline;
+
+    return containingBlock->willStretchItem(*this, containingAxis, mode);
+}
+
 
 inline LayoutUnit resolveHeightForRatio(LayoutUnit borderAndPaddingLogicalWidth, LayoutUnit borderAndPaddingLogicalHeight, LayoutUnit logicalWidth, double aspectRatio, BoxSizing boxSizing)
 {

@@ -82,7 +82,7 @@ class IDBConnectionProxy;
 }
 
 class WorkerGlobalScope : public Supplementable<WorkerGlobalScope>, public WindowOrWorkerGlobalScope, public WorkerOrWorkletGlobalScope, public ReportingClient {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WorkerGlobalScope);
+    WTF_MAKE_TZONE_ALLOCATED(WorkerGlobalScope);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WorkerGlobalScope);
 public:
     virtual ~WorkerGlobalScope();

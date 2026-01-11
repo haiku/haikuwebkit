@@ -39,8 +39,8 @@ public:
     WEBCORE_EXPORT explicit ScrollingTreeScrollingNodeDelegate(ScrollingTreeScrollingNode&);
     WEBCORE_EXPORT virtual ~ScrollingTreeScrollingNodeDelegate();
 
-    Ref<ScrollingTreeScrollingNode> scrollingNode() { return m_scrollingNode.get().releaseNonNull(); }
-    Ref<const ScrollingTreeScrollingNode> scrollingNode() const { return m_scrollingNode.get().releaseNonNull(); }
+    Ref<ScrollingTreeScrollingNode> scrollingNode() { return m_scrollingNode.get(); }
+    Ref<const ScrollingTreeScrollingNode> scrollingNode() const { return m_scrollingNode.get(); }
 
     virtual bool startAnimatedScrollToPosition(FloatPoint) = 0;
     virtual void stopAnimatedScroll() = 0;
@@ -85,7 +85,7 @@ protected:
     ScrollElasticity verticalScrollElasticity() const { return scrollingNode()->verticalScrollElasticity(); }
 
 private:
-    ThreadSafeWeakPtr<ScrollingTreeScrollingNode> m_scrollingNode; // m_scrollingNode is expected never be null
+    ThreadSafeWeakRef<ScrollingTreeScrollingNode> m_scrollingNode;
 };
 
 } // namespace WebCore

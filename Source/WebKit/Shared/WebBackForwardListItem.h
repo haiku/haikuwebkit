@@ -69,7 +69,7 @@ public:
     bool wasCreatedByJSWithoutUserInteraction() const;
 
     const URL& resourceDirectoryURL() const { return m_resourceDirectoryURL; }
-    void setResourceDirectoryURL(URL&& url) { m_resourceDirectoryURL = WTFMove(url); }
+    void setResourceDirectoryURL(URL&& url) { m_resourceDirectoryURL = WTF::move(url); }
     RefPtr<WebsiteDataStore> dataStoreForWebArchive() const { return m_dataStoreForWebArchive; }
     void setDataStoreForWebArchive(WebsiteDataStore* dataStore) { m_dataStoreForWebArchive = dataStore; }
 
@@ -78,7 +78,7 @@ public:
 
 #if PLATFORM(COCOA) || PLATFORM(GTK) || (PLATFORM(WPE) && USE(SKIA))
     ViewSnapshot* snapshot() const { return m_snapshot.get(); }
-    void setSnapshot(RefPtr<ViewSnapshot>&& snapshot) { m_snapshot = WTFMove(snapshot); }
+    void setSnapshot(RefPtr<ViewSnapshot>&& snapshot) { m_snapshot = WTF::move(snapshot); }
 #endif
 
     void wasRemovedFromBackForwardList();

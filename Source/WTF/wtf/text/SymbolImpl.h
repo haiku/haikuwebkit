@@ -137,12 +137,12 @@ public:
 
 private:
     PrivateSymbolImpl(std::span<const Latin1Character> characters, Ref<StringImpl>&& base)
-        : SymbolImpl(characters, WTFMove(base), s_flagIsPrivate)
+        : SymbolImpl(characters, WTF::move(base), s_flagIsPrivate)
     {
     }
 
     PrivateSymbolImpl(std::span<const char16_t> characters, Ref<StringImpl>&& base)
-        : SymbolImpl(characters, WTFMove(base), s_flagIsPrivate)
+        : SymbolImpl(characters, WTF::move(base), s_flagIsPrivate)
     {
     }
 };
@@ -160,13 +160,13 @@ private:
     static Ref<RegisteredSymbolImpl> createPrivate(StringImpl& rep, SymbolRegistry&);
 
     RegisteredSymbolImpl(std::span<const Latin1Character> characters, Ref<StringImpl>&& base, SymbolRegistry& registry, Flags flags = s_flagIsRegistered)
-        : SymbolImpl(characters, WTFMove(base), flags)
+        : SymbolImpl(characters, WTF::move(base), flags)
         , m_symbolRegistry(&registry)
     {
     }
 
     RegisteredSymbolImpl(std::span<const char16_t> characters, Ref<StringImpl>&& base, SymbolRegistry& registry, Flags flags = s_flagIsRegistered)
-        : SymbolImpl(characters, WTFMove(base), flags)
+        : SymbolImpl(characters, WTF::move(base), flags)
         , m_symbolRegistry(&registry)
     {
     }

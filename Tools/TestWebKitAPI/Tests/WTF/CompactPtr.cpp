@@ -103,14 +103,14 @@ TEST(WTF_CompactPtr, Basic)
 
     {
         CompactPtr<AlignedRefLogger> p1 = &a;
-        CompactPtr<AlignedRefLogger> p2 = WTFMove(p1);
+        CompactPtr<AlignedRefLogger> p2 = WTF::move(p1);
         SUPPRESS_USE_AFTER_MOVE EXPECT_EQ(nullptr, p1.get());
         EXPECT_EQ(&a, p2.get());
     }
 
     {
         CompactPtr<AlignedRefLogger> p1 = &a;
-        CompactPtr<AlignedRefLogger> p2(WTFMove(p1));
+        CompactPtr<AlignedRefLogger> p2(WTF::move(p1));
         SUPPRESS_USE_AFTER_MOVE EXPECT_EQ(nullptr, p1.get());
         EXPECT_EQ(&a, p2.get());
     }
@@ -124,7 +124,7 @@ TEST(WTF_CompactPtr, Basic)
 
     {
         CompactPtr<DerivedAlignedRefLogger> p1 = &a;
-        CompactPtr<AlignedRefLogger> p2 = WTFMove(p1);
+        CompactPtr<AlignedRefLogger> p2 = WTF::move(p1);
         SUPPRESS_USE_AFTER_MOVE EXPECT_EQ(nullptr, p1.get());
         EXPECT_EQ(&a, p2.get());
     }
@@ -193,7 +193,7 @@ TEST(WTF_CompactPtr, Assignment)
         CompactPtr<AlignedRefLogger> p2 = &b;
         EXPECT_EQ(&a, p1.get());
         EXPECT_EQ(&b, p2.get());
-        p1 = WTFMove(p2);
+        p1 = WTF::move(p2);
         EXPECT_EQ(&b, p1.get());
         SUPPRESS_USE_AFTER_MOVE EXPECT_EQ(nullptr, p2.get());
     }
@@ -213,7 +213,7 @@ TEST(WTF_CompactPtr, Assignment)
         CompactPtr<DerivedAlignedRefLogger> p2 = &c;
         EXPECT_EQ(&a, p1.get());
         EXPECT_EQ(&c, p2.get());
-        p1 = WTFMove(p2);
+        p1 = WTF::move(p2);
         EXPECT_EQ(&c, p1.get());
         SUPPRESS_USE_AFTER_MOVE EXPECT_EQ(nullptr, p2.get());
     }

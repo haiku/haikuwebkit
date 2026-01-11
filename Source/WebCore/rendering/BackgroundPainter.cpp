@@ -88,7 +88,7 @@ void BackgroundPainter::paintBackground(const LayoutRect& paintRect, BleedAvoida
             return;
     }
 
-    auto backgroundColor = m_renderer.style().visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor);
+    auto backgroundColor = m_renderer.style().visitedDependentBackgroundColorApplyingColorFilter();
     auto compositeOp = document().compositeOperatorForBackgroundColor(backgroundColor, m_renderer);
 
     paintFillLayers(backgroundColor, m_renderer.style().backgroundLayers(), paintRect, bleedAvoidance, compositeOp);
@@ -105,7 +105,7 @@ void BackgroundPainter::paintRootBoxFillLayers() const
         return;
 
     auto& style = rootBackgroundRenderer->style();
-    auto backgroundColor = style.visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor);
+    auto backgroundColor = style.visitedDependentBackgroundColorApplyingColorFilter();
     auto compositeOp = document().compositeOperatorForBackgroundColor(backgroundColor, m_renderer);
 
     paintFillLayers(backgroundColor, style.backgroundLayers(), view().backgroundRect(), BleedAvoidance::None, compositeOp, rootBackgroundRenderer);
@@ -177,13 +177,22 @@ template<typename Layers> void BackgroundPainter::paintFillLayersImpl(const Colo
 
 static void applyBoxShadowForBackground(GraphicsContext& context, const RenderStyle& style)
 {
+    Style::ColorResolver colorResolver { style };
+    const auto& zoomFactor = style.usedZoomForLength();
+
     for (const auto& shadow : style.boxShadow()) {
         if (shadow.inset)
             continue;
 
-        const auto& zoomFactor = style.usedZoomForLength();
-        FloatSize shadowOffset(shadow.location.x().resolveZoom(zoomFactor), shadow.location.y().resolveZoom(zoomFactor));
-        context.setDropShadow({ shadowOffset, shadow.blur.resolveZoom(zoomFactor), style.colorWithColorFilter(shadow.color), shadow.isWebkitBoxShadow ? ShadowRadiusMode::Legacy : ShadowRadiusMode::Default });
+        context.setDropShadow({
+            FloatSize {
+                shadow.location.x().resolveZoom(zoomFactor),
+                shadow.location.y().resolveZoom(zoomFactor),
+            },
+            shadow.blur.resolveZoom(zoomFactor),
+            colorResolver.colorResolvingCurrentColorApplyingColorFilter(shadow.color),
+            shadow.isWebkitBoxShadow ? ShadowRadiusMode::Legacy : ShadowRadiusMode::Default
+        });
         break;
     }
 }
@@ -370,6 +379,8 @@ template<typename Layer> void BackgroundPainter::paintFillLayerImpl(const Color&
 
     GraphicsContextStateSaver backgroundClipStateSaver(context, false);
 
+    auto layerBlendMode = layer.layer.blendMode();
+
     auto backgroundClipOuterLayerScope = TransparencyLayerScope(context, 1, false);
     auto backgroundClipInnerLayerScope = TransparencyLayerScope(context, 1, false);
 
@@ -377,6 +388,12 @@ template<typename Layer> void BackgroundPainter::paintFillLayerImpl(const Color&
         auto transparencyLayerBounds = snapRectToDevicePixels(rect, deviceScaleFactor);
         transparencyLayerBounds.intersect(snapRectToDevicePixels(m_paintInfo.rect, deviceScaleFactor));
         transparencyLayerBounds.inflate(1);
+
+        // The last layer is blended over the background color below, so only change the blend mode here for non-last layers.
+        if (layerBlendMode != BlendMode::Normal && !layer.isLast) {
+            context.setCompositeOperation(context.compositeOperation(), layerBlendMode);
+            layerBlendMode = BlendMode::Normal;
+        }
 
         backgroundClipStateSaver.save();
         context.clip(transparencyLayerBounds);
@@ -518,7 +535,7 @@ template<typename Layer> void BackgroundPainter::paintFillLayerImpl(const Color&
 
             ImagePaintingOptions options = {
                 op == CompositeOperator::SourceOver ? layer.layer.compositeForPainting(layer.isLast) : op,
-                layer.layer.blendMode(),
+                layerBlendMode,
                 m_renderer.decodingModeForImageDraw(*image, m_paintInfo),
                 ImageOrientation::Orientation::FromImage,
                 m_renderer.chooseInterpolationQuality(context, *image, &layer.layer, geometry.tileSize),
@@ -856,7 +873,7 @@ void BackgroundPainter::paintBoxShadow(const LayoutRect& paintRect, const Render
     bool hasBorderRadius = style.hasBorderRadius();
     float deviceScaleFactor = document().deviceScaleFactor();
 
-    bool hasOpaqueBackground = style.visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor).isOpaque();
+    bool hasOpaqueBackground = style.visitedDependentBackgroundColorApplyingColorFilter().isOpaque();
     const auto& zoomFactor = style.usedZoomForLength();
     for (const auto& shadow : style.boxShadow()) {
         if (Style::shadowStyle(shadow) != shadowStyle)
@@ -870,7 +887,8 @@ void BackgroundPainter::paintBoxShadow(const LayoutRect& paintRect, const Render
         if (shadowOffset.isZero() && !shadowRadius && !shadowSpread)
             continue;
 
-        auto shadowColor = style.colorWithColorFilter(shadow.color);
+        Style::ColorResolver colorResolver { style };
+        auto shadowColor = colorResolver.colorResolvingCurrentColorApplyingColorFilter(shadow.color);
 
         auto shouldInflateBorderRect = [&]() {
             if (!hasOpaqueBackground)
@@ -1044,7 +1062,7 @@ bool BackgroundPainter::boxShadowShouldBeAppliedToBackground(const RenderBoxMode
     if (!hasOneNormalBoxShadow)
         return false;
 
-    Color backgroundColor = style.visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor);
+    Color backgroundColor = style.visitedDependentBackgroundColorApplyingColorFilter();
     if (!backgroundColor.isOpaque())
         return false;
 

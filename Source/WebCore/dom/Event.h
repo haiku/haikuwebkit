@@ -49,7 +49,7 @@ class EventTarget;
 class ScriptExecutionContext;
 
 class Event : public ScriptWrappable, public RefCountedAndCanMakeWeakPtr<Event> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(Event);
+    WTF_MAKE_TZONE_ALLOCATED(Event);
 public:
     using IsTrusted = EventIsTrusted;
     using CanBubble = EventCanBubble;

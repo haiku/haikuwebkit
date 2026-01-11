@@ -1,0 +1,70 @@
+<!-- webkit-test-runner [ useFlexibleViewport=true textExtractionEnabled=true dumpJSConsoleLogInStdErr=true ] -->
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<head>
+<style>
+body {
+    white-space: pre-wrap;
+}
+
+.test-section {
+    margin: 20px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+img {
+    width: 50px;
+    height: 50px;
+}
+</style>
+<script src="../../resources/ui-helper.js"></script>
+</head>
+<body>
+<main>
+    <section class="test-section" title="Links">
+        <a href="https://example.com/search?q=webkit&lang=en&filter=recent&sort=relevance&page=1">Multiple query parameters</a>
+        <a href="https://example.com/search?q=html&lang=en&client=safari">Multiple query parameter 2</a>
+        <a href="https://example.com/path/to/file.html">Path components 1</a>
+        <a href="https://example.com/192a2083-6ccc-4508-9b59-6d6f59846dc5/oiiai_cat/19284789123">Path components 2</a>
+        <a href="javascript:alert('Hello World')">JavaScript link</a>
+        <a href="data:text/html;charset=utf-8,%3Ch1%3EHello%3C%2Fh1%3E">HTML data URL</a>
+        <a href="mailto:test@example.com">Email with params</a>
+        <a href="tel:+1-555-123-4567">Phone number</a>
+        <a href="blob:https://example.com/550e8400-e29b-41d4-a716-446655440000">Blob URL</a>
+        <a href="https://example.com/docs/guide.html?version=latest#installation-steps">Path, query, and fragment</a>
+        <a href="https://example.com/docs/guide.html?version=2025">Query parameter</a>
+        <a href="https://example.com/docs/guide.html?version=2025">Query parameter (duplicate)</a>
+    </section>
+    <section class="test-section" title="Images">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='50' cy='50' r='40' fill='red'/%3E%3C/svg%3E" alt="SVG data URL">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="PNG data URL">
+        <img src="https://cdn.example.com/media/users/12039859134234/uploads/2024/photos/vacation-2024-summer-beach.jpg" alt="Long image path">
+        <img src="https://images.example.com/foo/thumbnail.png" alt="Image with path">
+        <img src="https://images.example.com/thumbnail.png?id=98765&size=large&quality=high&format=webp&cache=false" alt="Image with query params">
+        <img src="https://assets.example.com/61d7035fa8d4.gif" alt="Image with high entropy name">
+        <img src="https://assets.example.com/70a27eafd353.gif" alt="Image with high entropy name 2">
+        <img src="https://assets.example.com/70a27eafd353.gif" alt="Image with high entropy name (duplicate)">
+    </section>
+</main>
+
+<script>
+addEventListener("load", async () => {
+    if (!window.testRunner)
+        return;
+
+    testRunner.dumpAsText();
+    testRunner.waitUntilDone();
+
+    document.body.textContent = await UIHelper.requestDebugText({
+        includeURLs: true,
+        shortenURLs: true,
+    });
+
+    testRunner.notifyDone();
+});
+</script>
+</body>
+</html>

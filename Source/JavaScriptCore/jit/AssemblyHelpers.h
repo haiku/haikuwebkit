@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
+
 #if ENABLE(JIT)
 
 #include <JavaScriptCore/CodeBlock.h>
@@ -1507,9 +1509,13 @@ public:
         jitAssertIsJSDouble(gpr);
         return unboxDoubleWithoutAssertions(gpr, resultGPR, fpr, mode);
     }
+    void unboxDouble(JSValueRegs regs, GPRReg resultGPR, FPRReg fpr)
+    {
+        unboxDouble(regs.payloadGPR(), resultGPR, fpr);
+    }
     void unboxDouble(JSValueRegs regs, FPRReg fpr)
     {
-        unboxDouble(regs.tagGPR(), regs.payloadGPR(), fpr);
+        unboxDouble(regs.payloadGPR(), regs.payloadGPR(), fpr);
     }
     void boxDouble(FPRReg fpr, JSValueRegs regs, TagRegistersMode mode = HaveTagRegisters)
     {
@@ -1829,6 +1835,7 @@ public:
         return branch8(Above, AbsoluteAddress(address), TrustedImm32(blackThreshold));
     }
     
+    // FIXME: We should name this something more obvious like branchIfCellIsRememberedOrEden. barrierBranch could mean many things.
     // Branch taken if the cell does not need a memory fence or store barrier.
     // When reverse is true, branch taken when the memory barrier or store barrier is needed.
     Jump barrierBranch(VM& vm, GPRReg cell, GPRReg scratchGPR, bool reverse = false)

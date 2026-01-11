@@ -24,10 +24,9 @@ layer at (8,8) size 0x200
 layer at (8,208) size 16x100
   RenderBlock (positioned) {DIV} at (0,200) size 16x100
     RenderInline {A} at (0,0) size 16x84
-      RenderBlock (anonymous) at (0,16) size 16x68
-        RenderBlock {P} at (0,0) size 16x68
-          RenderText {#text} at (0,0) size 16x68
-            text run at (0,0) width 16: "A"
-            text run at (0,17) width 16: "B"
-            text run at (0,34) width 16: "C"
-            text run at (0,51) width 16: "D"
+      RenderBlock {P} at (0,16) size 16x68
+        RenderText {#text} at (0,0) size 16x68
+          text run at (0,0) width 16: "A"
+          text run at (0,17) width 16: "B"
+          text run at (0,34) width 16: "C"
+          text run at (0,51) width 16: "D"

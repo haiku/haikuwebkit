@@ -49,7 +49,7 @@ constexpr size_t MaxFFTSize = 32768;
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(ConvolverNode);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(ConvolverNode);
 
 static unsigned computeNumberOfOutputChannels(unsigned inputChannels, unsigned responseChannels)
 {
@@ -68,7 +68,7 @@ ExceptionOr<Ref<ConvolverNode>> ConvolverNode::create(BaseAudioContext& context,
 
     node->setNormalizeForBindings(!options.disableNormalization);
 
-    result = node->setBufferForBindings(WTFMove(options.buffer));
+    result = node->setBufferForBindings(WTF::move(options.buffer));
     if (result.hasException())
         return result.releaseException();
 
@@ -152,8 +152,8 @@ ExceptionOr<void> ConvolverNode::setBufferForBindings(RefPtr<AudioBuffer>&& buff
         // Synchronize with process().
         Locker locker { m_processLock };
 
-        m_reverb = WTFMove(reverb);
-        m_buffer = WTFMove(buffer);
+        m_reverb = WTF::move(reverb);
+        m_buffer = WTF::move(buffer);
         if (m_buffer) {
             // This will propagate the channel count to any nodes connected further downstream in the graph.
             checkedOutput(0)->setNumberOfChannels(computeNumberOfOutputChannels(checkedInput(0)->numberOfChannels(), m_buffer->numberOfChannels()));

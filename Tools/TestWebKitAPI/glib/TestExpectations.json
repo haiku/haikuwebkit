@@ -188,6 +188,9 @@
             },
             "/webkit/WebKitWebView/save": {
                 "expected": {"wpe": {"status": ["CRASH", "TIMEOUT"], "bug": "webkit.org/b/289436"}}
+            },
+            "/webkit/WebKitWebView/title-change": {
+                "expected": {"all": {"status": ["FAIL", "PASS"], "bug": "webkit.org/b/304368"}}
             }
         }
     },

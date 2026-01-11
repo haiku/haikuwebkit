@@ -115,7 +115,7 @@ RetainPtr<NSAttributedString> AXTextMarkerRange::toAttributedString(AXCoreObject
         if (result)
             [result appendAttributedString:string.autorelease()];
         else
-            result = WTFMove(string);
+            result = WTF::move(string);
     };
 
     auto emitNewlineOnExit = [&] (AXIsolatedObject& object) {

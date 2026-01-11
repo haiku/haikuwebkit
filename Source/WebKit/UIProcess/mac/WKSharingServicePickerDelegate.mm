@@ -150,7 +150,7 @@
         WeakPtr weakPage = menuProxy ? menuProxy->page() : nullptr;
         RetainPtr<NSString> itemUTI = itemProvider.get().registeredTypeIdentifiers.firstObject;
         [itemProvider loadDataRepresentationForTypeIdentifier:itemUTI.get() completionHandler:[weakPage, attachmentID = _attachmentID, itemUTI](NSData *data, NSError *error) mutable {
-            ensureOnMainRunLoop([weakPage = WTFMove(weakPage), attachmentID, itemUTI, data = RetainPtr { data }, error = RetainPtr { error }] {
+            ensureOnMainRunLoop([weakPage = WTF::move(weakPage), attachmentID, itemUTI, data = RetainPtr { data }, error = RetainPtr { error }] {
                 RefPtr webPage = weakPage.get();
 
                 if (!webPage)

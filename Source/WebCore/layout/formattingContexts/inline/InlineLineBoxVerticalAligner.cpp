@@ -31,6 +31,8 @@
 #include "InlineLevelBoxInlines.h"
 #include "LayoutBoxGeometry.h"
 #include "LayoutChildIterator.h"
+#include "RenderStyle+GettersInlines.h"
+#include "StyleComputedStyle+InitialInlines.h"
 
 namespace WebCore {
 namespace Layout {
@@ -46,7 +48,7 @@ InlineLayoutUnit LineBoxVerticalAligner::computeLogicalHeightAndAlign(LineBox& l
         if (!lineBox.hasContent())
             return true;
 
-        if (rootBox().style().lineBoxContain() != RenderStyle::initialLineBoxContain())
+        if (rootBox().style().lineBoxContain() != Style::ComputedStyle::initialLineBoxContain())
             return false;
         auto& rootInlineBox = lineBox.rootInlineBox();
         if (!layoutState().inStandardsMode() || !WTF::holdsAlternative<CSS::Keyword::Baseline>(rootInlineBox.verticalAlign()))

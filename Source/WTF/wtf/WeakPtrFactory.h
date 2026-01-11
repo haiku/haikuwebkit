@@ -36,7 +36,6 @@ namespace WTF {
 
 #define USING_CAN_MAKE_WEAKPTR(BASE) \
     using BASE::weakImpl; \
-    using BASE::weakImplIfExists; \
     using BASE::weakCount; \
     using BASE::WeakValueType; \
     using BASE::WeakPtrImplType;
@@ -55,6 +54,13 @@ public:
         : m_wasConstructedOnMainThread(isMainThread())
 #endif
     {
+    }
+
+    void prepareForUseOnlyOnMainThread()
+    {
+#if ASSERT_ENABLED
+        m_wasConstructedOnMainThread = true;
+#endif
     }
 
     void prepareForUseOnlyOnNonMainThread()

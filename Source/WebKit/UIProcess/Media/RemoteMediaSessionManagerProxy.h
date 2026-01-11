@@ -75,12 +75,14 @@ public:
 
     virtual ~RemoteMediaSessionManagerProxy();
 
+    // IPC::MessageReceiver, WebCore::AudioSession.
+    void ref() const final { WebCore::REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::ref(); }
+    void deref() const final { WebCore::REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::deref(); }
+
 #if USE(AUDIO_SESSION)
-    void ref() const final { AudioSession::ref(); }
-    void deref() const final { AudioSession::deref(); }
-#else
-    void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
-    void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
+    // WebCore::AudioSession.
+    ThreadSafeWeakPtrControlBlock& controlBlock() const final { return REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::controlBlock(); }
+    uint32_t weakRefCount() const final { return REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::weakRefCount(); }
 #endif
 
     const Ref<WebProcessProxy> process() const { return m_process; }

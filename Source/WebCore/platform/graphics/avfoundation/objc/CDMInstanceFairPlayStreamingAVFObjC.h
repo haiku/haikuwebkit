@@ -29,6 +29,7 @@
 
 #include "CDMInstance.h"
 #include "CDMInstanceSession.h"
+#include "CDMKeyID.h"
 #include "ContentKeyGroupDataSource.h"
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/Function.h>
@@ -131,13 +132,12 @@ public:
     void externalProtectionStatusDidChangeForContentKey(AVContentKey *) final;
     void externalProtectionStatusDidChangeForContentKeyRequest(AVContentKeyRequest*) final;
 
-    using Keys = Vector<Ref<SharedBuffer>>;
-    CDMInstanceSessionFairPlayStreamingAVFObjC* sessionForKeyIDs(const Keys&) const;
+    CDMInstanceSessionFairPlayStreamingAVFObjC* sessionForKeyIDs(const CDMKeyIDs&) const;
     CDMInstanceSessionFairPlayStreamingAVFObjC* sessionForGroup(WebAVContentKeyGrouping *) const;
     CDMInstanceSessionFairPlayStreamingAVFObjC* sessionForKey(AVContentKey *) const;
     CDMInstanceSessionFairPlayStreamingAVFObjC* sessionForRequest(AVContentKeyRequest *) const;
 
-    bool isAnyKeyUsable(const Keys&) const;
+    bool isAnyKeyUsable(const CDMKeyIDs&) const;
 
     using KeyStatusesChangedObserver = Observer<void()>;
     void addKeyStatusesChangedObserver(const KeyStatusesChangedObserver&);
@@ -217,8 +217,7 @@ public:
     void externalProtectionStatusDidChangeForContentKey(AVContentKey *) final;
     void externalProtectionStatusDidChangeForContentKeyRequest(AVContentKeyRequest*) final;
 
-    using Keys = CDMInstanceFairPlayStreamingAVFObjC::Keys;
-    Keys keyIDs();
+    CDMKeyIDs keyIDs();
     AVContentKeySession *contentKeySession() { return m_session ? m_session.get() : m_instance->contentKeySession(); }
     WebAVContentKeyGrouping *contentKeyReportGroup() { return m_group.get(); }
 
@@ -230,7 +229,7 @@ public:
 
     bool hasKey(AVContentKey *) const;
     bool hasRequest(AVContentKeyRequest*) const;
-    bool isAnyKeyUsable(const Keys&) const;
+    bool isAnyKeyUsable(const CDMKeyIDs&) const;
 
     const KeyStatusVector& keyStatuses() const { return m_keyStatuses; }
     KeyStatusVector copyKeyStatuses() const;

@@ -38,7 +38,7 @@ WKTypeID WKBundleScriptWorldGetTypeID()
 WKBundleScriptWorldRef WKBundleScriptWorldCreateWorld()
 {
     RefPtr<WebKit::InjectedBundleScriptWorld> world = WebKit::InjectedBundleScriptWorld::create(WebKit::ContentWorldIdentifier::generate());
-    return toAPILeakingRef(WTFMove(world));
+    return toAPILeakingRef(WTF::move(world));
 }
 
 WKBundleScriptWorldRef WKBundleScriptWorldNormalWorld()

@@ -48,7 +48,8 @@ class APIReport:
         class_: str
 
     @classmethod
-    def from_binary(cls, binary_path: Path, *, arch: str, exports_only=False):
+    def from_binary(cls, binary_path: Path, *, arch: str,
+                    exports_only: bool = False) -> APIReport:
         dyld_args = ['-arch', arch, '-exports', '-objc']
         if not exports_only:
             dyld_args.extend(('-imports',

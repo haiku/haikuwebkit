@@ -703,6 +703,10 @@ private:
             if (!flags)
                 break;
 
+            // NewRegExp node does not have an explicit structure, so don't reduce cross-realm RegExp.
+            if (m_node->structure().get() != m_graph.globalObjectFor(m_node->origin.semantic)->regExpStructure())
+                break;
+
             auto* regExp = vm().regExpCache()->lookup(vm(), pattern, flags.value());
             if (!regExp)
                 break;
@@ -1303,7 +1307,7 @@ private:
 
             m_changed = true;
             m_insertionSet.insertNode(m_nodeIndex, SpecNone, Check, m_node->origin, m_node->children.justChecks());
-            m_node->convertToLazyJSConstant(m_graph, LazyJSValue::newString(m_graph, WTFMove(result)));
+            m_node->convertToLazyJSConstant(m_graph, LazyJSValue::newString(m_graph, WTF::move(result)));
             break;
         }
 
@@ -1881,3 +1885,4 @@ bool performStrengthReduction(Graph& graph)
 } } // namespace JSC::DFG
 
 #endif // ENABLE(DFG_JIT)
+

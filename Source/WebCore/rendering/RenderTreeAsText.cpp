@@ -256,23 +256,23 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
             ts << ' ' << quoteAndEscapeNonPrintables(control->fileTextValue());
 
         if (renderElement->parent()) {
-            Color color = renderElement->style().visitedDependentColor(CSSPropertyColor);
-            if (!equalIgnoringSemanticColor(renderElement->parent()->style().visitedDependentColor(CSSPropertyColor), color))
+            auto color = renderElement->style().visitedDependentColor();
+            if (!equalIgnoringSemanticColor(renderElement->parent()->style().visitedDependentColor(), color))
                 ts << " [color="_s << serializationForRenderTreeAsText(color) << ']';
 
             // Do not dump invalid or transparent backgrounds, since that is the default.
-            Color backgroundColor = renderElement->style().visitedDependentColor(CSSPropertyBackgroundColor);
-            if (!equalIgnoringSemanticColor(renderElement->parent()->style().visitedDependentColor(CSSPropertyBackgroundColor), backgroundColor)
+            auto backgroundColor = renderElement->style().visitedDependentBackgroundColor();
+            if (!equalIgnoringSemanticColor(renderElement->parent()->style().visitedDependentBackgroundColor(), backgroundColor)
                 && backgroundColor != Color::transparentBlack)
                 ts << " [bgcolor="_s << serializationForRenderTreeAsText(backgroundColor) << ']';
             
-            Color textFillColor = renderElement->style().visitedDependentColor(CSSPropertyWebkitTextFillColor);
-            if (!equalIgnoringSemanticColor(renderElement->parent()->style().visitedDependentColor(CSSPropertyWebkitTextFillColor), textFillColor)
+            auto textFillColor = renderElement->style().visitedDependentTextFillColor();
+            if (!equalIgnoringSemanticColor(renderElement->parent()->style().visitedDependentTextFillColor(), textFillColor)
                 && textFillColor != color && textFillColor != Color::transparentBlack)
                 ts << " [textFillColor="_s << serializationForRenderTreeAsText(textFillColor) << ']';
 
-            Color textStrokeColor = renderElement->style().visitedDependentColor(CSSPropertyWebkitTextStrokeColor);
-            if (!equalIgnoringSemanticColor(renderElement->parent()->style().visitedDependentColor(CSSPropertyWebkitTextStrokeColor), textStrokeColor)
+            auto textStrokeColor = renderElement->style().visitedDependentTextStrokeColor();
+            if (!equalIgnoringSemanticColor(renderElement->parent()->style().visitedDependentTextStrokeColor(), textStrokeColor)
                 && textStrokeColor != color && textStrokeColor != Color::transparentBlack)
                 ts << " [textStrokeColor="_s << serializationForRenderTreeAsText(textStrokeColor) << ']';
 
@@ -288,7 +288,7 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
         LayoutUnit borderRight = box->borderRight();
         LayoutUnit borderBottom = box->borderBottom();
         LayoutUnit borderLeft = box->borderLeft();
-        bool overridden = renderElement->style().borderImage().overridesBorderWidths();
+        bool overridden = renderElement->style().borderImageWidth().overridesBorderWidths();
         if (box->isFieldset()) {
             const auto& block = downcast<RenderBlock>(*box);
             switch (renderElement->writingMode().blockDirection()) {
@@ -308,34 +308,33 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
         if (borderTop || borderRight || borderBottom || borderLeft) {
             ts << " [border:"_s;
 
-            auto printBorder = [&] (const LayoutUnit& width, const BorderStyle& style, const Style::Color& color) {
+            auto printBorder = [&] (const LayoutUnit& width, const BorderStyle& style, const Color& resolvedColor) {
                 if (!width)
                     ts << " none"_s;
                 else {
                     ts << " ("_s << width << "px "_s;
                     printBorderStyle(ts, style);
-                    auto resolvedColor = renderElement->style().colorResolvingCurrentColor(color);
                     ts << serializationForRenderTreeAsText(resolvedColor) << ')';
                 }
 
             };
 
             BorderValue prevBorder = renderElement->style().borderTop();
-            printBorder(borderTop, renderElement->style().borderTopStyle(), renderElement->style().borderTopColor());
+            printBorder(borderTop, renderElement->style().borderTopStyle(), renderElement->style().borderTopColorResolvingCurrentColor());
 
             if (renderElement->style().borderRight() != prevBorder || (overridden && borderRight != borderTop)) {
                 prevBorder = renderElement->style().borderRight();
-                printBorder(borderRight, renderElement->style().borderRightStyle(), renderElement->style().borderRightColor());
+                printBorder(borderRight, renderElement->style().borderRightStyle(), renderElement->style().borderRightColorResolvingCurrentColor());
             }
 
             if (renderElement->style().borderBottom() != prevBorder || (overridden && borderBottom != borderRight)) {
                 prevBorder = renderElement->style().borderBottom();
-                printBorder(borderBottom, renderElement->style().borderBottomStyle(), renderElement->style().borderBottomColor());
+                printBorder(borderBottom, renderElement->style().borderBottomStyle(), renderElement->style().borderBottomColorResolvingCurrentColor());
             }
 
             if (renderElement->style().borderLeft() != prevBorder || (overridden && borderLeft != borderBottom)) {
                 prevBorder = renderElement->style().borderLeft();
-                printBorder(borderLeft, renderElement->style().borderLeftStyle(), renderElement->style().borderLeftColor());
+                printBorder(borderLeft, renderElement->style().borderLeftStyle(), renderElement->style().borderLeftColorResolvingCurrentColor());
             }
             ts << ']';
         }

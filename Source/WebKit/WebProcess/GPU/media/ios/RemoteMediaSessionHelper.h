@@ -38,6 +38,9 @@ class WebProcess;
 
 class RemoteMediaSessionHelper final
     : public WebCore::MediaSessionHelper
+#if HAVE(AVROUTING_FRAMEWORK)
+    , public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<RemoteMediaSessionHelper>
+#endif
     , public IPC::MessageReceiver
     , public GPUProcessConnection::Client {
 public:

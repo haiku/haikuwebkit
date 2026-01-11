@@ -44,11 +44,11 @@
 #include <wpe/wpe-platform.h>
 #endif
 
-#if USE(GBM)
+#if USE(GBM) || OS(ANDROID)
 #include "RendererBufferFormat.h"
 #endif
 
-#if USE(GBM) && ENABLE(WPE_PLATFORM)
+#if ENABLE(WPE_PLATFORM) && (USE(GBM) || OS(ANDROID))
 #include "MessageSenderInlines.h"
 #include "WebPageMessages.h"
 #endif
@@ -59,11 +59,13 @@ void WebPageProxy::platformInitialize()
 {
 }
 
+#if USE(LIBWPE)
 struct wpe_view_backend* WebPageProxy::viewBackend()
 {
     RefPtr pageClient = this->pageClient();
     return pageClient ? static_cast<PageClientImpl&>(*pageClient).viewBackend() : nullptr;
 }
+#endif
 
 #if ENABLE(WPE_PLATFORM)
 WPEView* WebPageProxy::wpeView() const
@@ -109,21 +111,21 @@ void WebPageProxy::sendMessageToWebViewWithReply(UserMessage&& message, Completi
     RefPtr pageClient = this->pageClient();
     if (!pageClient)
         return completionHandler({ });
-    static_cast<PageClientImpl&>(*pageClient).sendMessageToWebView(WTFMove(message), WTFMove(completionHandler));
+    static_cast<PageClientImpl&>(*pageClient).sendMessageToWebView(WTF::move(message), WTF::move(completionHandler));
 }
 
 void WebPageProxy::sendMessageToWebView(UserMessage&& message)
 {
-    sendMessageToWebViewWithReply(WTFMove(message), [](UserMessage&&) { });
+    sendMessageToWebViewWithReply(WTF::move(message), [](UserMessage&&) { });
 }
 
 void WebPageProxy::setInputMethodState(std::optional<InputMethodState>&& state)
 {
     if (RefPtr pageClient = this->pageClient())
-        static_cast<PageClientImpl&>(*pageClient).setInputMethodState(WTFMove(state));
+        static_cast<PageClientImpl&>(*pageClient).setInputMethodState(WTF::move(state));
 }
 
-#if USE(GBM)
+#if USE(GBM) || OS(ANDROID)
 Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
 {
 #if ENABLE(WPE_PLATFORM)
@@ -135,8 +137,11 @@ Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
     if (!formats)
         return { };
 
-    Vector<RendererBufferFormat> bufferFormats;
+#if USE(GBM)
     WPEDRMDevice* mainDevice = wpe_buffer_formats_get_device(formats);
+#endif
+
+    Vector<RendererBufferFormat> bufferFormats;
     auto groupCount = wpe_buffer_formats_get_n_groups(formats);
     for (unsigned i = 0; i < groupCount; ++i) {
         RendererBufferFormat bufferFormat;
@@ -152,11 +157,13 @@ Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
             break;
         }
 
+#if USE(GBM)
         WPEDRMDevice* targetDevice = wpe_buffer_formats_get_group_device(formats, i);
         if (!targetDevice)
             targetDevice = mainDevice;
         if (targetDevice)
             bufferFormat.drmDevice = { CString(wpe_drm_device_get_primary_node(targetDevice)), CString(wpe_drm_device_get_render_node(targetDevice)) };
+#endif
 
         auto formatsCount = wpe_buffer_formats_get_group_n_formats(formats, i);
         bufferFormat.formats.reserveInitialCapacity(formatsCount);
@@ -171,9 +178,9 @@ Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
                 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
                 format.modifiers.append(*modifier);
             }
-            bufferFormat.formats.append(WTFMove(format));
+            bufferFormat.formats.append(WTF::move(format));
         }
-        bufferFormats.append(WTFMove(bufferFormat));
+        bufferFormats.append(WTF::move(bufferFormat));
     }
 
     return bufferFormats;
@@ -182,7 +189,7 @@ Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
 #endif
 }
 
-#if USE(GBM) && ENABLE(WPE_PLATFORM)
+#if ENABLE(WPE_PLATFORM)
 void WebPageProxy::preferredBufferFormatsDidChange()
 {
     auto* view = wpeView();
@@ -192,7 +199,7 @@ void WebPageProxy::preferredBufferFormatsDidChange()
     legacyMainFrameProcess().send(Messages::WebPage::PreferredBufferFormatsDidChange(preferredBufferFormats()), webPageIDInMainFrameProcess());
 }
 #endif
-#endif
+#endif // USE(GBM) || OS(ANDROID)
 
 OptionSet<WebCore::PlatformEvent::Modifier> WebPageProxy::currentStateOfModifierKeys()
 {
@@ -228,13 +235,13 @@ void WebPageProxy::callAfterNextPresentationUpdate(CompletionHandler<void()>&& c
     }
 
 #if USE(COORDINATED_GRAPHICS)
-    Ref aggregator = CallbackAggregator::create([weakThis = WeakPtr { *this }, callback = WTFMove(callback)]() mutable {
+    Ref aggregator = CallbackAggregator::create([weakThis = WeakPtr { *this }, callback = WTF::move(callback)]() mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return callback();
 
         if (RefPtr pageClient = protectedThis->pageClient())
-            static_cast<PageClientImpl&>(*pageClient).callAfterNextPresentationUpdate(WTFMove(callback));
+            static_cast<PageClientImpl&>(*pageClient).callAfterNextPresentationUpdate(WTF::move(callback));
     });
     auto drawingAreaIdentifier = m_drawingArea->identifier();
     forEachWebContentProcess([&] (auto& process, auto) {

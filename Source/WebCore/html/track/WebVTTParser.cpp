@@ -105,24 +105,24 @@ WebVTTParser::WebVTTParser(WebVTTParserClient& client, Document& document)
 
 Vector<Ref<WebVTTCueData>> WebVTTParser::takeCues()
 {
-    return WTFMove(m_cuelist);
+    return WTF::move(m_cuelist);
 }
 
 Vector<Ref<VTTRegion>> WebVTTParser::takeRegions()
 {
-    return WTFMove(m_regionList);
+    return WTF::move(m_regionList);
 }
 
 Vector<String> WebVTTParser::takeStyleSheets()
 {
-    return WTFMove(m_styleSheets);
+    return WTF::move(m_styleSheets);
 }
 
 void WebVTTParser::parseFileHeader(String&& data)
 {
     m_state = Initial;
     m_lineReader.reset();
-    m_lineReader.append(WTFMove(data));
+    m_lineReader.append(WTF::move(data));
     parse();
     if (!m_regionList.isEmpty())
         m_client.newRegionsParsed();
@@ -152,7 +152,7 @@ void WebVTTParser::parseCueData(const ISOWebVTTCue& data)
     if (WebVTTParser::collectTimeStamp(data.originalStartTime(), originalStartTime))
         cue->setOriginalStartTime(originalStartTime);
 
-    m_cuelist.append(WTFMove(cue));
+    m_cuelist.append(WTF::move(cue));
     m_client.newCuesParsed();
 }
 
@@ -399,7 +399,7 @@ bool WebVTTParser::checkAndStoreStyleSheet(StringView line)
             return true;
 
         const auto& selectorList = styleRule->selectorList();
-        if (selectorList.listSize() != 1)
+        if (selectorList.size() != 1)
             return true;
         auto selector = selectorList.selectorAt(0);
         auto selectorText = selector->selectorText();
@@ -567,7 +567,7 @@ void WebVTTParser::createNewCue()
     cue->setId(m_currentId);
     cue->setSettings(m_currentSettings);
 
-    m_cuelist.append(WTFMove(cue));
+    m_cuelist.append(WTF::move(cue));
     m_client.newCuesParsed();
 }
 
@@ -724,7 +724,7 @@ void WebVTTTreeBuilder::constructTreeFromToken(Document& document)
             child->setAttributeWithoutSynchronization(WebVTTElement::langAttributeName(), m_languageStack.last());
         }
         protectedCurrentNode()->parserAppendChild(child);
-        m_currentNode = WTFMove(child);
+        m_currentNode = WTF::move(child);
         m_typeStack.append(nodeType);
         break;
     }

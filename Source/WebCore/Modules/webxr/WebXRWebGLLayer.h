@@ -34,6 +34,7 @@
 #include "PlatformXR.h"
 #include "WebXRLayer.h"
 #include <JavaScriptCore/ConsoleTypes.h>
+#include <wtf/CheckedRef.h>
 #include <wtf/Ref.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>
@@ -53,10 +54,10 @@ class WebXRViewport;
 struct XRWebGLLayerInit;
 template<typename> class ExceptionOr;
 
-class WebXRWebGLLayer : public WebXRLayer, private CanvasObserver {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebXRWebGLLayer);
+class WebXRWebGLLayer : public WebXRLayer, private CanvasObserver, public CanMakeCheckedPtr<WebXRWebGLLayer> {
+    WTF_MAKE_TZONE_ALLOCATED(WebXRWebGLLayer);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebXRWebGLLayer);
 public:
-
     using WebXRRenderingContext = Variant<
         RefPtr<WebGLRenderingContext>,
         RefPtr<WebGL2RenderingContext>
@@ -71,6 +72,9 @@ public:
     const WebGLFramebuffer* framebuffer() const;
     unsigned framebufferWidth() const;
     unsigned framebufferHeight() const;
+
+    // CanvasObserver.
+    OVERRIDE_ABSTRACT_CAN_MAKE_CHECKEDPTR(CanMakeCheckedPtr);
 
     ExceptionOr<RefPtr<WebXRViewport>> getViewport(WebXRView&);
 

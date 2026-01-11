@@ -117,7 +117,7 @@ static inline const char* toFeatureCategory(API::FeatureCategory category)
  */
 struct _WebKitFeature {
     _WebKitFeature(RefPtr<API::Feature>&& feature)
-        : feature(WTFMove(feature))
+        : feature(WTF::move(feature))
     {
     }
 

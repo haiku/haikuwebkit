@@ -44,7 +44,7 @@
 
 namespace WebCore {
     
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(AudioDestinationNode);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(AudioDestinationNode);
 
 AudioDestinationNode::AudioDestinationNode(BaseAudioContext& context, float sampleRate)
     : AudioNode(context, NodeTypeDestination)

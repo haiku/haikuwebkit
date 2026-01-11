@@ -47,7 +47,7 @@ public:
 #if PLATFORM(COCOA)
     static Ref<Connection> create(XPCObjectPtr<xpc_connection_t>&& connection)
     {
-        return adoptRef(*new Connection(WTFMove(connection)));
+        return adoptRef(*new Connection(WTF::move(connection)));
     }
 #endif
 
@@ -64,7 +64,7 @@ protected:
 
 #if PLATFORM(COCOA)
     explicit Connection(XPCObjectPtr<xpc_connection_t>&& connection)
-        : m_connection(WTFMove(connection)) { }
+        : m_connection(WTF::move(connection)) { }
 #endif
 
     virtual void initializeConnectionIfNeeded() const { }
@@ -93,7 +93,7 @@ public:
 
 protected:
     explicit ConnectionToMachService(CString&& machServiceName)
-        : m_machServiceName(WTFMove(machServiceName))
+        : m_machServiceName(WTF::move(machServiceName))
     { }
 
 private:

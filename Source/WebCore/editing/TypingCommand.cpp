@@ -147,7 +147,7 @@ static inline bool editActionIsDeleteByTyping(EditAction action)
 }
 
 TypingCommand::TypingCommand(Ref<Document>&& document, Type commandType, const String &textToInsert, OptionSet<Option> options, TextGranularity granularity, TextCompositionType compositionType)
-    : TextInsertionBaseCommand(WTFMove(document), editActionForTypingCommand(commandType, granularity, compositionType, options.contains(Option::IsAutocompletion)))
+    : TextInsertionBaseCommand(WTF::move(document), editActionForTypingCommand(commandType, granularity, compositionType, options.contains(Option::IsAutocompletion)))
     , m_commandType(commandType)
     , m_textToInsert(textToInsert)
     , m_currentTextToInsert(textToInsert)
@@ -179,7 +179,7 @@ void TypingCommand::deleteSelection(Ref<Document>&& document, OptionSet<Option> 
         return;
     }
 
-    TypingCommand::create(WTFMove(document), Type::DeleteSelection, emptyString(), options, compositionType)->apply();
+    TypingCommand::create(WTF::move(document), Type::DeleteSelection, emptyString(), options, compositionType)->apply();
 }
 
 void TypingCommand::deleteKeyPressed(Ref<Document>&& document, OptionSet<Option> options, TextGranularity granularity)
@@ -195,7 +195,7 @@ void TypingCommand::deleteKeyPressed(Ref<Document>&& document, OptionSet<Option>
         }
     }
 
-    TypingCommand::create(WTFMove(document), Type::DeleteKey, emptyString(), options, granularity)->apply();
+    TypingCommand::create(WTF::move(document), Type::DeleteKey, emptyString(), options, granularity)->apply();
 }
 
 void TypingCommand::forwardDeleteKeyPressed(Ref<Document>&& document, OptionSet<Option> options, TextGranularity granularity)
@@ -212,7 +212,7 @@ void TypingCommand::forwardDeleteKeyPressed(Ref<Document>&& document, OptionSet<
         }
     }
 
-    TypingCommand::create(WTFMove(document), Type::ForwardDeleteKey, emptyString(), options, granularity)->apply();
+    TypingCommand::create(WTF::move(document), Type::ForwardDeleteKey, emptyString(), options, granularity)->apply();
 }
 
 void TypingCommand::updateSelectionIfDifferentFromCurrentSelection(TypingCommand* typingCommand, Document& document)
@@ -231,7 +231,7 @@ void TypingCommand::insertText(Ref<Document>&& document, const String& text, Eve
         document->editor().updateMarkersForWordsAffectedByEditing(deprecatedIsSpaceOrNewline(text[0]));
     
     auto& selection = document->selection().selection();
-    insertText(WTFMove(document), text, triggeringEvent, selection, options, composition);
+    insertText(WTF::move(document), text, triggeringEvent, selection, options, composition);
 }
 
 // FIXME: We shouldn't need to take selectionForInsertion. It should be identical to FrameSelection's current selection.
@@ -269,7 +269,7 @@ void TypingCommand::insertText(Ref<Document>&& document, const String& text, Eve
     }
 
     RefPtr frame = document->frame();
-    auto command = TypingCommand::create(WTFMove(document), Type::InsertText, newText, options, compositionType);
+    auto command = TypingCommand::create(WTF::move(document), Type::InsertText, newText, options, compositionType);
     command->setTriggeringEventIsUntrusted(triggeringEventIsUntrusted);
     applyTextInsertionCommand(frame.get(), command.get(), selectionForInsertion, currentSelection);
 }
@@ -284,7 +284,7 @@ void TypingCommand::insertLineBreak(Ref<Document>&& document, OptionSet<Option> 
         return;
     }
 
-    TypingCommand::create(WTFMove(document), Type::InsertLineBreak, emptyString(), options)->apply();
+    TypingCommand::create(WTF::move(document), Type::InsertLineBreak, emptyString(), options)->apply();
 }
 
 void TypingCommand::insertParagraphSeparatorInQuotedContent(Ref<Document>&& document)
@@ -296,7 +296,7 @@ void TypingCommand::insertParagraphSeparatorInQuotedContent(Ref<Document>&& docu
         return;
     }
 
-    TypingCommand::create(WTFMove(document), Type::InsertParagraphSeparatorInQuotedContent)->apply();
+    TypingCommand::create(WTF::move(document), Type::InsertParagraphSeparatorInQuotedContent)->apply();
 }
 
 void TypingCommand::insertParagraphSeparator(Ref<Document>&& document, OptionSet<Option> options)
@@ -309,7 +309,7 @@ void TypingCommand::insertParagraphSeparator(Ref<Document>&& document, OptionSet
         return;
     }
 
-    TypingCommand::create(WTFMove(document), Type::InsertParagraphSeparator, emptyString(), options)->apply();
+    TypingCommand::create(WTF::move(document), Type::InsertParagraphSeparator, emptyString(), options)->apply();
 }
 
 RefPtr<TypingCommand> TypingCommand::lastTypingCommandIfStillOpenForTyping(Document& document)
@@ -559,7 +559,7 @@ void TypingCommand::insertTextRunWithoutNewlines(const String& text, bool select
     auto rebalanceWhitespaces = m_compositionType == TextCompositionType::None ? InsertTextCommand::RebalanceLeadingAndTrailingWhitespaces : InsertTextCommand::RebalanceAllWhitespaces;
     auto command = InsertTextCommand::create(document(), text, allowPasswordEcho, selectInsertedText, rebalanceWhitespaces, EditAction::TypingInsertText);
 
-    applyCommandToComposite(WTFMove(command), endingSelection());
+    applyCommandToComposite(WTF::move(command), endingSelection());
     typingAddedToOpenCommand(Type::InsertText);
 }
 

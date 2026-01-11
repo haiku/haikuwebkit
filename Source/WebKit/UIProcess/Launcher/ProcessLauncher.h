@@ -142,7 +142,7 @@ public:
 
     static Ref<ProcessLauncher> create(Client* client, LaunchOptions&& launchOptions)
     {
-        return adoptRef(*new ProcessLauncher(client, WTFMove(launchOptions)));
+        return adoptRef(*new ProcessLauncher(client, WTF::move(launchOptions)));
     }
 
     virtual ~ProcessLauncher();

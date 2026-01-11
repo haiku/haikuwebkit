@@ -1678,7 +1678,7 @@ public:
     Message(ArrayBufferContents&&, int32_t);
     ~Message();
 
-    ArrayBufferContents&& releaseContents() { return WTFMove(m_contents); }
+    ArrayBufferContents&& releaseContents() { return WTF::move(m_contents); }
     int32_t index() const { return m_index; }
 
 private:
@@ -3429,8 +3429,16 @@ JSC_DEFINE_HOST_FUNCTION(functionCreateBuiltin, (JSGlobalObject* globalObject, C
     auto functionText = asString(callFrame->argument(0))->value(globalObject);
     RETURN_IF_EXCEPTION(scope, encodedJSValue());
 
-    SourceCode source = makeSource(WTFMove(functionText), { }, SourceTaintedOrigin::Untainted);
-    JSFunction* func = JSFunction::create(vm, globalObject, createBuiltinExecutable(vm, source, Identifier::fromString(vm, "foo"_s), ImplementationVisibility::Public, ConstructorKind::None, ConstructAbility::CannotConstruct, InlineAttribute::None)->link(vm, nullptr, source), globalObject);
+    ImplementationVisibility visibility = ImplementationVisibility::Public;
+    if (callFrame->argumentCount() >= 2 && callFrame->argument(1).isString()) {
+        String visibilityString = asString(callFrame->argument(1))->value(globalObject);
+        RETURN_IF_EXCEPTION(scope, encodedJSValue());
+        if (visibilityString == "private"_s)
+            visibility = ImplementationVisibility::Private;
+    }
+
+    SourceCode source = makeSource(WTF::move(functionText), { }, SourceTaintedOrigin::Untainted);
+    JSFunction* func = JSFunction::create(vm, globalObject, createBuiltinExecutable(vm, source, Identifier::fromString(vm, "foo"_s), visibility, ConstructorKind::None, ConstructAbility::CannotConstruct, InlineAttribute::None)->link(vm, nullptr, source), globalObject);
 
     return JSValue::encode(func);
 }
@@ -3866,7 +3874,7 @@ JSC_DEFINE_HOST_FUNCTION(functionMake16BitStringIfPossible, (JSGlobalObject* glo
     String string = callFrame->argument(0).toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
     string.convertTo16Bit();
-    return JSValue::encode(jsString(vm, WTFMove(string)));
+    return JSValue::encode(jsString(vm, WTF::move(string)));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionGetStructureTransitionList, (JSGlobalObject* globalObject, CallFrame* callFrame))
@@ -4139,7 +4147,7 @@ JSC_DEFINE_HOST_FUNCTION(functionEvaluateWithScopeExtension, (JSGlobalObject* gl
     String program = asString(scriptValue)->value(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
 
-    SourceCode source = makeSource(WTFMove(program), callFrame->callerSourceOrigin(vm), SourceTaintedOrigin::Untainted);
+    SourceCode source = makeSource(WTF::move(program), callFrame->callerSourceOrigin(vm), SourceTaintedOrigin::Untainted);
     JSObject* scopeExtension = callFrame->argument(1).getObject();
 
     NakedPtr<Exception> exception;

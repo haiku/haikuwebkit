@@ -89,10 +89,10 @@ static Ref<API::TargetedElementRequest> protectedRequest(_WKTargetedElementReque
         selectors.reserveInitialCapacity(nsSelectors.count);
         for (NSString *selector in nsSelectors)
             selectors.add(selector);
-        selectorsForElement.append(WTFMove(selectors));
+        selectorsForElement.append(WTF::move(selectors));
     }
 
-    protectedRequest(self)->setSelectors(WTFMove(selectorsForElement));
+    protectedRequest(self)->setSelectors(WTF::move(selectorsForElement));
     return self;
 }
 

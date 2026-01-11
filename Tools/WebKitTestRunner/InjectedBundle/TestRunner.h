@@ -57,6 +57,15 @@ public:
 #endif
     }
 
+    bool isVision() const
+    {
+#if PLATFORM(VISION)
+        return true;
+#else
+        return false;
+#endif
+    }
+
     bool isMac() const
     {
 #if PLATFORM(MAC)
@@ -480,6 +489,7 @@ public:
     }
 
     void setHasMouseDeviceForTesting(bool);
+    void exitImmersive();
 
 private:
     TestRunner();

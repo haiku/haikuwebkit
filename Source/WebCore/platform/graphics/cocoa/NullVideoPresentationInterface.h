@@ -55,8 +55,6 @@ public:
     NullPlaybackSessionInterface& playbackSessionInterface() const { return m_playbackSessionInterface.get(); }
     PlaybackSessionModel* playbackSessionModel() const { return m_playbackSessionInterface->playbackSessionModel(); }
 
-    void setSpatialVideoMetadata(const std::optional<SpatialVideoMetadata>&) { }
-    void setVideoProjectionMetadata(const std::optional<VideoProjectionMetadata>&) { }
     void setVideoPresentationModel(VideoPresentationModel* model) { m_videoPresentationModel = model; }
     void setupFullscreen(const FloatRect&, const FloatSize&, UIView*, HTMLMediaElementEnums::VideoFullscreenMode, bool, bool, bool) { }
     void enterFullscreen() { }

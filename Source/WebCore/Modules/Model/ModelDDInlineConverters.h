@@ -25,8 +25,9 @@
 
 #pragma once
 
-#if ENABLE(WEBGPU_SWIFT)
+#if ENABLE(WEBGPU_SWIFT) && ENABLE(GPU_PROCESS_MODEL)
 
+#include <ImageIO/CGImageSource.h>
 #include <WebCore/DDImageAsset.h>
 #include <WebCore/DDMaterialDescriptor.h>
 #include <WebCore/DDMesh.h>
@@ -90,8 +91,8 @@ static DDModel::DDMeshPart toCpp(DDBridgeMeshPart *part)
         static_cast<uint32_t>(part.indexCount),
         static_cast<uint32_t>(part.topology),
         static_cast<uint32_t>(part.materialIndex),
-        WTFMove(part.boundsMin),
-        WTFMove(part.boundsMax)
+        part.boundsMin,
+        part.boundsMax
     };
 }
 

@@ -57,13 +57,13 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderSVGRoot);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderSVGRoot);
 
 const int defaultWidth = 300;
 const int defaultHeight = 150;
 
 RenderSVGRoot::RenderSVGRoot(SVGSVGElement& element, RenderStyle&& style)
-    : RenderReplaced(Type::SVGRoot, element, WTFMove(style))
+    : RenderReplaced(Type::SVGRoot, element, WTF::move(style))
 {
     ASSERT(isRenderSVGRoot());
     LayoutSize intrinsicSize(computeIntrinsicSize());

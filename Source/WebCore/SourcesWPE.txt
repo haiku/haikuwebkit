@@ -64,6 +64,8 @@ platform/glib/RunLoopObserverGLib.cpp
 
 platform/graphics/PlatformDisplay.cpp @no-unify
 
+platform/graphics/android/BufferFormatAndroid.cpp @no-unify
+
 platform/graphics/angle/PlatformDisplayANGLE.cpp @no-unify
 
 platform/graphics/glib/IconGLib.cpp

@@ -146,7 +146,7 @@ inline float contentStartInBlockDirection(const LineBox&);
 // -----------------------------------------------
 
 inline LineBox::LineBox(PathVariant&& path)
-    : m_pathVariant(WTFMove(path))
+    : m_pathVariant(WTF::move(path))
 {
 }
 

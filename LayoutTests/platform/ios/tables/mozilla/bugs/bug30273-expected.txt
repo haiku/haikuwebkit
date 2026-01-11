@@ -17,11 +17,10 @@ layer at (0,0) size 800x600
               RenderInline {SPAN} at (2,2) size 182x46
                 RenderText {#text} at (2,2) size 168x19
                   text run at (2,2) width 168: "This cell should be visible"
-                RenderBlock (anonymous) at (2,22) size 182x26
-                  RenderTable {TABLE} at (0,0) size 182x26
-                    RenderTableSection {TBODY} at (0,0) size 182x26
-                      RenderTableRow {TR} at (0,2) size 182x22
-                        RenderTableCell {TD} at (2,2) size 178x22 [r=0 c=0 rs=1 cs=1]
-                          RenderText {#text} at (1,1) size 176x19
-                            text run at (1,1) width 176: "This table should be visible"
+                RenderTable {TABLE} at (2,22) size 182x26
+                  RenderTableSection {TBODY} at (0,0) size 182x26
+                    RenderTableRow {TR} at (0,2) size 182x22
+                      RenderTableCell {TD} at (2,2) size 178x22 [r=0 c=0 rs=1 cs=1]
+                        RenderText {#text} at (1,1) size 176x19
+                          text run at (1,1) width 176: "This table should be visible"
               RenderText {#text} at (0,0) size 0x0

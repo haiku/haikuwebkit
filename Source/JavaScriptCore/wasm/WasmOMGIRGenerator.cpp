@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,6 +57,7 @@
 #include "JSWebAssemblyInstance.h"
 #include "JSWebAssemblyStruct.h"
 #include "ProbeContext.h"
+#include "ProfilerSupport.h"
 #include "ScratchRegisterAllocator.h"
 #include "WasmBaselineData.h"
 #include "WasmBranchHints.h"
@@ -118,10 +119,77 @@ static constexpr bool traceExecutionIncludesConstructionSite = false;
 
 #define TRACE_CF(...) do { if constexpr (WasmOMGIRGeneratorInternal::traceExecution) { traceCF(__VA_ARGS__); } } while (0)
 
+// ExpressionType for OMGIRGenerator. Typically, will be a B3::Value* but when encountering
+// Try/TryTable or loop with OSR, the wasm expression stack will be "materialized" to B3::Variables
+// so that the catch or loop OSR entrypoints have a location to restore into without needing
+// to determine Phi placement during this single pass parsing. Phi placement for these variables
+// will be handled by fixSSA.
+// FIXME: Ideally this would have WTF_MAKE_NONCOPYABLE(OMGExpression), rdar://166822445
+class OMGExpression {
+    static constexpr uintptr_t isMaterializedMask = 0x1;
+public:
+    OMGExpression() = default;
+
+    OMGExpression(Value* value)
+        : m_storage(reinterpret_cast<uintptr_t>(value))
+    {
+        ASSERT(!isEmpty() && !isMaterialized() && b3Value() == value);
+    }
+
+    bool isEmpty() const
+    {
+        return !m_storage;
+    }
+
+    bool isMaterialized() const
+    {
+        return m_storage & isMaterializedMask;
+    }
+
+    void setMaterialized(B3::Variable* var)
+    {
+        ASSERT(!isMaterialized());
+        m_storage = reinterpret_cast<uintptr_t>(var) | isMaterializedMask;
+        ASSERT(isMaterialized() && b3Variable() == var);
+    }
+
+    // Not named value() to disambiguate with TypedExpression::value()
+    B3::Value* b3Value() const
+    {
+        ASSERT(!isMaterialized());
+        // No need to mask in this common case since the isMaterialized bit will be 0
+        return reinterpret_cast<B3::Value*>(m_storage);
+    }
+
+    B3::Variable* b3Variable() const
+    {
+        ASSERT(isMaterialized());
+        return reinterpret_cast<B3::Variable*>(m_storage & ~isMaterializedMask);
+    }
+
+    B3::Type type() const
+    {
+        if (isMaterialized()) [[unlikely]]
+            return b3Variable()->type();
+        return b3Value()->type();
+    }
+
+    void dump(PrintStream& out) const
+    {
+        if (isMaterialized())
+            out.print(*b3Variable());
+        else
+            out.print(*b3Value());
+    }
+
+private:
+    uintptr_t m_storage;
+};
+
 class OMGIRGenerator {
     WTF_MAKE_TZONE_ALLOCATED(OMGIRGenerator);
 public:
-    using ExpressionType = Variable*;
+    using ExpressionType = OMGExpression;
     using ResultList = Vector<ExpressionType, 8>;
     using CallType = CallLinkInfo::CallType;
     using CallPatchpointData = std::tuple<B3::PatchpointValue*, RefPtr<PatchpointExceptionHandle>, RefPtr<B3::StackmapGenerator>>;
@@ -132,16 +200,13 @@ public:
     static constexpr bool validateFunctionBodySize = true;
 
     struct ControlData {
-        ControlData(Procedure& proc, Origin origin, BlockSignature signature, BlockType type, unsigned stackSize, BasicBlock* continuation, BasicBlock* special = nullptr)
+        ControlData(Procedure& proc, Origin origin, BlockSignature signature, BlockType type, BasicBlock* continuation, BasicBlock* special = nullptr)
             : controlBlockType(type)
             , m_signature(signature)
-            , m_stackSize(stackSize)
             , continuation(continuation)
             , special(special)
         {
             ASSERT(type != BlockType::Try && type != BlockType::Catch);
-            if (type != BlockType::TopLevel)
-                m_stackSize -= signature.m_signature->argumentCount();
 
             if (type == BlockType::Loop) {
                 for (unsigned i = 0; i < signature.m_signature->argumentCount(); ++i)
@@ -152,17 +217,15 @@ public:
             }
         }
 
-        ControlData(Procedure& proc, Origin origin, BlockSignature signature, BlockType type, unsigned stackSize, BasicBlock* continuation, unsigned tryStart, unsigned tryDepth)
+        ControlData(Procedure& proc, Origin origin, BlockSignature signature, BlockType type, BasicBlock* continuation, unsigned tryStart, unsigned tryDepth)
             : controlBlockType(type)
             , m_signature(signature)
-            , m_stackSize(stackSize)
             , continuation(continuation)
             , special(nullptr)
             , m_tryStart(tryStart)
             , m_tryCatchDepth(tryDepth)
         {
             ASSERT(type == BlockType::Try || type == BlockType::TryTable);
-            m_stackSize -= signature.m_signature->argumentCount();
             for (unsigned i = 0; i < signature.m_signature->returnCount(); ++i)
                 phis.append(proc.add<Value>(Phi, toB3Type(signature.m_signature->returnType(i)), origin));
         }
@@ -269,7 +332,7 @@ public:
 
         void setTryTableTargets(TargetList&& targets)
         {
-            m_tryTableTargets = WTFMove(targets);
+            m_tryTableTargets = WTF::move(targets);
         }
 
         void endTryTable(unsigned tryEndCallSiteIndex)
@@ -323,15 +386,12 @@ public:
             return m_exception;
         }
 
-        unsigned stackSize() const { return m_stackSize; }
-
     private:
         // FIXME: Compress OMGIRGenerator::ControlData fields using an union
         // https://bugs.webkit.org/show_bug.cgi?id=231212
         friend class OMGIRGenerator;
         BlockType controlBlockType;
         BlockSignature m_signature;
-        unsigned m_stackSize;
         BasicBlock* continuation;
         BasicBlock* special;
         Vector<Value*> phis;
@@ -360,12 +420,12 @@ public:
     typedef Expected<std::unique_ptr<InternalFunction>, ErrorType> Result;
     typedef Expected<void, ErrorType> PartialResult;
 
-    static ExpressionType emptyExpression() { return nullptr; };
+    static ExpressionType emptyExpression() { return { }; };
 
     enum class CastKind { Cast, Test };
 
     template <typename ...Args>
-    NEVER_INLINE UnexpectedResult WARN_UNUSED_RETURN fail(Args... args) const
+    WARN_UNUSED_RETURN NEVER_INLINE UnexpectedResult fail(Args... args) const
     {
         using namespace FailureHelper; // See ADL comment in WasmParser.h.
         return UnexpectedResult(makeString("WebAssembly.Module failed compiling: "_s, makeString(args)...));
@@ -417,21 +477,21 @@ public:
     // SIMD
     bool usesSIMD() { return m_info.usesSIMD(m_functionIndex); }
     void notifyFunctionUsesSIMD() { ASSERT(m_info.usesSIMD(m_functionIndex)); }
-    PartialResult WARN_UNUSED_RETURN addSIMDLoad(ExpressionType pointer, uint32_t offset, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addSIMDStore(ExpressionType value, ExpressionType pointer, uint32_t offset);
-    PartialResult WARN_UNUSED_RETURN addSIMDSplat(SIMDLane, ExpressionType scalar, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addSIMDShuffle(v128_t imm, ExpressionType a, ExpressionType b, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addSIMDShift(SIMDLaneOperation, SIMDInfo, ExpressionType v, ExpressionType shift, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addSIMDExtmul(SIMDLaneOperation, SIMDInfo, ExpressionType lhs, ExpressionType rhs, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addSIMDLoadSplat(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addSIMDLoadLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addSIMDStoreLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex);
-    PartialResult WARN_UNUSED_RETURN addSIMDLoadExtend(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addSIMDLoadPad(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSIMDLoad(ExpressionType pointer, uint32_t offset, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSIMDStore(ExpressionType value, ExpressionType pointer, uint32_t offset);
+    WARN_UNUSED_RETURN PartialResult addSIMDSplat(SIMDLane, ExpressionType scalar, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSIMDShuffle(v128_t imm, ExpressionType a, ExpressionType b, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSIMDShift(SIMDLaneOperation, SIMDInfo, ExpressionType v, ExpressionType shift, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSIMDExtmul(SIMDLaneOperation, SIMDInfo, ExpressionType lhs, ExpressionType rhs, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSIMDLoadSplat(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSIMDLoadLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSIMDStoreLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex);
+    WARN_UNUSED_RETURN PartialResult addSIMDLoadExtend(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSIMDLoadPad(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
 
-    ExpressionType WARN_UNUSED_RETURN addConstant(v128_t value)
+    WARN_UNUSED_RETURN ExpressionType addConstant(v128_t value)
     {
-        return push(m_currentBlock->appendNew<Const128Value>(m_proc, origin(), value));
+        return push(constant(B3::V128, value));
     }
 
     // SIMD generated
@@ -635,153 +695,153 @@ public:
         return { };
     }
 
-    PartialResult WARN_UNUSED_RETURN addDrop(ExpressionType);
-    PartialResult WARN_UNUSED_RETURN addInlinedArguments(const TypeDefinition&);
-    PartialResult WARN_UNUSED_RETURN addArguments(const TypeDefinition&);
-    PartialResult WARN_UNUSED_RETURN addLocal(Type, uint32_t);
+    WARN_UNUSED_RETURN PartialResult addDrop(ExpressionType);
+    WARN_UNUSED_RETURN PartialResult addInlinedArguments(const TypeDefinition&);
+    WARN_UNUSED_RETURN PartialResult addArguments(const TypeDefinition&);
+    WARN_UNUSED_RETURN PartialResult addLocal(Type, uint32_t);
     ExpressionType addConstant(Type, uint64_t);
 
     // References
-    PartialResult WARN_UNUSED_RETURN addRefIsNull(ExpressionType value, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addRefFunc(FunctionSpaceIndex index, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addRefAsNonNull(TypedExpression, ExpressionType&);
-    PartialResult WARN_UNUSED_RETURN addRefEq(ExpressionType, ExpressionType, ExpressionType&);
+    WARN_UNUSED_RETURN PartialResult addRefIsNull(ExpressionType value, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addRefFunc(FunctionSpaceIndex index, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addRefAsNonNull(TypedExpression, ExpressionType&);
+    WARN_UNUSED_RETURN PartialResult addRefEq(ExpressionType, ExpressionType, ExpressionType&);
 
     // Tables
-    PartialResult WARN_UNUSED_RETURN addTableGet(unsigned, ExpressionType index, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addTableSet(unsigned, ExpressionType index, ExpressionType value);
-    PartialResult WARN_UNUSED_RETURN addTableInit(unsigned, unsigned, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
-    PartialResult WARN_UNUSED_RETURN addElemDrop(unsigned);
-    PartialResult WARN_UNUSED_RETURN addTableSize(unsigned, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addTableGrow(unsigned, ExpressionType fill, ExpressionType delta, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addTableFill(unsigned, ExpressionType offset, ExpressionType fill, ExpressionType count);
-    PartialResult WARN_UNUSED_RETURN addTableCopy(unsigned, unsigned, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
+    WARN_UNUSED_RETURN PartialResult addTableGet(unsigned, ExpressionType index, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addTableSet(unsigned, ExpressionType index, ExpressionType value);
+    WARN_UNUSED_RETURN PartialResult addTableInit(unsigned, unsigned, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
+    WARN_UNUSED_RETURN PartialResult addElemDrop(unsigned);
+    WARN_UNUSED_RETURN PartialResult addTableSize(unsigned, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addTableGrow(unsigned, ExpressionType fill, ExpressionType delta, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addTableFill(unsigned, ExpressionType offset, ExpressionType fill, ExpressionType count);
+    WARN_UNUSED_RETURN PartialResult addTableCopy(unsigned, unsigned, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
 
     // Locals
-    PartialResult WARN_UNUSED_RETURN getLocal(uint32_t index, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN setLocal(uint32_t index, ExpressionType value);
-    PartialResult WARN_UNUSED_RETURN teeLocal(uint32_t, ExpressionType, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult getLocal(uint32_t index, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult setLocal(uint32_t index, ExpressionType value);
+    WARN_UNUSED_RETURN PartialResult teeLocal(uint32_t, ExpressionType, ExpressionType& result);
 
     // Globals
-    PartialResult WARN_UNUSED_RETURN getGlobal(uint32_t index, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN setGlobal(uint32_t index, ExpressionType value);
+    WARN_UNUSED_RETURN PartialResult getGlobal(uint32_t index, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult setGlobal(uint32_t index, ExpressionType value);
 
     // Memory
-    PartialResult WARN_UNUSED_RETURN load(LoadOpType, ExpressionType pointer, ExpressionType& result, uint32_t offset);
-    PartialResult WARN_UNUSED_RETURN store(StoreOpType, ExpressionType pointer, ExpressionType value, uint32_t offset);
-    PartialResult WARN_UNUSED_RETURN addGrowMemory(ExpressionType delta, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addCurrentMemory(ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addMemoryFill(ExpressionType dstAddress, ExpressionType targetValue, ExpressionType count);
-    PartialResult WARN_UNUSED_RETURN addMemoryCopy(ExpressionType dstAddress, ExpressionType srcAddress, ExpressionType count);
-    PartialResult WARN_UNUSED_RETURN addMemoryInit(unsigned, ExpressionType dstAddress, ExpressionType srcAddress, ExpressionType length);
-    PartialResult WARN_UNUSED_RETURN addDataDrop(unsigned);
+    WARN_UNUSED_RETURN PartialResult load(LoadOpType, ExpressionType pointer, ExpressionType& result, uint32_t offset);
+    WARN_UNUSED_RETURN PartialResult store(StoreOpType, ExpressionType pointer, ExpressionType value, uint32_t offset);
+    WARN_UNUSED_RETURN PartialResult addGrowMemory(ExpressionType delta, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addCurrentMemory(ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addMemoryFill(ExpressionType dstAddress, ExpressionType targetValue, ExpressionType count);
+    WARN_UNUSED_RETURN PartialResult addMemoryCopy(ExpressionType dstAddress, ExpressionType srcAddress, ExpressionType count);
+    WARN_UNUSED_RETURN PartialResult addMemoryInit(unsigned, ExpressionType dstAddress, ExpressionType srcAddress, ExpressionType length);
+    WARN_UNUSED_RETURN PartialResult addDataDrop(unsigned);
 
     // Atomics
-    PartialResult WARN_UNUSED_RETURN atomicLoad(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType& result, uint32_t offset);
-    PartialResult WARN_UNUSED_RETURN atomicStore(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, uint32_t offset);
-    PartialResult WARN_UNUSED_RETURN atomicBinaryRMW(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
-    PartialResult WARN_UNUSED_RETURN atomicCompareExchange(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset);
+    WARN_UNUSED_RETURN PartialResult atomicLoad(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType& result, uint32_t offset);
+    WARN_UNUSED_RETURN PartialResult atomicStore(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, uint32_t offset);
+    WARN_UNUSED_RETURN PartialResult atomicBinaryRMW(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
+    WARN_UNUSED_RETURN PartialResult atomicCompareExchange(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset);
 
-    PartialResult WARN_UNUSED_RETURN atomicWait(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType timeout, ExpressionType& result, uint32_t offset);
-    PartialResult WARN_UNUSED_RETURN atomicNotify(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
-    PartialResult WARN_UNUSED_RETURN atomicFence(ExtAtomicOpType, uint8_t flags);
+    WARN_UNUSED_RETURN PartialResult atomicWait(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType timeout, ExpressionType& result, uint32_t offset);
+    WARN_UNUSED_RETURN PartialResult atomicNotify(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
+    WARN_UNUSED_RETURN PartialResult atomicFence(ExtAtomicOpType, uint8_t flags);
 
     // Saturated truncation.
-    PartialResult WARN_UNUSED_RETURN truncSaturated(Ext1OpType, ExpressionType operand, ExpressionType& result, Type returnType, Type operandType);
+    WARN_UNUSED_RETURN PartialResult truncSaturated(Ext1OpType, ExpressionType operand, ExpressionType& result, Type returnType, Type operandType);
 
     // GC
-    PartialResult WARN_UNUSED_RETURN addRefI31(ExpressionType value, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addI31GetS(TypedExpression ref, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addI31GetU(TypedExpression ref, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addArrayNew(uint32_t index, ExpressionType size, ExpressionType value, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addArrayNewDefault(uint32_t index, ExpressionType size, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addArrayNewFixed(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addArrayGet(ExtGCOpType arrayGetKind, uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addArraySet(uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
-    PartialResult WARN_UNUSED_RETURN addArrayLen(TypedExpression arrayref, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addArrayFill(uint32_t, TypedExpression, ExpressionType, ExpressionType, ExpressionType);
-    PartialResult WARN_UNUSED_RETURN addArrayCopy(uint32_t, TypedExpression, ExpressionType, uint32_t, TypedExpression, ExpressionType, ExpressionType);
-    PartialResult WARN_UNUSED_RETURN addArrayInitElem(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
-    PartialResult WARN_UNUSED_RETURN addArrayInitData(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
-    PartialResult WARN_UNUSED_RETURN addStructNew(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addStructNewDefault(uint32_t index, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addStructGet(ExtGCOpType structGetKind, TypedExpression structReference, const StructType&, uint32_t fieldIndex, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addStructSet(TypedExpression structReference, const StructType&, uint32_t fieldIndex, ExpressionType value);
-    PartialResult WARN_UNUSED_RETURN addRefTest(TypedExpression reference, bool allowNull, int32_t heapType, bool shouldNegate, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addRefCast(TypedExpression reference, bool allowNull, int32_t heapType, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addAnyConvertExtern(ExpressionType reference, ExpressionType& result);
-    PartialResult WARN_UNUSED_RETURN addExternConvertAny(ExpressionType reference, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addRefI31(ExpressionType value, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addI31GetS(TypedExpression ref, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addI31GetU(TypedExpression ref, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addArrayNew(uint32_t index, ExpressionType size, ExpressionType value, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addArrayNewDefault(uint32_t index, ExpressionType size, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addArrayNewFixed(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addArrayGet(ExtGCOpType arrayGetKind, uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addArraySet(uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
+    WARN_UNUSED_RETURN PartialResult addArrayLen(TypedExpression arrayref, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addArrayFill(uint32_t, TypedExpression, ExpressionType, ExpressionType, ExpressionType);
+    WARN_UNUSED_RETURN PartialResult addArrayCopy(uint32_t, TypedExpression, ExpressionType, uint32_t, TypedExpression, ExpressionType, ExpressionType);
+    WARN_UNUSED_RETURN PartialResult addArrayInitElem(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
+    WARN_UNUSED_RETURN PartialResult addArrayInitData(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
+    WARN_UNUSED_RETURN PartialResult addStructNew(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addStructNewDefault(uint32_t index, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addStructGet(ExtGCOpType structGetKind, TypedExpression structReference, const StructType&, uint32_t fieldIndex, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addStructSet(TypedExpression structReference, const StructType&, uint32_t fieldIndex, ExpressionType value);
+    WARN_UNUSED_RETURN PartialResult addRefTest(TypedExpression reference, bool allowNull, int32_t heapType, bool shouldNegate, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addRefCast(TypedExpression reference, bool allowNull, int32_t heapType, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addAnyConvertExtern(ExpressionType reference, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addExternConvertAny(ExpressionType reference, ExpressionType& result);
 
     // Basic operators
 #define X(name, opcode, short, idx, ...) \
-    PartialResult WARN_UNUSED_RETURN add##name(ExpressionType arg, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult add##name(ExpressionType arg, ExpressionType& result);
     FOR_EACH_WASM_UNARY_OP(X)
 #undef X
 #define X(name, opcode, short, idx, ...) \
-    PartialResult WARN_UNUSED_RETURN add##name(ExpressionType left, ExpressionType right, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult add##name(ExpressionType left, ExpressionType right, ExpressionType& result);
     FOR_EACH_WASM_BINARY_OP(X)
 #undef X
 
-    PartialResult WARN_UNUSED_RETURN addSelect(ExpressionType condition, ExpressionType nonZero, ExpressionType zero, ExpressionType& result);
+    WARN_UNUSED_RETURN PartialResult addSelect(ExpressionType condition, ExpressionType nonZero, ExpressionType zero, ExpressionType& result);
 
     // Control flow
-    ControlData WARN_UNUSED_RETURN addTopLevel(BlockSignature);
-    PartialResult WARN_UNUSED_RETURN addBlock(BlockSignature, Stack& enclosingStack, ControlType& newBlock, Stack& newStack);
-    PartialResult WARN_UNUSED_RETURN addLoop(BlockSignature, Stack& enclosingStack, ControlType& block, Stack& newStack, uint32_t loopIndex);
-    PartialResult WARN_UNUSED_RETURN addIf(ExpressionType condition, BlockSignature, Stack& enclosingStack, ControlType& result, Stack& newStack);
-    PartialResult WARN_UNUSED_RETURN addElse(ControlData&, const Stack&);
-    PartialResult WARN_UNUSED_RETURN addElseToUnreachable(ControlData&);
+    WARN_UNUSED_RETURN ControlData addTopLevel(BlockSignature);
+    WARN_UNUSED_RETURN PartialResult addBlock(BlockSignature, Stack& enclosingStack, ControlType& newBlock, Stack& newStack);
+    WARN_UNUSED_RETURN PartialResult addLoop(BlockSignature, Stack& enclosingStack, ControlType& block, Stack& newStack, uint32_t loopIndex);
+    WARN_UNUSED_RETURN PartialResult addIf(ExpressionType condition, BlockSignature, Stack& enclosingStack, ControlType& result, Stack& newStack);
+    WARN_UNUSED_RETURN PartialResult addElse(ControlData&, const Stack&);
+    WARN_UNUSED_RETURN PartialResult addElseToUnreachable(ControlData&);
 
-    PartialResult WARN_UNUSED_RETURN addTry(BlockSignature, Stack& enclosingStack, ControlType& result, Stack& newStack);
-    PartialResult WARN_UNUSED_RETURN addTryTable(BlockSignature, Stack& enclosingStack, const Vector<CatchHandler>& targets, ControlType& result, Stack& newStack);
-    PartialResult WARN_UNUSED_RETURN addCatch(unsigned exceptionIndex, const TypeDefinition&, Stack&, ControlType&, ResultList&);
-    PartialResult WARN_UNUSED_RETURN addCatchToUnreachable(unsigned exceptionIndex, const TypeDefinition&, ControlType&, ResultList&);
-    PartialResult WARN_UNUSED_RETURN addCatchAll(Stack&, ControlType&);
-    PartialResult WARN_UNUSED_RETURN addCatchAllToUnreachable(ControlType&);
-    PartialResult WARN_UNUSED_RETURN addDelegate(ControlType&, ControlType&);
-    PartialResult WARN_UNUSED_RETURN addDelegateToUnreachable(ControlType&, ControlType&);
-    PartialResult WARN_UNUSED_RETURN addThrow(unsigned exceptionIndex, ArgumentList& args, Stack&);
-    PartialResult WARN_UNUSED_RETURN addRethrow(unsigned, ControlType&);
-    PartialResult WARN_UNUSED_RETURN addThrowRef(TypedExpression exception, Stack&);
+    WARN_UNUSED_RETURN PartialResult addTry(BlockSignature, Stack& enclosingStack, ControlType& result, Stack& newStack);
+    WARN_UNUSED_RETURN PartialResult addTryTable(BlockSignature, Stack& enclosingStack, const Vector<CatchHandler>& targets, ControlType& result, Stack& newStack);
+    WARN_UNUSED_RETURN PartialResult addCatch(unsigned exceptionIndex, const TypeDefinition&, Stack&, ControlType&, ResultList&);
+    WARN_UNUSED_RETURN PartialResult addCatchToUnreachable(unsigned exceptionIndex, const TypeDefinition&, ControlType&, ResultList&);
+    WARN_UNUSED_RETURN PartialResult addCatchAll(Stack&, ControlType&);
+    WARN_UNUSED_RETURN PartialResult addCatchAllToUnreachable(ControlType&);
+    WARN_UNUSED_RETURN PartialResult addDelegate(ControlType&, ControlType&);
+    WARN_UNUSED_RETURN PartialResult addDelegateToUnreachable(ControlType&, ControlType&);
+    WARN_UNUSED_RETURN PartialResult addThrow(unsigned exceptionIndex, ArgumentList& args, Stack&);
+    WARN_UNUSED_RETURN PartialResult addRethrow(unsigned, ControlType&);
+    WARN_UNUSED_RETURN PartialResult addThrowRef(TypedExpression exception, Stack&);
 
-    PartialResult WARN_UNUSED_RETURN addInlinedReturn(const auto& returnValues);
+    WARN_UNUSED_RETURN PartialResult addInlinedReturn(const auto& returnValues);
 
-    PartialResult WARN_UNUSED_RETURN addReturn(const ControlData&, const Stack& returnValues);
-    PartialResult WARN_UNUSED_RETURN addBranch(ControlData&, ExpressionType condition, const Stack& returnValues);
-    PartialResult WARN_UNUSED_RETURN addBranchNull(ControlType&, ExpressionType, const Stack&, bool, ExpressionType&);
-    PartialResult WARN_UNUSED_RETURN addBranchCast(ControlType&, TypedExpression, const Stack&, bool, int32_t, bool);
-    PartialResult WARN_UNUSED_RETURN addSwitch(ExpressionType condition, const Vector<ControlData*>& targets, ControlData& defaultTargets, const Stack& expressionStack);
-    PartialResult WARN_UNUSED_RETURN endBlock(ControlEntry&, Stack& expressionStack);
-    PartialResult WARN_UNUSED_RETURN addEndToUnreachable(ControlEntry&, const Stack& = { });
+    WARN_UNUSED_RETURN PartialResult addReturn(const ControlData&, const Stack& returnValues);
+    WARN_UNUSED_RETURN PartialResult addBranch(ControlData&, ExpressionType condition, const Stack& returnValues);
+    WARN_UNUSED_RETURN PartialResult addBranchNull(ControlType&, ExpressionType, const Stack&, bool, ExpressionType&);
+    WARN_UNUSED_RETURN PartialResult addBranchCast(ControlType&, TypedExpression, const Stack&, bool, int32_t, bool);
+    WARN_UNUSED_RETURN PartialResult addSwitch(ExpressionType condition, const Vector<ControlData*>& targets, ControlData& defaultTargets, const Stack& expressionStack);
+    WARN_UNUSED_RETURN PartialResult endBlock(ControlEntry&, Stack& expressionStack);
+    WARN_UNUSED_RETURN PartialResult addEndToUnreachable(ControlEntry&, const Stack& = { });
 
-    PartialResult WARN_UNUSED_RETURN endTopLevel(BlockSignature, const Stack&) { return { }; }
+    WARN_UNUSED_RETURN PartialResult endTopLevel(BlockSignature, const Stack&) { return { }; }
 
     // Fused comparison stubs (B3 will do this for us later).
-    PartialResult WARN_UNUSED_RETURN addFusedBranchCompare(OpType, ControlType&, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
-    PartialResult WARN_UNUSED_RETURN addFusedBranchCompare(OpType, ControlType&, ExpressionType, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
-    PartialResult WARN_UNUSED_RETURN addFusedIfCompare(OpType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
-    PartialResult WARN_UNUSED_RETURN addFusedIfCompare(OpType, ExpressionType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    WARN_UNUSED_RETURN PartialResult addFusedBranchCompare(OpType, ControlType&, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    WARN_UNUSED_RETURN PartialResult addFusedBranchCompare(OpType, ControlType&, ExpressionType, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    WARN_UNUSED_RETURN PartialResult addFusedIfCompare(OpType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    WARN_UNUSED_RETURN PartialResult addFusedIfCompare(OpType, ExpressionType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
 
     // Calls
-    PartialResult WARN_UNUSED_RETURN addCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
-    PartialResult WARN_UNUSED_RETURN addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
-    PartialResult WARN_UNUSED_RETURN addCallRef(unsigned, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
-    PartialResult WARN_UNUSED_RETURN addUnreachable();
-    PartialResult WARN_UNUSED_RETURN addCrash();
+    WARN_UNUSED_RETURN PartialResult addCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    WARN_UNUSED_RETURN PartialResult addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    WARN_UNUSED_RETURN PartialResult addCallRef(unsigned, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    WARN_UNUSED_RETURN PartialResult addUnreachable();
+    WARN_UNUSED_RETURN PartialResult addCrash();
 
     using ValueResults = Vector<Value*, 16>;
     void fillCallResults(Value* callResult, const TypeDefinition& signature, ValueResults&);
-    PartialResult WARN_UNUSED_RETURN emitDirectCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
-    PartialResult WARN_UNUSED_RETURN emitIndirectCall(Value* calleeInstance, Value* calleeCode, Value* boxedCalleeCallee, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
+    WARN_UNUSED_RETURN PartialResult emitDirectCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
+    WARN_UNUSED_RETURN PartialResult emitIndirectCall(Value* calleeInstance, Value* calleeCode, Value* boxedCalleeCallee, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
 
     Vector<ConstrainedValue> createCallConstrainedArgs(BasicBlock*, const CallInformation& wasmCalleeInfo, const ArgumentList&);
     auto createCallPatchpoint(BasicBlock*, const TypeDefinition&, const CallInformation&, const ArgumentList& tmpArgs) -> CallPatchpointData;
     auto createTailCallPatchpoint(BasicBlock*, const TypeDefinition&, const CallInformation& wasmCallerInfoAsCallee, const CallInformation& wasmCalleeInfoAsCallee, const ArgumentList& tmpArgSourceLocations, Vector<B3::ConstrainedValue> patchArgs) -> CallPatchpointData;
 
     InliningNode* canInline(FunctionSpaceIndex functionIndexSpace, unsigned callProfileIndex) const;
-    PartialResult WARN_UNUSED_RETURN emitInlineDirectCall(InliningNode*, FunctionCodeIndex calleeIndex, const TypeDefinition&, const ArgumentList& args, ValueResults&);
+    WARN_UNUSED_RETURN PartialResult emitInlineDirectCall(InliningNode*, FunctionCodeIndex calleeIndex, const TypeDefinition&, const ArgumentList& args, ValueResults&);
 
     void dump(const ControlStack&, const Stack* expressionStack);
     void setParser(FunctionParser<OMGIRGenerator>* parser) { m_parser = parser; };
@@ -791,8 +851,7 @@ public:
     void didFinishParsingLocals() { }
     void didPopValueFromStack(ExpressionType expr, ASCIILiteral message)
     {
-        --m_stackSize;
-        TRACE_VALUE(Wasm::Types::Void, get(expr), "pop at height: ", m_stackSize.value() + 1, " site: [", message, "], var ", *expr);
+        TRACE_VALUE(Wasm::Types::Void, get(expr), "pop at height: ", m_parser->expressionStack().size() + 1, " site: [", message, "], ", expr);
     }
     const Ref<TypeDefinition> getTypeDefinition(uint32_t typeIndex) { return m_info.typeSignatures[typeIndex]; }
     const ArrayType* getArrayTypeDefinition(uint32_t);
@@ -810,22 +869,22 @@ public:
     void addStackMap(unsigned callSiteIndex, StackMap&& stackmap)
     {
         if (m_inlineParent) {
-            m_inlineRoot->addStackMap(callSiteIndex, WTFMove(stackmap));
+            m_inlineRoot->addStackMap(callSiteIndex, WTF::move(stackmap));
             return;
         }
-        m_stackmaps.add(CallSiteIndex(callSiteIndex), WTFMove(stackmap));
+        m_stackmaps.add(CallSiteIndex(callSiteIndex), WTF::move(stackmap));
     }
 
     StackMaps&& takeStackmaps()
     {
         RELEASE_ASSERT(m_inlineRoot == this);
-        return WTFMove(m_stackmaps);
+        return WTF::move(m_stackmaps);
     }
 
     Vector<UnlinkedHandlerInfo>&& takeExceptionHandlers()
     {
         RELEASE_ASSERT(m_inlineRoot == this);
-        return WTFMove(m_exceptionHandlers);
+        return WTF::move(m_exceptionHandlers);
     }
 
 private:
@@ -881,27 +940,28 @@ private:
     void emitArraySetUnchecked(uint32_t, Value*, Value*, Value*);
     bool emitArraySetUncheckedWithoutWriteBarrier(uint32_t, Value*, Value*, Value*);
     // Returns true if a writeBarrier/mutatorFence is needed.
-    bool WARN_UNUSED_RETURN emitStructSet(bool canTrap, Value*, uint32_t, const StructType&, Value*);
-    Value* WARN_UNUSED_RETURN allocateWasmGCArray(uint32_t typeIndex, Value* initValue, Value* size);
+    WARN_UNUSED_RETURN bool emitStructSet(bool canTrap, Value*, uint32_t, const StructType&, Value*);
+    WARN_UNUSED_RETURN Value* allocateWasmGCArray(uint32_t typeIndex, Value* initValue, Value* size);
     using ArraySegmentOperation = EncodedJSValue SYSV_ABI (&)(JSC::JSWebAssemblyInstance*, uint32_t, uint32_t, uint32_t, uint32_t);
-    ExpressionType WARN_UNUSED_RETURN pushArrayNewFromSegment(ArraySegmentOperation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType);
+    WARN_UNUSED_RETURN ExpressionType pushArrayNewFromSegment(ArraySegmentOperation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType);
     void emitRefTestOrCast(CastKind, TypedExpression, bool, int32_t, bool, ExpressionType&);
     template <typename Generator>
     void emitCheckOrBranchForCast(CastKind, Value*, const Generator&, BasicBlock*);
     Value* emitLoadRTTFromObject(Value*);
 
-    void unify(Value* phi, const ExpressionType source);
+    void unify(Value* phi, const ExpressionType& source);
     void unifyValuesWithBlock(const Stack& resultStack, const ControlData& block);
 
     void emitChecksForModOrDiv(B3::Opcode, Value* left, Value* right);
 
-    int32_t WARN_UNUSED_RETURN fixupPointerPlusOffset(Value*&, uint32_t);
-    Value* WARN_UNUSED_RETURN fixupPointerPlusOffsetForAtomicOps(ExtAtomicOpType, Value*, uint32_t);
+    WARN_UNUSED_RETURN int32_t fixupPointerPlusOffset(Value*&, uint32_t);
+    WARN_UNUSED_RETURN Value* fixupPointerPlusOffsetForAtomicOps(ExtAtomicOpType, Value*, uint32_t);
 
     void restoreWasmContextInstance(BasicBlock*, Value*);
     void restoreWebAssemblyGlobalState(const MemoryInformation&, Value* instance, BasicBlock*);
     void reloadMemoryRegistersFromInstance(const MemoryInformation&, Value* instance, BasicBlock*);
 
+    void materializeExpressionStackIntoVariables();
     Value* loadFromScratchBuffer(unsigned& indexInBuffer, Value* pointer, B3::Type);
     void connectValuesAtEntrypoint(unsigned& indexInBuffer, Value* pointer, Stack& expressionStack);
     Value* emitCatchImpl(CatchKind, ControlType&, unsigned exceptionIndex = 0);
@@ -911,46 +971,17 @@ private:
 
     Origin origin();
 
-    ExpressionType getPushVariable(B3::Type type)
-    {
-        ++m_stackSize;
-        if (m_stackSize > m_maxStackSize) {
-            m_maxStackSize = m_stackSize;
-            Variable* var = m_proc.addVariable(type);
-            if constexpr (WasmOMGIRGeneratorInternal::traceStackValues)
-                set(var, constant(type, 0xBADBEEFEF));
-            m_stack.append(var);
-            return var;
-        }
-
-        if constexpr (WasmOMGIRGeneratorInternal::traceStackValues) {
-            // When we push, everything else *should* be dead
-            for (unsigned i = m_stackSize - 1; i < m_stack.size(); ++i)
-                set(m_stack[i], constant(m_stack[i]->type(), 0xBADBEEFEF));
-        }
-
-        Variable* var = m_stack[m_stackSize - 1];
-        if (var->type() == type)
-            return var;
-
-        var = m_proc.addVariable(type);
-        m_stack[m_stackSize - 1] = var;
-        return var;
-    }
-
     ExpressionType push(Value* value)
     {
-        Variable* var = getPushVariable(value->type());
-        set(var, value);
-        if constexpr (!WasmOMGIRGeneratorInternal::traceExecution)
-            return var;
-        String site;
+        if constexpr (WasmOMGIRGeneratorInternal::traceExecution) {
+            String site;
 #if ASSERT_ENABLED
-        if constexpr (WasmOMGIRGeneratorInternal::traceExecutionIncludesConstructionSite)
-            site = Value::generateCompilerConstructionSite();
+            if constexpr (WasmOMGIRGeneratorInternal::traceExecutionIncludesConstructionSite)
+                site = Value::generateCompilerConstructionSite();
 #endif
-        TRACE_VALUE(Wasm::Types::Void, get(var), "push to stack height ", m_stackSize.value(), " site: [", site, "] var ", *var);
-        return var;
+            TRACE_VALUE(Wasm::Types::Void, value, "push to stack height ", m_parser->expressionStack().size(), " site: [", site, "] ", value);
+        }
+        return value;
     }
 
     Value* get(BasicBlock* block, Variable* variable)
@@ -963,6 +994,18 @@ private:
         return get(m_currentBlock, variable);
     }
 
+    Value* get(BasicBlock* block, const OMGExpression& expr)
+    {
+        if (expr.isMaterialized())
+            return get(block, expr.b3Variable());
+        return expr.b3Value();
+    }
+
+    Value* get(const OMGExpression& expr)
+    {
+        return get(m_currentBlock, expr);
+    }
+
     Value* set(BasicBlock* block, Variable* dst, Value* src)
     {
         return block->appendNew<VariableValue>(m_proc, B3::Set, origin(), dst, src);
@@ -971,11 +1014,6 @@ private:
     Value* set(Variable* dst, Value* src)
     {
         return set(m_currentBlock, dst, src);
-    }
-
-    Value* set(Variable* dst, Variable* src)
-    {
-        return set(dst, get(src));
     }
 
     bool useSignalingMemory() const
@@ -1019,10 +1057,10 @@ private:
     OMGIRGenerator* m_inlineRoot { nullptr };
     OMGIRGenerator* m_inlineParent { nullptr };
     Vector<Value*> m_inlinedArgs;
-    Vector<Variable*> m_inlinedResults;
+    Vector<Value*> m_inlinedResultPhis;
 
     Vector<Variable*> m_locals;
-    Vector<Variable*> m_stack;
+
     Vector<UnlinkedWasmToWasmCall>& m_unlinkedWasmToWasmCalls; // List each call site and the function index whose address it should be patched with.
     FixedBitVector& m_directCallees; // Note this includes call targets from functions we inline.
     unsigned* m_osrEntryScratchBufferSize;
@@ -1062,8 +1100,6 @@ private:
 
     Checked<unsigned> m_tryCatchDepth { 0 };
     Checked<unsigned> m_callSiteIndex { 0 };
-    Checked<unsigned> m_stackSize { 0 };
-    Checked<unsigned> m_maxStackSize { 0 };
     StackMaps m_stackmaps;
     Vector<UnlinkedHandlerInfo> m_exceptionHandlers;
 
@@ -1154,7 +1190,7 @@ OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext
     , m_returnContinuation(returnContinuation)
     , m_inlineRoot(&rootCaller)
     , m_inlineParent(&parentCaller)
-    , m_inlinedArgs(WTFMove(args))
+    , m_inlinedArgs(WTF::move(args))
     , m_unlinkedWasmToWasmCalls(rootCaller.m_unlinkedWasmToWasmCalls)
     , m_directCallees(rootCaller.m_directCallees)
     , m_osrEntryScratchBufferSize(nullptr)
@@ -1260,7 +1296,7 @@ OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext
 
         if (WasmOMGIRGeneratorInternal::verboseTailCalls) {
             int fi = this->m_functionIndex;
-            jit.probeDebugSIMD([fi] (Probe::Context& context) {
+            jit.probeDebug([fi] (Probe::Context& context) {
                 dataLogLn(" General Before Prologue, fucntion ", fi, " FP: ", RawHex(context.gpr<uint64_t>(GPRInfo::callFrameRegister)), " SP: ", RawHex(context.gpr<uint64_t>(MacroAssembler::stackPointerRegister)));
             });
         }
@@ -1418,18 +1454,12 @@ void OMGIRGenerator::insertEntrySwitch()
     Ref<B3::Air::PrologueGenerator> catchPrologueGenerator = createSharedTask<B3::Air::PrologueGeneratorFunction>([] (CCallHelpers& jit, B3::Air::Code& code) {
         AllowMacroScratchRegisterUsage allowScratch(jit);
         jit.addPtr(CCallHelpers::TrustedImm32(-code.frameSize()), GPRInfo::callFrameRegister, CCallHelpers::stackPointerRegister);
-        jit.probe(tagCFunction<JITProbePtrTag>(code.usesSIMD() ? buildEntryBufferForCatchSIMD : buildEntryBufferForCatchNoSIMD), nullptr, code.usesSIMD() ? SavedFPWidth::SaveVectors : SavedFPWidth::DontSaveVectors);
-    });
-
-    Ref<B3::Air::PrologueGenerator> catchSIMDPrologueGenerator = createSharedTask<B3::Air::PrologueGeneratorFunction>([] (CCallHelpers& jit, B3::Air::Code& code) {
-        AllowMacroScratchRegisterUsage allowScratch(jit);
-        jit.addPtr(CCallHelpers::TrustedImm32(-code.frameSize()), GPRInfo::callFrameRegister, CCallHelpers::stackPointerRegister);
-        jit.probe(tagCFunction<JITProbePtrTag>(buildEntryBufferForCatchSIMD), nullptr, SavedFPWidth::SaveVectors);
+        jit.probe(tagCFunction<JITProbePtrTag>(buildEntryBufferForCatch), nullptr);
     });
 
     m_proc.code().setPrologueForEntrypoint(0, Ref<B3::Air::PrologueGenerator>(*m_prologueGenerator));
     for (unsigned i = 1; i < m_rootBlocks.size(); ++i)
-        m_proc.code().setPrologueForEntrypoint(i, m_rootBlocks[i].usesSIMD ? catchSIMDPrologueGenerator.copyRef() : catchPrologueGenerator.copyRef());
+        m_proc.code().setPrologueForEntrypoint(i, catchPrologueGenerator.copyRef());
 
     m_currentBlock = m_topLevelBlock;
     m_currentBlock->appendNew<Value>(m_proc, EntrySwitch, Origin());
@@ -1454,7 +1484,7 @@ B3::Type OMGIRGenerator::toB3ResultType(const TypeDefinition* returnType)
         Vector<B3::Type> result;
         for (unsigned i = 0; i < returnType->as<FunctionSignature>()->returnCount(); ++i)
             result.append(toB3Type(returnType->as<FunctionSignature>()->returnType(i)));
-        return m_proc.addTuple(WTFMove(result));
+        return m_proc.addTuple(WTF::move(result));
     });
     return result.iterator->value;
 }
@@ -1524,7 +1554,7 @@ auto OMGIRGenerator::addArguments(const TypeDefinition& signature) -> PartialRes
         patch->effects.writes = HeapRange::top();
         m_currentBlock->append(patch);
         SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE patch->setGenerator([functionIndex = m_functionIndex, functionSignature, wasmCallInfo](CCallHelpers& jit, const B3::StackmapGenerationParams&) {
-            SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE jit.probeDebugSIMD([functionIndex, functionSignature, wasmCallInfo](Probe::Context& context) {
+            SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE jit.probeDebug([functionIndex, functionSignature, wasmCallInfo](Probe::Context& context) {
                 dataLogLn(" General Add arguments, fucntion ", functionIndex, " FP: ", RawHex(context.gpr<uint64_t>(GPRInfo::callFrameRegister)), " SP: ", RawHex(context.gpr<uint64_t>(MacroAssembler::stackPointerRegister)));
 
                 auto fpl = context.gpr<uint64_t*>(GPRInfo::callFrameRegister);
@@ -1539,7 +1569,7 @@ auto OMGIRGenerator::addArguments(const TypeDefinition& signature) -> PartialRes
                     if (src.isGPR())
                         dataLog(context.gpr(src.jsr().payloadGPR()), " / ", (int) context.gpr(src.jsr().payloadGPR()));
                     else if (src.isFPR() && width <= Width::Width64)
-                        dataLog(context.fpr(src.fpr(), SavedFPWidth::SaveVectors));
+                        dataLog(context.fpr(src.fpr()));
                     else if (src.isFPR())
                         dataLog(context.vector(src.fpr()));
                     else
@@ -2010,7 +2040,7 @@ void OMGIRGenerator::traceValue(Type type, Value* value, Args&&... info)
     StringPrintStream sb;
     if (m_parser->unreachableBlocks())
         sb.print("(unreachable) ");
-    sb.print("TRACE OMG EXECUTION fn[", m_functionIndex, "] stack height ", m_stackSize.value(), " type ", type, " ");
+    sb.print("TRACE OMG EXECUTION fn[", m_functionIndex, "] stack height ", m_parser->expressionStack().size(), " type ", type, " ");
     sb.print(info...);
     dataLogLn("static: ", sb.toString());
     patch->setGenerator([infoString = sb.toString(), type] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
@@ -2052,7 +2082,7 @@ void OMGIRGenerator::traceCF(Args&&... info)
     patch->effects.reads = HeapRange::top();
     patch->effects.writes = HeapRange::top();
     StringPrintStream sb;
-    sb.print("TRACE OMG EXECUTION fn[", m_functionIndex, " <inlined into ", m_inlineParent ? m_inlineParent->m_functionIndex : -1, ">] stack height ", m_stackSize.value(), " CF ");
+    sb.print("TRACE OMG EXECUTION fn[", m_functionIndex, " <inlined into ", m_inlineParent ? m_inlineParent->m_functionIndex : -1, ">] stack height ", m_parser->expressionStack().size(), " CF ");
     sb.print(info...);
     dataLogLn("static: ", sb.toString());
     patch->setGenerator([infoString = sb.toString()] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
@@ -2067,33 +2097,13 @@ void OMGIRGenerator::traceCF(Args&&... info)
     if (!WasmOMGIRGeneratorInternal::traceStackValues)
         return;
     int i = 0;
-    for (auto* val : m_stack) {
-        ++i;
-        traceValue(Wasm::Types::Void, get(val), " wasm stack[", i, "] = ", *val);
-    }
-
-    i = 0;
     for (auto val : m_parser->expressionStack()) {
         ++i;
-        traceValue(Wasm::Types::Void, get(val.value()), " parser stack[", i, "] = ", *val.value());
+        traceValue(Wasm::Types::Void, get(val.value()), " parser stack[", i, "] = ", val.value());
     }
 
     if (m_parser->unreachableBlocks())
         return;
-    if (m_parser->expressionStack().isEmpty() && m_stackSize) {
-        dataLogLn("%%%%%%%%%%%%%%%%%%%");
-        return;
-    }
-    if (!m_parser->expressionStack().isEmpty() && !m_stackSize) {
-        dataLogLn("$$$$$$$$$$$$$$$$$$$");
-        return;
-    }
-    for (i = 0; i < (int) m_parser->expressionStack().size(); ++i) {
-        if (m_parser->expressionStack()[m_parser->expressionStack().size() - i - 1] != m_stack[m_stackSize.value() - i - 1]) {
-            dataLogLn("************************");
-            return;
-        }
-    }
 }
 
 auto OMGIRGenerator::setLocal(uint32_t index, ExpressionType value) -> PartialResult
@@ -2169,7 +2179,7 @@ auto OMGIRGenerator::getGlobal(uint32_t index, ExpressionType& result) -> Partia
 auto OMGIRGenerator::setGlobal(uint32_t index, ExpressionType value) -> PartialResult
 {
     const Wasm::GlobalInformation& global = m_info.globals[index];
-    ASSERT(toB3Type(global.type) == value->type());
+    ASSERT(toB3Type(global.type) == value.type());
     TRACE_VALUE(global.type, get(value), "set_global ", index);
 
     switch (global.bindingMode) {
@@ -2701,7 +2711,7 @@ inline Value* OMGIRGenerator::emitAtomicLoadOp(ExtAtomicOpType op, Type valueTyp
 
 auto OMGIRGenerator::atomicLoad(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType& result, uint32_t offset) -> PartialResult
 {
-    ASSERT(pointer->type() == Int32);
+    ASSERT(pointer.type() == Int32);
 
     if (sumOverflows<uint32_t>(offset, sizeOfAtomicOpMemoryAccess(op))) [[unlikely]] {
         // FIXME: Even though this is provably out of bounds, it's not a validation error, so we have to handle it
@@ -2741,7 +2751,7 @@ inline void OMGIRGenerator::emitAtomicStoreOp(ExtAtomicOpType op, Type valueType
 
 auto OMGIRGenerator::atomicStore(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType value, uint32_t offset) -> PartialResult
 {
-    ASSERT(pointer->type() == Int32);
+    ASSERT(pointer.type() == Int32);
 
     if (sumOverflows<uint32_t>(offset, sizeOfAtomicOpMemoryAccess(op))) [[unlikely]] {
         // FIXME: Even though this is provably out of bounds, it's not a validation error, so we have to handle it
@@ -2832,7 +2842,7 @@ inline Value* OMGIRGenerator::emitAtomicBinaryRMWOp(ExtAtomicOpType op, Type val
 
 auto OMGIRGenerator::atomicBinaryRMW(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset) -> PartialResult
 {
-    ASSERT(pointer->type() == Int32);
+    ASSERT(pointer.type() == Int32);
 
     if (sumOverflows<uint32_t>(offset, sizeOfAtomicOpMemoryAccess(op))) [[unlikely]] {
         // FIXME: Even though this is provably out of bounds, it's not a validation error, so we have to handle it
@@ -2925,7 +2935,7 @@ Value* OMGIRGenerator::emitAtomicCompareExchange(ExtAtomicOpType op, Type valueT
     return sanitizeAtomicResult(op, valueType, atomic);
 }
 
-bool WARN_UNUSED_RETURN OMGIRGenerator::emitStructSet(bool canTrap, Value* structValue, uint32_t fieldIndex, const StructType& structType, Value* argument)
+WARN_UNUSED_RETURN bool OMGIRGenerator::emitStructSet(bool canTrap, Value* structValue, uint32_t fieldIndex, const StructType& structType, Value* argument)
 {
     structValue = pointerOfWasmRef(structValue);
     auto fieldType = structType.field(fieldIndex).type;
@@ -2982,7 +2992,7 @@ bool WARN_UNUSED_RETURN OMGIRGenerator::emitStructSet(bool canTrap, Value* struc
 
 auto OMGIRGenerator::atomicCompareExchange(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset) -> PartialResult
 {
-    ASSERT(pointer->type() == Int32);
+    ASSERT(pointer.type() == Int32);
 
     if (sumOverflows<uint32_t>(offset, sizeOfAtomicOpMemoryAccess(op))) [[unlikely]] {
         // FIXME: Even though this is provably out of bounds, it's not a validation error, so we have to handle it
@@ -3223,7 +3233,7 @@ auto OMGIRGenerator::truncSaturated(Ext1OpType op, ExpressionType argVar, Expres
 
 auto OMGIRGenerator::addRefI31(ExpressionType value, ExpressionType& result) -> PartialResult
 {
-    ASSERT(value->type().kind() == Int32);
+    ASSERT(value.type() == Int32);
     Value* shiftLeft = m_currentBlock->appendNew<Value>(m_proc, B3::Shl, origin(), get(value), constant(Int32, 0x1));
     Value* shiftRight = m_currentBlock->appendNew<Value>(m_proc, B3::SShr, origin(), shiftLeft, constant(Int32, 0x1));
     Value* extended = m_currentBlock->appendNew<Value>(m_proc, B3::ZExt32, origin(), shiftRight);
@@ -3365,7 +3375,7 @@ auto OMGIRGenerator::addArrayNew(uint32_t typeIndex, ExpressionType size, Expres
 #if ASSERT_ENABLED
     StorageType elementType;
     getArrayElementType(typeIndex, elementType);
-    ASSERT(toB3Type(elementType.unpacked()) == value->type());
+    ASSERT(toB3Type(elementType.unpacked()) == value.type());
 #endif
 
     Value* initValue = get(value);
@@ -3375,7 +3385,7 @@ auto OMGIRGenerator::addArrayNew(uint32_t typeIndex, ExpressionType size, Expres
     return { };
 }
 
-Variable* OMGIRGenerator::pushArrayNewFromSegment(ArraySegmentOperation operation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType exceptionType)
+auto OMGIRGenerator::pushArrayNewFromSegment(ArraySegmentOperation operation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType exceptionType) -> ExpressionType
 {
     Value* resultValue = callWasmOperation(m_currentBlock, toB3Type(Types::Arrayref), operation,
         instanceValue(), constant(Int32, typeIndex),
@@ -3712,10 +3722,10 @@ auto OMGIRGenerator::addArrayFill(uint32_t typeIndex, TypedExpression arrayref, 
     StorageType elementType;
     getArrayElementType(typeIndex, elementType);
 
-    auto arrayValue = get(arrayref);
-    auto offsetValue = get(offset);
-    auto valueValue = get(value);
-    auto sizeValue = get(size);
+    Value* arrayValue = get(arrayref);
+    Value* offsetValue = get(offset);
+    Value* valueValue = get(value);
+    Value* sizeValue = get(size);
 
     if (arrayref.type().isNullable())
         emitNullCheck(arrayValue, ExceptionType::NullArrayFill);
@@ -3723,7 +3733,7 @@ auto OMGIRGenerator::addArrayFill(uint32_t typeIndex, TypedExpression arrayref, 
     Value* resultValue;
     if (!elementType.unpacked().isV128()) {
         Value* valueGPR = valueValue;
-        if (value->type().isFloat())
+        if (valueValue->type().isFloat())
             valueGPR = m_currentBlock->appendNew<Value>(m_proc, BitwiseCast, origin(), valueGPR);
         resultValue = callWasmOperation(m_currentBlock, toB3Type(Types::I32), operationWasmArrayFill,
             instanceValue(), arrayValue, offsetValue, valueGPR, sizeValue);
@@ -4253,28 +4263,14 @@ void OMGIRGenerator::emitCheckOrBranchForCast(CastKind kind, Value* condition, c
 
 Value* OMGIRGenerator::decodeNonNullStructure(Value* structureID)
 {
-#if ENABLE(STRUCTURE_ID_WITH_SHIFT)
-    return m_currentBlock->appendNew<Value>(m_proc, B3::Shl, pointerType(), origin(),
-        m_currentBlock->appendNew<Value>(m_proc, ZExt32, origin(), structureID),
-        constant(pointerType(), StructureID::encodeShiftAmount));
-#else
-    if constexpr (structureHeapAddressSize < 4 * GB) {
-        static_assert(static_cast<uint32_t>(StructureID::structureIDMask) == StructureID::structureIDMask);
-        structureID = m_currentBlock->appendNew<Value>(m_proc, B3::BitAnd, origin(), structureID, constant(Int32, static_cast<uint32_t>(StructureID::structureIDMask)));
-    }
     return m_currentBlock->appendNew<Value>(m_proc, B3::BitOr, origin(),
         m_currentBlock->appendNew<Value>(m_proc, ZExt32, origin(), structureID),
-        constant(pointerType(), startOfStructureHeap()));
-#endif
+        constant(pointerType(), structureIDBase()));
 }
 
 Value* OMGIRGenerator::encodeStructureID(Value* structure)
 {
-#if ENABLE(STRUCTURE_ID_WITH_SHIFT)
-    return m_currentBlock->appendNew<B3::Value>(m_proc, B3::Trunc, origin(), m_currentBlock->appendNew<Value>(m_proc, ZShr, origin(), structure, constant(Int32, StructureID::encodeShiftAmount)));
-#else
-    return m_currentBlock->appendNew<B3::Value>(m_proc, B3::Trunc, origin(), m_currentBlock->appendNew<Value>(m_proc, B3::BitAnd, origin(), structure, constant(pointerType(), StructureID::structureIDMask)));
-#endif
+    return m_currentBlock->appendNew<B3::Value>(m_proc, B3::Trunc, origin(), structure);
 }
 
 Value* OMGIRGenerator::allocatorForWasmGCHeapCellSize(Value* sizeInBytes, BasicBlock* slowPath)
@@ -4811,8 +4807,7 @@ auto OMGIRGenerator::addSIMDLoadPad(SIMDLaneOperation op, ExpressionType pointer
 
 Value* OMGIRGenerator::loadFromScratchBuffer(unsigned& indexInBuffer, Value* pointer, B3::Type type)
 {
-    unsigned valueSize = m_proc.usesSIMD() ? 2 : 1;
-    int32_t offset = safeCast<int32_t>(valueSize * sizeof(uint64_t) * (indexInBuffer++));
+    int32_t offset = safeCast<int32_t>(sizeof(Wasm::Context::ScratchBufferEntry) * (indexInBuffer++));
     RELEASE_ASSERT(type.isNumeric());
     return m_currentBlock->appendNew<MemoryValue>(m_proc, Load, type, origin(), pointer, offset);
 }
@@ -4820,10 +4815,15 @@ Value* OMGIRGenerator::loadFromScratchBuffer(unsigned& indexInBuffer, Value* poi
 void OMGIRGenerator::connectValuesAtEntrypoint(unsigned& indexInBuffer, Value* pointer, Stack& expressionStack)
 {
     TRACE_CF("Connect values at entrypoint");
-    for (unsigned i = 0; i < expressionStack.size(); i++) {
-        TypedExpression value = expressionStack[i];
-        Value* load = loadFromScratchBuffer(indexInBuffer, pointer, value->type());
-        m_currentBlock->appendNew<VariableValue>(m_proc, Set, origin(), value.value(), load);
+    for (TypedExpression& expr : expressionStack) {
+        if (!expr.value().isMaterialized()) {
+            RELEASE_ASSERT(expr.value().b3Value()->isConstant());
+            indexInBuffer++;
+            continue;
+        }
+        Variable* var = expr.value().b3Variable();
+        Value* load = loadFromScratchBuffer(indexInBuffer, pointer, var->type());
+        set(var, load);
     }
 };
 
@@ -4833,7 +4833,7 @@ auto OMGIRGenerator::addLoop(BlockSignature signature, Stack& enclosingStack, Co
     BasicBlock* body = m_proc.addBlock();
     BasicBlock* continuation = m_proc.addBlock();
 
-    block = ControlData(m_proc, origin(), signature, BlockType::Loop, m_stackSize, continuation, body);
+    block = ControlData(m_proc, origin(), signature, BlockType::Loop, continuation, body);
 
     unsigned offset = enclosingStack.size() - signature.m_signature->argumentCount();
     for (unsigned i = 0; i < signature.m_signature->argumentCount(); ++i) {
@@ -4841,8 +4841,7 @@ auto OMGIRGenerator::addLoop(BlockSignature signature, Stack& enclosingStack, Co
         Value* phi = block.phis[i];
         m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), get(value), phi);
         body->append(phi);
-        set(body, value, phi);
-        newStack.append(value);
+        newStack.constructAndAppend(signature.m_signature->argumentType(i), phi);
     }
     enclosingStack.shrink(offset);
 
@@ -4850,6 +4849,9 @@ auto OMGIRGenerator::addLoop(BlockSignature signature, Stack& enclosingStack, Co
     if (loopIndex == m_loopIndexForOSREntry) {
         // This must be kept in sync with BBQJIT::makeStackMap.
         dataLogLnIf(WasmOMGIRGeneratorInternal::verbose, "Setting up for OSR entry");
+
+        ASSERT(!m_inlineParent);
+        materializeExpressionStackIntoVariables();
 
         m_currentBlock = m_rootBlocks[0].block;
         Value* pointer = m_rootBlocks[0].block->appendNew<ArgumentRegValue>(m_proc, Origin(), GPRInfo::argumentGPR0);
@@ -4859,8 +4861,8 @@ auto OMGIRGenerator::addLoop(BlockSignature signature, Stack& enclosingStack, Co
         for (auto& local : m_locals)
             m_currentBlock->appendNew<VariableValue>(m_proc, Set, Origin(), local, loadFromScratchBuffer(indexInBuffer, pointer, local->type()));
 
-        for (unsigned controlIndex = 0; controlIndex < m_parser->controlStack().size(); ++controlIndex) {
-            auto& data = m_parser->controlStack()[controlIndex].controlData;
+        for (auto& control : m_parser->controlStack()) {
+            auto& data = control.controlData;
             if (ControlType::isAnyCatch(data)) {
                 auto* load = loadFromScratchBuffer(indexInBuffer, pointer, pointerType());
                 m_currentBlock->appendNew<VariableValue>(m_proc, Set, origin(), data.exception(), load);
@@ -4868,21 +4870,19 @@ auto OMGIRGenerator::addLoop(BlockSignature signature, Stack& enclosingStack, Co
                 ++indexInBuffer;
         }
 
-        for (unsigned controlIndex = 0; controlIndex < m_parser->controlStack().size(); ++controlIndex) {
-            auto& expressionStack = m_parser->controlStack()[controlIndex].enclosedExpressionStack;
-            ASSERT(&m_parser->controlStack()[controlIndex].controlData != &block);
-            connectValuesAtEntrypoint(indexInBuffer, pointer, expressionStack);
+        for (auto& control : m_parser->controlStack()) {
+            ASSERT(&control.controlData != &block);
+            connectValuesAtEntrypoint(indexInBuffer, pointer, control.enclosedExpressionStack);
         }
         connectValuesAtEntrypoint(indexInBuffer, pointer, enclosingStack);
         // The loop's stack can be read by the loop body, so the restored values should join using the loop-back phi nodes.
         for (unsigned i = 0; i < newStack.size(); i++) {
-            auto* load = loadFromScratchBuffer(indexInBuffer, pointer, newStack[i]->type());
+            auto* load = loadFromScratchBuffer(indexInBuffer, pointer, newStack[i].value().type());
             m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), load, block.phis[i]);
         }
 
         ASSERT(!m_proc.usesSIMD() || m_compilationMode == CompilationMode::OMGForOSREntryMode);
-        unsigned valueSize = m_proc.usesSIMD() ? 2 : 1;
-        *m_osrEntryScratchBufferSize = valueSize * indexInBuffer;
+        *m_osrEntryScratchBufferSize = indexInBuffer;
         m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), body);
         body->addPredecessor(m_currentBlock);
     }
@@ -4894,7 +4894,7 @@ auto OMGIRGenerator::addLoop(BlockSignature signature, Stack& enclosingStack, Co
 OMGIRGenerator::ControlData OMGIRGenerator::addTopLevel(BlockSignature signature)
 {
     TRACE_CF("TopLevel: ", *signature.m_signature);
-    return ControlData(m_proc, Origin(), signature, BlockType::TopLevel, m_stackSize, m_proc.addBlock());
+    return ControlData(m_proc, Origin(), signature, BlockType::TopLevel, m_proc.addBlock());
 }
 
 auto OMGIRGenerator::addBlock(BlockSignature signature, Stack& enclosingStack, ControlType& newBlock, Stack& newStack) -> PartialResult
@@ -4903,7 +4903,7 @@ auto OMGIRGenerator::addBlock(BlockSignature signature, Stack& enclosingStack, C
     BasicBlock* continuation = m_proc.addBlock();
 
     splitStack(signature, enclosingStack, newStack);
-    newBlock = ControlData(m_proc, origin(), signature, BlockType::Block, m_stackSize, continuation);
+    newBlock = ControlData(m_proc, origin(), signature, BlockType::Block, continuation);
     return { };
 }
 
@@ -4937,7 +4937,7 @@ auto OMGIRGenerator::addIf(ExpressionType condition, BlockSignature signature, S
     m_currentBlock = taken;
     TRACE_CF("IF");
     splitStack(signature, enclosingStack, newStack);
-    result = ControlData(m_proc, origin(), signature, BlockType::If, m_stackSize, continuation, notTaken);
+    result = ControlData(m_proc, origin(), signature, BlockType::If, continuation, notTaken);
     return { };
 }
 
@@ -4951,7 +4951,6 @@ auto OMGIRGenerator::addElse(ControlData& data, const Stack& currentStack) -> Pa
 auto OMGIRGenerator::addElseToUnreachable(ControlData& data) -> PartialResult
 {
     ASSERT(data.blockType() == BlockType::If);
-    m_stackSize = data.stackSize() + data.m_signature.m_signature->argumentCount();
     m_currentBlock = data.special;
     data.convertIfToBlock();
     TRACE_CF("ELSE");
@@ -4965,7 +4964,8 @@ auto OMGIRGenerator::addTry(BlockSignature signature, Stack& enclosingStack, Con
 
     BasicBlock* continuation = m_proc.addBlock();
     splitStack(signature, enclosingStack, newStack);
-    result = ControlData(m_proc, origin(), signature, BlockType::Try, m_stackSize, continuation, advanceCallSiteIndex(), m_tryCatchDepth);
+    materializeExpressionStackIntoVariables();
+    result = ControlData(m_proc, origin(), signature, BlockType::Try, continuation, advanceCallSiteIndex(), m_tryCatchDepth);
     return { };
 }
 
@@ -4987,8 +4987,9 @@ auto OMGIRGenerator::addTryTable(BlockSignature signature, Stack& enclosingStack
 
     BasicBlock* continuation = m_proc.addBlock();
     splitStack(signature, enclosingStack, newStack);
-    result = ControlData(m_proc, origin(), signature, BlockType::TryTable, m_stackSize, continuation, advanceCallSiteIndex(), m_tryCatchDepth);
-    result.setTryTableTargets(WTFMove(targetList));
+    materializeExpressionStackIntoVariables();
+    result = ControlData(m_proc, origin(), signature, BlockType::TryTable, continuation, advanceCallSiteIndex(), m_tryCatchDepth);
+    result.setTryTableTargets(WTF::move(targetList));
 
     return { };
 }
@@ -5001,7 +5002,9 @@ auto OMGIRGenerator::addCatch(unsigned exceptionIndex, const TypeDefinition& sig
     return addCatchToUnreachable(exceptionIndex, signature, data, results);
 }
 
-// Must be kept in sync with connectValuesForCatchEntrypoint.
+// Must be kept in sync with connectValuesForCatchEntrypoint. Creates a stackmap for the
+// wasm expression stack up to the inner most Try/TryTable, which is the point in
+// the stack that the corresponding catch entrypoint will need to restore.
 RefPtr<PatchpointExceptionHandle> OMGIRGenerator::preparePatchpointForExceptions(BasicBlock* block, PatchpointValue* patch)
 {
     bool mustSaveState = m_tryCatchDepth;
@@ -5015,35 +5018,125 @@ RefPtr<PatchpointExceptionHandle> OMGIRGenerator::preparePatchpointForExceptions
     Vector<Value*> liveValues;
     Origin origin = this->origin();
 
+    OMGIRGenerator* innerTryFrame = nullptr;
+    unsigned innerTryControlStackIndex = 0;
+
     Vector<OMGIRGenerator*> frames;
-    for (auto* currentFrame = this; currentFrame; currentFrame = currentFrame->m_inlineParent)
+    for (auto* currentFrame = this; currentFrame; currentFrame = currentFrame->m_inlineParent) {
+        if (!innerTryFrame) {
+            for (unsigned i = currentFrame->m_parser->controlStack().size(); i--; ) {
+                ControlData& data = currentFrame->m_parser->controlStack()[i].controlData;
+                if (ControlType::isTry(data) || ControlType::isTryTable(data)) {
+                    innerTryFrame = currentFrame;
+                    innerTryControlStackIndex = i;
+                    break;
+                }
+            }
+        }
         frames.append(currentFrame);
+    }
     frames.reverse();
+
+    if (!innerTryFrame)
+        return nullptr; // We're inside a Catch but not a Try (since m_tryCatchDepth != 0).
 
     for (auto* currentFrame : frames) {
         for (Variable* local : currentFrame->m_locals) {
             Value* result = block->appendNew<VariableValue>(m_proc, B3::Get, origin, local);
             liveValues.append(result);
         }
-        for (unsigned controlIndex = 0; controlIndex < currentFrame->m_parser->controlStack().size(); ++controlIndex) {
+        unsigned end = currentFrame == innerTryFrame ? innerTryControlStackIndex + 1 : currentFrame->m_parser->controlStack().size();
+        for (unsigned controlIndex = 0; controlIndex < end; ++controlIndex) {
             ControlData& data = currentFrame->m_parser->controlStack()[controlIndex].controlData;
             Stack& expressionStack = currentFrame->m_parser->controlStack()[controlIndex].enclosedExpressionStack;
-            for (Variable* value : expressionStack)
-                liveValues.append(get(block, value));
+            for (ExpressionType expr : expressionStack)
+                liveValues.append(get(block, expr));
             if (ControlType::isAnyCatch(data))
                 liveValues.append(get(block, data.exception()));
         }
-        // inlineParent frames only
-        if (currentFrame != this) {
-            for (Variable* value : currentFrame->m_parser->expressionStack())
-                liveValues.append(get(block, value));
-        }
+        if (currentFrame == innerTryFrame)
+            break;
+        ASSERT(currentFrame != this); // Should have encountered the inner most Try by now.
+        for (ExpressionType expr : currentFrame->m_parser->expressionStack())
+            liveValues.append(get(block, expr));
     }
 
     patch->effects.exitsSideways = true;
     patch->appendVectorWithRep(liveValues, ValueRep::LateColdAny);
 
     return PatchpointExceptionHandle::create(m_hasExceptionHandlers, callSiteIndex(), static_cast<unsigned>(liveValues.size()), firstStackmapParamOffset, firstStackmapChildOffset);
+}
+
+// Materializes the wasm expression stack into variables so that Catch block and loop OSR entrypoints have a place
+// to restore the wasm stack state. Note that catch labels always occur after Try/TryTable, so materalizing when
+// the Try block is encountered works even with loops.
+void OMGIRGenerator::materializeExpressionStackIntoVariables()
+{
+    class Materializer {
+    public:
+        Materializer(Procedure& proc)
+            : m_proc(proc)
+            , m_insertionSet(proc) { }
+
+        ~Materializer()
+        {
+            endBlock(nullptr);
+        }
+
+        void convertToVariable(OMGExpression& expr, Variable* variable)
+        {
+            if (expr.isMaterialized() || expr.b3Value()->isConstant())
+                return;
+            ASSERT(!expr.isMaterialized());
+            Value* value = expr.b3Value();
+            BasicBlock* block = value->owner;
+
+            if (block != m_block)
+                endBlock(block);
+
+            while (m_block->at(m_instIndex++) != value)
+                ASSERT(m_instIndex < m_block->size());
+
+            Value* setVariable = m_proc.add<VariableValue>(B3::Set, value->origin(), variable, value);
+            m_insertionSet.insertValue(m_instIndex, setVariable);
+
+            expr.setMaterialized(variable);
+        }
+
+        void endBlock(BasicBlock* nextBlock)
+        {
+            if (m_block)
+                m_insertionSet.execute(m_block);
+            m_block = nextBlock;
+            m_instIndex = 0;
+        }
+
+    private:
+        Procedure& m_proc;
+        InsertionSet m_insertionSet;
+        BasicBlock* m_block { nullptr };
+        unsigned m_instIndex { 0 };
+    };
+
+    Materializer materializer(m_proc);
+
+    Vector<OMGIRGenerator*> frames;
+    for (auto* currentFrame = this; currentFrame; currentFrame = currentFrame->m_inlineParent)
+        frames.append(currentFrame);
+    frames.reverse();
+
+    for (auto* currentFrame : frames) {
+        auto* parser = currentFrame->m_parser;
+
+        for (auto& control : parser->controlStack()) {
+            for (auto& expr : control.enclosedExpressionStack)
+                materializer.convertToVariable(expr.value(), m_proc.addVariable(expr.value().type()));
+        }
+        // Note that this is the not yet (but soon to be) enclosedExpressionStack for the Try/TryTable/Loop.
+        auto& topExpressionStack = parser->expressionStack();
+        for (auto& expr : topExpressionStack)
+            materializer.convertToVariable(expr.value(), m_proc.addVariable(expr.value().type()));
+    }
 }
 
 // Must be kept in sync with preparePatchpointForExceptions.
@@ -5060,9 +5153,9 @@ void OMGIRGenerator::connectValuesForCatchEntrypoint(ControlData& catchData, Val
         for (auto& local : currentFrame->m_locals)
             m_currentBlock->appendNew<VariableValue>(m_proc, Set, Origin(), local, loadFromScratchBuffer(indexInBuffer, pointer, local->type()));
 
-        for (unsigned controlIndex = 0; controlIndex < currentFrame->m_parser->controlStack().size(); ++controlIndex) {
-            auto& controlData = currentFrame->m_parser->controlStack()[controlIndex].controlData;
-            auto& expressionStack = currentFrame->m_parser->controlStack()[controlIndex].enclosedExpressionStack;
+        for (auto& control : currentFrame->m_parser->controlStack()) {
+            auto& controlData = control.controlData;
+            auto& expressionStack = control.enclosedExpressionStack;
             connectValuesAtEntrypoint(indexInBuffer, pointer, expressionStack);
             if (ControlType::isAnyCatch(controlData) && &controlData != &catchData) {
                 auto* load = loadFromScratchBuffer(indexInBuffer, pointer, pointerType());
@@ -5109,7 +5202,6 @@ Value* OMGIRGenerator::emitCatchImpl(CatchKind kind, ControlType& data, unsigned
 {
     m_currentBlock = m_proc.addBlock();
     m_rootBlocks.append({ m_currentBlock, usesSIMD() });
-    m_stackSize = data.stackSize();
 
     if (ControlType::isTry(data)) {
         if (kind == CatchKind::Catch)
@@ -5124,8 +5216,6 @@ Value* OMGIRGenerator::emitCatchImpl(CatchKind kind, ControlType& data, unsigned
 
     HandlerType handlerType = kind == CatchKind::Catch ? HandlerType::Catch : HandlerType::CatchAll;
     m_exceptionHandlers.append({ handlerType, data.tryStart(), data.tryEnd(), 0, m_tryCatchDepth, exceptionIndex });
-
-    reloadMemoryRegistersFromInstance(m_info.memory, instanceValue(), m_currentBlock);
 
     Value* pointer = m_currentBlock->appendNew<ArgumentRegValue>(m_proc, Origin(), GPRInfo::argumentGPR0);
     Value* exception = m_currentBlock->appendNew<ArgumentRegValue>(m_proc, Origin(), GPRInfo::argumentGPR1);
@@ -5165,8 +5255,6 @@ auto OMGIRGenerator::emitCatchTableImpl(ControlData& data, const ControlData::Tr
 
     auto signature = target.exceptionSignature;
 
-    reloadMemoryRegistersFromInstance(m_info.memory, instanceValue(), m_currentBlock);
-
     Value* pointer = m_currentBlock->appendNew<ArgumentRegValue>(m_proc, Origin(), GPRInfo::argumentGPR0);
     Value* exception = m_currentBlock->appendNew<ArgumentRegValue>(m_proc, Origin(), GPRInfo::argumentGPR1);
     Value* buffer = m_currentBlock->appendNew<ArgumentRegValue>(m_proc, Origin(), GPRInfo::argumentGPR2);
@@ -5178,20 +5266,15 @@ auto OMGIRGenerator::emitCatchTableImpl(ControlData& data, const ControlData::Tr
         unsigned offset = 0;
         for (unsigned i = 0; i < signature->template as<FunctionSignature>()->argumentCount(); ++i) {
             Type type = signature->as<FunctionSignature>()->argumentType(i);
-            Variable* var = m_proc.addVariable(toB3Type(type));
             Value* value = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, toB3Type(type), origin(), buffer, safeCast<int32_t>(offset * sizeof(uint64_t)));
-            set(var, value);
-            resultStack.constructAndAppend(type, var);
+            resultStack.constructAndAppend(type, value);
             offset += type.kind == TypeKind::V128 ? 2 : 1;
         }
     }
 
     if (target.type == CatchKind::CatchRef || target.type == CatchKind::CatchAllRef) {
-        Variable* var = m_proc.addVariable(wasmRefType());
         exception = wasmRefOfCell(exception);
-        set(var, exception);
-        push(exception);
-        resultStack.constructAndAppend(Type { TypeKind::RefNull, static_cast<TypeIndex>(TypeKind::Exnref) }, var);
+        resultStack.constructAndAppend(Type { TypeKind::RefNull, static_cast<TypeIndex>(TypeKind::Exnref) }, exception);
     }
 
     auto& targetControl = m_parser->resolveControlRef(target.target).controlData;
@@ -5233,12 +5316,12 @@ auto OMGIRGenerator::addThrow(unsigned exceptionIndex, ArgumentList& args, Stack
     unsigned offset = 0;
     for (auto arg : args) {
         patch->append(get(arg), ValueRep::stackArgument(safeCast<int32_t>(offset * sizeof(EncodedJSValue))));
-        offset += arg->type().isVector() ? 2 : 1;
+        offset += arg.value().type().isVector() ?  2 : 1;
     }
     m_maxNumJSCallArguments = std::max(m_maxNumJSCallArguments, offset);
     patch->clobber(RegisterSetBuilder::registersToSaveForJSCall(m_proc.usesSIMD() ? RegisterSetBuilder::allRegisters() : RegisterSetBuilder::allScalarRegisters()));
     auto handle = preparePatchpointForExceptions(m_currentBlock, patch);
-    patch->setGenerator([this, exceptionIndex, handle = WTFMove(handle), origin = this->origin()] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
+    patch->setGenerator([this, exceptionIndex, handle = WTF::move(handle), origin = this->origin()] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
         AllowMacroScratchRegisterUsage allowScratch(jit);
         if (handle)
             handle->collectStackMap(this, params);
@@ -5250,7 +5333,7 @@ auto OMGIRGenerator::addThrow(unsigned exceptionIndex, ArgumentList& args, Stack
     return { };
 }
 
-auto WARN_UNUSED_RETURN OMGIRGenerator::addThrowRef(TypedExpression exnref, Stack&) -> PartialResult
+WARN_UNUSED_RETURN auto OMGIRGenerator::addThrowRef(TypedExpression exnref, Stack&) -> PartialResult
 {
     TRACE_CF("THROW_REF");
 
@@ -5265,7 +5348,7 @@ auto WARN_UNUSED_RETURN OMGIRGenerator::addThrowRef(TypedExpression exnref, Stac
     patch->append(instanceValue(), ValueRep::reg(GPRInfo::argumentGPR0));
     patch->append(exception , ValueRep::reg(GPRInfo::argumentGPR1));
     auto handle = preparePatchpointForExceptions(m_currentBlock, patch);
-    patch->setGenerator([this, handle = WTFMove(handle), origin = this->origin()] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
+    patch->setGenerator([this, handle = WTF::move(handle), origin = this->origin()] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
         AllowMacroScratchRegisterUsage allowScratch(jit);
         if (handle)
             handle->collectStackMap(this, params);
@@ -5287,7 +5370,7 @@ auto OMGIRGenerator::addRethrow(unsigned, ControlType& data) -> PartialResult
     patch->append(instanceValue(), ValueRep::reg(GPRInfo::argumentGPR0));
     patch->append(get(data.exception()), ValueRep::reg(GPRInfo::argumentGPR1));
     auto handle = preparePatchpointForExceptions(m_currentBlock, patch);
-    patch->setGenerator([this, handle = WTFMove(handle), origin = this->origin()] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
+    patch->setGenerator([this, handle = WTF::move(handle), origin = this->origin()] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
         AllowMacroScratchRegisterUsage allowScratch(jit);
         if (handle)
             handle->collectStackMap(this, params);
@@ -5307,16 +5390,11 @@ auto OMGIRGenerator::addInlinedReturn(const auto& returnValues) -> PartialResult
     CallInformation wasmCallInfo = wasmCallingConvention().callInformationFor(m_parser->signature(), CallRole::Callee);
     RELEASE_ASSERT(returnValues.size() >= wasmCallInfo.results.size());
     RELEASE_ASSERT(signature->returnCount() == wasmCallInfo.results.size());
-
-    if (!m_inlinedResults.size() && wasmCallInfo.results.size()) {
-        for (unsigned i = 0; i < wasmCallInfo.results.size(); ++i)
-            m_inlinedResults.append(m_proc.addVariable(toB3Type(signature->returnType(i))));
-    }
-    RELEASE_ASSERT(m_inlinedResults.size() == wasmCallInfo.results.size());
+    RELEASE_ASSERT(m_inlinedResultPhis.size() == wasmCallInfo.results.size());
 
     unsigned offset = returnValues.size() - wasmCallInfo.results.size();
     for (unsigned i = 0; i < wasmCallInfo.results.size(); ++i)
-        m_currentBlock->appendNew<B3::VariableValue>(m_proc, B3::Set, origin(), m_inlinedResults[i], get(returnValues[offset + i]));
+        m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), get(returnValues[offset + i]), m_inlinedResultPhis[i]);
 
     m_currentBlock->appendNewControlValue(m_proc, B3::Jump, origin(), FrequentedBlock(m_returnContinuation));
     return { };
@@ -5376,7 +5454,7 @@ auto OMGIRGenerator::addBranch(ControlData& data, ExpressionType condition, cons
 
     TRACE_CF("BRANCH to ", *target);
 
-    if (condition) {
+    if (!condition.isEmpty()) {
         BasicBlock* continuation = m_proc.addBlock();
         m_currentBlock->appendNew<Value>(m_proc, B3::Branch, origin(), get(condition));
         m_currentBlock->setSuccessors(FrequentedBlock(target, targetFrequency), FrequentedBlock(continuation, continuationFrequency));
@@ -5394,8 +5472,6 @@ auto OMGIRGenerator::addBranch(ControlData& data, ExpressionType condition, cons
 auto OMGIRGenerator::addBranchNull(ControlData& data, ExpressionType reference, const Stack& returnValues, bool shouldNegate, ExpressionType& result) -> PartialResult
 {
     auto condition = push(m_currentBlock->appendNew<Value>(m_proc, shouldNegate ? B3::NotEqual : B3::Equal, origin(), get(reference), m_currentBlock->appendNew<WasmConstRefValue>(m_proc, origin(), JSValue::encode(jsNull()))));
-    // We should pop the condition here to keep stack size consistent.
-    --m_stackSize;
 
     WASM_FAIL_IF_HELPER_FAILS(addBranch(data, condition, returnValues));
 
@@ -5409,8 +5485,6 @@ auto OMGIRGenerator::addBranchCast(ControlData& data, TypedExpression reference,
 {
     ExpressionType condition;
     emitRefTestOrCast(CastKind::Test, reference, allowNull, heapType, shouldNegate, condition);
-    // We should pop the condition here to keep stack size consistent.
-    --m_stackSize;
 
     WASM_FAIL_IF_HELPER_FAILS(addBranch(data, condition, returnValues));
 
@@ -5451,7 +5525,6 @@ auto OMGIRGenerator::addEndToUnreachable(ControlEntry& entry, const Stack& expre
 {
     ControlData& data = entry.controlData;
     m_currentBlock = data.continuation;
-    m_stackSize = data.stackSize();
 
     if (data.blockType() == BlockType::If) {
         data.special->appendNewControlValue(m_proc, Jump, origin(), m_currentBlock);
@@ -5477,7 +5550,6 @@ auto OMGIRGenerator::addEndToUnreachable(ControlEntry& entry, const Stack& expre
     } else {
         for (unsigned i = 0; i < blockSignature.m_signature->returnCount(); ++i) {
             if (i < expressionStack.size()) {
-                ++m_stackSize;
                 entry.enclosedExpressionStack.append(expressionStack[i]);
             } else {
                 Type returnType = blockSignature.m_signature->returnType(i);
@@ -5531,10 +5603,10 @@ auto OMGIRGenerator::createCallPatchpoint(BasicBlock* block, const TypeDefinitio
         Vector<B3::ValueRep, 1> resultConstraints;
         for (auto valueLocation : constrainedResultLocations)
             resultConstraints.append(B3::ValueRep(valueLocation.location));
-        patchpoint->resultConstraints = WTFMove(resultConstraints);
+        patchpoint->resultConstraints = WTF::move(resultConstraints);
     }
     block->append(patchpoint);
-    return { patchpoint, WTFMove(handle), nullptr };
+    return { patchpoint, WTF::move(handle), nullptr };
 }
 
 // See createTailCallPatchpoint for the setup before this.
@@ -5623,7 +5695,7 @@ static inline void prepareForTailCallImpl(unsigned functionIndex, CCallHelpers& 
 
     JIT_COMMENT(jit, "Let's use the caller's frame, so that we always have a valid frame.");
     if (WasmOMGIRGeneratorInternal::verboseTailCalls) {
-        jit.probeDebugSIMD([frameSize, fpOffsetToSPOffset, newFPOffsetFromFP, signature = Ref<const TypeDefinition>(signature), wasmCalleeInfoAsCallee, firstPatchArg, lastPatchArg, params, functionIndex] (Probe::Context& context) {
+        jit.probeDebug([frameSize, fpOffsetToSPOffset, newFPOffsetFromFP, signature = Ref<const TypeDefinition>(signature), wasmCalleeInfoAsCallee, firstPatchArg, lastPatchArg, params, functionIndex] (Probe::Context& context) {
             auto& functionSignature = *signature->as<FunctionSignature>();
             auto sp = context.gpr<uintptr_t>(MacroAssembler::stackPointerRegister);
             auto fp = context.gpr<uintptr_t>(GPRInfo::callFrameRegister);
@@ -5648,7 +5720,7 @@ static inline void prepareForTailCallImpl(unsigned functionIndex, CCallHelpers& 
                 if (src.isGPR())
                     dataLog(context.gpr(src.gpr()), " / ", (int) context.gpr(src.gpr()));
                 else if (src.isFPR() && width <= Width64)
-                    dataLog(context.fpr(src.fpr(), SavedFPWidth::SaveVectors));
+                    dataLog(context.fpr(src.fpr()));
                 else if (src.isFPR())
                     dataLog(context.vector(src.fpr()));
                 else if (src.isConstant())
@@ -5670,7 +5742,7 @@ static inline void prepareForTailCallImpl(unsigned functionIndex, CCallHelpers& 
     }
     jit.loadPtr(CCallHelpers::Address(MacroAssembler::framePointerRegister, CallFrame::callerFrameOffset()), MacroAssembler::framePointerRegister);
     if (WasmOMGIRGeneratorInternal::verboseTailCalls) {
-        jit.probeDebugSIMD([] (Probe::Context& context) {
+        jit.probeDebug([] (Probe::Context& context) {
             auto sp = context.gpr<uintptr_t>(MacroAssembler::stackPointerRegister);
             auto fp = context.gpr<uintptr_t>(GPRInfo::callFrameRegister);
             dataLogLn("In the new expanded frame, including F's caller: FP: ", RawHex(fp), " SP: ", RawHex(sp));
@@ -5693,7 +5765,7 @@ static inline void prepareForTailCallImpl(unsigned functionIndex, CCallHelpers& 
             jit.transfer64(src.withOffset(bytesForWidth(Width::Width64)), dst.withOffset(bytesForWidth(Width::Width64)));
         }
         if (WasmOMGIRGeneratorInternal::verboseTailCalls) {
-            jit.probeDebugSIMD([tmp, srcOffset, dstOffset, width] (Probe::Context& context) {
+            jit.probeDebug([tmp, srcOffset, dstOffset, width] (Probe::Context& context) {
                 auto val = context.gpr<uintptr_t>(tmp);
                 auto sp = context.gpr<uintptr_t>(MacroAssembler::stackPointerRegister);
                 dataLogLn("Move value ", val, " / ", RawHex(val), " at ", RawHex(sp + srcOffset), " -> ", RawHex(sp + dstOffset), " width ", width);
@@ -5853,7 +5925,7 @@ static inline void prepareForTailCallImpl(unsigned functionIndex, CCallHelpers& 
     jit.loadPtr(CCallHelpers::Address(MacroAssembler::stackPointerRegister, newFPOffsetFromSP + OBJECT_OFFSETOF(CallerFrameAndPC, returnPC)), tmp);
     jit.move(tmp, MacroAssembler::linkRegister);
     if (WasmOMGIRGeneratorInternal::verboseTailCalls) {
-        jit.probeDebugSIMD([] (Probe::Context& context) {
+        jit.probeDebug([] (Probe::Context& context) {
             dataLogLn("tagged return pc: ", RawHex(context.gpr<uintptr_t>(MacroAssembler::linkRegister)));
         });
     }
@@ -5862,7 +5934,7 @@ static inline void prepareForTailCallImpl(unsigned functionIndex, CCallHelpers& 
     jit.addPtr(MacroAssembler::TrustedImm32(params.code().frameSize() + sizeof(CallerFrameAndPC)), MacroAssembler::stackPointerRegister, tmp);
     jit.untagPtr(tmp, MacroAssembler::linkRegister);
     if (WasmOMGIRGeneratorInternal::verboseTailCalls) {
-        jit.probeDebugSIMD([] (Probe::Context& context) {
+        jit.probeDebug([] (Probe::Context& context) {
             dataLogLn("untagged return pc: ", RawHex(context.gpr<uintptr_t>(MacroAssembler::linkRegister)));
         });
     }
@@ -5881,7 +5953,7 @@ static inline void prepareForTailCallImpl(unsigned functionIndex, CCallHelpers& 
 
 #if CPU(X86_64)
         if (WasmOMGIRGeneratorInternal::verboseTailCalls) {
-            jit.probeDebugSIMD([] (Probe::Context& context) {
+            jit.probeDebug([] (Probe::Context& context) {
                 dataLogLn("return pc on the top of the stack: ", RawHex(*context.gpr<uintptr_t*>(MacroAssembler::stackPointerRegister)), " at ", RawHex(context.gpr<uintptr_t>(MacroAssembler::stackPointerRegister)));
             });
         }
@@ -5889,7 +5961,7 @@ static inline void prepareForTailCallImpl(unsigned functionIndex, CCallHelpers& 
 
         JIT_COMMENT(jit, "OK, now we can jump.");
         if (WasmOMGIRGeneratorInternal::verboseTailCalls) {
-            jit.probeDebugSIMD([wasmCalleeInfoAsCallee] (Probe::Context& context) {
+            jit.probeDebug([wasmCalleeInfoAsCallee] (Probe::Context& context) {
                 dataLogLn("Can now jump: FP: ", RawHex(context.gpr<uintptr_t>(GPRInfo::callFrameRegister)), " SP: ", RawHex(context.gpr<uintptr_t>(MacroAssembler::stackPointerRegister)));
                 auto* newFP = context.gpr<uintptr_t*>(MacroAssembler::stackPointerRegister) - prologueStackPointerDelta() / sizeof(uintptr_t);
                 dataLogLn("New (callee) FP at prologue will be at ", RawPointer(newFP));
@@ -5903,7 +5975,7 @@ static inline void prepareForTailCallImpl(unsigned functionIndex, CCallHelpers& 
                     if (arg.location.isGPR())
                         dataLog(context.gpr(arg.location.jsr().payloadGPR()), " / ", (int) context.gpr(arg.location.jsr().payloadGPR()));
                     else if (arg.location.isFPR() && arg.width <= Width::Width64)
-                        dataLog(context.fpr(arg.location.fpr(), SavedFPWidth::SaveVectors));
+                        dataLog(context.fpr(arg.location.fpr()));
                     else if (arg.location.isFPR())
                         dataLog(context.vector(arg.location.fpr()));
                     else
@@ -6026,9 +6098,9 @@ auto OMGIRGenerator::createTailCallPatchpoint(BasicBlock* block, const TypeDefin
     RegisterSetBuilder clobbers;
     clobbers.merge(RegisterSetBuilder::calleeSaveRegisters());
     clobbers.exclude(RegisterSetBuilder::stackRegisters());
-    patchpoint->clobberEarly(WTFMove(clobbers));
+    patchpoint->clobberEarly(WTF::move(clobbers));
     patchpoint->clobberLate(RegisterSetBuilder::macroClobberedGPRs());
-    patchpoint->appendVector(WTFMove(patchArgs));
+    patchpoint->appendVector(WTF::move(patchArgs));
     // See prepareForTailCallImpl for the heart of this patchpoint.
     block->append(patchpoint);
 
@@ -6040,7 +6112,7 @@ auto OMGIRGenerator::createTailCallPatchpoint(BasicBlock* block, const TypeDefin
         prepareForTailCallImpl(functionIndex, jit, params, signature, wasmCallerInfoAsCallee, wasmCalleeInfoAsCallee, firstPatchArg, lastPatchArg, newFPOffsetFromFP);
     });
 
-    return { patchpoint, nullptr, WTFMove(prepareForCall) };
+    return { patchpoint, nullptr, WTF::move(prepareForCall) };
 }
 
 InliningNode* OMGIRGenerator::canInline(FunctionSpaceIndex functionIndexSpace, unsigned callProfileIndex) const
@@ -6058,11 +6130,11 @@ InliningNode* OMGIRGenerator::canInline(FunctionSpaceIndex functionIndexSpace, u
 auto OMGIRGenerator::emitInlineDirectCall(InliningNode* inlining, FunctionCodeIndex calleeFunctionIndex, const TypeDefinition& calleeSignature, const ArgumentList& args, ValueResults& results) -> PartialResult
 {
     Vector<Value*> getArgs;
-
     for (auto& arg : args)
-        getArgs.append(m_currentBlock->appendNew<VariableValue>(m_proc, B3::Get, origin(), arg.value()));
+        getArgs.append(get(arg));
 
     BasicBlock* continuation = m_proc.addBlock();
+
     // Not all inine frames need to save state, but we still need to make sure that there is at least
     // one unique CallSiteIndex per inline frame for stack traces to work.
     advanceCallSiteIndex();
@@ -6070,8 +6142,14 @@ auto OMGIRGenerator::emitInlineDirectCall(InliningNode* inlining, FunctionCodeIn
 
     const FunctionData& function = m_info.functions[calleeFunctionIndex];
     Ref<IPIntCallee> profiledCallee = m_calleeGroup.ipintCalleeFromFunctionIndexSpace(m_calleeGroup.toSpaceIndex(calleeFunctionIndex));
-    m_protectedInlineeGenerators.append(makeUnique<OMGIRGenerator>(m_heaps, m_context, *this, *m_inlineRoot, m_module, m_calleeGroup, calleeFunctionIndex, profiledCallee.get(), inlining, continuation, WTFMove(getArgs)));
+    m_protectedInlineeGenerators.append(makeUnique<OMGIRGenerator>(m_heaps, m_context, *this, *m_inlineRoot, m_module, m_calleeGroup, calleeFunctionIndex, profiledCallee.get(), inlining, continuation, WTF::move(getArgs)));
     auto& irGenerator = *m_protectedInlineeGenerators.last();
+
+    for (unsigned i = 0; i < calleeSignature.as<FunctionSignature>()->returnCount(); ++i) {
+        Value* phi = continuation->appendNew<Value>(m_proc, B3::Phi, toB3Type(calleeSignature.as<FunctionSignature>()->returnType(i)), origin());
+        irGenerator.m_inlinedResultPhis.append(phi);
+    }
+
     m_protectedInlineeParsers.append(makeUnique<FunctionParser<OMGIRGenerator>>(irGenerator, function.data, calleeSignature, m_info));
     auto& parser = *m_protectedInlineeParsers.last();
     WASM_FAIL_IF_HELPER_FAILS(parser.parse());
@@ -6082,7 +6160,7 @@ auto OMGIRGenerator::emitInlineDirectCall(InliningNode* inlining, FunctionCodeIn
         dataLogLnIf(WasmOMGIRGeneratorInternal::verboseInlining, "Block (", i, ")", block.block, " is an inline catch handler");
         m_rootBlocks.append({ block.block, block.usesSIMD || irGenerator.usesSIMD() });
     }
-    m_exceptionHandlers.appendVector(WTFMove(irGenerator.m_exceptionHandlers));
+    m_exceptionHandlers.appendVector(WTF::move(irGenerator.m_exceptionHandlers));
     if (irGenerator.m_exceptionHandlers.size())
         m_hasExceptionHandlers = true;
     RELEASE_ASSERT(!irGenerator.m_callSiteIndex);
@@ -6095,8 +6173,7 @@ auto OMGIRGenerator::emitInlineDirectCall(InliningNode* inlining, FunctionCodeIn
     m_currentBlock->appendNewControlValue(m_proc, B3::Jump, origin(), FrequentedBlock(irGenerator.m_topLevelBlock));
     m_currentBlock = continuation;
 
-    for (unsigned i = 0; i < calleeSignature.as<FunctionSignature>()->returnCount(); ++i)
-        results.append(m_currentBlock->appendNew<VariableValue>(m_proc, B3::Get, origin(), irGenerator.m_inlinedResults[i]));
+    results = WTF::move(irGenerator.m_inlinedResultPhis);
 
     auto lastInlineCallSiteIndex = advanceCallSiteIndex();
     advanceCallSiteIndex();
@@ -6324,7 +6401,7 @@ auto OMGIRGenerator::tryInliningPolymorphicCalls(unsigned callProfileIndex, Valu
         }
 
         calleeCheck = nextCase;
-        fastValuesList.append(WTFMove(fastValues));
+        fastValuesList.append(WTF::move(fastValues));
     }
 
     m_currentBlock = slowCase;
@@ -6430,9 +6507,9 @@ auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIn
 
     auto inliningResult = tryInliningPolymorphicCalls(callProfileIndex, calleeInstance, calleeCallee, signature, args, callType, isTailCallRootCaller, continuation);
     if (!inliningResult.has_value()) [[unlikely]]
-        return makeUnexpected(WTFMove(inliningResult.error()));
+        return makeUnexpected(WTF::move(inliningResult.error()));
 
-    auto fastValuesList = WTFMove(inliningResult.value());
+    auto fastValuesList = WTF::move(inliningResult.value());
 
     Value* calleeCodeLocation = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), callableFunction, safeCast<int32_t>(FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfEntrypointLoadLocation()));
     m_heaps.decorateMemory(&m_heaps.WasmFuncRefTableFunction_entrypointLoadLocation, calleeCodeLocation);
@@ -6564,9 +6641,9 @@ auto OMGIRGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition&
 
     auto inliningResult = tryInliningPolymorphicCalls(callProfileIndex, calleeInstance, calleeCallee, signature, args, callType, isTailCallRootCaller, continuation);
     if (!inliningResult.has_value()) [[unlikely]]
-        return makeUnexpected(WTFMove(inliningResult.error()));
+        return makeUnexpected(WTF::move(inliningResult.error()));
 
-    auto fastValuesList = WTFMove(inliningResult.value());
+    auto fastValuesList = WTF::move(inliningResult.value());
 
     Value* calleeCodeLocation = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), pointerOfWasmRef(callee), safeCast<int32_t>(WebAssemblyFunctionBase::offsetOfEntrypointLoadLocation()));
     m_heaps.decorateMemory(&m_heaps.WebAssemblyFunctionBase_entrypointLoadLocation, calleeCodeLocation);
@@ -6607,7 +6684,7 @@ auto OMGIRGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition&
     return { };
 }
 
-void OMGIRGenerator::unify(Value* phi, const ExpressionType source)
+void OMGIRGenerator::unify(Value* phi, const ExpressionType& source)
 {
     m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), get(source), phi);
 }
@@ -6627,7 +6704,7 @@ static void dumpExpressionStack(const CommaPrinter& comma, const OMGIRGenerator:
 {
     dataLog(comma, "ExpressionStack:");
     for (const auto& expression : expressionStack)
-        dataLog(comma, *expression);
+        dataLog(comma, expression);
 }
 
 void OMGIRGenerator::dump(const ControlStack& controlStack, const Stack* expressionStack)
@@ -6691,6 +6768,16 @@ Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileOMG(Compilati
 
     Wasm::Thunks::singleton().stub(Wasm::catchInWasmThunkGenerator);
 
+    RefPtr<JSON::Object> ionGraphFunction;
+    RefPtr<JSON::Array> ionGraphPasses;
+    auto functionIndexSpace = info.toSpaceIndex(profiledCallee.functionIndex());
+    if (Options::dumpIonGraph()) [[unlikely]] {
+        ionGraphFunction = JSON::Object::create();
+        auto passes = JSON::Array::create();
+        ionGraphPasses = passes.get();
+        ionGraphFunction->setString("name"_s, makeString(IndexOrName(functionIndexSpace, info.nameSection->get(functionIndexSpace))));
+        ionGraphFunction->setArray("passes"_s, WTF::move(passes));
+    }
     auto result = makeUnique<InternalFunction>();
     InliningDecision inliningDecision(module, profiledCallee);
     inliningDecision.expand();
@@ -6708,6 +6795,8 @@ Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileOMG(Compilati
         if (auto* impl = origin.maybeWasmOrigin())
             out.print("Wasm: ", impl->m_opcodeOrigin, " CallSiteIndex: ", impl->m_callSiteIndex.bits());
     });
+    if (ionGraphPasses) [[unlikely]]
+        procedure.setIonGraphPasses(*ionGraphPasses);
 
     // This means we cannot use either StackmapGenerationParams::usedRegisters() or
     // StackmapGenerationParams::unavailableRegisters(). In exchange for this concession, we
@@ -6764,6 +6853,9 @@ Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileOMG(Compilati
             checkSize = stackCheckNotNeeded;
         uncheckedDowncast<OMGOSREntryCallee>(callee).setStackCheckSize(checkSize);
     }
+
+    if (ionGraphFunction) [[unlikely]]
+        ProfilerSupport::dumpIonGraphFunction(makeString("wasm-function-"_s, functionIndexSpace.rawIndex()), ionGraphFunction.releaseNonNull());
 
     return result;
 }

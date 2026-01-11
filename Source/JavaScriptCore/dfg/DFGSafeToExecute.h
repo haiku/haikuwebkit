@@ -96,7 +96,6 @@ public:
         case AnyIntUse:
         case DoubleRepAnyIntUse:
         case NotDoubleUse:
-        case NotOtherUse:
         case NeitherDoubleNorHeapBigIntNorStringUse:
         case NeitherDoubleNorHeapBigIntUse:
             return;

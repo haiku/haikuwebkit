@@ -107,7 +107,7 @@ public:
 
     void set(Ref<T>&& ref)
     {
-        Ref<T> local = WTFMove(ref);
+        Ref<T> local = WTF::move(ref);
         m_pointer = std::bit_cast<uintptr_t>(&local.leakRef());
     }
 

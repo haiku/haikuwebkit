@@ -153,7 +153,7 @@ TEST(VideoPresentationMode, Fullscreen)
         [viewStack removeLastObject];
 
         if ([view isKindOfClass:NSClassFromString(@"WebAVPlayerLayerView")]) {
-            playerLayerView = WTFMove(view);
+            playerLayerView = WTF::move(view);
             break;
         }
 
@@ -213,7 +213,7 @@ TEST(VideoPresentationMode, Inline)
         [viewStack removeLastObject];
 
         if ([view isKindOfClass:NSClassFromString(@"WebAVPlayerLayerView")]) {
-            playerLayerView = WTFMove(view);
+            playerLayerView = WTF::move(view);
             break;
         }
 
@@ -256,7 +256,7 @@ TEST(VideoPresentationMode, Standby)
             [viewControllerStack removeLastObject];
 
             if ([viewController isKindOfClass:AVPlayerViewController.class]) {
-                playerViewController = WTFMove(viewController);
+                playerViewController = WTF::move(viewController);
                 EXPECT_TRUE(window.isHidden);
                 break;
             }
@@ -312,7 +312,7 @@ TEST(VideoPresentationMode, PictureInPicture)
             [viewControllerStack removeLastObject];
 
             if ([viewController isKindOfClass:AVPlayerViewController.class]) {
-                playerViewController = WTFMove(viewController);
+                playerViewController = WTF::move(viewController);
                 break;
             }
 
@@ -334,7 +334,7 @@ TEST(VideoPresentationMode, PictureInPicture)
         [viewStack removeLastObject];
 
         if ([view isKindOfClass:NSClassFromString(@"WebAVPlayerLayerView")]) {
-            playerLayerView = WTFMove(view);
+            playerLayerView = WTF::move(view);
             break;
         }
 
@@ -376,7 +376,7 @@ TEST(VideoPresentationMode, CaptionPreview)
             RetainPtr view = (UIView *)[viewStack lastObject];
             [viewStack removeLastObject];
             if ([view isKindOfClass:NSClassFromString(@"WebAVPlayerLayerView")]) {
-                playerLayerView = WTFMove(view);
+                playerLayerView = WTF::move(view);
                 break;
             }
             [viewStack addObjectsFromArray:[view subviews]];

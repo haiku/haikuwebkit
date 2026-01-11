@@ -34,16 +34,16 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRHitTestSource);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebXRHitTestSource);
 
 Ref<WebXRHitTestSource> WebXRHitTestSource::create(WebXRSession& session, PlatformXR::HitTestSource&& source)
 {
-    return adoptRef(*new WebXRHitTestSource(session, WTFMove(source)));
+    return adoptRef(*new WebXRHitTestSource(session, WTF::move(source)));
 }
 
 WebXRHitTestSource::WebXRHitTestSource(WebXRSession& session, PlatformXR::HitTestSource&& source)
     : m_session(session)
-    , m_source(WTFMove(source))
+    , m_source(WTF::move(source))
 {
 }
 

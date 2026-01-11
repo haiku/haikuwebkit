@@ -97,6 +97,8 @@ public:
 };
 
 class CDMInstanceClearKey final : public CDMInstanceProxy {
+    WTF_MAKE_TZONE_ALLOCATED(CDMInstanceClearKey);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(CDMInstanceClearKey);
 public:
     CDMInstanceClearKey();
     virtual ~CDMInstanceClearKey();

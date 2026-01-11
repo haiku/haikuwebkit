@@ -47,6 +47,8 @@
 #import <WebKit/_WKFrameTreeNode.h>
 #import <WebKit/_WKProcessPoolConfiguration.h>
 #import <wtf/RetainPtr.h>
+#import <wtf/Vector.h>
+#import <wtf/text/MakeString.h>
 
 TEST(WKWebView, EvaluateJavaScriptBlockCrash)
 {
@@ -171,7 +173,7 @@ TEST(WKWebView, WKContentWorld)
 TEST(WKWebView, EvaluateJavaScriptInWorlds)
 {
     RetainPtr<TestWKWebView> webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
-    [webView synchronouslyLoadHTMLString:@"<html></html>"];
+    [webView synchronouslyLoadHTMLString:@"<html><body><iframe sandbox=""></frame></html>"];
 
     // Set a variable in the main world via "normal" evaluateJavaScript
     __block bool isDone = false;
@@ -299,8 +301,21 @@ TEST(WKWebView, EvaluateJavaScriptInWorlds)
     }];
     TestWebKitAPI::Util::run(&isDone);
     isDone = false;
-    
-    EXPECT_EQ(testsPassed, 12u);
+
+    [webView _frames:^(_WKFrameTreeNode *mainFrame) {
+        EXPECT_EQ(mainFrame.childFrames.count, 1U);
+        [webView evaluateJavaScript:@"'PASS'" inFrame:mainFrame.childFrames[0].info inContentWorld:namedWorld.get() completionHandler:^(id result, NSError *error) {
+            EXPECT_TRUE([result isKindOfClass:[NSString class]]);
+            EXPECT_TRUE([result isEqualToString:@"PASS"]);
+            if (!error)
+                testsPassed++;
+            isDone = true;
+        }];
+    }];
+    TestWebKitAPI::Util::run(&isDone);
+    isDone = false;
+
+    EXPECT_EQ(testsPassed, 13u);
 }
 
 TEST(WKWebView, EvaluateJavaScriptInWorldsWithGlobalObjectAvailable)
@@ -1138,6 +1153,72 @@ TEST(EvaluateJavaScript, ExceptionAccessingProperty)
     RetainPtr webView = adoptNS([TestWKWebView new]);
     id result = [webView objectByCallingAsyncFunction:@"return { get foo() { throw new Error(); }, get bar() { return 123; } }" withArguments:nil];
     EXPECT_TRUE([result isEqual:@{ @"bar": @123 }]);
+}
+
+// Tests that evaluating @"" means the same as evaluating nil string. Also, no crashes.
+TEST(EvaluateJavaScript, EmptyStrings)
+{
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    RetainPtr webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    bool didRunCase1 = false;
+    {
+        [webView evaluateJavaScript:@"" completionHandler:[&](id value, NSError *error) {
+            EXPECT_FALSE(value);
+            EXPECT_NULL(error);
+            didRunCase1 = true;
+        }];
+        EXPECT_FALSE(didRunCase1); // The evaluation is async.
+        TestWebKitAPI::Util::run(&didRunCase1);
+    }
+    {
+        bool didRunCase2 = false;
+        NSString *nilScript = nil;
+        [webView evaluateJavaScript:nilScript completionHandler:[&](id value, NSError *error) {
+            EXPECT_FALSE(value);
+            EXPECT_NULL(error);
+            didRunCase2 = true;
+        }];
+        EXPECT_FALSE(didRunCase2); // The evaluation is async.
+        TestWebKitAPI::Util::run(&didRunCase2);
+    }
+}
+
+// Tests that evaluating long strings work.
+TEST(EvaluateJavaScript, LongStrings)
+{
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    RetainPtr webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    {
+        bool didRunCase1 = false;
+        RetainPtr<NSString> evalResult;
+        Vector<Latin1Character> longLatin1Data(1024*1024, ' ');
+        auto s1 = makeString("'a'"_s, String { longLatin1Data }, "+ 'b'"_s);
+        RetainPtr ns1 = s1.createNSString();
+        [webView evaluateJavaScript:ns1.get() completionHandler:[&](id value, NSError *error) {
+            EXPECT_NULL(error);
+            didRunCase1 = true;
+            evalResult = [NSString stringWithFormat:@"%@", value];
+
+        }];
+        EXPECT_FALSE(didRunCase1); // The evaluation is async.
+        TestWebKitAPI::Util::run(&didRunCase1);
+        EXPECT_WK_STREQ(evalResult.get(), "ab");
+    }
+    {
+        bool didRunCase2 = false;
+        RetainPtr<NSString> evalResult;
+        Vector<char16_t> longUnicodeData(1024*1200, u' ');
+        auto s2 = makeString(u"'z'"_str, String { longUnicodeData }, u"+ 'u'"_str);
+        RetainPtr ns2 = s2.createNSString();
+        [webView evaluateJavaScript:ns2.get() completionHandler:[&](id value, NSError *error) {
+            EXPECT_NULL(error);
+            didRunCase2 = true;
+            evalResult = [NSString stringWithFormat:@"%@", value];
+        }];
+        EXPECT_FALSE(didRunCase2); // The evaluation is async.
+        TestWebKitAPI::Util::run(&didRunCase2);
+        EXPECT_WK_STREQ(evalResult.get(), "zu");
+    }
 }
 
 @interface TestScriptMessageHandlerWithReply : NSObject <WKScriptMessageHandlerWithReply>

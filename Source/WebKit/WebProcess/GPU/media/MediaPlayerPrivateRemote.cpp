@@ -207,7 +207,7 @@ MediaPlayerPrivateRemote::~MediaPlayerPrivateRemote()
 #if PLATFORM(COCOA)
     m_videoLayerManager->didDestroyVideoLayer();
 #endif
-    protectedManager()->deleteRemoteMediaPlayer(m_id);
+    manager()->deleteRemoteMediaPlayer(m_id);
 
 #if ENABLE(WEB_AUDIO) && PLATFORM(COCOA)
     if (RefPtr audioSourceProvider = m_audioSourceProvider)
@@ -250,16 +250,16 @@ void MediaPlayerPrivateRemote::load(const URL& url, const LoadOptions& options)
 
         auto createExtension = [&] {
 #if HAVE(AUDIT_TOKEN)
-            if (auto auditToken = protectedManager()->protectedGPUProcessConnection()->auditToken()) {
+            if (auto auditToken = manager()->protectedGPUProcessConnection()->auditToken()) {
                 if (auto createdHandle = SandboxExtension::createHandleForReadByAuditToken(fileSystemPath, auditToken.value())) {
-                    handle = WTFMove(*createdHandle);
+                    handle = WTF::move(*createdHandle);
                     return true;
                 }
                 return false;
             }
 #endif
             if (auto createdHandle = SandboxExtension::createHandle(fileSystemPath, SandboxExtension::Type::ReadOnly)) {
-                handle = WTFMove(*createdHandle);
+                handle = WTF::move(*createdHandle);
                 return true;
             }
             return false;
@@ -273,10 +273,10 @@ void MediaPlayerPrivateRemote::load(const URL& url, const LoadOptions& options)
             return;
         }
 
-        sandboxExtensionHandle = WTFMove(handle);
+        sandboxExtensionHandle = WTF::move(handle);
     }
 
-    protectedConnection()->sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::Load(url, WTFMove(sandboxExtensionHandle), options), [weakThis = ThreadSafeWeakPtr { *this }](auto&& configuration) {
+    protectedConnection()->sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::Load(url, WTF::move(sandboxExtensionHandle), options), [weakThis = ThreadSafeWeakPtr { *this }](auto&& configuration) {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -285,7 +285,7 @@ void MediaPlayerPrivateRemote::load(const URL& url, const LoadOptions& options)
         if (!player)
             return;
 
-        protectedThis->updateConfiguration(WTFMove(configuration));
+        protectedThis->updateConfiguration(WTF::move(configuration));
         player->mediaEngineUpdated();
     }, m_id);
 }
@@ -444,7 +444,7 @@ bool MediaPlayerPrivateRemote::didLoadingProgress() const
 
 void MediaPlayerPrivateRemote::didLoadingProgressAsync(MediaPlayer::DidLoadingProgressCompletionHandler&& callback) const
 {
-    protectedConnection()->sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::DidLoadingProgress(), WTFMove(callback), m_id);
+    protectedConnection()->sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::DidLoadingProgress(), WTF::move(callback), m_id);
 }
 
 bool MediaPlayerPrivateRemote::hasVideo() const
@@ -469,7 +469,7 @@ MediaPlayer::MovieLoadType MediaPlayerPrivateRemote::movieLoadType() const
 
 void MediaPlayerPrivateRemote::networkStateChanged(RemoteMediaPlayerState&& state)
 {
-    updateCachedState(WTFMove(state));
+    updateCachedState(WTF::move(state));
     if (RefPtr player = m_player.get())
         player->networkStateChanged();
 }
@@ -494,7 +494,7 @@ void MediaPlayerPrivateRemote::readyStateChanged(RemoteMediaPlayerState&& state,
 
     ALWAYS_LOG(LOGIDENTIFIER, readyState);
 
-    updateCachedState(WTFMove(state));
+    updateCachedState(WTF::move(state));
     setReadyState(readyState);
 
 }
@@ -525,7 +525,7 @@ void MediaPlayerPrivateRemote::seeked(MediaTimeUpdateData&& timeData)
 void MediaPlayerPrivateRemote::timeChanged(RemoteMediaPlayerState&& state, MediaTimeUpdateData&& timeData)
 {
     ALWAYS_LOG(LOGIDENTIFIER, "currentTime:", timeData.currentTime, " timeIsProgressing:", timeData.timeIsProgressing);
-    updateCachedState(WTFMove(state));
+    updateCachedState(WTF::move(state));
     m_currentTimeEstimator.setTime(timeData);
     if (RefPtr player = m_player.get())
         player->timeChanged();
@@ -533,7 +533,7 @@ void MediaPlayerPrivateRemote::timeChanged(RemoteMediaPlayerState&& state, Media
 
 void MediaPlayerPrivateRemote::durationChanged(RemoteMediaPlayerState&& state)
 {
-    updateCachedState(WTFMove(state));
+    updateCachedState(WTF::move(state));
     if (RefPtr player = m_player.get())
         player->durationChanged();
 }
@@ -574,7 +574,7 @@ void MediaPlayerPrivateRemote::engineFailedToLoad(int64_t platformErrorCode)
 
 void MediaPlayerPrivateRemote::characteristicChanged(RemoteMediaPlayerState&& state)
 {
-    updateCachedState(WTFMove(state));
+    updateCachedState(WTF::move(state));
     if (RefPtr player = m_player.get())
         player->characteristicChanged();
 }
@@ -654,7 +654,7 @@ void MediaPlayerPrivateRemote::acceleratedRenderingStateChanged()
 
 void MediaPlayerPrivateRemote::updateConfiguration(RemoteMediaPlayerConfiguration&& configuration)
 {
-    m_configuration = WTFMove(configuration);
+    m_configuration = WTF::move(configuration);
 }
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
@@ -707,7 +707,7 @@ void MediaPlayerPrivateRemote::updateCachedState(RemoteMediaPlayerState&& state)
 
 void MediaPlayerPrivateRemote::updatePlaybackQualityMetrics(VideoPlaybackQualityMetrics&& metrics)
 {
-    m_cachedState.videoMetrics = WTFMove(metrics);
+    m_cachedState.videoMetrics = WTF::move(metrics);
 }
 
 bool MediaPlayerPrivateRemote::shouldIgnoreIntrinsicSize()
@@ -757,7 +757,7 @@ void MediaPlayerPrivateRemote::addRemoteAudioTrack(AudioTrackPrivateRemoteConfig
 
     m_audioTracks.erase(configuration.trackId);
 
-    auto addResult = m_audioTracks.emplace(configuration.trackId, AudioTrackPrivateRemote::create(protectedManager()->protectedGPUProcessConnection(), m_id, WTFMove(configuration)));
+    auto addResult = m_audioTracks.emplace(configuration.trackId, AudioTrackPrivateRemote::create(manager()->protectedGPUProcessConnection(), m_id, WTF::move(configuration)));
     ASSERT(addResult.second);
 
 #if ENABLE(MEDIA_SOURCE)
@@ -791,11 +791,11 @@ void MediaPlayerPrivateRemote::remoteAudioTrackConfigurationChanged(TrackID trac
     if (auto it = m_audioTracks.find(trackID); it != m_audioTracks.end()) {
         Ref track = it->second;
         bool idChanged = track->id() != configuration.trackId;
-        track->updateConfiguration(WTFMove(configuration));
+        track->updateConfiguration(WTF::move(configuration));
         if (idChanged) {
             auto node = m_audioTracks.extract(it);
             node.key() = track->id();
-            m_audioTracks.insert(WTFMove(node));
+            m_audioTracks.insert(WTF::move(node));
         }
     }
 }
@@ -807,7 +807,7 @@ void MediaPlayerPrivateRemote::addRemoteTextTrack(TextTrackPrivateRemoteConfigur
 
     m_textTracks.erase(configuration.trackId);
 
-    auto addResult = m_textTracks.emplace(configuration.trackId, TextTrackPrivateRemote::create(protectedManager()->protectedGPUProcessConnection(), m_id, WTFMove(configuration)));
+    auto addResult = m_textTracks.emplace(configuration.trackId, TextTrackPrivateRemote::create(manager()->protectedGPUProcessConnection(), m_id, WTF::move(configuration)));
     ASSERT(addResult.second);
 
 #if ENABLE(MEDIA_SOURCE)
@@ -843,11 +843,11 @@ void MediaPlayerPrivateRemote::remoteTextTrackConfigurationChanged(TrackID track
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end()) {
         Ref track = it->second;
         bool idChanged = track->id() != configuration.trackId;
-        track->updateConfiguration(WTFMove(configuration));
+        track->updateConfiguration(WTF::move(configuration));
         if (idChanged) {
             auto node = m_textTracks.extract(it);
             node.key() = track->id();
-            m_textTracks.insert(WTFMove(node));
+            m_textTracks.insert(WTF::move(node));
         }
     }
 }
@@ -860,7 +860,7 @@ void MediaPlayerPrivateRemote::parseWebVTTFileHeader(TrackID trackID, String&& h
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->parseWebVTTFileHeader(WTFMove(header));
+        Ref { it->second }->parseWebVTTFileHeader(WTF::move(header));
 }
 
 void MediaPlayerPrivateRemote::parseWebVTTCueData(TrackID trackID, std::span<const uint8_t> data)
@@ -871,7 +871,7 @@ void MediaPlayerPrivateRemote::parseWebVTTCueData(TrackID trackID, std::span<con
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->parseWebVTTCueData(WTFMove(data));
+        Ref { it->second }->parseWebVTTCueData(WTF::move(data));
 }
 
 void MediaPlayerPrivateRemote::parseWebVTTCueDataStruct(TrackID trackID, ISOWebVTTCue&& data)
@@ -882,7 +882,7 @@ void MediaPlayerPrivateRemote::parseWebVTTCueDataStruct(TrackID trackID, ISOWebV
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->parseWebVTTCueDataStruct(WTFMove(data));
+        Ref { it->second }->parseWebVTTCueDataStruct(WTF::move(data));
 }
 
 void MediaPlayerPrivateRemote::addDataCue(TrackID trackID, MediaTime&& start, MediaTime&& end, std::span<const uint8_t> data)
@@ -893,7 +893,7 @@ void MediaPlayerPrivateRemote::addDataCue(TrackID trackID, MediaTime&& start, Me
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->addDataCue(WTFMove(start), WTFMove(end), WTFMove(data));
+        Ref { it->second }->addDataCue(WTF::move(start), WTF::move(end), WTF::move(data));
 }
 
 #if ENABLE(DATACUE_VALUE)
@@ -905,7 +905,7 @@ void MediaPlayerPrivateRemote::addDataCueWithType(TrackID trackID, MediaTime&& s
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->addDataCueWithType(WTFMove(start), WTFMove(end), WTFMove(data), WTFMove(type));
+        Ref { it->second }->addDataCueWithType(WTF::move(start), WTF::move(end), WTF::move(data), WTF::move(type));
 }
 
 void MediaPlayerPrivateRemote::updateDataCue(TrackID trackID, MediaTime&& start, MediaTime&& end, SerializedPlatformDataCueValue&& data)
@@ -916,7 +916,7 @@ void MediaPlayerPrivateRemote::updateDataCue(TrackID trackID, MediaTime&& start,
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->updateDataCue(WTFMove(start), WTFMove(end), WTFMove(data));
+        Ref { it->second }->updateDataCue(WTF::move(start), WTF::move(end), WTF::move(data));
 }
 
 void MediaPlayerPrivateRemote::removeDataCue(TrackID trackID, MediaTime&& start, MediaTime&& end, SerializedPlatformDataCueValue&& data)
@@ -927,7 +927,7 @@ void MediaPlayerPrivateRemote::removeDataCue(TrackID trackID, MediaTime&& start,
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->removeDataCue(WTFMove(start), WTFMove(end), WTFMove(data));
+        Ref { it->second }->removeDataCue(WTF::move(start), WTF::move(end), WTF::move(data));
 }
 #endif
 
@@ -939,7 +939,7 @@ void MediaPlayerPrivateRemote::addGenericCue(TrackID trackID, GenericCueData&& c
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->addGenericCue(InbandGenericCue::create(WTFMove(cueData)));
+        Ref { it->second }->addGenericCue(InbandGenericCue::create(WTF::move(cueData)));
 }
 
 void MediaPlayerPrivateRemote::updateGenericCue(TrackID trackID, GenericCueData&& cueData)
@@ -950,7 +950,7 @@ void MediaPlayerPrivateRemote::updateGenericCue(TrackID trackID, GenericCueData&
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->updateGenericCue(InbandGenericCue::create(WTFMove(cueData)));
+        Ref { it->second }->updateGenericCue(InbandGenericCue::create(WTF::move(cueData)));
 }
 
 void MediaPlayerPrivateRemote::removeGenericCue(TrackID trackID, GenericCueData&& cueData)
@@ -961,7 +961,7 @@ void MediaPlayerPrivateRemote::removeGenericCue(TrackID trackID, GenericCueData&
     ASSERT(m_textTracks.contains(trackID));
 
     if (auto it = m_textTracks.find(trackID); it != m_textTracks.end())
-        Ref { it->second }->removeGenericCue(InbandGenericCue::create(WTFMove(cueData)));
+        Ref { it->second }->removeGenericCue(InbandGenericCue::create(WTF::move(cueData)));
 }
 
 void MediaPlayerPrivateRemote::addRemoteVideoTrack(VideoTrackPrivateRemoteConfiguration&& configuration)
@@ -971,7 +971,7 @@ void MediaPlayerPrivateRemote::addRemoteVideoTrack(VideoTrackPrivateRemoteConfig
 
     m_videoTracks.erase(configuration.trackId);
 
-    auto addResult = m_videoTracks.emplace(configuration.trackId, VideoTrackPrivateRemote::create(protectedManager()->protectedGPUProcessConnection(), m_id, WTFMove(configuration)));
+    auto addResult = m_videoTracks.emplace(configuration.trackId, VideoTrackPrivateRemote::create(manager()->protectedGPUProcessConnection(), m_id, WTF::move(configuration)));
     ASSERT(addResult.second);
 
 #if ENABLE(MEDIA_SOURCE)
@@ -1007,11 +1007,11 @@ void MediaPlayerPrivateRemote::remoteVideoTrackConfigurationChanged(TrackID trac
     if (auto it = m_videoTracks.find(trackID); it != m_videoTracks.end()) {
         Ref track = it->second;
         bool idChanged = track->id() != configuration.trackId;
-        track->updateConfiguration(WTFMove(configuration));
+        track->updateConfiguration(WTF::move(configuration));
         if (idChanged) {
             auto node = m_videoTracks.extract(it);
             node.key() = track->id();
-            m_videoTracks.insert(WTFMove(node));
+            m_videoTracks.insert(WTF::move(node));
         }
     }
 }
@@ -1039,15 +1039,15 @@ void MediaPlayerPrivateRemote::load(const URL& url, const LoadOptions& options, 
             if (!player)
                 return;
 
-            protectedThis->updateConfiguration(WTFMove(configuration));
+            protectedThis->updateConfiguration(WTF::move(configuration));
             player->mediaEngineUpdated();
         }, m_id);
         if (mediaSourcePrivate) {
-            m_mediaSourcePrivate = WTFMove(mediaSourcePrivate);
+            m_mediaSourcePrivate = WTF::move(mediaSourcePrivate);
             // MediaSource can only be re-opened after RemoteMediaPlayerProxy::LoadMediaSource has been called.
             client.reOpen();
         } else
-            m_mediaSourcePrivate = MediaSourcePrivateRemote::create(protectedManager()->protectedGPUProcessConnection(), identifier, protectedManager()->checkedTypeCache(m_remoteEngineIdentifier), *this, client);
+            m_mediaSourcePrivate = MediaSourcePrivateRemote::create(manager()->protectedGPUProcessConnection(), identifier, manager()->checkedTypeCache(m_remoteEngineIdentifier), *this, client);
         return;
     }
 
@@ -1103,7 +1103,7 @@ PlatformLayer* MediaPlayerPrivateRemote::platformLayer() const
 void MediaPlayerPrivateRemote::setVideoFullscreenLayer(PlatformLayer* videoFullscreenLayer, WTF::Function<void()>&& completionHandler)
 {
 #if PLATFORM(COCOA)
-    m_videoLayerManager->setVideoFullscreenLayer(videoFullscreenLayer, WTFMove(completionHandler), nullptr);
+    m_videoLayerManager->setVideoFullscreenLayer(videoFullscreenLayer, WTF::move(completionHandler), nullptr);
 #endif
 }
 
@@ -1267,7 +1267,7 @@ RefPtr<WebCore::VideoFrame> MediaPlayerPrivateRemote::videoFrameForCurrentTime()
     auto [result, changed] = sendResult.takeReply();
     if (changed) {
         if (result)
-            m_videoFrameForCurrentTime = RemoteVideoFrameProxy::create(protectedConnection(), protectedVideoFrameObjectHeapProxy(), WTFMove(*result));
+            m_videoFrameForCurrentTime = RemoteVideoFrameProxy::create(protectedConnection(), protectedVideoFrameObjectHeapProxy(), WTF::move(*result));
         else
             m_videoFrameForCurrentTime = nullptr;
     }
@@ -1474,7 +1474,7 @@ void MediaPlayerPrivateRemote::initializationDataEncountered(const String& initD
 {
     auto initDataBuffer = ArrayBuffer::create(initData);
     if (RefPtr player = m_player.get())
-        player->initializationDataEncountered(initDataType, WTFMove(initDataBuffer));
+        player->initializationDataEncountered(initDataType, WTF::move(initDataBuffer));
 }
 
 bool MediaPlayerPrivateRemote::waitingForKey() const
@@ -1591,7 +1591,7 @@ void MediaPlayerPrivateRemote::setPlatformDynamicRangeLimit(WebCore::PlatformDyn
 
 bool MediaPlayerPrivateRemote::performTaskAtTime(WTF::Function<void(const MediaTime&)>&& task, const MediaTime& mediaTime)
 {
-    auto asyncReplyHandler = [weakThis = ThreadSafeWeakPtr { *this }, task = WTFMove(task)](std::optional<MediaTime> currentTime) mutable {
+    auto asyncReplyHandler = [weakThis = ThreadSafeWeakPtr { *this }, task = WTF::move(task)](std::optional<MediaTime> currentTime) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis || !currentTime)
             return;
@@ -1599,7 +1599,7 @@ bool MediaPlayerPrivateRemote::performTaskAtTime(WTF::Function<void(const MediaT
         task(*currentTime);
     };
 
-    protectedConnection()->sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::PerformTaskAtTime(mediaTime), WTFMove(asyncReplyHandler), m_id);
+    protectedConnection()->sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::PerformTaskAtTime(mediaTime), WTF::move(asyncReplyHandler), m_id);
 
     return true;
 }
@@ -1658,7 +1658,7 @@ void MediaPlayerPrivateRemote::requestResource(RemoteMediaResourceIdentifier rem
     ASSERT(!m_mediaResources.contains(remoteMediaResourceIdentifier));
 
     RefPtr player = m_player.get();
-    RefPtr resource = player ? player->mediaResourceLoader()->requestResource(WTFMove(request), options) : nullptr;
+    RefPtr resource = player ? player->mediaResourceLoader()->requestResource(WTF::move(request), options) : nullptr;
 
     if (!resource) {
         // FIXME: Get the error from MediaResourceLoader::requestResource.
@@ -1667,7 +1667,7 @@ void MediaPlayerPrivateRemote::requestResource(RemoteMediaResourceIdentifier rem
     }
     // PlatformMediaResource owns the PlatformMediaResourceClient
     resource->setClient(adoptRef(*new RemoteMediaResourceProxy(connection(), *resource, remoteMediaResourceIdentifier)));
-    m_mediaResources.add(remoteMediaResourceIdentifier, WTFMove(resource));
+    m_mediaResources.add(remoteMediaResourceIdentifier, WTF::move(resource));
 }
 
 void MediaPlayerPrivateRemote::sendH2Ping(const URL& url, CompletionHandler<void(Expected<WTF::Seconds, WebCore::ResourceError>&&)>&& completionHandler)
@@ -1677,7 +1677,7 @@ void MediaPlayerPrivateRemote::sendH2Ping(const URL& url, CompletionHandler<void
         completionHandler(makeUnexpected(internalError(url)));
         return;
     }
-    player->mediaResourceLoader()->sendH2Ping(url, WTFMove(completionHandler));
+    player->mediaResourceLoader()->sendH2Ping(url, WTF::move(completionHandler));
 }
 
 void MediaPlayerPrivateRemote::removeResource(RemoteMediaResourceIdentifier remoteMediaResourceIdentifier)
@@ -1705,7 +1705,7 @@ void MediaPlayerPrivateRemote::activeSourceBuffersChanged()
 void MediaPlayerPrivateRemote::getRawCookies(const URL& url, WebCore::MediaPlayerClient::GetRawCookiesCallback&& completionHandler) const
 {
     if (RefPtr player = m_player.get())
-        player->getRawCookies(url, WTFMove(completionHandler));
+        player->getRawCookies(url, WTF::move(completionHandler));
 }
 #endif
 
@@ -1723,10 +1723,10 @@ void MediaPlayerPrivateRemote::requestHostingContext(LayerHostingContextCallback
         return;
     }
 
-    m_layerHostingContextRequests.append(WTFMove(completionHandler));
+    m_layerHostingContextRequests.append(WTF::move(completionHandler));
     protectedConnection()->sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::RequestHostingContext(), [weakThis = ThreadSafeWeakPtr { *this }] (WebCore::HostingContext context) {
         if (RefPtr protectedThis = weakThis.get())
-            protectedThis->setLayerHostingContext(WTFMove(context));
+            protectedThis->setLayerHostingContext(WTF::move(context));
     }, m_id);
 }
 
@@ -1740,7 +1740,7 @@ void MediaPlayerPrivateRemote::setLayerHostingContext(WebCore::HostingContext&& 
     if (m_layerHostingContext.contextID == hostingContext.contextID)
         return;
 
-    m_layerHostingContext = WTFMove(hostingContext);
+    m_layerHostingContext = WTF::move(hostingContext);
 #if PLATFORM(COCOA)
     m_videoLayer = nullptr;
 #endif
@@ -1870,9 +1870,9 @@ void MediaPlayerPrivateRemote::commitAllTransactions(CompletionHandler<void()>&&
     completionHandler();
 }
 
-Ref<RemoteMediaPlayerManager> MediaPlayerPrivateRemote::protectedManager() const
+Ref<RemoteMediaPlayerManager> MediaPlayerPrivateRemote::manager() const
 {
-    return m_manager.get().releaseNonNull();
+    return m_manager.get();
 }
 
 #if PLATFORM(IOS_FAMILY)
@@ -1885,7 +1885,7 @@ void MediaPlayerPrivateRemote::sceneIdentifierDidChange()
 
 void MediaPlayerPrivateRemote::setMessageClientForTesting(WeakPtr<MessageClientForTesting> client)
 {
-    m_internalMessageClient = WTFMove(client);
+    m_internalMessageClient = WTF::move(client);
     protectedConnection()->send(Messages::RemoteMediaPlayerProxy::SetHasMessageClientForTesting(!!m_internalMessageClient), m_id);
 }
 

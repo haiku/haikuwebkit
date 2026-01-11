@@ -839,7 +839,7 @@ sub GenerateIndexedGetter
         # We can thus call item() right away and do a null check instead of first checking if `index < length` and then calling
         # item(). This avoids duplicates bounds check, which is especially useful when `length()` is virtual, like on NodeList.
         $itemGetterCondition = "auto item = thisObject->wrapped().${indexedGetterFunctionName}(${indexExpression}); !!item";
-        $nativeToJSConversion = NativeToJSValueUsingPointers($indexedGetterOperation, $interface, "WTFMove(item)", "*thisObject->globalObject()");
+        $nativeToJSConversion = NativeToJSValueUsingPointers($indexedGetterOperation, $interface, "WTF::move(item)", "*thisObject->globalObject()");
     }
     return ($itemGetterCondition, $nativeToJSConversion, StringifyJSCAttributes(\@attributes));
 }
@@ -967,7 +967,7 @@ sub GenerateGetOwnPropertySlot
         
         # NOTE: GenerateNamedGetter implements steps 2.1 - 2.10.
         
-        my ($nativeToJSConversion, $attributeString) = GenerateNamedGetter($interface, $namedGetterOperation, "WTFMove(namedProperty.value())");
+        my ($nativeToJSConversion, $attributeString) = GenerateNamedGetter($interface, $namedGetterOperation, "WTF::move(namedProperty.value())");
         
         push(@$outputArray, "            auto value = ${nativeToJSConversion};\n");
         push(@$outputArray, "            RETURN_IF_EXCEPTION(throwScope, false);\n");
@@ -1086,7 +1086,7 @@ sub GenerateGetOwnPropertySlotByIndex
         
         # NOTE: GenerateNamedGetter implements steps 2.1 - 2.10.
         
-        my ($nativeToJSConversion, $attributeString) = GenerateNamedGetter($interface, $namedGetterOperation, "WTFMove(namedProperty.value())");
+        my ($nativeToJSConversion, $attributeString) = GenerateNamedGetter($interface, $namedGetterOperation, "WTF::move(namedProperty.value())");
 
         push(@$outputArray, "        auto value = ${nativeToJSConversion};\n");
         push(@$outputArray, "        RETURN_IF_EXCEPTION(throwScope, false);\n");
@@ -1300,7 +1300,7 @@ sub GeneratePut
             push(@$outputArray, "        ownDescriptor.setPropertySlot(lexicalGlobalObject, propertyName, slot);\n");
             push(@$outputArray, "        RETURN_IF_EXCEPTION(throwScope, false);\n");
             push(@$outputArray, "    }\n");
-            push(@$outputArray, "    RELEASE_AND_RETURN(throwScope, ordinarySetWithOwnDescriptor(lexicalGlobalObject, thisObject, propertyName, value, putPropertySlot.thisValue(), WTFMove(ownDescriptor), putPropertySlot.isStrictMode()));\n");
+            push(@$outputArray, "    RELEASE_AND_RETURN(throwScope, ordinarySetWithOwnDescriptor(lexicalGlobalObject, thisObject, propertyName, value, putPropertySlot.thisValue(), WTF::move(ownDescriptor), putPropertySlot.isStrictMode()));\n");
         } else {
             push(@$outputArray, "    RELEASE_AND_RETURN(throwScope, ordinarySetSlow(lexicalGlobalObject, thisObject, propertyName, value, putPropertySlot.thisValue(), putPropertySlot.isStrictMode()));\n");
         }
@@ -2626,13 +2626,12 @@ sub GenerateEnumerationImplementationContent
         my $enumerationValueName = GetEnumerationValueName(shift(@sortedEnumerationValues));
         $result .= "        return ${className}::$enumerationValueName;\n";
     }
-    $result .= "    static constexpr std::array<std::pair<ComparableASCIILiteral, $className>, " . scalar(@sortedEnumerationValues) . "> mappings {\n";
+    $result .= "    static constexpr SortedArrayMap enumerationMapping { std::to_array<std::pair<ComparableASCIILiteral, $className>>({\n";
     for my $value (@sortedEnumerationValues) {
         my $enumerationValueName = GetEnumerationValueName($value);
-        $result .= "        std::pair<ComparableASCIILiteral, $className> { \"$value\"_s, ${className}::$enumerationValueName },\n";
+        $result .= "        { \"$value\"_s, ${className}::$enumerationValueName },\n";
     }
-    $result .= "    };\n";
-    $result .= "    static constexpr SortedArrayMap enumerationMapping { mappings };\n";
+    $result .= "    }) };\n";
     $result .= "    if (auto* enumerationValue = enumerationMapping.tryGet(stringValue); enumerationValue) [[likely]]\n";
     $result .= "        return *enumerationValue;\n";
     $result .= "    return std::nullopt;\n";
@@ -2933,15 +2932,27 @@ sub GenerateDictionaryImplementationContent
                     $result .= "${indent}        return ConversionResultException { };\n";
                     $result .= "${indent}    result.$implementedAsKey = ${implementedAsKey}ConversionResult.releaseReturnValue();\n";
                 } else {
-                    my $defaultValueFunctor = GetDictionaryMemberDefaultValueFunctor($typeScope, $member);
-                    my $conversion = JSValueToNative($typeScope, $member, "${key}Value", $conditional, "&lexicalGlobalObject", "lexicalGlobalObject", "", "*jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)", undef, undef, undef, undef);
+                    if ($member->extendedAttributes->{PermissiveInvalidValue} && $codeGenerator->IsEnumType($type)) {
+                        # For enum members with PermissiveInvalidValue, use parseEnumeration directly
+                        # which returns std::optional and doesn't throw on invalid values.
+                        my $className = GetEnumerationClassName($type, $typeScope);
+                        $result .= "${indent}    if (!${key}Value.isUndefined()) {\n";
+                        $result .= "${indent}        auto ${implementedAsKey}ParseResult = parseEnumeration<${className}>(lexicalGlobalObject, ${key}Value);\n";
+                        $result .= "${indent}        RETURN_IF_EXCEPTION(throwScope, ConversionResultException { });\n";
+                        $result .= "${indent}        if (${implementedAsKey}ParseResult)\n";
+                        $result .= "${indent}            result.$implementedAsKey = *${implementedAsKey}ParseResult;\n";
+                        $result .= "${indent}    }\n";
+                    } else {
+                        my $defaultValueFunctor = GetDictionaryMemberDefaultValueFunctor($typeScope, $member);
+                        my $conversion = JSValueToNative($typeScope, $member, "${key}Value", $conditional, "&lexicalGlobalObject", "lexicalGlobalObject", "", "*jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)", undef, undef, undef, undef);
 
-                    $result .= "${indent}    if (!${key}Value.isUndefined()) {\n";
-                    $result .= "${indent}        auto ${implementedAsKey}ConversionResult = ${conversion};\n";
-                    $result .= "${indent}        if (${implementedAsKey}ConversionResult.hasException(throwScope)) [[unlikely]]\n";
-                    $result .= "${indent}            return ConversionResultException { };\n";
-                    $result .= "${indent}        result.$implementedAsKey = ${implementedAsKey}ConversionResult.releaseReturnValue();\n";
-                    $result .= "${indent}    }\n";
+                        $result .= "${indent}    if (!${key}Value.isUndefined()) {\n";
+                        $result .= "${indent}        auto ${implementedAsKey}ConversionResult = ${conversion};\n";
+                        $result .= "${indent}        if (${implementedAsKey}ConversionResult.hasException(throwScope)) [[unlikely]]\n";
+                        $result .= "${indent}            return ConversionResultException { };\n";
+                        $result .= "${indent}        result.$implementedAsKey = ${implementedAsKey}ConversionResult.releaseReturnValue();\n";
+                        $result .= "${indent}    }\n";
+                    }
                 }
 
                 if ($needsRuntimeCheck) {
@@ -3156,14 +3167,14 @@ sub GenerateHeader
     if ($interfaceName eq "DOMWindow") {
         push(@headerContent, "    static $className* create(JSC::VM& vm, JSC::Structure* structure, Ref<$implType>&& impl, JSWindowProxy* proxy)\n");
         push(@headerContent, "    {\n");
-        push(@headerContent, "        $className* ptr = new (NotNull, JSC::allocateCell<$className>(vm)) ${className}(vm, structure, WTFMove(impl), proxy);\n");
+        push(@headerContent, "        $className* ptr = new (NotNull, JSC::allocateCell<$className>(vm)) ${className}(vm, structure, WTF::move(impl), proxy);\n");
         push(@headerContent, "        ptr->finishCreation(vm, proxy);\n");
         push(@headerContent, "        return ptr;\n");
         push(@headerContent, "    }\n\n");
     } elsif (ShouldCreateWithJSGlobalProxy($codeGenerator, $interface)) {
         push(@headerContent, "    static $className* create(JSC::VM& vm, JSC::Structure* structure, Ref<$implType>&& impl, JSC::JSGlobalProxy* proxy)\n");
         push(@headerContent, "    {\n");
-        push(@headerContent, "        $className* ptr = new (NotNull, JSC::allocateCell<$className>(vm)) ${className}(vm, structure, WTFMove(impl));\n");
+        push(@headerContent, "        $className* ptr = new (NotNull, JSC::allocateCell<$className>(vm)) ${className}(vm, structure, WTF::move(impl));\n");
         push(@headerContent, "        ptr->finishCreation(vm, proxy);\n");
         push(@headerContent, "        return ptr;\n");
         push(@headerContent, "    }\n\n");
@@ -3173,7 +3184,7 @@ sub GenerateHeader
         push(@headerContent, "    {\n");
         push(@headerContent, "        SUPPRESS_UNCOUNTED_LOCAL auto& vm = globalObject->vm();\n");
         push(@headerContent, "        globalObject->masqueradesAsUndefinedWatchpointSet().fireAll(vm, \"Allocated masquerading object\");\n");
-        push(@headerContent, "        $className* ptr = new (NotNull, JSC::allocateCell<$className>(vm)) $className(structure, *globalObject, WTFMove(impl));\n");
+        push(@headerContent, "        $className* ptr = new (NotNull, JSC::allocateCell<$className>(vm)) $className(structure, *globalObject, WTF::move(impl));\n");
         push(@headerContent, "        ptr->finishCreation(vm);\n");
         push(@headerContent, "        return ptr;\n");
         push(@headerContent, "    }\n\n");
@@ -3192,7 +3203,7 @@ sub GenerateHeader
         push(@headerContent, "    static $className* create(JSC::Structure* structure, JSDOMGlobalObject* globalObject, Ref<$implType>&& impl)\n");
         push(@headerContent, "    {\n");
         push(@headerContent, "        SUPPRESS_UNCOUNTED_LOCAL auto& vm = globalObject->vm();\n");
-        push(@headerContent, "        $className* ptr = new (NotNull, JSC::allocateCell<$className>(vm)) $className(structure, *globalObject, WTFMove(impl));\n");
+        push(@headerContent, "        $className* ptr = new (NotNull, JSC::allocateCell<$className>(vm)) $className(structure, *globalObject, WTF::move(impl));\n");
         push(@headerContent, "        ptr->finishCreation(vm);\n");
         push(@headerContent, "        return ptr;\n");
         push(@headerContent, "    }\n\n");
@@ -4351,7 +4362,7 @@ sub GenerateRuntimeEnableConditionalString
 
         AddToImplIncludes("DOMWrapperWorld.h");
 
-        push(@conjuncts, "worldForDOMObject(*this)." . ToMethodName($context->extendedAttributes->{EnabledForWorld}) . "()");
+        push(@conjuncts, "worldForDOMObject(*" . $globalObjectPtr . ")." . ToMethodName($context->extendedAttributes->{EnabledForWorld}) . "()");
     }
 
     if ($context->extendedAttributes->{EnabledForGlobalObject}) {
@@ -5023,13 +5034,13 @@ sub GenerateImplementation
         AddIncludesForImplementationTypeInImpl("JSWindowProxy");
         AddIncludesForImplementationTypeInImpl("HTMLFrameOwnerElement");
         push(@implContent, "${className}::$className(VM& vm, Structure* structure, Ref<$implType>&& impl, JSWindowProxy* proxy)\n");
-        push(@implContent, "    : $parentClassName(vm, structure, WTFMove(impl), proxy)\n");
+        push(@implContent, "    : $parentClassName(vm, structure, WTF::move(impl), proxy)\n");
         push(@implContent, "{\n");
         push(@implContent, "}\n\n");
       } elsif (ShouldCreateWithJSGlobalProxy($codeGenerator, $interface)) {
         AddIncludesForImplementationTypeInImpl($interfaceName);
         push(@implContent, "${className}::$className(VM& vm, Structure* structure, Ref<$implType>&& impl)\n");
-        push(@implContent, "    : $parentClassName(vm, structure, WTFMove(impl))\n");
+        push(@implContent, "    : $parentClassName(vm, structure, WTF::move(impl))\n");
         push(@implContent, "{\n");
         push(@implContent, "}\n\n");
     } elsif (!NeedsImplementationClass($interface)) {
@@ -5037,7 +5048,7 @@ sub GenerateImplementation
         push(@implContent, "    : $parentClassName(structure, globalObject) { }\n\n");
     } else {
         push(@implContent, "${className}::$className(Structure* structure, JSDOMGlobalObject& globalObject, Ref<$implType>&& impl)\n");
-        push(@implContent, "    : $parentClassName(structure, globalObject, WTFMove(impl))\n");
+        push(@implContent, "    : $parentClassName(structure, globalObject, WTF::move(impl))\n");
         push(@implContent, "{\n");
         push(@implContent, "}\n\n");
     }
@@ -5575,7 +5586,7 @@ END
                     }
                 }
                 push(@implContent, "    if (is<${childImplType}>(impl))\n");
-                push(@implContent, "        return toJSNewlyCreated(lexicalGlobalObject, globalObject, uncheckedDowncast<${childImplType}>(WTFMove(impl)));\n");
+                push(@implContent, "        return toJSNewlyCreated(lexicalGlobalObject, globalObject, uncheckedDowncast<${childImplType}>(WTF::move(impl)));\n");
                 push(@implContent, "#endif\n") if $conditional;
             });
         }
@@ -5584,7 +5595,7 @@ END
     verifyVTable<$implType>(impl.ptr());
 #endif
 END
-        push(@implContent, "    return createWrapper<${implType}>(globalObject, WTFMove(impl));\n");
+        push(@implContent, "    return createWrapper<${implType}>(globalObject, WTF::move(impl));\n");
         push(@implContent, "}\n\n");
 
         push(@implContent, "JSC::JSValue toJS(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, ${implType}& impl)\n");
@@ -6215,8 +6226,8 @@ sub GenerateOperationBodyDefinition
         push(@argumentsToForward, "lexicalGlobalObject");
         push(@argumentsToForward, "callFrame");
         push(@argumentsToForward, "castedThis") if !$operation->isStatic;
-        push(@argumentsToForward, "WTFMove(promise)") if $hasPromiseReturnType && !$operation->extendedAttributes->{ReturnsOwnPromise};
-        push(@argumentsToForward, "WTFMove(promise), WTFMove(promise2)") if $operation->extendedAttributes->{ReturnsPromisePair};
+        push(@argumentsToForward, "WTF::move(promise)") if $hasPromiseReturnType && !$operation->extendedAttributes->{ReturnsOwnPromise};
+        push(@argumentsToForward, "WTF::move(promise), WTF::move(promise2)") if $operation->extendedAttributes->{ReturnsPromisePair};
 
         GenerateOverloadDispatcher($operation, $interface, $functionName, "Body", join(", ", @argumentsToForward));
     } elsif (HasCustomMethod($operation)) {
@@ -6233,7 +6244,7 @@ sub GenerateOperationBodyDefinition
         if ($operation->extendedAttributes->{ResultField}) {
             my $resultName = $operation->extendedAttributes->{ResultField};
             push(@$outputArray, "    auto implResult = $functionString;\n");
-            GenerateImplementationFunctionCall($outputArray, $operation, $interface, "WTFMove(implResult.$resultName)", $indent, $hasThrowScope);
+            GenerateImplementationFunctionCall($outputArray, $operation, $interface, "WTF::move(implResult.$resultName)", $indent, $hasThrowScope);
         } else {
             GenerateImplementationFunctionCall($outputArray, $operation, $interface, $functionString, $indent, $hasThrowScope);
         }
@@ -6353,7 +6364,7 @@ sub GenerateOperationDefinition
             my ($nativeValue, $mayThrowException) = ToNativeForFunctionWithoutTypeCheck($interface, $argument, $encodedName, $operation->extendedAttributes->{Conditional});
             push(@$outputArray, "    auto $name = ${nativeValue};\n");
             push(@$outputArray, "    OPERATION_RETURN_IF_EXCEPTION(throwScope, encodedJSValue());\n") if $mayThrowException;
-            $value = "WTFMove($name)";
+            $value = "WTF::move($name)";
 
             if ($shouldPassByReference) {
                 $value = "*$name";
@@ -6752,7 +6763,7 @@ sub GenerateParametersCheck
             push(@$outputArray, $indent . "auto ${name} = convertVariadicArguments<${IDLType}>(*lexicalGlobalObject, *callFrame, ${argumentIndex});\n");
             push(@$outputArray, $indent . "RETURN_IF_EXCEPTION(throwScope, encodedJSValue());\n");
 
-            $value = "WTFMove(${name})";
+            $value = "WTF::move(${name})";
         } else {
             if ($argument->isOptional) {
                 assert("[ReturnValue] is not supported for optional arguments") if $argument->extendedAttributes->{ReturnValue};
@@ -6783,8 +6794,8 @@ sub GenerateParametersCheck
         $argumentIndex++;
     }
 
-    push(@arguments, "WTFMove(promise)") if $operation->type && $codeGenerator->IsPromiseType($operation->type) && !$operation->extendedAttributes->{PromiseProxy} && !$operation->extendedAttributes->{ReturnsOwnPromise};
-    push(@arguments, "WTFMove(promise), WTFMove(promise2)") if $operation->extendedAttributes->{ReturnsPromisePair};
+    push(@arguments, "WTF::move(promise)") if $operation->type && $codeGenerator->IsPromiseType($operation->type) && !$operation->extendedAttributes->{PromiseProxy} && !$operation->extendedAttributes->{ReturnsOwnPromise};
+    push(@arguments, "WTF::move(promise), WTF::move(promise2)") if $operation->extendedAttributes->{ReturnsPromisePair};
 
     return "$functionName(" . join(", ", @arguments) . ")";
 }
@@ -7096,8 +7107,8 @@ sub GenerateCallbackImplementationOperationBody
     foreach my $argument (@{$operation->arguments}) {
         if ($argument->isVariadic) {
             my $argumentName = $argument->name;
-            push(@$contentRef, "    for (auto&& ${argumentName}Item : WTFMove(${argumentName})) {\n");
-            push(@$contentRef, "        args.append(" . NativeToJSValueUsingReferences($argument, $interfaceOrCallback, "WTFMove(${argumentName}Item)", "globalObject") . ");\n");
+            push(@$contentRef, "    for (auto&& ${argumentName}Item : WTF::move(${argumentName})) {\n");
+            push(@$contentRef, "        args.append(" . NativeToJSValueUsingReferences($argument, $interfaceOrCallback, "WTF::move(${argumentName}Item)", "globalObject") . ");\n");
             push(@$contentRef, "    }\n");
         } else {
             push(@$contentRef, "    args.append(" . NativeToJSValueUsingReferences($argument, $interfaceOrCallback, $argument->name, "globalObject") . ");\n");
@@ -7335,7 +7346,7 @@ sub GenerateImplementationCustomFunctionCall
     my @customFunctionArguments = ();
     push(@customFunctionArguments, "*lexicalGlobalObject");
     push(@customFunctionArguments, "*callFrame");
-    push(@customFunctionArguments, "WTFMove(promise)") if $codeGenerator->IsPromiseType($operation->type) && !$operation->extendedAttributes->{ReturnsOwnPromise};
+    push(@customFunctionArguments, "WTF::move(promise)") if $codeGenerator->IsPromiseType($operation->type) && !$operation->extendedAttributes->{ReturnsOwnPromise};
 
     if ($operation->isStatic) {
         push(@$outputArray, $indent . "RELEASE_AND_RETURN(throwScope, (JSValue::encode(${className}::" . $functionImplementationName . "(" . join(", ", @customFunctionArguments) . "))));\n");
@@ -7445,7 +7456,7 @@ public:
 
     static ${iteratorName}* create(JSC::VM& vm, JSC::Structure* structure, ${className}& iteratedObject, IterationKind kind, InternalIterator&& iterator)
     {
-        auto* instance = new (NotNull, JSC::allocateCell<${iteratorName}>(vm)) ${iteratorName}(structure, iteratedObject, kind, WTFMove(iterator));
+        auto* instance = new (NotNull, JSC::allocateCell<${iteratorName}>(vm)) ${iteratorName}(structure, iteratedObject, kind, WTF::move(iterator));
         instance->finishCreation(vm);
         return instance;
     }
@@ -7463,7 +7474,7 @@ END
     push(@implContent,  <<END);
 private:
     ${iteratorName}(JSC::Structure* structure, ${className}& iteratedObject, IterationKind kind, InternalIterator&& iterator)
-        : Base(structure, iteratedObject, kind, WTFMove(iterator))
+        : Base(structure, iteratedObject, kind, WTF::move(iterator))
     {
     }
 };
@@ -8501,7 +8512,7 @@ sub GenerateConstructorDefinition
             push(@constructionConversionArguments, "*lexicalGlobalObject");
             push(@constructionConversionArguments, "*castedThis->globalObject()");
             push(@constructionConversionArguments, "throwScope");
-            push(@constructionConversionArguments, "WTFMove(object)");
+            push(@constructionConversionArguments, "WTF::move(object)");
 
             # FIXME: toJSNewlyCreated should return JSObject* instead of JSValue.
             push(@$outputArray, "    auto jsValue = toJSNewlyCreated<${IDLType}>(" . join(", ", @constructionConversionArguments) . ");\n");

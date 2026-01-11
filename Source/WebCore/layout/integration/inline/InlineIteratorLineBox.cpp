@@ -31,14 +31,14 @@
 #include "LayoutIntegrationLineLayout.h"
 #include "RenderBlockFlow.h"
 #include "RenderObjectDocument.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderView.h"
 
 namespace WebCore {
 namespace InlineIterator {
 
 LineBoxIterator::LineBoxIterator(LineBox::PathVariant&& pathVariant)
-    : m_lineBox(WTFMove(pathVariant))
+    : m_lineBox(WTF::move(pathVariant))
 {
 }
 
@@ -100,7 +100,6 @@ LineBoxIterator lineBoxFor(const LayoutIntegration::InlineContent& inlineContent
 {
     return { LineBoxIteratorModernPath { inlineContent, lineIndex } };
 }
-
 
 LineBoxIterator LineBox::next() const
 {

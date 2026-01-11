@@ -42,7 +42,7 @@
 namespace WebKit {
 
 XPCServiceInitializerDelegate::XPCServiceInitializerDelegate(XPCObjectPtr<xpc_connection_t> connection, xpc_object_t initializerMessage)
-    : m_connection(WTFMove(connection))
+    : m_connection(WTF::move(connection))
     , m_initializerMessage(initializerMessage)
 {
 }
@@ -133,10 +133,10 @@ bool XPCServiceInitializerDelegate::getExtraInitializationData(HashMap<String, S
 
     auto serviceWorkerProcess = xpcDictionaryGetString(extraDataInitializationDataObject.get(), "service-worker-process"_s);
     if (!serviceWorkerProcess.isEmpty())
-        extraInitializationData.add("service-worker-process"_s, WTFMove(serviceWorkerProcess));
+        extraInitializationData.add("service-worker-process"_s, WTF::move(serviceWorkerProcess));
     auto registrableDomain = xpcDictionaryGetString(extraDataInitializationDataObject.get(), "registrable-domain"_s);
     if (!registrableDomain.isEmpty())
-        extraInitializationData.add("registrable-domain"_s, WTFMove(registrableDomain));
+        extraInitializationData.add("registrable-domain"_s, WTF::move(registrableDomain));
 
     auto isPrewarmedProcess = xpcDictionaryGetString(extraDataInitializationDataObject.get(), "is-prewarmed"_s);
     if (!isPrewarmedProcess.isEmpty())
@@ -195,7 +195,7 @@ void setOSTransaction(OSObjectPtr<os_transaction_t>&& transaction)
     }();
     UNUSED_PARAM(globalSource);
 
-    globalTransaction.get() = WTFMove(transaction);
+    globalTransaction.get() = WTF::move(transaction);
 }
 #endif
 

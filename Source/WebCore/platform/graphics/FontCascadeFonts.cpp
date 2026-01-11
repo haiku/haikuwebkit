@@ -71,7 +71,7 @@ private:
 };
 
 inline FontCascadeFonts::GlyphPageCacheEntry::GlyphPageCacheEntry(RefPtr<GlyphPage>&& singleFont)
-    : m_singleFont(WTFMove(singleFont))
+    : m_singleFont(WTF::move(singleFont))
 {
 }
 
@@ -173,7 +173,7 @@ static FontRanges realizeNextFallback(const FontCascadeDescription& description,
                     return ranges;
             }
             if (auto font = fontCache->fontForFamily(description, family))
-                return FontRanges(WTFMove(font));
+                return FontRanges(WTF::move(font));
             return FontRanges();
         }, [&](const FontFamilyPlatformSpecification& fontFamilySpecification) -> FontRanges {
             return { fontFamilySpecification.fontRanges(description), IsGenericFontFamily::Yes };
@@ -188,7 +188,7 @@ static FontRanges realizeNextFallback(const FontCascadeDescription& description,
     // Geeza Pro font.
     for (auto& family : description.families()) {
         if (auto font = fontCache->similarFont(description, family))
-            return FontRanges(WTFMove(font));
+            return FontRanges(WTF::move(font));
     }
     return { };
 }
@@ -394,7 +394,7 @@ GlyphData FontCascadeFonts::glyphDataForSystemFallback(char32_t character, const
 
     // Keep the system fallback fonts we use alive.
     if (fallbackGlyphData.isValid())
-        m_systemFallbackFontSet.add(WTFMove(systemFallbackFont));
+        m_systemFallbackFontSet.add(WTF::move(systemFallbackFont));
 
     return fallbackGlyphData;
 }

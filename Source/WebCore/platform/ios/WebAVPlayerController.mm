@@ -1159,7 +1159,7 @@ Class webAVPlayerControllerClassSingleton()
 - (id)copyWithZone:(NSZone *)zone
 {
     RetainPtr displayName = adoptNS([_localizedDisplayName copyWithZone:zone]);
-    return [[WebAVMediaSelectionOption allocWithZone:zone] initWithMediaType:_mediaType displayName:displayName.get()];
+    SUPPRESS_RETAINPTR_CTOR_ADOPT return [[WebAVMediaSelectionOption allocWithZone:zone] initWithMediaType:_mediaType displayName:displayName.get()];
 }
 
 - (NSString *)displayName

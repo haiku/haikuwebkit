@@ -68,7 +68,7 @@ void BrowsingContextGroup::sharedProcessForSite(WebsiteDataStore& websiteDataSto
         lockdownMode,
         enhancedSecurity,
         pageConfiguration = Ref { pageConfiguration },
-        completionHandler = WTFMove(completionHandler)
+        completionHandler = WTF::move(completionHandler)
     ](const HashSet<WebCore::RegistrableDomain>& domainsWithUserInteraction) mutable {
 
         if (domainsWithUserInteraction.contains(site.domain()) && !protectedThis->m_sharedProcessSites.contains(site))
@@ -150,7 +150,7 @@ void BrowsingContextGroup::addFrameProcessAndInjectPageContextIf(FrameProcess& p
             ASSERT(existingPage->page() == newRemotePage->page());
         }
 #endif
-        set.add(WTFMove(newRemotePage));
+        set.add(WTF::move(newRemotePage));
     };
 
     if (process.isSharedProcess()) {
@@ -190,6 +190,7 @@ void BrowsingContextGroup::removeFrameProcess(FrameProcess& process)
         set.removeIf([&] (auto& remotePage) {
             if (remotePage->process().coreProcessIdentifier() != process.process().coreProcessIdentifier())
                 return false;
+            remotePage->disconnect();
             return true;
         });
         return set.isEmpty();
@@ -222,7 +223,7 @@ void BrowsingContextGroup::addPage(WebPageProxy& page)
             ASSERT(existingPage->page() == newRemotePage->page());
         }
 #endif
-        set.add(WTFMove(newRemotePage));
+        set.add(WTF::move(newRemotePage));
         return false;
     });
 }
@@ -231,13 +232,14 @@ void BrowsingContextGroup::addRemotePage(WebPageProxy& page, Ref<RemotePageProxy
 {
     m_remotePages.ensure(page, [] {
         return HashSet<Ref<RemotePageProxy>> { };
-    }).iterator->value.add(WTFMove(remotePage));
+    }).iterator->value.add(WTF::move(remotePage));
 }
 
 void BrowsingContextGroup::removePage(WebPageProxy& page)
 {
     m_pages.remove(page);
-    m_remotePages.remove(page);
+    for (auto& remotePage : m_remotePages.take(page))
+        remotePage->disconnect();
 }
 
 void BrowsingContextGroup::forEachRemotePage(const WebPageProxy& page, Function<void(RemotePageProxy&)>&& function)
@@ -285,7 +287,7 @@ void BrowsingContextGroup::transitionPageToRemotePage(WebPageProxy& page, const 
         ASSERT(existingPage->page() == newRemotePage->page());
     }
 #endif
-    set.add(WTFMove(newRemotePage));
+    set.add(WTF::move(newRemotePage));
 }
 
 void BrowsingContextGroup::transitionProvisionalPageToRemotePage(ProvisionalPageProxy& page, const Site& provisionalNavigationFailureSite)
@@ -301,7 +303,7 @@ void BrowsingContextGroup::transitionProvisionalPageToRemotePage(ProvisionalPage
         ASSERT(existingPage->page() == newRemotePage->page());
     }
 #endif
-    set.add(WTFMove(newRemotePage));
+    set.add(WTF::move(newRemotePage));
 }
 
 bool BrowsingContextGroup::hasRemotePages(const WebPageProxy& page)

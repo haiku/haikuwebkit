@@ -98,7 +98,7 @@ public:
 
     // This can be called on a background thread.
     void scheduleWork(Instance::WorkItem&&);
-    uint64_t WARN_UNUSED_RETURN retainCounterSampleBuffer(CommandEncoder&);
+    WARN_UNUSED_RETURN uint64_t retainCounterSampleBuffer(CommandEncoder&);
     void releaseCounterSampleBuffer(uint64_t);
     void retainTimestampsForOneUpdate(NSMutableSet<id<MTLCounterSampleBuffer>> *);
     void waitForAllCommitedWorkToComplete();

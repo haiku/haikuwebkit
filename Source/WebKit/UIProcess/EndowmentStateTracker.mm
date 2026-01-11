@@ -109,7 +109,7 @@ void EndowmentStateTracker::registerMonitorIfNecessary()
 
         [config setUpdateHandler:[this] (RBSProcessMonitor * _Nonnull monitor, RBSProcessHandle * _Nonnull process, RBSProcessStateUpdate * _Nonnull update) mutable {
             RunLoop::mainSingleton().dispatch([this, state = stateFromEndowments(update.state.endowmentNamespaces)]() mutable {
-                setState(WTFMove(state));
+                setState(WTF::move(state));
             });
         }];
     }];
@@ -140,7 +140,7 @@ void EndowmentStateTracker::setState(State&& state)
     if (!isUserFacingChanged && !isVisibleChanged)
         return;
 
-    m_state = WTFMove(state);
+    m_state = WTF::move(state);
 
     RELEASE_LOG(ViewState, "%p - EndowmentStateTracker::setState() isUserFacing: %{public}s isVisible: %{public}s", this, m_state->isUserFacing ? "true" : "false", m_state->isVisible ? "true" : "false");
 

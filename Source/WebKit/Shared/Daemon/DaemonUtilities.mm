@@ -84,12 +84,12 @@ void startListeningForMachServiceConnections(const char* serviceName, ASCIILiter
 XPCObjectPtr<xpc_object_t> vectorToXPCData(Vector<uint8_t>&& vector)
 {
     // FIXME: This is a false positive. <rdar://164843889>
-    SUPPRESS_RETAINPTR_CTOR_ADOPT return adoptXPCObject(xpc_data_create_with_dispatch_data(makeDispatchData(WTFMove(vector)).get()));
+    SUPPRESS_RETAINPTR_CTOR_ADOPT return adoptXPCObject(xpc_data_create_with_dispatch_data(makeDispatchData(WTF::move(vector)).get()));
 }
 
 XPCObjectPtr<xpc_object_t> encoderToXPCData(UniqueRef<IPC::Encoder>&& encoder)
 {
-    __block auto blockEncoder = WTFMove(encoder);
+    __block auto blockEncoder = WTF::move(encoder);
     auto buffer = blockEncoder->span();
     auto dispatchData = adoptOSObject(dispatch_data_create(buffer.data(), buffer.size(), mainDispatchQueueSingleton(), ^{
         // Explicitly clear out the encoder, destroying it.

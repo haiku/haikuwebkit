@@ -93,7 +93,7 @@ private:
     void runErrorSteps(Exception&& exception) final
     {
         if (RefPtr sink = m_sink.get())
-            sink->error(WTFMove(exception));
+            sink->error(WTF::move(exception));
     }
 
     WeakPtr<ReadableStreamToSharedBufferSink> m_sink;
@@ -101,7 +101,7 @@ private:
 };
 
 ReadableStreamToSharedBufferSink::ReadableStreamToSharedBufferSink(Callback&& callback)
-    : m_callback { WTFMove(callback) }
+    : m_callback { WTF::move(callback) }
 {
 }
 
@@ -176,7 +176,7 @@ void ReadableStreamToSharedBufferSink::error(Exception&& exception)
         return;
 
     auto callback = std::exchange(m_callback, { });
-    callback(WTFMove(exception));
+    callback(WTF::move(exception));
 }
 
 void ReadableStreamToSharedBufferSink::clearCallback()

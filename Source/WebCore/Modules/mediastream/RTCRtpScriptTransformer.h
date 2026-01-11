@@ -80,7 +80,7 @@ private:
     // ActiveDOMObject.
     void stop() final { stopPendingActivity(); }
 
-    void stopPendingActivity() { auto pendingActivity = WTFMove(m_pendingActivity); }
+    void stopPendingActivity() { auto pendingActivity = WTF::move(m_pendingActivity); }
 
     void enqueueFrame(ScriptExecutionContext&, Ref<RTCRtpTransformableFrame>&&);
 

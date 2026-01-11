@@ -110,6 +110,8 @@ private:
 };
 
 class CDMInstanceThunder final : public CDMInstanceProxy {
+    WTF_MAKE_TZONE_ALLOCATED(CDMInstanceThunder);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(CDMInstanceThunder);
 public:
     CDMInstanceThunder(const String& keySystem);
     virtual ~CDMInstanceThunder() = default;
@@ -142,7 +144,7 @@ public:
 
     bool isValid() const { return m_session && m_message && !m_message->isEmpty(); }
 
-    void setClient(WeakPtr<CDMInstanceSessionClient>&& client) final { m_client = WTFMove(client); }
+    void setClient(WeakPtr<CDMInstanceSessionClient>&& client) final { m_client = WTF::move(client); }
     void clearClient() final { m_client.clear(); }
 
 private:

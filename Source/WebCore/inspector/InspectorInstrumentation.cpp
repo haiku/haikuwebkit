@@ -887,13 +887,13 @@ bool InspectorInstrumentation::shouldInterceptResponseImpl(InstrumentingAgents& 
 void InspectorInstrumentation::interceptRequestImpl(InstrumentingAgents& instrumentingAgents, ResourceLoader& loader, Function<void(const ResourceRequest&)>&& handler)
 {
     if (auto* networkAgent = instrumentingAgents.enabledNetworkAgent())
-        networkAgent->interceptRequest(loader, WTFMove(handler));
+        networkAgent->interceptRequest(loader, WTF::move(handler));
 }
 
 void InspectorInstrumentation::interceptResponseImpl(InstrumentingAgents& instrumentingAgents, const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<FragmentedSharedBuffer>)>&& handler)
 {
     if (auto* networkAgent = instrumentingAgents.enabledNetworkAgent())
-        networkAgent->interceptResponse(response, identifier, WTFMove(handler));
+        networkAgent->interceptResponse(response, identifier, WTF::move(handler));
 }
 
 // JavaScriptCore InspectorDebuggerAgent should know Console MessageTypes.
@@ -912,7 +912,7 @@ void InspectorInstrumentation::addMessageToConsoleImpl(InstrumentingAgents& inst
     String messageText = message->message();
 
     if (auto* consoleAgent = instrumentingAgents.webConsoleAgent())
-        consoleAgent->addMessageToConsole(WTFMove(message));
+        consoleAgent->addMessageToConsole(WTF::move(message));
     // FIXME: This should just pass the message on to the debugger agent. JavaScriptCore InspectorDebuggerAgent should know Console MessageTypes.
     if (auto* webDebuggerAgent = instrumentingAgents.enabledWebDebuggerAgent()) {
         if (isConsoleAssertMessage(source, type))
@@ -940,8 +940,15 @@ void InspectorInstrumentation::consoleCountResetImpl(InstrumentingAgents& instru
 
 void InspectorInstrumentation::takeHeapSnapshotImpl(InstrumentingAgents& instrumentingAgents, const String& title)
 {
-    if (auto* consoleAgent = instrumentingAgents.webConsoleAgent())
-        consoleAgent->takeHeapSnapshot(title);
+    if (auto* heapAgent = instrumentingAgents.persistentWebHeapAgent()) {
+        auto result = heapAgent->snapshot();
+        if (!result)
+            return;
+
+        auto [timestamp, snapshotData] = WTF::move(result.value());
+        if (auto* consoleAgent = instrumentingAgents.webConsoleAgent())
+            consoleAgent->reportHeapSnapshot(timestamp, snapshotData, title);
+    }
 }
 
 void InspectorInstrumentation::startConsoleTimingImpl(InstrumentingAgents& instrumentingAgents, JSC::JSGlobalObject* exec, const String& label)
@@ -961,7 +968,7 @@ void InspectorInstrumentation::logConsoleTimingImpl(InstrumentingAgents& instrum
         return;
 
     if (auto* consoleAgent = instrumentingAgents.webConsoleAgent())
-        consoleAgent->logTiming(exec, label, WTFMove(arguments));
+        consoleAgent->logTiming(exec, label, WTF::move(arguments));
 }
 
 void InspectorInstrumentation::stopConsoleTimingImpl(InstrumentingAgents& instrumentingAgents, JSC::JSGlobalObject* exec, const String& label)

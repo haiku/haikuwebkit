@@ -183,17 +183,19 @@ enum class LinkTimeConstant : int32_t;
     macro(setIteratorFieldKind) \
     macro(stringIteratorFieldIndex) \
     macro(stringIteratorFieldIteratedString) \
-    macro(asyncGeneratorFieldSuspendReason) \
-    macro(asyncGeneratorFieldQueueFirst) \
-    macro(asyncGeneratorFieldQueueLast) \
+    macro(asyncGeneratorFieldQueue) \
+    macro(asyncGeneratorFieldResumeValue) \
+    macro(asyncGeneratorFieldResumeMode) \
+    macro(asyncGeneratorFieldResumePromise) \
+    macro(AsyncGeneratorResumeModeEmpty) \
     macro(AsyncGeneratorStateCompleted) \
     macro(AsyncGeneratorStateExecuting) \
     macro(AsyncGeneratorStateAwaitingReturn) \
-    macro(AsyncGeneratorStateSuspendedStart) \
-    macro(AsyncGeneratorStateSuspendedYield) \
+    macro(AsyncGeneratorStateInit) \
     macro(AsyncGeneratorSuspendReasonYield) \
     macro(AsyncGeneratorSuspendReasonAwait) \
-    macro(AsyncGeneratorSuspendReasonNone) \
+    macro(AsyncGeneratorSuspendReasonShift) \
+    macro(AsyncGeneratorSuspendReasonMask) \
     macro(asyncFromSyncIteratorFieldSyncIterator) \
     macro(asyncFromSyncIteratorFieldNextMethod) \
     macro(abstractModuleRecordFieldState) \
@@ -212,6 +214,12 @@ enum class LinkTimeConstant : int32_t;
     macro(asyncDisposableStackFieldCapability) \
     macro(AsyncDisposableStackStatePending) \
     macro(AsyncDisposableStackStateDisposed) \
+    macro(InternalMicrotaskAsyncFromSyncIteratorContinue) \
+    macro(InternalMicrotaskAsyncFromSyncIteratorDone) \
+    macro(InternalMicrotaskAsyncGeneratorYieldAwaited) \
+    macro(InternalMicrotaskAsyncGeneratorBodyCallNormal) \
+    macro(InternalMicrotaskAsyncGeneratorBodyCallReturn) \
+    macro(InternalMicrotaskAsyncGeneratorResumeNext) \
 
 
 #define JSC_COMMON_BYTECODE_INTRINSIC_CONSTANTS_CUSTOM_EACH_NAME(macro) \

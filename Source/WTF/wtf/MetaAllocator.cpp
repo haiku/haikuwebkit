@@ -37,6 +37,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace WTF {
 
+WTF_MAKE_COMPACT_TZONE_ALLOCATED_IMPL(MetaAllocatorHandle);
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(MetaAllocatorHandle);
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(MetaAllocatorFreeSpace);
 
@@ -49,8 +50,8 @@ MetaAllocator::~MetaAllocator()
     for (CheckedPtr node = m_freeSpaceSizeMap.first(); node;) {
         CheckedPtr next = node->successor();
         m_freeSpaceSizeMap.remove(node.get());
-        freeFreeSpaceNode(WTFMove(node));
-        node = WTFMove(next);
+        freeFreeSpaceNode(WTF::move(node));
+        node = WTF::move(next);
     }
 #ifndef NDEBUG
     ASSERT(!m_mallocBalance);
@@ -232,7 +233,7 @@ MetaAllocator::FreeSpacePtr MetaAllocator::findAndRemoveFreeSpace(size_t sizeInB
         
         m_freeSpaceStartAddressMap.remove(node->m_start);
         m_freeSpaceEndAddressMap.remove(node->m_end);
-        freeFreeSpaceNode(WTFMove(node));
+        freeFreeSpaceNode(WTF::move(node));
     } else {
         // Try to be a good citizen and ensure that the returned chunk of memory
         // straddles as few pages as possible, but only insofar as doing so will
@@ -357,7 +358,7 @@ void MetaAllocator::addFreeSpace(FreeSpacePtr start, size_t sizeInBytes)
             m_freeSpaceSizeMap.insert(leftNode.get());
             m_freeSpaceEndAddressMap.add(rightEnd, leftNode.get());
 
-            freeFreeSpaceNode(WTFMove(rightNode));
+            freeFreeSpaceNode(WTF::move(rightNode));
         } else {
             leftNode->m_end += sizeInBytes;
 

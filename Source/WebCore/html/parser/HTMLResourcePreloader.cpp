@@ -70,7 +70,7 @@ CachedResourceRequest PreloadRequest::resourceRequest(Document& document)
         options.referrerPolicy = m_referrerPolicy;
     options.fetchPriority = m_fetchPriority;
     options.nonce = m_nonceAttribute;
-    auto request = createPotentialAccessControlRequest(completeURL(document), WTFMove(options), document, crossOriginMode);
+    auto request = createPotentialAccessControlRequest(completeURL(document), WTF::move(options), document, crossOriginMode);
     request.setInitiatorType(m_initiatorType);
 
     if (m_scriptIsAsync && m_resourceType == CachedResource::Type::Script && m_scriptType == ScriptType::Classic)
@@ -94,7 +94,7 @@ HTMLResourcePreloader::~HTMLResourcePreloader() = default;
 void HTMLResourcePreloader::preload(PreloadRequestStream requests)
 {
     for (auto& request : requests)
-        preload(WTFMove(request));
+        preload(WTF::move(request));
 }
 
 void HTMLResourcePreloader::preload(std::unique_ptr<PreloadRequest> preload)
@@ -109,7 +109,7 @@ void HTMLResourcePreloader::preload(std::unique_ptr<PreloadRequest> preload)
     if (!MQ::MediaQueryEvaluator { screenAtom(), *document, document->renderStyle() }.evaluate(queries))
         return;
 
-    document->protectedCachedResourceLoader()->preload(preload->resourceType(), preload->resourceRequest(*document));
+    std::ignore = document->protectedCachedResourceLoader()->preload(preload->resourceType(), preload->resourceRequest(*document));
 }
 
 }

@@ -4253,7 +4253,7 @@ PrivateTokenTestSetupState setupWebViewForPrivateTokenTests(bool& didDecideServi
     };
     [webView setNavigationDelegate:navigationDelegate.get()];
 
-    return { webView, WTFMove(server), storeConfiguration, dataStore, websiteDataStoreDelegate, navigationDelegate };
+    return { webView, WTF::move(server), storeConfiguration, dataStore, websiteDataStoreDelegate, navigationDelegate };
 }
 
 #if HAVE(ALLOW_PRIVATE_ACCESS_TOKENS_FOR_THIRD_PARTY)

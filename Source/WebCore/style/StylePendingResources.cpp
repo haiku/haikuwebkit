@@ -29,7 +29,7 @@
 #include "CSSCursorImageValue.h"
 #include "DocumentResourceLoader.h"
 #include "DocumentView.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "SVGURIReference.h"
 #include "Settings.h"
 #include "StyleCursor.h"

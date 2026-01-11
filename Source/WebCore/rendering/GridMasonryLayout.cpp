@@ -28,9 +28,9 @@
 #include "GridLayoutFunctions.h"
 #include "RenderBoxInlines.h"
 #include "RenderGrid.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
+#include "StyleFlowTolerance.h"
 #include "StyleGridPositionsResolver.h"
-#include "StyleItemTolerance.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "WritingMode.h"
 
@@ -43,6 +43,7 @@ void GridMasonryLayout::initializeMasonry(unsigned gridAxisTracks, Style::GridTr
     m_masonryAxisGridGap = m_renderGrid->gridGap(m_masonryAxisDirection);
     m_gridAxisTracksCount = gridAxisTracks;
     m_gridContentSize = 0;
+    m_itemOffsets.clear();
 
     m_renderGrid->currentGrid().setupGridForMasonryLayout();
     m_renderGrid->populateExplicitGridAndOrderIterator();
@@ -109,13 +110,25 @@ LayoutUnit GridMasonryLayout::calculateMasonryIntrinsicLogicalWidth(RenderBox& g
     return { };
 }
 
-void GridMasonryLayout::setItemGridAxisContainingBlockToGridArea(const GridTrackSizingAlgorithm& algorithm, RenderBox& gridItem)
+void GridMasonryLayout::setItemContainingBlockToGridArea(const GridTrackSizingAlgorithm& algorithm, RenderBox& gridItem)
 {
-    if (auto direction = gridAxisDirection(); direction == Style::GridTrackSizingDirection::Columns)
+    CheckedPtr<RenderGrid> containingBlock = dynamicDowncast<RenderGrid>(gridItem.containingBlock());
+    if (!containingBlock) {
+        ASSERT_NOT_REACHED();
+        return;
+    }
+
+    // FIXME: We need to set both axes here because RenderGrid sets and expects them all over the place.
+    // Ideally we untangle all that and only set the grid axis that we need. webkit.org/b/305136
+    auto direction = gridAxisDirection();
+    if (direction == Style::GridTrackSizingDirection::Columns) {
         gridItem.setGridAreaContentLogicalWidth(algorithm.gridAreaBreadthForGridItem(gridItem, direction));
-    else
+        gridItem.setGridAreaContentLogicalHeight(containingBlock->availableLogicalHeightForContentBox());
+    } else {
         gridItem.setGridAreaContentLogicalHeight(algorithm.gridAreaBreadthForGridItem(gridItem, direction));
-    
+        gridItem.setGridAreaContentLogicalWidth(containingBlock->contentBoxLogicalWidth());
+    }
+
     // FIXME(249230): Try to cache masonry layout sizes
     gridItem.setChildNeedsLayout(MarkOnlyThis);
 }
@@ -144,7 +157,7 @@ void GridMasonryLayout::insertIntoGridAndLayoutItem(const GridTrackSizingAlgorit
         gridItem.setOverridingBorderBoxLogicalWidth(calculateMasonryIntrinsicLogicalWidth(gridItem, layoutPhase));
 
     m_renderGrid->currentGrid().insert(gridItem, area);
-    setItemGridAxisContainingBlockToGridArea(algorithm, gridItem);
+    setItemContainingBlockToGridArea(algorithm, gridItem);
     gridItem.layoutIfNeeded();
     updateRunningPositions(gridItem, area);
     m_autoFlowNextCursor = gridAxisSpanFromArea(area).endLine() % m_gridAxisTracksCount;
@@ -206,8 +219,8 @@ GridArea GridMasonryLayout::gridAreaForIndefiniteGridAxisItem(const RenderBox& i
     auto itemSpanLength = Style::GridPositionsResolver::spanSizeForAutoPlacedItem(item, gridAxisDirection());
     auto gridAxisLines = m_gridAxisTracksCount + 1;
 
-    // Get item-tolerance from the masonry container's style
-    const auto& tolerance = m_renderGrid->style().itemTolerance();
+    // Get flow-tolerance from the masonry container's style
+    const auto& tolerance = m_renderGrid->style().flowTolerance();
 
     if (tolerance.isInfinite()) {
         // Infinite tolerance: place items strictly in order without considering track lengths
@@ -233,13 +246,13 @@ GridArea GridMasonryLayout::gridAreaForIndefiniteGridAxisItem(const RenderBox& i
             // Normal resolves to 1em
             return LayoutUnit { m_renderGrid->checkedStyle()->computedFontSize() };
         },
-        [&](const typename Style::ItemTolerance::Fixed& fixed) -> LayoutUnit {
+        [&](const typename Style::FlowTolerance::Fixed& fixed) -> LayoutUnit {
             return LayoutUnit { fixed.resolveZoom(m_renderGrid->style().usedZoomForLength()) };
         },
-        [&](const typename Style::ItemTolerance::Percentage& percentage) -> LayoutUnit {
+        [&](const typename Style::FlowTolerance::Percentage& percentage) -> LayoutUnit {
             return Style::evaluate<LayoutUnit>(percentage, contentBoxSize);
         },
-        [&](const typename Style::ItemTolerance::Calc& calc) -> LayoutUnit {
+        [&](const typename Style::FlowTolerance::Calc& calc) -> LayoutUnit {
             return Style::evaluate<LayoutUnit>(calc, contentBoxSize, m_renderGrid->style().usedZoomForLength());
         },
         [](const CSS::Keyword::Infinite&) -> LayoutUnit {

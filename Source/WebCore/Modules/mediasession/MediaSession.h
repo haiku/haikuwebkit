@@ -134,9 +134,9 @@ public:
     void updateNowPlayingInfo(NowPlayingInfo&);
 
 #if ENABLE(MEDIA_STREAM)
-    void setMicrophoneActive(bool isActive, DOMPromiseDeferred<void>&& promise) { updateCaptureState(isActive, WTFMove(promise), MediaProducerMediaCaptureKind::Microphone); }
-    void setCameraActive(bool isActive, DOMPromiseDeferred<void>&& promise) { updateCaptureState(isActive, WTFMove(promise), MediaProducerMediaCaptureKind::Camera); }
-    void setScreenshareActive(bool isActive, DOMPromiseDeferred<void>&& promise) { updateCaptureState(isActive, WTFMove(promise), MediaProducerMediaCaptureKind::Display); }
+    void setMicrophoneActive(bool isActive, DOMPromiseDeferred<void>&& promise) { updateCaptureState(isActive, WTF::move(promise), MediaProducerMediaCaptureKind::Microphone); }
+    void setCameraActive(bool isActive, DOMPromiseDeferred<void>&& promise) { updateCaptureState(isActive, WTF::move(promise), MediaProducerMediaCaptureKind::Camera); }
+    void setScreenshareActive(bool isActive, DOMPromiseDeferred<void>&& promise) { updateCaptureState(isActive, WTF::move(promise), MediaProducerMediaCaptureKind::Display); }
 #endif
 
     WEBCORE_EXPORT bool hasActionHandler(const MediaSessionAction) const;

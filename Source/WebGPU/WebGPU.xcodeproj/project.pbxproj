@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		075BAABA2EEFBCA2008765CE /* WGPUBufferImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 075BAAB92EEFBCA2008765CE /* WGPUBufferImpl.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		075BAABC2EEFC6B4008765CE /* WGPUTextureImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 075BAABB2EEFC6B4008765CE /* WGPUTextureImpl.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		075BAABE2EEFCA9C008765CE /* WGPUTextureViewImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 075BAABD2EEFCA9C008765CE /* WGPUTextureViewImpl.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		075BAAC02EEFCAE1008765CE /* WGPUQuerySetImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 075BAABF2EEFCAE1008765CE /* WGPUQuerySetImpl.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		07662ED72EEB9E6B006C3698 /* Adapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C5ACAB2273A426D0095F8D5 /* Adapter.h */; };
+		079861942EF13A1100659042 /* CxxBridgingPublic.h in Headers */ = {isa = PBXBuildFile; fileRef = 079861932EF13A1100659042 /* CxxBridgingPublic.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		07D2916D2EC9C4D200A32120 /* CxxBridging.h in Headers */ = {isa = PBXBuildFile; fileRef = 07D2916C2EC9C4D200A32120 /* CxxBridging.h */; };
 		07D2916E2EC9C7A400A32120 /* ComputePassEncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C5ACAAA273A426D0095F8D5 /* ComputePassEncoder.h */; };
 		07D2916F2EC9CE9F00A32120 /* IsValidToUseWith.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C33755D27FA23B8002F1644 /* IsValidToUseWith.h */; };
@@ -67,7 +73,7 @@
 		1C5ACACC273A426E0095F8D5 /* RenderBundleEncoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1C5ACAAE273A426D0095F8D5 /* RenderBundleEncoder.mm */; };
 		1C5ACACE273A426E0095F8D5 /* ShaderModule.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1C5ACAB0273A426D0095F8D5 /* ShaderModule.mm */; };
 		1C5ACACF273A426E0095F8D5 /* Texture.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1C5ACAB1273A426D0095F8D5 /* Texture.mm */; };
-		1C5ACAD3273A4C860095F8D5 /* WebGPUExt.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C5ACAD2273A4C860095F8D5 /* WebGPUExt.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		1C5ACAD3273A4C860095F8D5 /* WebGPUExt.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C5ACAD2273A4C860095F8D5 /* WebGPUExt.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		1C5ACADF273A55AF0095F8D5 /* BindGroup.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1C5ACADE273A55AF0095F8D5 /* BindGroup.mm */; };
 		1C5ACAE1273A55C10095F8D5 /* BindGroupLayout.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1C5ACAE0273A55C10095F8D5 /* BindGroupLayout.mm */; };
 		1C5ACAE3273A55CD0095F8D5 /* CommandBuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1C5ACAE2273A55CD0095F8D5 /* CommandBuffer.mm */; };
@@ -81,7 +87,7 @@
 		1CA5B5002A6F2A5E00E5F297 /* libwgsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1CEBD7F22716B2CC00A5254D /* libwgsl.a */; };
 		1CBAB0922718CCA0006080BB /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1CBAB0912718CCA0006080BB /* JavaScriptCore.framework */; };
 		1CBD2E992977DAC900BBF52C /* PresentationContextIOSurface.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1CBD2E952977DAC900BBF52C /* PresentationContextIOSurface.mm */; };
-		1CEBD7E72716AFBA00A5254D /* WebGPU.h in Headers */ = {isa = PBXBuildFile; fileRef = 1CEBD7E62716AFBA00A5254D /* WebGPU.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		1CEBD7E72716AFBA00A5254D /* WebGPU.h in Headers */ = {isa = PBXBuildFile; fileRef = 1CEBD7E62716AFBA00A5254D /* WebGPU.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		1CEBD7F82716B34400A5254D /* WGSL.h in Headers */ = {isa = PBXBuildFile; fileRef = 1CEBD7F72716B34400A5254D /* WGSL.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1CEBD8032716BF8200A5254D /* WGSL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1CEBD8022716BF8200A5254D /* WGSL.cpp */; };
 		1CEBD8262716CACC00A5254D /* libwgsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1CEBD7F22716B2CC00A5254D /* libwgsl.a */; };
@@ -317,6 +323,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		075BAAB92EEFBCA2008765CE /* WGPUBufferImpl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WGPUBufferImpl.h; sourceTree = "<group>"; };
+		075BAABB2EEFC6B4008765CE /* WGPUTextureImpl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WGPUTextureImpl.h; sourceTree = "<group>"; };
+		075BAABD2EEFCA9C008765CE /* WGPUTextureViewImpl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WGPUTextureViewImpl.h; sourceTree = "<group>"; };
+		075BAABF2EEFCAE1008765CE /* WGPUQuerySetImpl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WGPUQuerySetImpl.h; sourceTree = "<group>"; };
+		07607E0D2EFC966700A2F311 /* WebGPU_Private.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = WebGPU_Private.modulemap; sourceTree = "<group>"; };
+		079861932EF13A1100659042 /* CxxBridgingPublic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CxxBridgingPublic.h; sourceTree = "<group>"; };
 		07D2916C2EC9C4D200A32120 /* CxxBridging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CxxBridging.h; sourceTree = "<group>"; };
 		0D078E8F2E737C0500A9B266 /* DDMesh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DDMesh.h; sourceTree = "<group>"; };
 		0D078E902E737C0500A9B266 /* DDMesh.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = DDMesh.mm; sourceTree = "<group>"; };
@@ -509,7 +521,6 @@
 		941C1EE42CA328EE004D4220 /* Queue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Queue.swift; sourceTree = "<group>"; };
 		94200C502CADBD6B00484401 /* CommandEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandEncoder.swift; sourceTree = "<group>"; };
 		947871492C98CEC6003DB695 /* Buffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Buffer.swift; sourceTree = "<group>"; };
-		94CC0FE52CA203AB00CB3264 /* WebGPUSwiftInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebGPUSwiftInternal.h; sourceTree = "<group>"; };
 		97099ABE2AA60D58003B41F8 /* ASTElaboratedTypeExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTElaboratedTypeExpression.h; sourceTree = "<group>"; };
 		97099ABF2AA60D58003B41F8 /* ASTReferenceTypeExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTReferenceTypeExpression.h; sourceTree = "<group>"; };
 		97099AC02AA60D58003B41F8 /* ASTArrayTypeExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTArrayTypeExpression.h; sourceTree = "<group>"; };
@@ -682,6 +693,7 @@
 				1C5ACAA2273A426D0095F8D5 /* ComputePipeline.mm */,
 				1CEBD80A2716C36C00A5254D /* config.h */,
 				07D2916C2EC9C4D200A32120 /* CxxBridging.h */,
+				079861932EF13A1100659042 /* CxxBridgingPublic.h */,
 				0D078E8F2E737C0500A9B266 /* DDMesh.h */,
 				0D078E902E737C0500A9B266 /* DDMesh.mm */,
 				0DACD85A2E79E66F00CDA0DC /* DDModelTypes.h */,
@@ -731,8 +743,13 @@
 				0D078E912E737C0500A9B266 /* USDModel.swift */,
 				1CEBD7E62716AFBA00A5254D /* WebGPU.h */,
 				1CC0C8C9273A7D8900D0B481 /* WebGPU.modulemap */,
+				07607E0D2EFC966700A2F311 /* WebGPU_Private.modulemap */,
 				1C5ACAD2273A4C860095F8D5 /* WebGPUExt.h */,
 				1CA7CDB12A2B284A0094071F /* WebGPUInternal.h */,
+				075BAAB92EEFBCA2008765CE /* WGPUBufferImpl.h */,
+				075BAABF2EEFCAE1008765CE /* WGPUQuerySetImpl.h */,
+				075BAABB2EEFC6B4008765CE /* WGPUTextureImpl.h */,
+				075BAABD2EEFCA9C008765CE /* WGPUTextureViewImpl.h */,
 				0D943C0D2C6571BC00D33BA5 /* XRBinding.h */,
 				0D943C0E2C6571BC00D33BA5 /* XRBinding.mm */,
 				0DD5FD332C66947B004AF552 /* XRProjectionLayer.h */,
@@ -984,7 +1001,6 @@
 			isa = PBXGroup;
 			children = (
 				DD8EE22F2CE6B4B3004DD6F8 /* module.modulemap */,
-				94CC0FE52CA203AB00CB3264 /* WebGPUSwiftInternal.h */,
 			);
 			path = Internal;
 			sourceTree = "<group>";
@@ -997,6 +1013,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1CEBD7E72716AFBA00A5254D /* WebGPU.h in Headers */,
+				07662ED72EEB9E6B006C3698 /* Adapter.h in Headers */,
 				07D291702EC9CEC400A32120 /* APIConversions.h in Headers */,
 				07D291712EC9CEC800A32120 /* BindableResource.h in Headers */,
 				07D291722EC9CECC00A32120 /* BindGroup.h in Headers */,
@@ -1008,6 +1025,7 @@
 				07D2916E2EC9C7A400A32120 /* ComputePassEncoder.h in Headers */,
 				07D291752EC9CEDF00A32120 /* ComputePipeline.h in Headers */,
 				07D2916D2EC9C4D200A32120 /* CxxBridging.h in Headers */,
+				079861942EF13A1100659042 /* CxxBridgingPublic.h in Headers */,
 				0D078E922E737C0500A9B266 /* DDMesh.h in Headers */,
 				0DACD85B2E79E66F00CDA0DC /* DDModelTypes.h in Headers */,
 				941C64B72CAB4A0700A63214 /* Device.h in Headers */,
@@ -1035,6 +1053,10 @@
 				07D291822EC9CF2A00A32120 /* TextureView.h in Headers */,
 				1C5ACAD3273A4C860095F8D5 /* WebGPUExt.h in Headers */,
 				07D291832EC9CF3100A32120 /* WebGPUInternal.h in Headers */,
+				075BAABA2EEFBCA2008765CE /* WGPUBufferImpl.h in Headers */,
+				075BAAC02EEFCAE1008765CE /* WGPUQuerySetImpl.h in Headers */,
+				075BAABC2EEFC6B4008765CE /* WGPUTextureImpl.h in Headers */,
+				075BAABE2EEFCA9C008765CE /* WGPUTextureViewImpl.h in Headers */,
 				0D943C0F2C6571BC00D33BA5 /* XRBinding.h in Headers */,
 				0DD5FD352C66947B004AF552 /* XRProjectionLayer.h in Headers */,
 				0D943C242C65E46400D33BA5 /* XRSubImage.h in Headers */,

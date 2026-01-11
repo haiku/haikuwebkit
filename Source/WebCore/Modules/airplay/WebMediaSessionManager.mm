@@ -347,7 +347,7 @@ void WebMediaSessionManager::clientStateDidChange(WebMediaSessionManagerClient& 
 void WebMediaSessionManager::setPlaybackTarget(Ref<MediaPlaybackTarget>&& target)
 {
     ALWAYS_LOG_MEDIASESSIONMANAGER(__func__, "has active route = ", target->hasActiveRoute());
-    m_playbackTarget = WTFMove(target);
+    m_playbackTarget = WTF::move(target);
     m_targetChanged = true;
     scheduleDelayedTask(ConfigurationTaskFlags::TargetClientsConfiguration);
 }

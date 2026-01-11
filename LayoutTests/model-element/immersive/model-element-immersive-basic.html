@@ -59,6 +59,20 @@ promise_test(async t => {
 promise_test(async t => {
     const [model, source] = createModelAndSource(t, "../resources/cube.usdz");
     
+    await test_driver.bless("immersive");
+    await model.requestImmersive();
+    assert_equals(document.immersiveElement, model, 'Model is immersive after request');
+
+    if (window.testRunner)
+        testRunner.exitImmersive();
+
+    await t.step_wait(() => document.immersiveElement === null, "Waiting for immersive element to be null");
+    assert_equals(document.immersiveElement, null, 'No immersive element after exit');
+}, 'WKWebview._exitImmersive() exits immersive model');
+
+promise_test(async t => {
+    const [model, source] = createModelAndSource(t, "../resources/cube.usdz");
+    
     let modelChangeEvents = [];
     let documentChangeEvents = [];
     const modelHandler = () => { modelChangeEvents.push(document.immersiveElement); };

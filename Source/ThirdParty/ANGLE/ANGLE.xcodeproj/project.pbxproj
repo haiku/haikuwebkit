@@ -442,6 +442,7 @@
 		7B359E152A7CFD610016DC59 /* platform_helpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7B359E0C2A7CFD610016DC59 /* platform_helpers.cpp */; };
 		7B359E162A7CFD610016DC59 /* SynchronizedValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 7B359E0D2A7CFD610016DC59 /* SynchronizedValue.h */; };
 		7B533A8A2E0A933D0069B90F /* libtranslator.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7BF5549B2C81EDE0002B101E /* libtranslator.a */; };
+		7B5B1F112F0FC73B00B5D57B /* unsafe_buffers.h in Headers */ = {isa = PBXBuildFile; fileRef = 7B5B1F0F2F0FC73B00B5D57B /* unsafe_buffers.h */; };
 		7B600EBD2CF9CFF600D5DE66 /* Name.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7B600EBC2CF9CFF600D5DE66 /* Name.cpp */; };
 		7B600EBF2CF9CFF600D5DE66 /* Name.h in Headers */ = {isa = PBXBuildFile; fileRef = 7B600EBB2CF9CFF600D5DE66 /* Name.h */; };
 		7B600EC02CF9CFF600D5DE66 /* Name.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7B600EBC2CF9CFF600D5DE66 /* Name.cpp */; };
@@ -2158,6 +2159,7 @@
 		7B359E172A7CFE0B0016DC59 /* RegenerateStructNames.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RegenerateStructNames.h; sourceTree = "<group>"; };
 		7B359E182A7CFE0B0016DC59 /* RegenerateStructNames.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RegenerateStructNames.cpp; sourceTree = "<group>"; };
 		7B533A8F2E0A933D0069B90F /* ANGLETranslator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ANGLETranslator; sourceTree = BUILT_PRODUCTS_DIR; };
+		7B5B1F0F2F0FC73B00B5D57B /* unsafe_buffers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = unsafe_buffers.h; sourceTree = "<group>"; };
 		7B600EBB2CF9CFF600D5DE66 /* Name.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Name.h; sourceTree = "<group>"; };
 		7B600EBC2CF9CFF600D5DE66 /* Name.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Name.cpp; sourceTree = "<group>"; };
 		7B62E9DD2DA91F0900793212 /* ScalarizeVecAndMatConstructorArgs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ScalarizeVecAndMatConstructorArgs.h; sourceTree = "<group>"; };
@@ -3645,6 +3647,7 @@
 				5C1DBBED1B0436EC00235552 /* tls.cpp */,
 				5C1DBBEE1B0436EC00235552 /* tls.h */,
 				315EBD3E1FCE43BD00AC7A89 /* uniform_type_info_autogen.cpp */,
+				7B5B1F0F2F0FC73B00B5D57B /* unsafe_buffers.h */,
 				5CC7D46819102620000B8C1F /* utilities.cpp */,
 				5CC7D46919102620000B8C1F /* utilities.h */,
 				31A331C51EA5ED5F00FD2203 /* vector_utils.h */,
@@ -4905,6 +4908,7 @@
 				7B359DAC2A7CEDAA0016DC59 /* TransposeRowMajorMatrices.h in Headers */,
 				31CDFFF2249184A700486F27 /* Types.h in Headers */,
 				31CD00B0249184FD00486F27 /* Uniform.h in Headers */,
+				7B5B1F112F0FC73B00B5D57B /* unsafe_buffers.h in Headers */,
 				7B359D6E2A7CED3C0016DC59 /* UseInterfaceBlockFields.h in Headers */,
 				31CDFFDD249184A700486F27 /* util.h in Headers */,
 				31CDFF642491848C00486F27 /* utilities.h in Headers */,

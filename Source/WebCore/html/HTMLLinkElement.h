@@ -47,7 +47,7 @@ template<typename T, typename Counter> class EventSender;
 using LinkEventSender = EventSender<HTMLLinkElement, WeakPtrImplWithEventTargetData>;
 
 class HTMLLinkElement final : public HTMLElement, public CachedStyleSheetClient, public LinkLoaderClient {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLLinkElement);
+    WTF_MAKE_TZONE_ALLOCATED(HTMLLinkElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HTMLLinkElement);
 public:
     USING_CAN_MAKE_WEAKPTR(HTMLElement);

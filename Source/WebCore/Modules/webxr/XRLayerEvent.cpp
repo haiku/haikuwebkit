@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(XRLayerEvent);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(XRLayerEvent);
 
 Ref<XRLayerEvent> XRLayerEvent::create(const AtomString& type, const Init& initializer, IsTrusted isTrusted)
 {

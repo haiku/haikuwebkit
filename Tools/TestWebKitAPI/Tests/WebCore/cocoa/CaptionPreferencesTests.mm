@@ -513,7 +513,8 @@ TEST_F(CaptionPreferenceTests, CaptionStyleMenuHighlight)
 }
 #endif
 
-#if !HAVE(AVLEGIBLEMEDIAOPTIONSMENUCONTROLLER)
+// FIXME: Re-enable this test for iOS when rdar://166158601 is resolved.
+#if !HAVE(AVLEGIBLEMEDIAOPTIONSMENUCONTROLLER) && !PLATFORM(IOS)
 TEST_F(CaptionPreferenceTests, CaptionStyleMenuSelect)
 {
     MediaAccessibilityShim shim;
@@ -648,7 +649,12 @@ TEST_F(CaptionPreferenceTests, MenuAncestryCheck)
     EXPECT_TRUE([controller hasAncestor:parentMenu.get()]);
 }
 
+// FIXME: Re-enable this test for iOS when rdar://166158601 is resolved.
+#if PLATFORM(IOS)
+TEST_F(CaptionPreferenceTests, DISABLED_MenuItemChangesAfterSelection)
+#else
 TEST_F(CaptionPreferenceTests, MenuItemChangesAfterSelection)
+#endif
 {
     if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
         return;
@@ -673,8 +679,9 @@ TEST_F(CaptionPreferenceTests, MenuItemChangesAfterSelection)
     });
 }
 
+// FIXME: Re-enable this test for iOS when rdar://166158601 is resolved.
 #if PLATFORM(IOS_FAMILY)
-TEST_F(CaptionPreferenceTests, ReceievedDidOpenWhenSelected)
+TEST_F(CaptionPreferenceTests, DISABLED_ReceievedDidOpenWhenSelected)
 {
     if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
         return;

@@ -106,7 +106,7 @@ static WKRetainPtr<WKDictionaryRef> createWKDictionary(std::initializer_list<std
         auto key = toWK(pair.first);
         keys.append(key.get());
         values.append(pair.second.get());
-        strings.append(WTFMove(key));
+        strings.append(WTF::move(key));
     }
     return adoptWK(WKDictionaryCreate(keys.span().data(), values.span().data(), keys.size()));
 }
@@ -1168,8 +1168,8 @@ static WKRetainPtr<WKDictionaryRef> captureDeviceProperties(JSContextRef context
 
             keys.append(propertyName.get());
             values.append(propertyValue.get());
-            strings.append(WTFMove(propertyName));
-            strings.append(WTFMove(propertyValue));
+            strings.append(WTF::move(propertyName));
+            strings.append(WTF::move(propertyValue));
         }
         JSPropertyNameArrayRelease(propertyNameArray);
     }
@@ -1570,6 +1570,11 @@ bool TestRunner::shouldDumpAllFrameScrollPositions() const
 void TestRunner::setHasMouseDeviceForTesting(bool hasMouseDevice)
 {
     postSynchronousPageMessage("SetHasMouseDeviceForTesting", hasMouseDevice);
+}
+
+void TestRunner::exitImmersive()
+{
+    postSynchronousPageMessage("ExitImmersive");
 }
 
 ALLOW_DEPRECATED_DECLARATIONS_END

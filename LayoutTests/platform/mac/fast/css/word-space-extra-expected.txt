@@ -437,12 +437,11 @@ layer at (0,0) size 785x2377
       RenderBlock (anonymous) at (0,427) size 769x311
         RenderInline {SPAN} at (0,0) size 769x275
           RenderText {#text} at (0,0) size 0x0
-          RenderBlock (anonymous) at (0,0) size 769x22
-            RenderBlock {H3} at (0,0) size 769x22
-              RenderText {#text} at (0,0) size 114x22
-                text run at (0,0) width 18: "In"
-                text run at (37,0) width 15: " a"
-                text run at (71,0) width 43: " span"
+          RenderBlock {H3} at (0,0) size 769x22
+            RenderText {#text} at (0,0) size 114x22
+              text run at (0,0) width 18: "In"
+              text run at (37,0) width 15: " a"
+              text run at (71,0) width 43: " span"
           RenderText {#text} at (0,40) size 179x19
             text run at (0,40) width 36: "Word"
             text run at (55,40) width 5: " "
@@ -947,10 +946,9 @@ layer at (0,0) size 785x2377
         RenderBR {BR} at (0,0) size 0x18
         RenderInline {SPAN} at (0,18) size 769x275
           RenderText {#text} at (0,0) size 0x0
-          RenderBlock (anonymous) at (0,18) size 769x22
-            RenderBlock {H3} at (0,0) size 769x22
-              RenderText {#text} at (0,0) size 119x22
-                text run at (0,0) width 119: "In a span"
+          RenderBlock {H3} at (0,18) size 769x22
+            RenderText {#text} at (0,0) size 119x22
+              text run at (0,0) width 119: "In a span"
           RenderText {#text} at (0,58) size 222x19
             text run at (0,58) width 78: "Letter "
             text run at (77,58) width 145: "spacing test "
@@ -1567,12 +1565,11 @@ layer at (0,0) size 785x2377
         RenderBR {BR} at (0,0) size 0x18
         RenderInline {SPAN} at (0,18) size 769x383
           RenderText {#text} at (0,0) size 0x0
-          RenderBlock (anonymous) at (0,18) size 769x22
-            RenderBlock {H3} at (0,0) size 769x22
-              RenderText {#text} at (0,0) size 159x22
-                text run at (0,0) width 28: "In"
-                text run at (47,0) width 25: " a"
-                text run at (91,0) width 68: " span"
+          RenderBlock {H3} at (0,18) size 769x22
+            RenderText {#text} at (0,0) size 159x22
+              text run at (0,0) width 28: "In"
+              text run at (47,0) width 25: " a"
+              text run at (91,0) width 68: " span"
           RenderText {#text} at (0,58) size 428x19
             text run at (0,58) width 56: "Word"
             text run at (75,58) width 48: " and"

@@ -58,7 +58,7 @@ template<> inline void StringTypeAdapter<CFStringRef>::writeTo<Latin1Character>(
 template<> inline void StringTypeAdapter<CFStringRef>::writeTo<char16_t>(std::span<char16_t> destination) const
 {
     if (m_string)
-        CFStringCopyCharactersSpan(m_string.get(), destination.first(CFStringGetLength(m_string.get())));
+        CFStringCopyCharactersSpan(m_string.get(), destination);
 }
 
 #ifdef __OBJC__

@@ -43,24 +43,24 @@ namespace WebCore {
 
 std::unique_ptr<CoordinatedPlatformLayerBufferDMABuf> CoordinatedPlatformLayerBufferDMABuf::create(Ref<DMABufBuffer>&& dmabuf, OptionSet<TextureMapperFlags> flags, std::unique_ptr<GLFence>&& fence)
 {
-    return makeUnique<CoordinatedPlatformLayerBufferDMABuf>(WTFMove(dmabuf), flags, WTFMove(fence));
+    return makeUnique<CoordinatedPlatformLayerBufferDMABuf>(WTF::move(dmabuf), flags, WTF::move(fence));
 }
 
 std::unique_ptr<CoordinatedPlatformLayerBufferDMABuf> CoordinatedPlatformLayerBufferDMABuf::create(Ref<DMABufBuffer>&& dmabuf, OptionSet<TextureMapperFlags> flags, UnixFileDescriptor&& fenceFD)
 {
-    return makeUnique<CoordinatedPlatformLayerBufferDMABuf>(WTFMove(dmabuf), flags, WTFMove(fenceFD));
+    return makeUnique<CoordinatedPlatformLayerBufferDMABuf>(WTF::move(dmabuf), flags, WTF::move(fenceFD));
 }
 
 CoordinatedPlatformLayerBufferDMABuf::CoordinatedPlatformLayerBufferDMABuf(Ref<DMABufBuffer>&& dmabuf, OptionSet<TextureMapperFlags> flags, std::unique_ptr<GLFence>&& fence)
-    : CoordinatedPlatformLayerBuffer(Type::DMABuf, dmabuf->attributes().size, flags, WTFMove(fence))
-    , m_dmabuf(WTFMove(dmabuf))
+    : CoordinatedPlatformLayerBuffer(Type::DMABuf, dmabuf->attributes().size, flags, WTF::move(fence))
+    , m_dmabuf(WTF::move(dmabuf))
 {
 }
 
 CoordinatedPlatformLayerBufferDMABuf::CoordinatedPlatformLayerBufferDMABuf(Ref<DMABufBuffer>&& dmabuf, OptionSet<TextureMapperFlags> flags, UnixFileDescriptor&& fenceFD)
     : CoordinatedPlatformLayerBuffer(Type::DMABuf, dmabuf->attributes().size, flags, nullptr)
-    , m_dmabuf(WTFMove(dmabuf))
-    , m_fenceFD(WTFMove(fenceFD))
+    , m_dmabuf(WTF::move(dmabuf))
+    , m_fenceFD(WTF::move(fenceFD))
 {
 }
 
@@ -214,7 +214,7 @@ std::unique_ptr<CoordinatedPlatformLayerBuffer> CoordinatedPlatformLayerBufferDM
         auto texture = importToTexture(attributes.size, plane.subsampling, plane.fourcc, { attributes.fds[i].value() }, { attributes.offsets[i] }, { attributes.strides[i] }, attributes.modifier, textureFlags, textureMapper);
         if (!texture)
             return nullptr;
-        textures.append(WTFMove(texture));
+        textures.append(WTF::move(texture));
         yuvPlane[i] = plane.index;
         yuvPlaneOffset[i] = plane.offset;
     }
@@ -249,7 +249,7 @@ std::unique_ptr<CoordinatedPlatformLayerBuffer> CoordinatedPlatformLayerBufferDM
     }
 
     unsigned numberOfPlanes = textures.size();
-    return CoordinatedPlatformLayerBufferYUV::create(numberOfPlanes, WTFMove(textures), WTFMove(yuvPlane), WTFMove(yuvPlaneOffset), yuvToRgbColorSpace, transferFunction, m_size, m_flags, nullptr);
+    return CoordinatedPlatformLayerBufferYUV::create(numberOfPlanes, WTF::move(textures), WTF::move(yuvPlane), WTF::move(yuvPlaneOffset), yuvToRgbColorSpace, transferFunction, m_size, m_flags, nullptr);
 }
 
 std::unique_ptr<CoordinatedPlatformLayerBuffer> CoordinatedPlatformLayerBufferDMABuf::importDMABuf(TextureMapper& textureMapper) const
@@ -273,7 +273,7 @@ void CoordinatedPlatformLayerBufferDMABuf::paintToTextureMapper(TextureMapper& t
     waitForContentsIfNeeded();
 
     if (m_fenceFD) {
-        if (auto fence = GLFence::importFD(PlatformDisplay::sharedDisplay().glDisplay(), WTFMove(m_fenceFD)))
+        if (auto fence = GLFence::importFD(PlatformDisplay::sharedDisplay().glDisplay(), WTF::move(m_fenceFD)))
             fence->serverWait();
     }
 

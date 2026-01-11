@@ -36,7 +36,7 @@ LengthWrapperData::LengthWrapperData(uint8_t opaqueType, Ref<Calculation::Value>
     : m_opaqueType { opaqueType }
     , m_kind { LengthWrapperDataKind::Calculation }
 {
-    m_calculationValueHandle = Calculation::ValueMap::calculationValues().insert(WTFMove(value));
+    m_calculationValueHandle = Calculation::ValueMap::calculationValues().insert(WTF::move(value));
 }
 
 Calculation::Value& LengthWrapperData::calculationValue() const

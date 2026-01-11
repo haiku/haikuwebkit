@@ -321,7 +321,7 @@ void SQLiteDatabase::close()
 
 void SQLiteDatabase::overrideUnauthorizedFunctions()
 {
-    static const std::pair<ASCIILiteral, int> functionParameters[] = {
+    static constexpr auto functionParameters = std::to_array<std::pair<ASCIILiteral, int>>({
         { "rtreenode"_s, 2 },
         { "rtreedepth"_s, 1 },
         { "eval"_s, 1 },
@@ -329,7 +329,7 @@ void SQLiteDatabase::overrideUnauthorizedFunctions()
         { "printf"_s, -1 },
         { "fts3_tokenizer"_s, 1 },
         { "fts3_tokenizer"_s, 2 },
-    };
+    });
 
     for (auto& functionParameter : functionParameters)
         sqlite3_create_function(m_db, functionParameter.first, functionParameter.second, SQLITE_UTF8, const_cast<char*>(functionParameter.first.characters()), unauthorizedSQLFunction, 0, 0);
@@ -761,7 +761,7 @@ static int callCollationFunction(void* arg, int aLength, const void* a, int bLen
 
 void SQLiteDatabase::setCollationFunction(const String& collationName, Function<int(int, const void*, int, const void*)>&& collationFunction)
 {
-    auto functionObject = new Function<int(int, const void*, int, const void*)>(WTFMove(collationFunction));
+    auto functionObject = new Function<int(int, const void*, int, const void*)>(WTF::move(collationFunction));
     sqlite3_create_collation_v2(m_db, collationName.utf8().data(), SQLITE_UTF8, functionObject, callCollationFunction, destroyCollationFunction);
 }
 

@@ -45,7 +45,7 @@ public:
 
     WebIDBResult(const WebCore::IDBResultData& resultData, Vector<SandboxExtension::Handle>&& handles)
         : m_resultData(resultData)
-        , m_handles(WTFMove(handles))
+        , m_handles(WTF::move(handles))
     {
     }
     

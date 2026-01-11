@@ -26,7 +26,7 @@
 #pragma once
 
 #include <WebCore/RenderElementInlines.h>
-#include <WebCore/RenderStyleInlines.h>
+#include <WebCore/RenderStyle+GettersInlines.h>
 
 namespace WebCore {
 

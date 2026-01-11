@@ -645,7 +645,7 @@ TEST(CTAPResponseTest, TestSerializeGetInfoResponse)
     options.setIsPlatformDevice(true);
     options.setClientPinAvailability(AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedButPinNotSet);
     options.setUserVerificationAvailability(AuthenticatorSupportedOptions::UserVerificationAvailability::kSupportedAndConfigured);
-    response.setOptions(WTFMove(options));
+    response.setOptions(WTF::move(options));
     response.setMaxMsgSize(1200);
     response.setPinProtocols({ PINUVAuthProtocol::kPinProtocol1 });
 

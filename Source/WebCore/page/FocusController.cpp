@@ -1047,7 +1047,7 @@ bool FocusController::setFocusedElement(Element* element, Frame* newFocusedFrame
     if (oldFocusedElement && oldFocusedElement->isRootEditableElement() && !relinquishesEditingFocus(*oldFocusedElement))
         return false;
 
-    if (shouldClearSelectionWhenChangingFocusedElement(page, WTFMove(oldFocusedElement), element))
+    if (shouldClearSelectionWhenChangingFocusedElement(page, WTF::move(oldFocusedElement), element))
         clearSelectionIfNeeded(oldFocusedFrame.get(), newFocusedLocalFrame.get(), element);
 
     if (!element) {

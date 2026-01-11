@@ -56,7 +56,7 @@ NavigatorMediaDevices* NavigatorMediaDevices::from(Navigator* navigator)
     if (!supplement) {
         auto newSupplement = makeUnique<NavigatorMediaDevices>(navigator->window());
         supplement = newSupplement.get();
-        provideTo(navigator, supplementName(), WTFMove(newSupplement));
+        provideTo(navigator, supplementName(), WTF::move(newSupplement));
     }
     return supplement;
 }

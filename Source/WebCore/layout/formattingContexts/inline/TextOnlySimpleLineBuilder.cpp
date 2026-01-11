@@ -28,7 +28,8 @@
 
 #include "InlineContentCache.h"
 #include "InlineFormattingContext.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
+#include "StyleComputedStyle+InitialInlines.h"
 
 namespace WebCore {
 namespace Layout {
@@ -116,7 +117,7 @@ LineLayoutResult TextOnlySimpleLineBuilder::layoutInlineContent(const LineInput&
     auto contentLogicalLeft = InlineFormattingUtils::horizontalAlignmentOffset(rootStyle, result.contentLogicalRight, m_lineLogicalRect.width(), result.hangingTrailingContentWidth, isLastLineOrLineEndsWithForcedLineBreak);
 
     return { { lineInput.needsLayoutRange.start, placedContentEnd }
-        , WTFMove(result.runs)
+        , WTF::move(result.runs)
         , { }
         , { contentLogicalLeft, result.contentLogicalWidth, contentLogicalLeft + result.contentLogicalRight, m_overflowContentLogicalWidth }
         , { m_lineLogicalRect.topLeft(), m_lineLogicalRect.width(), m_lineLogicalRect.left() }
@@ -178,7 +179,7 @@ std::optional<LineLayoutResult> TextOnlySimpleLineBuilder::placeSingleCharacterC
     auto contentRight = contentLeft + contentWidth;
 
     return LineLayoutResult { lineInput.needsLayoutRange
-        , WTFMove(singleRun)
+        , WTF::move(singleRun)
         , { }
         , { contentLeft, contentWidth, contentRight, std::max(0.f, contentRight - lineRect.right()) }
         , { lineRect.topLeft(), lineRect.width(), lineRect.left() }
@@ -505,7 +506,7 @@ bool TextOnlySimpleLineBuilder::isEligibleForSimplifiedInlineLayoutByStyle(const
             return false;
         if (style.wordBreak() == WordBreak::AutoPhrase)
             return false;
-        if (style.textIndent() != RenderStyle::initialTextIndent())
+        if (style.textIndent() != Style::ComputedStyle::initialTextIndent())
             return false;
         if (style.textAlignLast() == Style::TextAlignLast::Justify || style.textAlign() == Style::TextAlign::Justify || style.display() == DisplayType::RubyAnnotation)
             return false;

@@ -75,7 +75,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SourceBuffer);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SourceBuffer);
 
 class SourceBufferClientImpl final : public SourceBufferPrivateClient {
 public:
@@ -85,8 +85,8 @@ public:
         MediaPromise::AutoRejectProducer producer(PlatformMediaError::BufferRemoved);
         auto promise = producer.promise();
 
-        ensureWeakOnDispatcher([producer = WTFMove(producer), segment = WTFMove(segment)](SourceBuffer& parent) mutable {
-            parent.sourceBufferPrivateDidReceiveInitializationSegment(WTFMove(segment))->chainTo(WTFMove(producer));
+        ensureWeakOnDispatcher([producer = WTF::move(producer), segment = WTF::move(segment)](SourceBuffer& parent) mutable {
+            parent.sourceBufferPrivateDidReceiveInitializationSegment(WTF::move(segment))->chainTo(WTF::move(producer));
         });
         return promise;
     }
@@ -96,8 +96,8 @@ public:
         MediaPromise::AutoRejectProducer producer(PlatformMediaError::BufferRemoved);
         auto promise = producer.promise();
 
-        ensureWeakOnDispatcher([producer = WTFMove(producer), trackBuffers = trackBuffers](SourceBuffer& parent) mutable {
-            parent.sourceBufferPrivateBufferedChanged(WTFMove(trackBuffers))->chainTo(WTFMove(producer));
+        ensureWeakOnDispatcher([producer = WTF::move(producer), trackBuffers = trackBuffers](SourceBuffer& parent) mutable {
+            parent.sourceBufferPrivateBufferedChanged(WTF::move(trackBuffers))->chainTo(WTF::move(producer));
         });
 
         return promise;
@@ -115,8 +115,8 @@ public:
         MediaPromise::AutoRejectProducer producer(PlatformMediaError::BufferRemoved);
         auto promise = producer.promise();
 
-        ensureWeakOnDispatcher([producer = WTFMove(producer), duration](SourceBuffer& parent) mutable {
-            parent.sourceBufferPrivateDurationChanged(duration)->chainTo(WTFMove(producer));
+        ensureWeakOnDispatcher([producer = WTF::move(producer), duration](SourceBuffer& parent) mutable {
+            parent.sourceBufferPrivateDurationChanged(duration)->chainTo(WTF::move(producer));
         });
 
         return promise;
@@ -130,17 +130,17 @@ public:
 
     void ensureWeakOnDispatcher(Function<void(SourceBuffer&)>&& function, bool forceAsync = false) const
     {
-        auto weakWrapper = [function = WTFMove(function), weakParent = m_parent] {
+        auto weakWrapper = [function = WTF::move(function), weakParent = m_parent] {
             if (RefPtr parent = weakParent.get(); parent && !parent->isRemoved())
                 function(*parent);
         };
         if (!forceAsync) {
-            ScriptExecutionContext::ensureOnContextThread(m_identifier, [wrapper = WTFMove(weakWrapper)](auto&) {
+            ScriptExecutionContext::ensureOnContextThread(m_identifier, [wrapper = WTF::move(weakWrapper)](auto&) {
                 wrapper();
             });
             return;
         }
-        ScriptExecutionContext::postTaskTo(m_identifier, [wrapper = WTFMove(weakWrapper)](auto&) {
+        ScriptExecutionContext::postTaskTo(m_identifier, [wrapper = WTF::move(weakWrapper)](auto&) {
             wrapper();
         });
     }
@@ -150,8 +150,8 @@ public:
         MediaPromise::AutoRejectProducer producer(PlatformMediaError::BufferRemoved);
         auto promise = producer.promise();
 
-        ensureWeakOnDispatcher([producer = WTFMove(producer), segment = WTFMove(segment)](SourceBuffer& parent) mutable {
-            parent.sourceBufferPrivateDidAttach(WTFMove(segment))->chainTo(WTFMove(producer));
+        ensureWeakOnDispatcher([producer = WTF::move(producer), segment = WTF::move(segment)](SourceBuffer& parent) mutable {
+            parent.sourceBufferPrivateDidAttach(WTF::move(segment))->chainTo(WTF::move(producer));
         });
         return promise;
     }
@@ -169,14 +169,14 @@ private:
 
 Ref<SourceBuffer> SourceBuffer::create(Ref<SourceBufferPrivate>&& sourceBufferPrivate, MediaSource& source)
 {
-    auto sourceBuffer = adoptRef(*new SourceBuffer(WTFMove(sourceBufferPrivate), source));
+    Ref sourceBuffer = adoptRef(*new SourceBuffer(WTF::move(sourceBufferPrivate), source));
     sourceBuffer->suspendIfNeeded();
     return sourceBuffer;
 }
 
 SourceBuffer::SourceBuffer(Ref<SourceBufferPrivate>&& sourceBufferPrivate, MediaSource& source)
     : ActiveDOMObject(source.scriptExecutionContext())
-    , m_private(WTFMove(sourceBufferPrivate))
+    , m_private(WTF::move(sourceBufferPrivate))
     , m_client(SourceBufferClientImpl::create(*this))
     , m_source(&source)
     , m_opaqueRootProvider(Observer<WebCoreOpaqueRoot()>::create([opaqueRoot = WebCoreOpaqueRoot { this }] { return opaqueRoot; }))
@@ -474,12 +474,12 @@ void SourceBuffer::rangeRemoval(const MediaTime& start, const MediaTime& end)
     });
 
     // 5. Return control to the caller and run the rest of the steps asynchronously.
-    m_client->ensureWeakOnDispatcher([producer = WTFMove(producer), weakThis = WeakPtr { *this }, start, end](SourceBuffer&) mutable {
+    m_client->ensureWeakOnDispatcher([producer = WTF::move(producer), weakThis = WeakPtr { *this }, start, end](SourceBuffer&) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
         // 6. Run the coded frame removal algorithm with start and end as the start and end of the removal range.
-        protectedThis->m_private->removeCodedFrames(start, end, protectedThis->protectedSource()->currentTime())->chainTo(WTFMove(producer));
+        protectedThis->m_private->removeCodedFrames(start, end, protectedThis->protectedSource()->currentTime())->chainTo(WTF::move(producer));
     }, true);
 }
 
@@ -661,18 +661,18 @@ ExceptionOr<void> SourceBuffer::appendBufferInternal(std::span<const uint8_t> da
         if (id != protectedThis->m_appendBufferOperationId)
             return;
 
-        protectedThis->sourceBufferPrivateAppendComplete(WTFMove(result));
+        protectedThis->sourceBufferPrivateAppendComplete(WTF::move(result));
     });
 
     // 5. Return control to the caller and run the rest of the steps asynchronously.
-    m_client->ensureWeakOnDispatcher([producer = WTFMove(producer), weakThis = WeakPtr { *this }, id = m_appendBufferOperationId](SourceBuffer&) mutable {
+    m_client->ensureWeakOnDispatcher([producer = WTF::move(producer), weakThis = WeakPtr { *this }, id = m_appendBufferOperationId](SourceBuffer&) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
         // 1. Loop Top: If the input buffer is empty, then jump to the need more data step below.
         if (id != protectedThis->m_appendBufferOperationId || !protectedThis->m_pendingAppendData || protectedThis->m_pendingAppendData->isEmpty())
             return producer.resolve();
-        protectedThis->m_private->append(protectedThis->m_pendingAppendData.releaseNonNull())->chainTo(WTFMove(producer));
+        protectedThis->m_private->append(protectedThis->m_pendingAppendData.releaseNonNull())->chainTo(WTF::move(producer));
     }, true);
 
     return { };
@@ -891,7 +891,7 @@ Ref<MediaPromise> SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegme
         }
 
         if (!trackIdPairs.isEmpty())
-            m_private->updateTrackIds(WTFMove(trackIdPairs));
+            m_private->updateTrackIds(WTF::move(trackIdPairs));
 
         // 3.3 Set the need random access point flag on all track buffers to true.
         m_private->setAllTrackBuffersNeedRandomAccess();
@@ -929,7 +929,7 @@ Ref<MediaPromise> SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegme
             // FIXME: Implement steps 5.2.1-5.2.8.1 as per Editor's Draft 09 January 2015, and reorder this
             // 5.2.1 Let new audio track be a new AudioTrack object.
             // 5.2.2 Generate a unique ID and assign it to the id property on new video track.
-            auto newAudioTrack = AudioTrack::create(protectedScriptExecutionContext().get(), Ref { *audioTrackInfo.track });
+            Ref newAudioTrack = AudioTrack::create(protectedScriptExecutionContext().get(), Ref { *audioTrackInfo.track });
             newAudioTrack->addClient(*this);
             newAudioTrack->setSourceBuffer(this);
 
@@ -955,7 +955,7 @@ Ref<MediaPromise> SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegme
             // not cancelable, and that uses the TrackEvent interface, at the AudioTrackList object
             // referenced by the audioTracks attribute on the HTMLMediaElement.
             if (isMainThread())
-                source->addAudioTrackToElement(WTFMove(newAudioTrack));
+                source->addAudioTrackToElement(WTF::move(newAudioTrack));
             else {
                 // 11.5.7.7.9 If the parent media source was constructed in a DedicatedWorkerGlobalScope:
                 // Post an internal create track mirror message to [[port to main]] whose implicit handler in Window runs the following steps:
@@ -968,7 +968,7 @@ Ref<MediaPromise> SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegme
             m_audioCodecs.append(RefPtr { audioTrackInfo.description }->codec().toAtomString());
 
             // 5.2.8 Create a new track buffer to store coded frames for this track.
-            m_private->addTrackBuffer(RefPtr { audioTrackInfo.track }->id(), WTFMove(audioTrackInfo.description));
+            m_private->addTrackBuffer(RefPtr { audioTrackInfo.track }->id(), WTF::move(audioTrackInfo.description));
         }
 
         // 5.3 For each video track in the initialization segment, run following steps:
@@ -976,7 +976,7 @@ Ref<MediaPromise> SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegme
             // FIXME: Implement steps 5.3.1-5.3.8.1 as per Editor's Draft 09 January 2015, and reorder this
             // 5.3.1 Let new video track be a new VideoTrack object.
             // 5.3.2 Generate a unique ID and assign it to the id property on new video track.
-            auto newVideoTrack = VideoTrack::create(protectedScriptExecutionContext().get(), Ref { *videoTrackInfo.track });
+            Ref newVideoTrack = VideoTrack::create(protectedScriptExecutionContext().get(), Ref { *videoTrackInfo.track });
             newVideoTrack->addClient(*this);
             newVideoTrack->setSourceBuffer(this);
 
@@ -1002,7 +1002,7 @@ Ref<MediaPromise> SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegme
             // not cancelable, and that uses the TrackEvent interface, at the VideoTrackList object
             // referenced by the videoTracks attribute on the HTMLMediaElement.
             if (isMainThread())
-                source->addVideoTrackToElement(WTFMove(newVideoTrack));
+                source->addVideoTrackToElement(WTF::move(newVideoTrack));
             else {
                 // 11.5.7.7.3.9 If the parent media source was constructed in a DedicatedWorkerGlobalScope:
                 // Post an internal create track mirror message to [[port to main]] whose implicit handler in Window runs the following steps:
@@ -1015,49 +1015,49 @@ Ref<MediaPromise> SourceBuffer::sourceBufferPrivateDidReceiveInitializationSegme
             m_videoCodecs.append(RefPtr { videoTrackInfo.description }->codec().toAtomString());
 
             // 5.3.8 Create a new track buffer to store coded frames for this track.
-            m_private->addTrackBuffer(RefPtr { videoTrackInfo.track }->id(), WTFMove(videoTrackInfo.description));
+            m_private->addTrackBuffer(RefPtr { videoTrackInfo.track }->id(), WTF::move(videoTrackInfo.description));
         }
 
         // 5.4 For each text track in the initialization segment, run following steps:
         for (auto& textTrackInfo : segment.textTracks) {
-            auto& textTrackPrivate = *textTrackInfo.track;
+            Ref textTrackPrivate = *textTrackInfo.track;
 
             // FIXME: Implement steps 5.4.1-5.4.8.1 as per Editor's Draft 09 January 2015, and reorder this
             // 5.4.1 Let new text track be a new TextTrack object with its properties populated with the
             // appropriate information from the initialization segment.
-            auto newTextTrack = InbandTextTrack::create(*protectedScriptExecutionContext(), textTrackPrivate);
+            Ref newTextTrack = InbandTextTrack::create(*protectedScriptExecutionContext(), textTrackPrivate);
             newTextTrack->addClient(*this);
 
             // 5.4.2 If the mode property on new text track equals "showing" or "hidden", then set active
             // track flag to true.
-            if (textTrackPrivate.mode() != InbandTextTrackPrivate::Mode::Disabled)
+            if (textTrackPrivate->mode() != InbandTextTrackPrivate::Mode::Disabled)
                 activeTrackFlag = true;
 
             // 5.4.3 Add new text track to the textTracks attribute on this SourceBuffer object.
             // 5.4.4 Queue a task to fire a trusted event named addtrack, that does not bubble and is
             // not cancelable, and that uses the TrackEvent interface, at textTracks attribute on this
             // SourceBuffer object.
-            textTracks->append(newTextTrack.get());
+            textTracks->append(newTextTrack);
 
             // 5.4.5 Add new text track to the textTracks attribute on the HTMLMediaElement.
             // 5.4.6 Queue a task to fire a trusted event named addtrack, that does not bubble and is
             // not cancelable, and that uses the TrackEvent interface, at the TextTrackList object
             // referenced by the textTracks attribute on the HTMLMediaElement.
             if (isMainThread())
-                source->addTextTrackToElement(WTFMove(newTextTrack));
+                source->addTextTrackToElement(WTF::move(newTextTrack));
             else {
                 // 11.5.7.7.4.10 If the parent media source was constructed in a DedicatedWorkerGlobalScope:
                 // Post an internal create track mirror message to [[port to main]] whose implicit handler in Window runs the following steps:
                 // Let mirrored text track be a new TextTrack object.
                 // Assign the same property values to mirrored text track as were determined for new text track.
                 // Add mirrored text track to the textTracks attribute on the HTMLMediaElement.
-                source->addTextTrackMirrorToElement(textTrackPrivate);
+                source->addTextTrackMirrorToElement(textTrackPrivate.get());
             }
 
             m_textCodecs.append(RefPtr { textTrackInfo.description }->codec().toAtomString());
 
             // 5.4.7 Create a new track buffer to store coded frames for this track.
-            m_private->addTrackBuffer(textTrackPrivate.id(), WTFMove(textTrackInfo.description));
+            m_private->addTrackBuffer(textTrackPrivate->id(), WTF::move(textTrackInfo.description));
         }
 
         // 5.5 If active track flag equals true, then run the following steps:
@@ -1388,7 +1388,7 @@ void SourceBuffer::setShouldGenerateTimestamps(bool flag)
 Ref<MediaPromise> SourceBuffer::sourceBufferPrivateBufferedChanged(Vector<PlatformTimeRanges>&& trackBuffers)
 {
     reportExtraMemoryAllocated(m_private->contentSize());
-    m_trackBuffers = WTFMove(trackBuffers);
+    m_trackBuffers = WTF::move(trackBuffers);
 
     updateBuffered();
     return MediaPromise::createAndResolve();
@@ -1405,13 +1405,13 @@ void SourceBuffer::updateBuffered()
         if (isManaged()) {
             auto addedRanges = m_buffered->ranges();
             addedRanges -= oldRanges;
-            auto addedTimeRanges = TimeRanges::create(WTFMove(addedRanges));
+            Ref addedTimeRanges = TimeRanges::create(WTF::move(addedRanges));
 
             auto removedRanges = oldRanges;
             removedRanges -= m_buffered->ranges();
-            auto removedTimeRanges = TimeRanges::create(WTFMove(removedRanges));
+            Ref removedTimeRanges = TimeRanges::create(WTF::move(removedRanges));
 
-            queueTaskToDispatchEvent(*this, TaskSource::MediaElement, BufferedChangeEvent::create(WTFMove(addedTimeRanges), WTFMove(removedTimeRanges)));
+            queueTaskToDispatchEvent(*this, TaskSource::MediaElement, BufferedChangeEvent::create(WTF::move(addedTimeRanges), WTF::move(removedTimeRanges)));
         }
         if (!isRemoved())
             protectedSource()->monitorSourceBuffers();

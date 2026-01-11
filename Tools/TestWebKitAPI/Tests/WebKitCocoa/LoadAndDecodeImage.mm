@@ -292,7 +292,7 @@ RetainPtr<NSData> tiffRepresentation(CocoaImage *image)
     if (!cgImage)
         return nullptr;
 
-    RefPtr nativeImage = WebCore::NativeImage::create(WTFMove(cgImage));
+    RefPtr nativeImage = WebCore::NativeImage::create(WTF::move(cgImage));
     if (!nativeImage)
         return nullptr;
 

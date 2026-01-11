@@ -168,7 +168,7 @@ finish:
 
 void WebExtensionContextProxy::updateGrantedPermissions(PermissionsMap&& permissions)
 {
-    m_grantedPermissions = WTFMove(permissions);
+    m_grantedPermissions = WTF::move(permissions);
     m_nextGrantedPermissionsExpirationDate = WallTime::nan();
 }
 

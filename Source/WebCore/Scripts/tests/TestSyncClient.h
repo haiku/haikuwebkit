@@ -46,13 +46,13 @@ public:
     virtual void broadcastAllTestSyncDataToOtherProcesses(TestSyncData&) { }
 
 #if ENABLE(DOM_AUDIO_SESSION)
-    void broadcastAudioSessionTypeToOtherProcesses(const WebCore::DOMAudioSessionType&);
+    WEBCORE_EXPORT void broadcastAudioSessionTypeToOtherProcesses(const WebCore::DOMAudioSessionType&);
 #endif
-    void broadcastMainFrameURLChangeToOtherProcesses(const URL&);
-    void broadcastIsAutofocusProcessedToOtherProcesses(const bool&);
-    void broadcastUserDidInteractWithPageToOtherProcesses(const bool&);
-    void broadcastAnotherOneToOtherProcesses(const StringifyThis&);
-    void broadcastMultipleHeadersToOtherProcesses(const HashSet<URL>&);
+    WEBCORE_EXPORT void broadcastMainFrameURLChangeToOtherProcesses(const URL&);
+    WEBCORE_EXPORT void broadcastIsAutofocusProcessedToOtherProcesses(const bool&);
+    WEBCORE_EXPORT void broadcastUserDidInteractWithPageToOtherProcesses(const bool&);
+    WEBCORE_EXPORT void broadcastAnotherOneToOtherProcesses(const StringifyThis&);
+    WEBCORE_EXPORT void broadcastMultipleHeadersToOtherProcesses(const HashSet<URL>&);
 
 protected:
     virtual void broadcastTestSyncDataToOtherProcesses(const TestSyncSerializationData&) { }

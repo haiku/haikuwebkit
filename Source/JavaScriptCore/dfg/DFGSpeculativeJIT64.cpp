@@ -185,7 +185,7 @@ void SpeculativeJIT::cachedGetById(Node* node, CodeOrigin codeOrigin, JSValueReg
         resultRegs, BaselineJITRegisters::GetById::baseJSR, BaselineJITRegisters::GetById::stubInfoGPR);
 
     addGetById(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 }
 
 void SpeculativeJIT::cachedGetByIdWithThis(Node* node, CodeOrigin codeOrigin, JSValueRegs baseRegs, JSValueRegs thisRegs, JSValueRegs resultRegs, CacheableIdentifier identifier, bool needsBaseAndThisCellCheck)
@@ -221,7 +221,7 @@ void SpeculativeJIT::cachedGetByIdWithThis(Node* node, CodeOrigin codeOrigin, JS
         resultRegs, BaselineJITRegisters::GetByIdWithThis::baseJSR, BaselineJITRegisters::GetByIdWithThis::thisJSR, BaselineJITRegisters::GetByIdWithThis::stubInfoGPR);
 
     addGetByIdWithThis(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 }
 
 void SpeculativeJIT::nonSpeculativeNonPeepholeCompareNullOrUndefined(Edge operand)
@@ -1126,7 +1126,7 @@ void SpeculativeJIT::emitCall(Node* node)
                 if (callTargetGPR != InvalidGPRReg)
                     preserved.add(callTargetGPR, IgnoreVectors);
                 preserved.add(BaselineJITRegisters::Call::calleeGPR, IgnoreVectors);
-                prepareForTailCallSlow(WTFMove(preserved));
+                prepareForTailCallSlow(WTF::move(preserved));
             }
         }));
         abortWithReason(JITDidReturnFromTailCall);
@@ -2742,7 +2742,7 @@ void SpeculativeJIT::compileGetByVal(Node* node, const ScopedLambda<std::tuple<J
             resultRegs, BaselineJITRegisters::GetByVal::baseJSR, BaselineJITRegisters::GetByVal::propertyJSR, BaselineJITRegisters::GetByVal::stubInfoGPR, BaselineJITRegisters::GetByVal::profileGPR);
 
         addGetByVal(gen, slowPath.get());
-        addSlowPathGenerator(WTFMove(slowPath));
+        addSlowPathGenerator(WTF::move(slowPath));
         jsValueResult(resultRegs, node);
         break;
     }
@@ -5941,7 +5941,7 @@ void SpeculativeJIT::compile(Node* node)
                 resultRegs, BaselineJITRegisters::InByVal::baseJSR, BaselineJITRegisters::InByVal::propertyJSR, BaselineJITRegisters::InByVal::stubInfoGPR, BaselineJITRegisters::InByVal::profileGPR);
 
             addInByVal(gen, slowPath.get());
-            addSlowPathGenerator(WTFMove(slowPath));
+            addSlowPathGenerator(WTF::move(slowPath));
 
             blessedBooleanResult(resultRegs.payloadGPR(), node);
             break;
@@ -6968,7 +6968,7 @@ void SpeculativeJIT::compileGetByValWithThis(Node* node)
         resultRegs.payloadGPR(), BaselineJITRegisters::GetByValWithThis::baseJSR, BaselineJITRegisters::GetByValWithThis::propertyJSR, BaselineJITRegisters::GetByValWithThis::thisJSR, BaselineJITRegisters::GetByValWithThis::stubInfoGPR, BaselineJITRegisters::GetByValWithThis::profileGPR);
 
     addGetByValWithThis(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 
     jsValueResult(resultRegs, node);
 }
@@ -7061,7 +7061,7 @@ void SpeculativeJIT::compileDeleteById(Node* node)
             resultRegs.payloadGPR(), BaselineJITRegisters::DelById::baseJSR, BaselineJITRegisters::DelById::stubInfoGPR);
 
         addDelById(gen, slowPath.get());
-        addSlowPathGenerator(WTFMove(slowPath));
+        addSlowPathGenerator(WTF::move(slowPath));
 
         unblessedBooleanResult(resultRegs.payloadGPR(), node);
         return;
@@ -7128,7 +7128,7 @@ void SpeculativeJIT::compileDeleteByVal(Node* node)
             resultRegs.payloadGPR(), BaselineJITRegisters::DelByVal::baseJSR, BaselineJITRegisters::DelByVal::propertyJSR, BaselineJITRegisters::DelByVal::stubInfoGPR);
 
         addDelByVal(gen, slowPath.get());
-        addSlowPathGenerator(WTFMove(slowPath));
+        addSlowPathGenerator(WTF::move(slowPath));
 
         unblessedBooleanResult(resultRegs.payloadGPR(), node);
         return;
@@ -7186,7 +7186,7 @@ void SpeculativeJIT::compileInById(Node* node)
         resultRegs, BaselineJITRegisters::InById::baseJSR, BaselineJITRegisters::InById::stubInfoGPR);
 
     addInById(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 
     blessedBooleanResult(resultRegs.payloadGPR(), node);
 }
@@ -7232,7 +7232,7 @@ void SpeculativeJIT::compileInByVal(Node* node)
         resultRegs, BaselineJITRegisters::InByVal::baseJSR, BaselineJITRegisters::InByVal::propertyJSR, BaselineJITRegisters::InByVal::stubInfoGPR, BaselineJITRegisters::InByVal::profileGPR);
 
     addInByVal(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 
     blessedBooleanResult(resultRegs.payloadGPR(), node);
 }
@@ -7284,7 +7284,7 @@ void SpeculativeJIT::compileHasPrivate(Node* node, AccessType type)
         resultRegs, BaselineJITRegisters::InByVal::baseJSR, BaselineJITRegisters::InByVal::propertyJSR, BaselineJITRegisters::InByVal::stubInfoGPR);
 
     addInByVal(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 
     blessedBooleanResult(resultRegs.payloadGPR(), node);
 }
@@ -7407,7 +7407,7 @@ void SpeculativeJIT::compilePutByVal(Node* node)
             NoResult, BaselineJITRegisters::PutByVal::baseJSR, BaselineJITRegisters::PutByVal::propertyJSR, BaselineJITRegisters::PutByVal::valueJSR, BaselineJITRegisters::PutByVal::stubInfoGPR, BaselineJITRegisters::PutByVal::profileGPR);
 
         addPutByVal(gen, slowPath.get());
-        addSlowPathGenerator(WTFMove(slowPath));
+        addSlowPathGenerator(WTF::move(slowPath));
 
         noResult(node);
         break;
@@ -7562,7 +7562,7 @@ void SpeculativeJIT::compileGetPrivateNameByVal(Node* node, JSValueRegs baseRegs
         result.regs(), BaselineJITRegisters::GetByVal::baseJSR, BaselineJITRegisters::GetByVal::propertyJSR, BaselineJITRegisters::GetByVal::stubInfoGPR);
 
     addGetByVal(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 
     jsValueResult(result.regs(), node, DataFormatJS);
 }
@@ -7678,7 +7678,7 @@ void SpeculativeJIT::compilePutPrivateName(Node* node)
         NoResult, BaselineJITRegisters::PutByVal::baseJSR, BaselineJITRegisters::PutByVal::propertyJSR, BaselineJITRegisters::PutByVal::valueJSR, BaselineJITRegisters::PutByVal::stubInfoGPR, BaselineJITRegisters::PutByVal::profileGPR);
 
     addPutByVal(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 
     noResult(node);
 }
@@ -7727,7 +7727,7 @@ void SpeculativeJIT::compileCheckPrivateBrand(Node* node)
         BaselineJITRegisters::PrivateBrand::baseJSR, BaselineJITRegisters::PrivateBrand::propertyJSR, BaselineJITRegisters::PrivateBrand::stubInfoGPR);
 
     addPrivateBrandAccess(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 
     noResult(node);
 }
@@ -7775,7 +7775,7 @@ void SpeculativeJIT::compileSetPrivateBrand(Node* node)
         BaselineJITRegisters::PrivateBrand::baseJSR, BaselineJITRegisters::PrivateBrand::propertyJSR, BaselineJITRegisters::PrivateBrand::stubInfoGPR);
 
     addPrivateBrandAccess(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 
     noResult(node);
 }
@@ -7811,7 +7811,7 @@ void SpeculativeJIT::compileInstanceOf(Node* node)
         auto slowPath = slowPathICCall(slowCases, this, stubInfoConstant, BaselineJITRegisters::Instanceof::stubInfoGPR, Address(BaselineJITRegisters::Instanceof::stubInfoGPR, StructureStubInfo::offsetOfSlowOperation()), operationInstanceOfOptimize, resultGPR, BaselineJITRegisters::Instanceof::valueJSR, BaselineJITRegisters::Instanceof::protoJSR, BaselineJITRegisters::Instanceof::stubInfoGPR);
 
         addInstanceOf(gen, slowPath.get());
-        addSlowPathGenerator(WTFMove(slowPath));
+        addSlowPathGenerator(WTF::move(slowPath));
     };
 
     if (node->child1().useKind() == CellUse
@@ -7920,7 +7920,7 @@ void SpeculativeJIT::cachedPutById(Node*, CodeOrigin codeOrigin, GPRReg baseGPR,
     auto slowPath = slowPathICCall(slowCases, this, stubInfoConstant, BaselineJITRegisters::PutById::stubInfoGPR, Address(BaselineJITRegisters::PutById::stubInfoGPR, StructureStubInfo::offsetOfSlowOperation()), operation, NoResult, BaselineJITRegisters::PutById::valueJSR, BaselineJITRegisters::PutById::baseJSR, BaselineJITRegisters::PutById::stubInfoGPR);
 
     addPutById(gen, slowPath.get());
-    addSlowPathGenerator(WTFMove(slowPath));
+    addSlowPathGenerator(WTF::move(slowPath));
 }
 
 void SpeculativeJIT::compilePutPrivateNameById(Node* node)
@@ -8299,7 +8299,7 @@ void SpeculativeJIT::compileEnumeratorPutByVal(Node* node)
                 NoResult, BaselineJITRegisters::PutByVal::baseJSR, BaselineJITRegisters::PutByVal::propertyJSR, BaselineJITRegisters::PutByVal::valueJSR, BaselineJITRegisters::PutByVal::stubInfoGPR, BaselineJITRegisters::PutByVal::profileGPR);
 
             addPutByVal(gen, slowPath.get());
-            addSlowPathGenerator(WTFMove(slowPath));
+            addSlowPathGenerator(WTF::move(slowPath));
         }
 
         if (!recoverGenericCase.empty()) {
@@ -8374,7 +8374,7 @@ void SpeculativeJIT::compilePutByValMegamorphic(Node* node)
     slowCases.append(branchTest32(Zero, Address(scratch4GPR, StringImpl::flagsOffset()), TrustedImm32(StringImpl::flagIsAtom())));
 
     auto [slow, reallocating] = storeMegamorphicProperty(vm(), baseGPR, scratch4GPR, nullptr, valueRegs.payloadGPR(), scratch1GPR, scratch2GPR, scratch3GPR);
-    slowCases.append(WTFMove(slow));
+    slowCases.append(WTF::move(slow));
 
     addSlowPathGenerator(slowPathCall(slowCases, this, node->ecmaMode().isStrict() ? operationPutByValStrictMegamorphicGeneric : operationPutByValSloppyMegamorphicGeneric, NoResult, LinkableConstant::globalObject(*this, node), baseGPR, subscriptGPR, valueRegs));
     addSlowPathGenerator(slowPathCall(reallocating, this, operationPutByMegamorphicReallocating, NoResult, TrustedImmPtr(&vm()), baseGPR, valueRegs, scratch3GPR));
@@ -8439,7 +8439,7 @@ void SpeculativeJIT::compileCreateClonedArguments(Node* node)
         Vector<SilentRegisterSavePlan> savePlans;
         silentSpillAllRegistersImpl(false, savePlans, resultGPR);
         auto doneFromSlowPath = label();
-        addSlowPathGeneratorLambda([=, this, savePlans = WTFMove(savePlans), slowCases = WTFMove(slowCases)] () {
+        addSlowPathGeneratorLambda([=, this, savePlans = WTF::move(savePlans), slowCases = WTF::move(slowCases)] () {
             slowCases.link(this);
             silentSpill(savePlans);
 

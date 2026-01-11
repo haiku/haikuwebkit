@@ -250,7 +250,7 @@ TEST(WTF_WeakPtr, Operators)
     weakPtr3 = weakPtr;
     EXPECT_EQ(weakPtr3.get(), &f);
 
-    WeakPtr<Foo> weakPtr4 = WTFMove(weakPtr);
+    WeakPtr<Foo> weakPtr4 = WTF::move(weakPtr);
     EXPECT_EQ(weakPtr4.get(), &f);
     SUPPRESS_USE_AFTER_MOVE EXPECT_FALSE(weakPtr);
 }
@@ -355,7 +355,7 @@ TEST(WTF_WeakPtr, DerivedConstructAndAssign)
     Derived derived;
     {
         WeakPtr<Derived> derivedWeakPtr = makeWeakPtr(derived);
-        WeakPtr<Base> baseWeakPtr { WTFMove(derivedWeakPtr) };
+        WeakPtr<Base> baseWeakPtr { WTF::move(derivedWeakPtr) };
         EXPECT_EQ(baseWeakPtr.get(), &derived);
         SUPPRESS_USE_AFTER_MOVE EXPECT_NULL(derivedWeakPtr.get());
     }
@@ -370,7 +370,7 @@ TEST(WTF_WeakPtr, DerivedConstructAndAssign)
     {
         WeakPtr<Derived> derivedWeakPtr = makeWeakPtr(derived);
         WeakPtr<Base> baseWeakPtr;
-        baseWeakPtr = WTFMove(derivedWeakPtr);
+        baseWeakPtr = WTF::move(derivedWeakPtr);
         EXPECT_EQ(baseWeakPtr.get(), &derived);
         SUPPRESS_USE_AFTER_MOVE EXPECT_NULL(derivedWeakPtr.get());
     }
@@ -389,7 +389,7 @@ TEST(WTF_WeakPtr, DerivedConstructAndAssignConst)
     const Derived derived;
     {
         auto derivedWeakPtr = makeWeakPtr(derived);
-        WeakPtr<const Base> baseWeakPtr { WTFMove(derivedWeakPtr) };
+        WeakPtr<const Base> baseWeakPtr { WTF::move(derivedWeakPtr) };
         EXPECT_EQ(baseWeakPtr.get(), &derived);
         SUPPRESS_USE_AFTER_MOVE EXPECT_NULL(derivedWeakPtr.get());
     }
@@ -404,7 +404,7 @@ TEST(WTF_WeakPtr, DerivedConstructAndAssignConst)
     {
         auto derivedWeakPtr = makeWeakPtr(derived);
         WeakPtr<const Base> baseWeakPtr;
-        baseWeakPtr = WTFMove(derivedWeakPtr);
+        baseWeakPtr = WTF::move(derivedWeakPtr);
         EXPECT_EQ(baseWeakPtr.get(), &derived);
         SUPPRESS_USE_AFTER_MOVE EXPECT_NULL(derivedWeakPtr.get());
     }
@@ -738,7 +738,7 @@ TEST(WTF_WeakPtr, WeakHashSetExpansion)
         for (unsigned i = 0; i < initialCapacity / maxLoadCap; ++i) {
             auto object = makeUnique<Base>();
             weakHashSet.add(*object);
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
             otherObjects.append(makeUnique<Base>());
             weakHashSet.checkConsistency();
         }
@@ -775,7 +775,7 @@ TEST(WTF_WeakPtr, WeakHashSetExpansion)
         for (unsigned i = 0; i < objectCount; ++i) {
             auto object = makeUnique<Base>();
             weakHashSet.add(*object);
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
             weakHashSet.checkConsistency();
         }
         unsigned originalCapacity = weakHashSet.capacity();
@@ -830,7 +830,7 @@ TEST(WTF_WeakPtr, WeakHashSetisEmptyIgnoringNullReferences)
         do {
             auto object = makeUnique<Base>();
             weakHashSet.add(*object);
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
         } while (weakHashSet.begin().get() == firstObject.get());
 
         EXPECT_EQ(s_baseWeakReferences, objects.size() + 1);
@@ -922,7 +922,7 @@ TEST(WTF_WeakPtr, WeakHashSetComputeSize)
         do {
             auto object = makeUnique<Base>();
             weakHashSet.add(*object);
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
         } while (weakHashSet.begin().get() == nonFirstObject.get());
 
         unsigned objectsCount = objects.size();
@@ -1311,7 +1311,7 @@ TEST(WTF_WeakPtr, WeakHashMapRemoveIterator)
     for (unsigned i = 0; i < 13; ++i) {
         auto object = makeUnique<Base>();
         weakHashMap.add(*object, 0);
-        objects.append(WTFMove(object));
+        objects.append(WTF::move(object));
     }
     while (!objects.isEmpty()) {
         auto it = weakHashMap.find(*objects.last());
@@ -1345,7 +1345,7 @@ TEST(WTF_WeakPtr, WeakHashMapExpansion)
         for (unsigned i = 0; i < initialCapacity / maxLoadCap; ++i) {
             auto object = makeUnique<Base>();
             weakHashMap.add(*object, i);
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
             otherObjects.append(makeUnique<Base>());
             weakHashMap.checkConsistency();
         }
@@ -1389,7 +1389,7 @@ TEST(WTF_WeakPtr, WeakHashMapExpansion)
         for (unsigned i = 0; i < objectCount; ++i) {
             auto object = makeUnique<Base>();
             weakHashMap.set(*object, ValueObject::create(100 + i));
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
             weakHashMap.checkConsistency();
         }
         unsigned originalCapacity = weakHashMap.capacity();
@@ -1481,7 +1481,7 @@ TEST(WTF_WeakPtr, WeakHashMapIsEmptyIgnoringNullReferences)
         do {
             auto object = makeUnique<Base>();
             weakHashMap.set(*object, ValueObject::create(value++));
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
         } while (&weakHashMap.begin()->key == firstObject.get());
 
         EXPECT_EQ(ValueObject::s_count, objects.size() + 1);
@@ -1560,7 +1560,7 @@ TEST(WTF_WeakPtr, WeakHashMapRemoveNullReferences)
         for (unsigned i = 0; i < 50; ++i) {
             auto key = makeUnique<Derived>();
             weakHashMap.add(*key, ValueObject::create(i + 100));
-            objects.append(WTFMove(key));
+            objects.append(WTF::move(key));
         }
         EXPECT_EQ(ValueObject::s_count, 50U);
         EXPECT_EQ(s_baseWeakReferences, 50U);
@@ -1981,7 +1981,7 @@ TEST(WTF_WeakPtr, WeakHashMap_iterator_destruction)
     for (unsigned i = 0; i < objectCount; ++i) {
         auto object = makeUnique<Base>();
         weakHashMap.add(*object, i);
-        objects.append(WTFMove(object));
+        objects.append(WTF::move(object));
     }
 
     auto a = objects.takeLast();
@@ -1994,6 +1994,19 @@ TEST(WTF_WeakPtr, WeakHashMap_iterator_destruction)
         EXPECT_EQ(bIterator->value, objectCount - 2);
         EXPECT_EQ(aIterator->value, objectCount - 1);
     }
+}
+
+TEST(WTF_WeakPtr, ListHashSetBoundedGrowth)
+{
+    ListHashSet<WeakPtr<BaseObjectWithRefAndWeakPtr>> set;
+    for (size_t i = 0; i < 128; ++i)
+        set.add(BaseObjectWithRefAndWeakPtr::create().get());
+
+    size_t entryCount = 0;
+    for (auto entry : set)
+        ++entryCount;
+
+    EXPECT_LT(entryCount, 16u);
 }
 
 template <typename T>
@@ -2092,7 +2105,7 @@ TEST(WTF_WeakPtr, WeakListHashSetBasic)
         for (unsigned i = 0; i < 50; ++i) {
             auto object = makeUnique<Base>();
             weakListHashSet.add(*object);
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
         }
 
         unsigned i = 0;
@@ -2171,7 +2184,7 @@ TEST(WTF_WeakPtr, WeakListHashSetRemoveIterator)
     for (unsigned i = 0; i < 13; ++i) {
         auto object = makeUnique<Base>();
         weakListHashSet.add(*object);
-        objects.append(WTFMove(object));
+        objects.append(WTF::move(object));
     }
     for (unsigned i = 0; i < 13; ++i) {
         auto it = weakListHashSet.find(*objects[0]);
@@ -2210,7 +2223,7 @@ TEST(WTF_WeakPtr, WeakListHashSetExpansion)
         for (unsigned i = 0; i < initialCapacity / maxLoadCap; ++i) {
             auto object = makeUnique<Base>();
             weakListHashSet.add(*object);
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
             otherObjects.append(makeUnique<Base>());
             weakListHashSet.checkConsistency();
         }
@@ -2247,7 +2260,7 @@ TEST(WTF_WeakPtr, WeakListHashSetExpansion)
         for (unsigned i = 0; i < objectCount; ++i) {
             auto object = makeUnique<Base>();
             weakListHashSet.add(*object);
-            objects.append(WTFMove(object));
+            objects.append(WTF::move(object));
             weakListHashSet.checkConsistency();
         }
         unsigned originalCapacity = weakListHashSet.capacity();
@@ -2359,7 +2372,7 @@ TEST(WTF_WeakPtr, WeakListHashSetRemoveNullReferences)
         for (unsigned i = 0; i < 50; ++i) {
             auto key = makeUnique<Derived>();
             weakListHashSet.add(*key);
-            objects.append(WTFMove(key));
+            objects.append(WTF::move(key));
         }
         EXPECT_EQ(s_baseWeakReferences, 50U);
         EXPECT_FALSE(weakListHashSet.hasNullReferences());
@@ -2847,7 +2860,7 @@ TEST(WTF_ThreadSafeWeakPtr, UseAfterMoveResistance)
 {
     auto counter = adoptRef(*new ThreadSafeInstanceCounter());
     auto weakPtr = ThreadSafeWeakPtr { counter.get() };
-    auto movedTo = WTFMove(weakPtr);
+    auto movedTo = WTF::move(weakPtr);
     SUPPRESS_USE_AFTER_MOVE EXPECT_NULL(weakPtr.get());
     EXPECT_NOT_NULL(movedTo.get());
     ThreadSafeWeakPtr<ThreadSafeInstanceCounter> emptyConstructor;
@@ -3052,7 +3065,7 @@ TEST(WTF_ThreadSafeWeakPtr, AmortizedCleanupNotQuadratic)
     for (int i = 0; i < 1000000; ++i) {
         auto obj = adoptRef(*new Struct);
         set.add(obj.get());
-        strongSet.add(WTFMove(obj));
+        strongSet.add(WTF::move(obj));
     }
 }
 

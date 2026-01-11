@@ -61,7 +61,7 @@ const PlatformTimeRanges& MediaPlayerPrivateInterface::seekable() const
 auto MediaPlayerPrivateInterface::asyncVideoPlaybackQualityMetrics() -> Ref<VideoPlaybackQualityMetricsPromise>
 {
     if (auto metrics = videoPlaybackQualityMetrics())
-        return VideoPlaybackQualityMetricsPromise::createAndResolve(WTFMove(*metrics));
+        return VideoPlaybackQualityMetricsPromise::createAndResolve(WTF::move(*metrics));
     return VideoPlaybackQualityMetricsPromise::createAndReject(PlatformMediaError::NotSupportedError);
 }
 

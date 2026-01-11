@@ -66,7 +66,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(Navigator);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(Navigator);
 
 Navigator::Navigator(ScriptExecutionContext* context, LocalDOMWindow& window)
     : NavigatorBase(context)
@@ -93,6 +93,14 @@ const String& Navigator::userAgent() const
         return m_userAgent;
     if (frame->settings().webAPIStatisticsEnabled())
         ResourceLoadObserver::singleton().logNavigatorAPIAccessed(*frame->protectedDocument(), NavigatorAPIsAccessed::UserAgent);
+
+#if PLATFORM(IOS_FAMILY)
+    if (RefPtr document = frame->document(); document && document->quirks().needsChromeOSNavigatorUserAgentQuirk(*document)) {
+        static NeverDestroyed<String> chromeOSUserAgent = "Mozilla/5.0 (X11; CrOS x86_64 15917.71.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"_s;
+        return chromeOSUserAgent.get();
+    }
+#endif
+
     if (m_userAgent.isNull())
         m_userAgent = frame->loader().userAgent(frame->document()->url());
     return m_userAgent;
@@ -194,14 +202,14 @@ void Navigator::share(Document& document, const ShareData& data, Ref<DeferredPro
         if (loader)
             loader->cancel();
 
-        loader = ShareDataReader::create([this, protectedThis = Ref { *this }, promise = WTFMove(promise)](ExceptionOr<ShareDataWithParsedURL&> readData) mutable {
-            showShareData(readData, WTFMove(promise));
+        loader = ShareDataReader::create([this, protectedThis = Ref { *this }, promise = WTF::move(promise)](ExceptionOr<ShareDataWithParsedURL&> readData) mutable {
+            showShareData(readData, WTF::move(promise));
         });
         m_loader = loader.copyRef();
-        loader->start(&document, WTFMove(shareData));
+        loader->start(&document, WTF::move(shareData));
         return;
     }
-    this->showShareData(shareData, WTFMove(promise));
+    this->showShareData(shareData, WTF::move(promise));
 }
 
 void Navigator::showShareData(ExceptionOr<ShareDataWithParsedURL&> readData, Ref<DeferredPromise>&& promise)
@@ -218,7 +226,7 @@ void Navigator::showShareData(ExceptionOr<ShareDataWithParsedURL&> readData, Ref
     m_hasPendingShare = true;
 
     if (frame->page()->isControlledByAutomation()) {
-        RunLoop::mainSingleton().dispatch([promise = WTFMove(promise), weakThis = WeakPtr { *this }] {
+        RunLoop::mainSingleton().dispatch([promise = WTF::move(promise), weakThis = WeakPtr { *this }] {
             if (weakThis)
                 weakThis->m_hasPendingShare = false;
             promise->resolve();
@@ -228,7 +236,7 @@ void Navigator::showShareData(ExceptionOr<ShareDataWithParsedURL&> readData, Ref
 
     auto shareData = readData.returnValue();
 
-    frame->page()->chrome().showShareSheet(WTFMove(shareData), [promise = WTFMove(promise), weakThis = WeakPtr { *this }](bool completed) {
+    frame->page()->chrome().showShareSheet(WTF::move(shareData), [promise = WTF::move(promise), weakThis = WeakPtr { *this }](bool completed) {
         if (weakThis)
             weakThis->m_hasPendingShare = false;
         if (completed) {
@@ -301,8 +309,8 @@ void Navigator::initializePluginAndMimeTypeArrays()
             domMimeTypes.appendVector(domPlugins.last()->mimeTypes());
     }
 
-    m_plugins = DOMPluginArray::create(*this, WTFMove(domPlugins));
-    m_mimeTypes = DOMMimeTypeArray::create(*this, WTFMove(domMimeTypes));
+    m_plugins = DOMPluginArray::create(*this, WTF::move(domPlugins));
+    m_mimeTypes = DOMMimeTypeArray::create(*this, WTF::move(domMimeTypes));
 }
 
 DOMPluginArray& Navigator::plugins()
@@ -440,7 +448,7 @@ void Navigator::setAppBadge(std::optional<unsigned long long> badge, Ref<Deferre
 
 void Navigator::clearAppBadge(Ref<DeferredPromise>&& promise)
 {
-    setAppBadge(0, WTFMove(promise));
+    setAppBadge(0, WTF::move(promise));
 }
 
 int Navigator::maxTouchPoints() const
@@ -464,7 +472,7 @@ NavigatorUAData& Navigator::userAgentData() const
             Ref parser = UserAgentStringParser::create(userAgentString);
             std::optional userAgentStringData = parser->parse();
             if (userAgentStringData) {
-                m_navigatorUAData = NavigatorUAData::create(WTFMove(*userAgentStringData));
+                m_navigatorUAData = NavigatorUAData::create(WTF::move(*userAgentStringData));
                 return *m_navigatorUAData;
             }
         }

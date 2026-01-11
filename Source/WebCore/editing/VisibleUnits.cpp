@@ -43,7 +43,7 @@
 #include "Range.h"
 #include "RenderBlockFlow.h"
 #include "RenderObjectStyle.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderedPosition.h"
 #include "Text.h"
 #include "TextBoundaries.h"
@@ -1043,7 +1043,7 @@ VisiblePosition nextLinePosition(const VisiblePosition& visiblePosition, LayoutU
     if (!lineBox) {
         // FIXME: We need do the same in previousLinePosition.
         if (RefPtr child = node->traverseToChildAt(p.deprecatedEditingOffset()))
-            node = WTFMove(child);
+            node = WTF::move(child);
         else
             node = node->lastDescendant();
         Position position = nextLineCandidatePosition(node.get(), visiblePosition, editableType);
@@ -1265,14 +1265,14 @@ VisiblePosition startOfParagraph(const VisiblePosition& c, EditingBoundaryCrossi
     RefPtr node = findStartOfParagraph(startNode.get(), highestRoot.get(), startBlock.get(), offset, type, boundaryCrossingRule);
 
     if (RefPtr textNode = dynamicDowncast<Text>(node))
-        return Position(WTFMove(textNode), offset);
+        return Position(WTF::move(textNode), offset);
 
     if (type == Position::PositionIsOffsetInAnchor) {
         ASSERT(type == Position::PositionIsOffsetInAnchor || !offset);
-        return Position(WTFMove(node), offset, type);
+        return Position(WTF::move(node), offset, type);
     }
 
-    return Position(WTFMove(node), type);
+    return Position(WTF::move(node), type);
 }
 
 VisiblePosition endOfParagraph(const VisiblePosition& c, EditingBoundaryCrossingRule boundaryCrossingRule)
@@ -1295,12 +1295,12 @@ VisiblePosition endOfParagraph(const VisiblePosition& c, EditingBoundaryCrossing
     RefPtr node = findEndOfParagraph(startNode.get(), highestRoot.get(), stayInsideBlock.get(), offset, type, boundaryCrossingRule);
 
     if (RefPtr textNode = dynamicDowncast<Text>(node))
-        return Position(WTFMove(textNode), offset);
+        return Position(WTF::move(textNode), offset);
 
     if (type == Position::PositionIsOffsetInAnchor)
-        return Position(WTFMove(node), offset, type);
+        return Position(WTF::move(node), offset, type);
 
-    return Position(WTFMove(node), type);
+    return Position(WTF::move(node), type);
 }
 
 // FIXME: isStartOfParagraph(startOfNextParagraph(pos)) is not always true
@@ -1703,7 +1703,7 @@ static VisiblePosition nextSentenceBoundaryInDirection(const VisiblePosition& vp
             if (newResult == result)
                 break;
 
-            result = WTFMove(newResult);
+            result = WTF::move(newResult);
         }
     } while (areVisiblePositionsInSameTreeScope(result, vp) && (useDownstream ? (result < vp) : (result > vp)));
 

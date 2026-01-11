@@ -59,14 +59,14 @@ public:
     const String& accessGroup() const { return m_accessGroup; }
 
     WEBCORE_EXPORT void setAuthenticatorData(Vector<uint8_t>&&);
-    void setSignature(Ref<ArrayBuffer>&& signature) { m_signature = WTFMove(signature); }
+    void setSignature(Ref<ArrayBuffer>&& signature) { m_signature = WTF::move(signature); }
     void setName(const String& name) { m_name = name; }
     void setDisplayName(const String& displayName) { m_displayName = displayName; }
     void setNumberOfCredentials(size_t numberOfCredentials) { m_numberOfCredentials = numberOfCredentials; }
     void setGroup(const String& group) { m_group = group; }
     void setSynchronizable(bool synchronizable) { m_synchronizable = synchronizable; }
     void setLAContext(LAContext *context) { m_laContext = context; }
-    void setLargeBlob(Ref<ArrayBuffer>&& largeBlob) { m_largeBlob = WTFMove(largeBlob); }
+    void setLargeBlob(Ref<ArrayBuffer>&& largeBlob) { m_largeBlob = WTF::move(largeBlob); }
     void setAccessGroup(const String& accessGroup) { m_accessGroup = accessGroup; }
 
     AuthenticationResponseJSON::AuthenticatorAssertionResponseJSON toJSON();

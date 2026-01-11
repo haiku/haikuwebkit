@@ -170,7 +170,7 @@ void BarcodeDetectorImpl::getSupportedFormats(CompletionHandler<void(Vector<Barc
     auto barcodeFormatsVector = copyToVector(barcodeFormatsSet);
     std::ranges::sort(barcodeFormatsVector);
 
-    completionHandler(WTFMove(barcodeFormatsVector));
+    completionHandler(WTF::move(barcodeFormatsVector));
 }
 
 void BarcodeDetectorImpl::detect(const NativeImage& image, CompletionHandler<void(Vector<DetectedBarcode>&&)>&& completionHandler)
@@ -213,7 +213,7 @@ void BarcodeDetectorImpl::detect(const NativeImage& image, CompletionHandler<voi
         });
     }
 
-    completionHandler(WTFMove(results));
+    completionHandler(WTF::move(results));
 }
 
 } // namespace WebCore::ShapeDetection

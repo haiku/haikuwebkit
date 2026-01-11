@@ -46,6 +46,7 @@
 #include "DocumentQuirks.h"
 #include "DocumentView.h"
 #include "Element.h"
+#include "EventLoop.h"
 #include "EventTargetInlines.h"
 #include "FontCascade.h"
 #include "GeometryUtilities.h"
@@ -64,7 +65,7 @@
 #include "RenderBoxModelObject.h"
 #include "RenderElement.h"
 #include "RenderObjectInlines.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+SettersInlines.h"
 #include "Settings.h"
 #include "StyleAdjuster.h"
 #include "StyleEasingFunction.h"
@@ -76,6 +77,7 @@
 #include "StyleResolver.h"
 #include "StyleScope.h"
 #include "StyleSingleAnimationRange.h"
+#include "StyleTransformResolver.h"
 #include "StyleWillChange.h"
 #include "StyledElement.h"
 #include "TimelineRangeOffset.h"
@@ -97,7 +99,7 @@
 namespace WebCore {
 using namespace JSC;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(KeyframeEffect);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(KeyframeEffect);
 
 KeyframeEffect::~KeyframeEffect()
 {
@@ -487,7 +489,7 @@ static inline ExceptionOr<KeyframeEffect::KeyframeLikeObject> processKeyframeLik
 
             propertyValues = WTF::switchOn(propertyValuesConversionResult.releaseReturnValue(),
                 [](String&& value) -> Vector<String> {
-                    return { WTFMove(value) };
+                    return { WTF::move(value) };
                 },
                 [](Vector<String>&& values) -> Vector<String> {
                     return values;
@@ -516,7 +518,7 @@ static inline ExceptionOr<KeyframeEffect::KeyframeLikeObject> processKeyframeLik
     }
 
     // 7. Return keyframe output.
-    return { WTFMove(keyframeOuput) };
+    return { WTF::move(keyframeOuput) };
 }
 
 static inline ExceptionOr<void> processIterableKeyframes(JSGlobalObject& lexicalGlobalObject, Document& document, Strong<JSObject>&& keyframesInput, JSValue method, Vector<KeyframeEffect::ParsedKeyframe>& parsedKeyframes)
@@ -584,7 +586,7 @@ static inline ExceptionOr<void> processIterableKeyframes(JSGlobalObject& lexical
                 keyframeOutput.styleStrings.set(cssPropertyId, stringValue);
         }
 
-        parsedKeyframes.append(WTFMove(keyframeOutput));
+        parsedKeyframes.append(WTF::move(keyframeOutput));
 
         return { };
     });
@@ -595,7 +597,7 @@ static inline ExceptionOr<void> processIterableKeyframes(JSGlobalObject& lexical
 static inline ExceptionOr<void> processPropertyIndexedKeyframes(JSGlobalObject& lexicalGlobalObject, Document& document, Strong<JSObject>&& keyframesInput, Vector<KeyframeEffect::ParsedKeyframe>& parsedKeyframes, Vector<String>& unusedEasings)
 {
     // 1. Let property-indexed keyframe be the result of running the procedure to process a keyframe-like object passing object as the keyframe input.
-    auto processKeyframeLikeObjectResult = processKeyframeLikeObject(lexicalGlobalObject, document, WTFMove(keyframesInput), true);
+    auto processKeyframeLikeObjectResult = processKeyframeLikeObject(lexicalGlobalObject, document, WTF::move(keyframesInput), true);
     if (processKeyframeLikeObjectResult.hasException())
         return processKeyframeLikeObjectResult.releaseException();
     auto propertyIndexedKeyframe = processKeyframeLikeObjectResult.returnValue();
@@ -625,7 +627,7 @@ static inline ExceptionOr<void> processPropertyIndexedKeyframes(JSGlobalObject& 
             } else if (k.style->setProperty(propertyName, v, parserContext))
                 k.styleStrings.set(propertyName, v);
             // 3. Append k to property keyframes.
-            propertyKeyframes.append(WTFMove(k));
+            propertyKeyframes.append(WTF::move(k));
         }
         // 6. Apply the procedure to compute missing keyframe offsets to property keyframes.
         computeMissingKeyframeOffsets(propertyKeyframes, nullptr, nullptr);
@@ -805,7 +807,7 @@ ExceptionOr<Ref<KeyframeEffect>> KeyframeEffect::create(JSGlobalObject& lexicalG
             return updateTimingResult.releaseException();
     }
 
-    auto processKeyframesResult = keyframeEffect->processKeyframes(lexicalGlobalObject, document, WTFMove(keyframes));
+    auto processKeyframesResult = keyframeEffect->processKeyframes(lexicalGlobalObject, document, WTF::move(keyframes));
     if (processKeyframesResult.hasException())
         return processKeyframesResult.releaseException();
 
@@ -815,7 +817,7 @@ ExceptionOr<Ref<KeyframeEffect>> KeyframeEffect::create(JSGlobalObject& lexicalG
 Ref<KeyframeEffect> KeyframeEffect::create(Ref<KeyframeEffect>&& source)
 {
     auto keyframeEffect = adoptRef(*new KeyframeEffect(nullptr, { }));
-    keyframeEffect->copyPropertiesFromSource(WTFMove(source));
+    keyframeEffect->copyPropertiesFromSource(WTF::move(source));
     return keyframeEffect;
 }
 
@@ -851,9 +853,9 @@ void KeyframeEffect::copyPropertiesFromSource(Ref<KeyframeEffect>&& source)
         parsedKeyframe.computedOffset = sourceParsedKeyframe.computedOffset;
         parsedKeyframe.timingFunction = sourceParsedKeyframe.timingFunction;
         parsedKeyframe.style = sourceParsedKeyframe.style->mutableCopy();
-        parsedKeyframes.append(WTFMove(parsedKeyframe));
+        parsedKeyframes.append(WTF::move(parsedKeyframe));
     }
-    m_parsedKeyframes = WTFMove(parsedKeyframes);
+    m_parsedKeyframes = WTF::move(parsedKeyframes);
 
     setFill(source->fill());
     setDelay(source->specifiedDelay());
@@ -866,7 +868,7 @@ void KeyframeEffect::copyPropertiesFromSource(Ref<KeyframeEffect>&& source)
 
     BlendingKeyframes blendingKeyframes(m_blendingKeyframes.identifier());
     blendingKeyframes.copyKeyframes(source->m_blendingKeyframes);
-    setBlendingKeyframes(WTFMove(blendingKeyframes));
+    setBlendingKeyframes(WTF::move(blendingKeyframes));
 }
 
 static TimelineRangeOffset timelineRangeOffsetFromSpecifiedOffset(const BlendingKeyframe::Offset& specifiedOffset)
@@ -897,7 +899,7 @@ auto KeyframeEffect::getKeyframes() -> Vector<ComputedKeyframe>
                     stringValue = cssValue->cssText(CSS::defaultSerializationContext());
             }
             computedKeyframe.easing = timingFunctionForKeyframeAtIndex(i)->cssText();
-            computedKeyframes.append(WTFMove(computedKeyframe));
+            computedKeyframes.append(WTF::move(computedKeyframe));
         }
         return computedKeyframes;
     }
@@ -1066,20 +1068,20 @@ auto KeyframeEffect::getKeyframes() -> Vector<ComputedKeyframe>
         // by computed offset just like BlendingKeyframes would organize its keyframes.
         // https://github.com/w3c/csswg-drafts/issues/11467
         if (std::holds_alternative<double>(computedKeyframe.offset))
-            computedKeyframesWithDoubleOffset.append(WTFMove(computedKeyframe));
+            computedKeyframesWithDoubleOffset.append(WTF::move(computedKeyframe));
         else
-            computedKeyframesWithTimelineRangeOffset.append(WTFMove(computedKeyframe));
+            computedKeyframesWithTimelineRangeOffset.append(WTF::move(computedKeyframe));
     }
 
-    computedKeyframes.appendVector(WTFMove(computedKeyframesWithDoubleOffset));
-    computedKeyframes.appendVector(WTFMove(computedKeyframesWithTimelineRangeOffset));
+    computedKeyframes.appendVector(WTF::move(computedKeyframesWithDoubleOffset));
+    computedKeyframes.appendVector(WTF::move(computedKeyframesWithTimelineRangeOffset));
 
     return computedKeyframes;
 }
 
 ExceptionOr<void> KeyframeEffect::setBindingsKeyframes(JSGlobalObject& lexicalGlobalObject, Document& document, Strong<JSObject>&& keyframesInput)
 {
-    auto retVal = setKeyframes(lexicalGlobalObject, document, WTFMove(keyframesInput));
+    auto retVal = setKeyframes(lexicalGlobalObject, document, WTF::move(keyframesInput));
     if (!retVal.hasException()) {
         if (RefPtr cssAnimation = dynamicDowncast<CSSAnimation>(animation()))
             cssAnimation->effectKeyframesWereSetUsingBindings();
@@ -1089,7 +1091,7 @@ ExceptionOr<void> KeyframeEffect::setBindingsKeyframes(JSGlobalObject& lexicalGl
 
 ExceptionOr<void> KeyframeEffect::setKeyframes(JSGlobalObject& lexicalGlobalObject, Document& document, Strong<JSObject>&& keyframesInput)
 {
-    auto processKeyframesResult = processKeyframes(lexicalGlobalObject, document, WTFMove(keyframesInput));
+    auto processKeyframesResult = processKeyframes(lexicalGlobalObject, document, WTF::move(keyframesInput));
     if (!processKeyframesResult.hasException() && animation()) {
         animation()->effectTimingDidChange();
 
@@ -1141,11 +1143,11 @@ ExceptionOr<void> KeyframeEffect::processKeyframes(JSGlobalObject& lexicalGlobal
     // 5. Perform the steps corresponding to the first matching condition from below,
     Vector<String> unusedEasings;
     if (!method.isUndefined()) {
-        auto retVal = processIterableKeyframes(lexicalGlobalObject, document, WTFMove(keyframesInput), WTFMove(method), parsedKeyframes);
+        auto retVal = processIterableKeyframes(lexicalGlobalObject, document, WTF::move(keyframesInput), WTF::move(method), parsedKeyframes);
         if (retVal.hasException())
             return retVal.releaseException();
     } else {
-        auto retVal = processPropertyIndexedKeyframes(lexicalGlobalObject, document, WTFMove(keyframesInput), parsedKeyframes, unusedEasings);
+        auto retVal = processPropertyIndexedKeyframes(lexicalGlobalObject, document, WTF::move(keyframesInput), parsedKeyframes, unusedEasings);
         if (retVal.hasException())
             return retVal.releaseException();
     }
@@ -1180,7 +1182,7 @@ ExceptionOr<void> KeyframeEffect::processKeyframes(JSGlobalObject& lexicalGlobal
         auto timingFunctionResult = CSSPropertyParserHelpers::parseEasingFunctionDeprecated(keyframe.easing, parserContext);
         if (!timingFunctionResult)
             return Exception { ExceptionCode::TypeError };
-        keyframe.timingFunction = WTFMove(timingFunctionResult);
+        keyframe.timingFunction = WTF::move(timingFunctionResult);
     }
 
     // 9. Parse each of the values in unused easings using the CSS syntax defined for easing property of the
@@ -1193,7 +1195,7 @@ ExceptionOr<void> KeyframeEffect::processKeyframes(JSGlobalObject& lexicalGlobal
             return Exception { ExceptionCode::TypeError };
     }
 
-    m_parsedKeyframes = WTFMove(parsedKeyframes);
+    m_parsedKeyframes = WTF::move(parsedKeyframes);
 
     clearBlendingKeyframes();
 
@@ -1245,11 +1247,11 @@ void KeyframeEffect::updateBlendingKeyframes(RenderStyle& elementStyle, const St
 
         auto keyframeRule = StyleRuleKeyframe::create(keyframe.style->immutableCopyIfNeeded());
         blendingKeyframe.setStyle(styleResolver->styleForKeyframe(*m_target, elementStyle, resolutionContext, keyframeRule.get(), blendingKeyframe));
-        blendingKeyframes.insert(WTFMove(blendingKeyframe));
+        blendingKeyframes.insert(WTF::move(blendingKeyframe));
         blendingKeyframes.updatePropertiesMetadata(keyframeRule->properties());
     }
 
-    setBlendingKeyframes(WTFMove(blendingKeyframes));
+    setBlendingKeyframes(WTF::move(blendingKeyframes));
 }
 
 const HashSet<AnimatableCSSProperty>& KeyframeEffect::animatedProperties()
@@ -1324,7 +1326,7 @@ void KeyframeEffect::setBlendingKeyframes(BlendingKeyframes&& blendingKeyframes)
 {
     CanBeAcceleratedMutationScope mutationScope(this);
 
-    m_blendingKeyframes = WTFMove(blendingKeyframes);
+    m_blendingKeyframes = WTF::move(blendingKeyframes);
     m_animatedProperties.clear();
 
     m_needsComputedKeyframeOffsetsUpdate = true;
@@ -1431,7 +1433,7 @@ void KeyframeEffect::computeCSSAnimationBlendingKeyframes(const RenderStyle& una
     }
 
     m_animationType = WebAnimationType::CSSAnimation;
-    setBlendingKeyframes(WTFMove(blendingKeyframes));
+    setBlendingKeyframes(WTF::move(blendingKeyframes));
 }
 
 void KeyframeEffect::computeCSSTransitionBlendingKeyframes(const RenderStyle& oldStyle, const RenderStyle& newStyle)
@@ -1451,14 +1453,14 @@ void KeyframeEffect::computeCSSTransitionBlendingKeyframes(const RenderStyle& ol
 
     BlendingKeyframe fromBlendingKeyframe(0, RenderStyle::clonePtr(oldStyle));
     fromBlendingKeyframe.addProperty(property);
-    blendingKeyframes.insert(WTFMove(fromBlendingKeyframe));
+    blendingKeyframes.insert(WTF::move(fromBlendingKeyframe));
 
-    BlendingKeyframe toBlendingKeyframe(1, WTFMove(toStyle));
+    BlendingKeyframe toBlendingKeyframe(1, WTF::move(toStyle));
     toBlendingKeyframe.addProperty(property);
-    blendingKeyframes.insert(WTFMove(toBlendingKeyframe));
+    blendingKeyframes.insert(WTF::move(toBlendingKeyframe));
 
     m_animationType = WebAnimationType::CSSTransition;
-    setBlendingKeyframes(WTFMove(blendingKeyframes));
+    setBlendingKeyframes(WTF::move(blendingKeyframes));
 }
 
 void KeyframeEffect::computedNeedsForcedLayout()
@@ -1567,7 +1569,7 @@ void KeyframeEffect::setTarget(RefPtr<Element>&& newTarget)
     RefPtr<Element> protector;
     if (previousTargetStyleable)
         protector = previousTargetStyleable->element;
-    m_target = WTFMove(newTarget);
+    m_target = WTF::move(newTarget);
     didChangeTargetStyleable(previousTargetStyleable);
 }
 
@@ -2238,6 +2240,37 @@ void KeyframeEffect::wasAddedToEffectStack()
 void KeyframeEffect::wasRemovedFromEffectStack()
 {
     m_inTargetEffectStack = false;
+
+    if (!canBeAccelerated())
+        return;
+
+#if ENABLE(THREADED_ANIMATIONS)
+    if (canHaveAcceleratedRepresentation())
+        return;
+#endif
+
+    // If the effect was running accelerated, we need to mark it for removal straight away
+    // since it will not be invalidated by a future call to KeyframeEffectStack::applyPendingAcceleratedActions().
+    ASSERT(animation());
+    if (isRunningAccelerated() || isAboutToRunAccelerated()) {
+        Ref animation = *this->animation();
+        bool isFinishingNaturally = animation->hasPendingFinishNotification() || animation->playState() == WebAnimation::PlayState::Finished;
+
+        m_pendingAcceleratedActions.clear();
+        m_pendingAcceleratedActions.append(AcceleratedAction::Stop);
+
+        if (isFinishingNaturally) {
+            // Don't immediately stop animations that are finishing naturally - delay cleanup via microtask
+            // to allow the finished promise callback to observe the final animation state (e.g., layer tree).
+            // Only immediately stop animations removed mid-flight.
+            if (RefPtr context = animation->scriptExecutionContext()) {
+                context->eventLoop().queueMicrotask([protectedThis = Ref { *this }] {
+                    protectedThis->applyPendingAcceleratedActions();
+                });
+            }
+        } else
+            applyPendingAcceleratedActions();
+    }
 }
 
 void KeyframeEffect::willChangeRenderer()
@@ -2497,8 +2530,7 @@ bool KeyframeEffect::computeExtentOfTransformAnimation(LayoutRect& bounds) const
     auto addStyleToCumulativeBounds = [&](const RenderStyle& style) {
         auto keyframeBounds = bounds;
 
-        TransformationMatrix transform;
-        style.applyTransform(transform, transformOperationData);
+        auto transform = Style::TransformResolver::computeTransform(style, transformOperationData);
         if (!transform.isAffine())
             return false;
 

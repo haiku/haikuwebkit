@@ -47,7 +47,7 @@
 #import "LocalFrameInlines.h"
 #import "Logging.h"
 #import "NodeRenderStyle.h"
-#import "RenderStyleInlines.h"
+#import "RenderStyle+GettersInlines.h"
 #import "RenderedDocumentMarker.h"
 #import "TextAnimationTypes.h"
 #import "TextIterator.h"
@@ -193,7 +193,7 @@ static RetainPtr<NSAttributedString> attributedStringApplyingBodyTextColorIfNece
 
     CheckedRef style = renderer->style();
 
-    Color textColor = style->visitedDependentColorWithColorFilter(CSSPropertyColor);
+    auto textColor = style->visitedDependentColorApplyingColorFilter();
     if (!textColor.isVisible())
         return attributedString;
 
@@ -782,7 +782,7 @@ void WritingToolsController::compositionSessionDidReceiveTextWithReplacementRang
     if (isZeroToOneCompositionType(session.compositionType))
         finished = false;
 
-    m_page->chrome().client().addSourceTextAnimationForActiveWritingToolsSession(sourceAnimationUUID, destinationAnimationUUID, finished, range, attributedText.string, WTFMove(addDestinationTextAnimation));
+    m_page->chrome().client().addSourceTextAnimationForActiveWritingToolsSession(sourceAnimationUUID, destinationAnimationUUID, finished, range, attributedText.string, WTF::move(addDestinationTextAnimation));
 }
 
 template<>
@@ -841,7 +841,7 @@ void WritingToolsController::writingToolsSessionDidReceiveAction<WritingTools::S
         auto newData = DocumentMarker::WritingToolsTextSuggestionData { currentText, oldData.suggestionID, newState, oldData.decoration };
         auto newOffsetRange = OffsetRange { startOffset, endOffset + previousText.length() - currentText.length() };
 
-        markers.addMarker(node, DocumentMarker { DocumentMarkerType::WritingToolsTextSuggestion, newOffsetRange, WTFMove(newData) });
+        markers.addMarker(node, DocumentMarker { DocumentMarkerType::WritingToolsTextSuggestion, newOffsetRange, WTF::move(newData) });
     }
 }
 
@@ -1316,7 +1316,7 @@ void WritingToolsController::replaceContentsOfRangeInSession(CompositionState& s
     auto matchStyle = hasAttributes ? WritingToolsCompositionCommand::MatchStyle::No : WritingToolsCompositionCommand::MatchStyle::Yes;
 
     EditingScope editingScope { *document() };
-    state.reappliedCommands.last()->replaceContentsOfRangeWithFragment(WTFMove(fragment), range, matchStyle, commandState);
+    state.reappliedCommands.last()->replaceContentsOfRangeWithFragment(WTF::move(fragment), range, matchStyle, commandState);
 }
 
 void WritingToolsController::commitComposition(CompositionState& state, Document& document)

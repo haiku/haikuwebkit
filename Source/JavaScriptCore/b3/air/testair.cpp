@@ -2254,7 +2254,7 @@ void testElideHandlesEarlyClobber()
 
     Inst inst(Patch, patch, Arg::special(code.addSpecial(makeUniqueWithoutFastMallocCheck<JSC::B3::PatchpointSpecial>())));
     inst.args.append(Tmp(firstCalleeSave));
-    root->appendInst(WTFMove(inst));
+    root->appendInst(WTF::move(inst));
 
     Tmp result = code.newTmp(B3::GP);
     root->append(Move, nullptr, tmps[0], result);

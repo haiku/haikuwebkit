@@ -44,7 +44,7 @@ static constexpr auto Secp384r1 = std::to_array<unsigned char>({ 0x06, 0x05, 0x2
 static constexpr auto Secp521r1 = std::to_array<unsigned char>({ 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x23 });
 
 // Version 1. Per https://tools.ietf.org/html/rfc5915#section-3
-static const unsigned char PrivateKeyVersion[] = {0x02, 0x01, 0x01};
+static constexpr std::array<uint8_t, 3> PrivateKeyVersion { 0x02, 0x01, 0x01 };
 // Tagged type [1]
 static const unsigned char TaggedType1 = 0xa1;
 
@@ -125,7 +125,7 @@ std::optional<CryptoKeyPair> CryptoKeyEC::platformGeneratePair(CryptoAlgorithmId
 #if !defined(CLANG_WEBKIT_BRANCH)
     auto privateKey = CryptoKeyEC::create(identifier, curve, CryptoKeyType::Private, toPlatformKey(PAL::ECKey::init(namedCurveToCryptoKitCurve(curve))), extractable, usages);
     auto publicKey = CryptoKeyEC::create(identifier, curve, CryptoKeyType::Public, toPlatformKey(privateKey->platformKey()->toPub()), true, usages);
-    return CryptoKeyPair { WTFMove(publicKey), WTFMove(privateKey) };
+    return CryptoKeyPair { WTF::move(publicKey), WTF::move(privateKey) };
 #else
     UNUSED_PARAM(identifier);
     UNUSED_PARAM(curve);
@@ -164,7 +164,7 @@ Vector<uint8_t> CryptoKeyEC::platformExportRaw() const
         return { };
     if (rv.result.size() != expectedSize)
         return { };
-    return WTFMove(rv.result);
+    return WTF::move(rv.result);
 #else
     RELEASE_ASSERT_NOT_REACHED_WITH_MESSAGE("CLANG_WEBKIT_BRANCH");
 #endif
@@ -177,7 +177,7 @@ RefPtr<CryptoKeyEC> CryptoKeyEC::platformImportJWKPublic(CryptoAlgorithmIdentifi
     Vector<uint8_t> combined { InitialOctetEC };
     combined.appendVector(x);
     combined.appendVector(y);
-    return platformImportRaw(identifier, curve, WTFMove(combined), extractable, usages);
+    return platformImportRaw(identifier, curve, WTF::move(combined), extractable, usages);
 }
 
 RefPtr<CryptoKeyEC> CryptoKeyEC::platformImportJWKPrivate(CryptoAlgorithmIdentifier identifier, NamedCurve curve, Vector<uint8_t>&& x, Vector<uint8_t>&& y, Vector<uint8_t>&& d, bool extractable, CryptoKeyUsageBitmap usages)
@@ -223,14 +223,14 @@ bool CryptoKeyEC::platformAddFieldElements(JsonWebKey& jwk) const
         auto rv = platformKey()->exportX963Pub();
         if (rv.errorCode != Cpp::ErrorCodes::Success)
             return false;
-        result = WTFMove(rv.result);
+        result = WTF::move(rv.result);
         break;
     }
     case CryptoKeyType::Private: {
         auto rv = platformKey()->exportX963Private();
         if (rv.errorCode != Cpp::ErrorCodes::Success)
             return false;
-        result = WTFMove(rv.result);
+        result = WTF::move(rv.result);
         break;
     }
     case CryptoKeyType::Secret:
@@ -329,7 +329,7 @@ Vector<uint8_t> CryptoKeyEC::platformExportSpki() const
         return { };
     if (rv.result.size() != expectedKeySize)
         return { };
-    keyBytes = WTFMove(rv.result);
+    keyBytes = WTF::move(rv.result);
     keySize = expectedKeySize;
 
     // The following adds SPKI header to a raw EC public key.
@@ -442,7 +442,7 @@ Vector<uint8_t> CryptoKeyEC::platformExportPkcs8() const
         return { };
     if (rv.result.size() != expectedKeySize)
         return { };
-    keyBytes = WTFMove(rv.result);
+    keyBytes = WTF::move(rv.result);
 
     // The following addes PKCS8 header to a raw EC private key.
     // Once the underlying crypto library is updated to output PKCS8 EC Key, we should remove this hack.

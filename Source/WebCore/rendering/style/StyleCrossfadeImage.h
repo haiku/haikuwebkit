@@ -39,7 +39,7 @@ class StyleCrossfadeImage final : public StyleGeneratedImage, private CachedImag
 public:
     static Ref<StyleCrossfadeImage> create(RefPtr<StyleImage> from, RefPtr<StyleImage> to, double percentage, bool isPrefixed)
     {
-        return adoptRef(*new StyleCrossfadeImage(WTFMove(from), WTFMove(to), percentage, isPrefixed));
+        return adoptRef(*new StyleCrossfadeImage(WTF::move(from), WTF::move(to), percentage, isPrefixed));
     }
     virtual ~StyleCrossfadeImage();
 

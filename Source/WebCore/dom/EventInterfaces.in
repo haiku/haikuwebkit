@@ -26,6 +26,7 @@ ExtendableMessageEvent
 ErrorEvent
 FetchEvent
 FocusEvent
+FontFaceSetLoadEvent
 FormDataEvent
 HashChangeEvent
 InputEvent

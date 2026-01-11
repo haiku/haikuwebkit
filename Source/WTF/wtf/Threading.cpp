@@ -153,8 +153,8 @@ struct Thread::NewThreadContext : public ThreadSafeRefCounted<NewThreadContext> 
 public:
     NewThreadContext(ASCIILiteral name, Function<void()>&& entryPoint, Ref<Thread>&& thread)
         : name(name)
-        , entryPoint(WTFMove(entryPoint))
-        , thread(WTFMove(thread))
+        , entryPoint(WTF::move(entryPoint))
+        , thread(WTF::move(thread))
     {
     }
 
@@ -242,12 +242,12 @@ void Thread::entryPoint(NewThreadContext* newThreadContext)
 #endif
 
         Thread::initializeCurrentThreadInternal(context->name);
-        function = WTFMove(context->entryPoint);
+        function = WTF::move(context->entryPoint);
 
-        Ref thread = WTFMove(context->thread);
+        Ref thread = WTF::move(context->thread);
         thread->initializeInThread();
 
-        Thread::initializeTLS(WTFMove(thread));
+        Thread::initializeTLS(WTF::move(thread));
 
 #if !HAVE(STACK_BOUNDS_FOR_NEW_THREAD)
         // Ack completion of initialization to the creating thread.
@@ -266,7 +266,7 @@ Ref<Thread> Thread::create(ASCIILiteral name, Function<void()>&& entryPoint, Thr
 
     Ref thread = adoptRef(*new Thread(schedulingPolicy));
 
-    Ref context = adoptRef(*new NewThreadContext { name, WTFMove(entryPoint), thread.get() });
+    Ref context = adoptRef(*new NewThreadContext { name, WTF::move(entryPoint), thread.get() });
     {
         MutexLocker locker(context->mutex);
         context->ref(); // Adopted by Thread::entryPoint

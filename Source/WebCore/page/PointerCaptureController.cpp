@@ -366,13 +366,13 @@ void PointerCaptureController::dispatchEventForTouchAtIndex(EventTarget& target,
     bool shouldWaitForSyntheticClick = [&] {
 #if PLATFORM(IOS_FAMILY)
         if (platformTouchEvent.isPotentialTap())
-            return currentTarget->protectedDocument()->quirks().shouldDispatchPointerOutAfterHandlingSyntheticClick();
+            return currentTarget->protectedDocument()->quirks().shouldDispatchPointerOutAndLeaveAfterHandlingSyntheticClick();
 #endif
         return false;
     }();
 
     if (shouldWaitForSyntheticClick)
-        page->chrome().client().callAfterPendingSyntheticClick(WTFMove(dispatchPointerOutAndLeave));
+        page->chrome().client().callAfterPendingSyntheticClick(WTF::move(dispatchPointerOutAndLeave));
     else
         dispatchPointerOutAndLeave(SyntheticClickResult::Failed);
 

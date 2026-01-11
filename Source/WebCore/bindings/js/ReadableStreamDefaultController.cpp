@@ -140,7 +140,7 @@ bool ReadableStreamDefaultController::enqueue(RefPtr<JSC::ArrayBuffer>&& buffer)
     JSC::JSLockHolder lock(vm);
     auto scope = DECLARE_CATCH_SCOPE(vm);
     auto length = buffer->byteLength();
-    auto chunk = JSC::Uint8Array::create(WTFMove(buffer), 0, length);
+    auto chunk = JSC::Uint8Array::create(WTF::move(buffer), 0, length);
     auto value = toJS(&lexicalGlobalObject, &lexicalGlobalObject, chunk.get());
 
     EXCEPTION_ASSERT(!scope.exception() || vm.hasPendingTerminationException());

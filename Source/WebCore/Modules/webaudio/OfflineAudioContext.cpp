@@ -44,7 +44,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(OfflineAudioContext);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(OfflineAudioContext);
 
 OfflineAudioContext::OfflineAudioContext(Document& document, const OfflineAudioContextOptions& options)
     : BaseAudioContext(document)
@@ -146,13 +146,13 @@ void OfflineAudioContext::startRendering(Ref<DeferredPromise>&& promise)
 
     lazyInitialize();
 
-    protectedDestination()->startRendering([promise = WTFMove(promise), pendingActivity = makePendingActivity(*this)](std::optional<Exception>&& exception) mutable {
+    protectedDestination()->startRendering([promise = WTF::move(promise), pendingActivity = makePendingActivity(*this)](std::optional<Exception>&& exception) mutable {
         if (exception) {
-            promise->reject(WTFMove(*exception));
+            promise->reject(WTF::move(*exception));
             return;
         }
 
-        pendingActivity->object().m_pendingRenderingPromise = WTFMove(promise);
+        pendingActivity->object().m_pendingRenderingPromise = WTF::move(promise);
         pendingActivity->object().m_didStartRendering = true;
         pendingActivity->object().setState(State::Running);
     });
@@ -207,9 +207,9 @@ void OfflineAudioContext::resumeRendering(Ref<DeferredPromise>&& promise)
     }
     ASSERT(state() == AudioContextState::Suspended);
 
-    protectedDestination()->startRendering([promise = WTFMove(promise), pendingActivity = makePendingActivity(*this)](std::optional<Exception>&& exception) mutable {
+    protectedDestination()->startRendering([promise = WTF::move(promise), pendingActivity = makePendingActivity(*this)](std::optional<Exception>&& exception) mutable {
         if (exception) {
-            promise->reject(WTFMove(*exception));
+            promise->reject(WTF::move(*exception));
             return;
         }
 

@@ -84,7 +84,7 @@ void RemoteScrollingTree::scrollingTreeNodeDidScroll(ScrollingTreeScrollingNode&
         layoutViewportOrigin = scrollingNode->layoutViewport().location();
 
     auto scrollUpdate = ScrollUpdate { node.scrollingNodeID(), node.currentScrollPosition(), layoutViewportOrigin, ScrollUpdateType::PositionUpdate, scrollingLayerPositionAction };
-    addPendingScrollUpdate(WTFMove(scrollUpdate));
+    addPendingScrollUpdate(WTF::move(scrollUpdate));
 
     scrollingCoordinatorProxy->scrollingThreadAddedPendingUpdate();
 }
@@ -98,7 +98,7 @@ void RemoteScrollingTree::scrollingTreeNodeDidStopAnimatedScroll(ScrollingTreeSc
         return;
 
     auto scrollUpdate = ScrollUpdate { node.scrollingNodeID(), { }, { }, ScrollUpdateType::AnimatedScrollDidEnd };
-    addPendingScrollUpdate(WTFMove(scrollUpdate));
+    addPendingScrollUpdate(WTF::move(scrollUpdate));
 
     scrollingCoordinatorProxy->scrollingThreadAddedPendingUpdate();
 }
@@ -112,7 +112,7 @@ void RemoteScrollingTree::scrollingTreeNodeDidStopWheelEventScroll(WebCore::Scro
         return;
 
     auto scrollUpdate = ScrollUpdate { node.scrollingNodeID(), { }, { }, ScrollUpdateType::WheelEventScrollDidEnd };
-    addPendingScrollUpdate(WTFMove(scrollUpdate));
+    addPendingScrollUpdate(WTF::move(scrollUpdate));
 
     scrollingCoordinatorProxy->scrollingThreadAddedPendingUpdate();
 }
@@ -148,7 +148,7 @@ void RemoteScrollingTree::scrollingTreeNodeDidStopProgrammaticScroll(WebCore::Sc
         return;
 
     auto scrollUpdate = ScrollUpdate { node.scrollingNodeID(), { }, { }, ScrollUpdateType::ProgrammaticScrollDidEnd };
-    addPendingScrollUpdate(WTFMove(scrollUpdate));
+    addPendingScrollUpdate(WTF::move(scrollUpdate));
 
     scrollingCoordinatorProxy->scrollingThreadAddedPendingUpdate();
 }
@@ -314,11 +314,6 @@ RefPtr<const RemoteAnimationTimeline> RemoteScrollingTree::timeline(const Timeli
     if (m_progressBasedTimelineRegistry)
         return m_progressBasedTimelineRegistry->get(timelineID);
     return nullptr;
-}
-
-bool RemoteScrollingTree::hasTimelineForNode(const WebCore::ScrollingTreeScrollingNode& node) const
-{
-    return m_progressBasedTimelineRegistry && m_progressBasedTimelineRegistry->hasTimelineForNode(node);
 }
 
 void RemoteScrollingTree::updateProgressBasedTimelinesForNode(const WebCore::ScrollingTreeScrollingNode& node)

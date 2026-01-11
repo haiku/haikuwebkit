@@ -83,11 +83,11 @@ std::unique_ptr<ContentFilter> ContentFilter::create(ContentFilterClient& client
     if (filters.isEmpty())
         return nullptr;
 
-    return makeUnique<ContentFilter>(WTFMove(filters), client);
+    return makeUnique<ContentFilter>(WTF::move(filters), client);
 }
 
 ContentFilter::ContentFilter(Container&& contentFilters, ContentFilterClient& client)
-    : m_contentFilters(WTFMove(contentFilters))
+    : m_contentFilters(WTF::move(contentFilters))
     , m_client(client)
 {
     LOG(ContentFiltering, "Creating ContentFilter with %zu platform content filter(s).\n", m_contentFilters.size());
@@ -137,7 +137,7 @@ ContentFilter::ContentFilterCallbackAggregator::~ContentFilterCallbackAggregator
 
     m_contentFilter = nullptr;
 
-    m_callback(WTFMove(m_request));
+    m_callback(WTF::move(m_request));
 }
 
 void ContentFilter::ContentFilterCallbackAggregator::didReceivePlatformContentFilterDecision(PlatformContentFilter& platformContentFilter, String&& urlString)
@@ -156,13 +156,13 @@ void ContentFilter::ContentFilterCallbackAggregator::didReceivePlatformContentFi
 
     URL url { urlString };
     if (url.isValid())
-        m_request.setURL(WTFMove(url));
+        m_request.setURL(WTF::move(url));
 }
 
 ContentFilter::ContentFilterCallbackAggregator::ContentFilterCallbackAggregator(ContentFilter& contentFilter, const ResourceRequest& request, CompletionHandler<void(ResourceRequest&&)>&& callback)
     : m_contentFilter(contentFilter)
     , m_request(request)
-    , m_callback(WTFMove(callback))
+    , m_callback(WTF::move(callback))
 {
     ASSERT(RunLoop::isMain());
 }
@@ -174,16 +174,16 @@ void ContentFilter::continueAfterWillSendRequest(ResourceRequest&& request, cons
     LOG(ContentFiltering, "ContentFilter received request for <%{sensitive}s> with redirect response from %s" SENSITIVE_LOG_STRING, request.url().string().utf8().data(), redirectResponse.url().string().utf8().data());
     ASSERT(m_state == State::Stopped || m_state == State::Filtering);
 
-    Ref contentFilterCallbackAggregator = ContentFilterCallbackAggregator::create(*this, request, WTFMove(completionHandler));
+    Ref contentFilterCallbackAggregator = ContentFilterCallbackAggregator::create(*this, request, WTF::move(completionHandler));
 
     for (Ref platformContentFilter : m_contentFilters) {
         CompletionHandler<void(String&&)> completion = [contentFilterCallbackAggregator, platformContentFilter] (String&& urlString) mutable {
             ASSERT(RunLoop::isMain());
-            contentFilterCallbackAggregator->didReceivePlatformContentFilterDecision(platformContentFilter, WTFMove(urlString));
+            contentFilterCallbackAggregator->didReceivePlatformContentFilterDecision(platformContentFilter, WTF::move(urlString));
         };
 
         ASSERT(platformContentFilter->needsMoreData());
-        platformContentFilter->willSendRequest(ResourceRequest { request }, redirectResponse, WTFMove(completion));
+        platformContentFilter->willSendRequest(ResourceRequest { request }, redirectResponse, WTF::move(completion));
     }
 }
 
@@ -420,9 +420,9 @@ void ContentFilter::handleProvisionalLoadFailure(const ResourceError& error)
     ASSERT(blockingContentFilter);
     RefPtr replacementData { blockingContentFilter->replacementData() };
     ResourceResponse response { URL(), "text/html"_s, static_cast<long long>(replacementData->size()), "UTF-8"_s };
-    SubstituteData substituteData { WTFMove(replacementData), URL { error.failingURL() }, WTFMove(response), SubstituteData::SessionHistoryVisibility::Hidden };
+    SubstituteData substituteData { WTF::move(replacementData), URL { error.failingURL() }, WTF::move(response), SubstituteData::SessionHistoryVisibility::Hidden };
     SetForScope loadingBlockedPage { m_isLoadingBlockedPage, true };
-    protectedClient()->handleProvisionalLoadFailureFromContentFilter(blockedPageURL(), WTFMove(substituteData));
+    protectedClient()->handleProvisionalLoadFailureFromContentFilter(blockedPageURL(), WTF::move(substituteData));
 }
 
 void ContentFilter::deliverStoredResourceData()

@@ -41,7 +41,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(DataTransferItemList);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(DataTransferItemList);
 
 DataTransferItemList::DataTransferItemList(Document& document, DataTransfer& dataTransfer)
     : ContextDestructionObserver(&document)
@@ -171,7 +171,7 @@ Vector<Ref<DataTransferItem>>& DataTransferItemList::ensureItems() const
         }));
     }
 
-    m_items = WTFMove(items);
+    m_items = WTF::move(items);
 
     return *m_items;
 }

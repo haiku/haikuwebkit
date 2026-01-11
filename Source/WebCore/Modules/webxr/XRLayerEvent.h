@@ -33,13 +33,13 @@
 namespace WebCore {
 
 class XRLayerEvent final : public Event {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(XRLayerEvent);
+    WTF_MAKE_TZONE_ALLOCATED(XRLayerEvent);
 public:
     struct Init : EventInit {
         Init() = default;
         Init(RefPtr<WebXRLayer>&& layer)
             : EventInit()
-            , layer(WTFMove(layer))
+            , layer(WTF::move(layer))
         { }
         RefPtr<WebXRLayer> layer;
     };

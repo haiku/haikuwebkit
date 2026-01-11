@@ -127,13 +127,13 @@ void WasmDebuggerDebuggable::disconnect(FrontendChannel& channel)
 
 void WasmDebuggerDebuggable::dispatchMessageFromRemote(String&& message)
 {
-    callOnMainRunLoopAndWait([this, protectedThis = Ref { *this }, message = WTFMove(message).isolatedCopy()]() mutable {
+    callOnMainRunLoopAndWait([this, protectedThis = Ref { *this }, message = WTF::move(message).isolatedCopy()]() mutable {
         RefPtr process = m_process.get();
         if (!process)
             return;
 
         // Forward message to WebContent process via IPC
-        process->dispatchWasmDebuggerMessage(WTFMove(message));
+        process->dispatchWasmDebuggerMessage(WTF::move(message));
     });
 }
 

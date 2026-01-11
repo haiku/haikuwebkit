@@ -68,7 +68,7 @@ void JSObservableArray::finishCreation(VM& vm, Ref<ObservableArray>&& array)
 {
     Base::finishCreation(vm);
     ASSERT(inherits(info()));
-    m_array = WTFMove(array);
+    m_array = WTF::move(array);
 }
 
 JSObservableArray::~JSObservableArray() = default;

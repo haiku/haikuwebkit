@@ -208,7 +208,7 @@ std::pair<String, FileHandle> openTemporaryFile(StringView prefix, StringView su
         return { String(), FileHandle() };
 #endif
 
-    return { String::fromUTF8(buffer.span().data()), WTFMove(handle) };
+    return { String::fromUTF8(buffer.span().data()), WTF::move(handle) };
 }
 #endif // !PLATFORM(COCOA)
 

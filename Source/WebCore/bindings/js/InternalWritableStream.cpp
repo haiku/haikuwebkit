@@ -232,7 +232,7 @@ void InternalWritableStream::errorIfPossible(Exception&& exception)
     auto* clientData = downcast<JSVMClientData>(vm->clientData);
     auto& privateName = clientData->builtinFunctions().writableStreamInternalsBuiltins().writableStreamErrorIfPossiblePrivateName();
 
-    auto reason = createDOMException(*globalObject, WTFMove(exception));
+    auto reason = createDOMException(*globalObject, WTF::move(exception));
 
     JSC::MarkedArgumentBuffer arguments;
     arguments.append(guardedObject());

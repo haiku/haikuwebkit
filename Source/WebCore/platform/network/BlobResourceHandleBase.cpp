@@ -42,7 +42,7 @@ static constexpr auto httpOKText = "OK"_s;
 static constexpr auto httpPartialContentText = "Partial Content"_s;
 
 BlobResourceHandleBase::BlobResourceHandleBase(bool async, RefPtr<BlobData>&& blobData)
-    : m_blobData(WTFMove(blobData))
+    : m_blobData(WTF::move(blobData))
 {
     if (async)
         m_stream = makeUnique<AsyncFileStream>(*this);
@@ -399,7 +399,7 @@ void BlobResourceHandleBase::dispatchDidReceiveResponse()
     // as if the response had a Content-Disposition header with the filename parameter set to the File's name attribute.
     // Notably, this will affect a name suggested in "File Save As".
 
-    didReceiveResponse(WTFMove(response));
+    didReceiveResponse(WTF::move(response));
 }
 
 } // namespace WebCore

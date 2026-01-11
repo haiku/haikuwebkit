@@ -199,7 +199,7 @@ void ModelProcessModelPlayer::reload(WebCore::Model& model, WebCore::LayoutSize 
 {
     RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayer reload model id=%" PRIu64, this, m_id.toUInt64());
 
-    auto transformStateToRestore = WTFMove(transformState);
+    auto transformStateToRestore = WTF::move(transformState);
     ASSERT(transformStateToRestore);
     m_entityTransform = transformStateToRestore->entityTransform();
     m_boundingBoxCenter = transformStateToRestore->boundingBoxCenter();
@@ -379,7 +379,7 @@ void ModelProcessModelPlayer::setPlaybackRate(double playbackRate, CompletionHan
 {
     // FIXME (280081): Support negative playback rate
     m_requestedPlaybackRate = fmax(playbackRate, 0);
-    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::SetPlaybackRate(m_requestedPlaybackRate), WTFMove(completionHandler));
+    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::SetPlaybackRate(m_requestedPlaybackRate), WTF::move(completionHandler));
 }
 
 double ModelProcessModelPlayer::duration() const
@@ -394,7 +394,7 @@ bool ModelProcessModelPlayer::paused() const
 
 void ModelProcessModelPlayer::setPaused(bool paused, CompletionHandler<void(bool succeeded)>&& completionHandler)
 {
-    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::SetPaused(paused), WTFMove(completionHandler));
+    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::SetPaused(paused), WTF::move(completionHandler));
 }
 
 Seconds ModelProcessModelPlayer::currentTime() const
@@ -418,7 +418,7 @@ void ModelProcessModelPlayer::setCurrentTime(Seconds currentTime, CompletionHand
     MonotonicTime timestamp = MonotonicTime::now();
     m_clockTimestampOfLastCurrentTimeSet = timestamp;
 
-    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::SetCurrentTime(*m_pendingCurrentTime), [weakThis = WeakPtr { *this }, timestamp, completionHandler = WTFMove(completionHandler)]() mutable {
+    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::SetCurrentTime(*m_pendingCurrentTime), [weakThis = WeakPtr { *this }, timestamp, completionHandler = WTF::move(completionHandler)]() mutable {
         ASSERT(RunLoop::isMain());
         if (RefPtr protectedThis = weakThis.get()) {
             if (protectedThis->m_clockTimestampOfLastCurrentTimeSet && *(protectedThis->m_clockTimestampOfLastCurrentTimeSet) <= timestamp) {
@@ -432,7 +432,7 @@ void ModelProcessModelPlayer::setCurrentTime(Seconds currentTime, CompletionHand
 
 void ModelProcessModelPlayer::setEnvironmentMap(Ref<WebCore::SharedBuffer>&& data)
 {
-    send(Messages::ModelProcessModelPlayerProxy::SetEnvironmentMap(WTFMove(data)));
+    send(Messages::ModelProcessModelPlayerProxy::SetEnvironmentMap(WTF::move(data)));
 }
 
 void ModelProcessModelPlayer::setHasPortal(bool hasPortal)
@@ -470,7 +470,7 @@ void ModelProcessModelPlayer::endStageModeInteraction()
 
 void ModelProcessModelPlayer::animateModelToFitPortal(CompletionHandler<void(bool)>&& completionHandler)
 {
-    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::AnimateModelToFitPortal(), WTFMove(completionHandler));
+    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::AnimateModelToFitPortal(), WTF::move(completionHandler));
 }
 
 void ModelProcessModelPlayer::resetModelTransformAfterDrag()
@@ -487,12 +487,12 @@ void ModelProcessModelPlayer::disableUnloadDelayForTesting()
 
 void ModelProcessModelPlayer::ensureImmersivePresentation(CompletionHandler<void(std::optional<WebCore::LayerHostingContextIdentifier>)>&& completion)
 {
-    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::EnsureImmersivePresentation(), WTFMove(completion));
+    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::EnsureImmersivePresentation(), WTF::move(completion));
 }
 
 void ModelProcessModelPlayer::exitImmersivePresentation(CompletionHandler<void()>&& completion)
 {
-    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::ExitImmersivePresentation(), WTFMove(completion));
+    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::ExitImmersivePresentation(), WTF::move(completion));
 }
 
 #endif

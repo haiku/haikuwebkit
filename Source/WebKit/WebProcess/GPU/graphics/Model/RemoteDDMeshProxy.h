@@ -47,7 +47,7 @@ class RemoteDDMeshProxy final : public WebCore::DDModel::DDMesh {
 public:
     static Ref<RemoteDDMeshProxy> create(Ref<RemoteGPUProxy>&& root, ConvertToBackingContext& convertToBackingContext, DDModelIdentifier identifier)
     {
-        return adoptRef(*new RemoteDDMeshProxy(WTFMove(root), convertToBackingContext, identifier));
+        return adoptRef(*new RemoteDDMeshProxy(WTF::move(root), convertToBackingContext, identifier));
     }
 
     virtual ~RemoteDDMeshProxy();
@@ -71,7 +71,7 @@ private:
     template<typename T>
     WARN_UNUSED_RETURN IPC::Error send(T&& message)
     {
-        return root().protectedStreamClientConnection()->send(WTFMove(message), backing());
+        return root().protectedStreamClientConnection()->send(WTF::move(message), backing());
     }
 
     void update(const WebCore::DDModel::DDUpdateMeshDescriptor&) final;

@@ -103,6 +103,9 @@ public:
     void datagramsWritableCreated(WebTransportDatagramsWritable&);
     void cleanupContext(ScriptExecutionContext&);
 
+    void sendStreamClosed(WebTransportStreamIdentifier);
+    void receiveStreamClosed(WebTransportStreamIdentifier);
+
 private:
     WebTransport(ScriptExecutionContext&, JSDOMGlobalObject&, Ref<ReadableStream>&&, Ref<ReadableStream>&&, const WebTransportOptions&, Ref<WebTransportDatagramDuplexStream>&&, Ref<DatagramSource>&&, Ref<WebTransportReceiveStreamSource>&&, Ref<WebTransportBidirectionalStreamSource>&&);
 
@@ -112,10 +115,11 @@ private:
 
     // ActiveDOMObject.
     bool virtualHasPendingActivity() const final;
+    void suspend(ReasonForSuspension) final;
 
     void receiveDatagram(std::span<const uint8_t>, bool, std::optional<Exception>&&) final;
     void receiveIncomingUnidirectionalStream(WebTransportStreamIdentifier) final;
-    void receiveBidirectionalStream(Ref<WebTransportSendStreamSink>&&) final;
+    void receiveBidirectionalStream(WebTransportStreamIdentifier) final;
     void streamReceiveBytes(WebTransportStreamIdentifier, std::span<const uint8_t>, bool, std::optional<Exception>&&) final;
     void streamReceiveError(WebTransportStreamIdentifier, uint64_t) final;
     void streamSendError(WebTransportStreamIdentifier, uint64_t) final;
@@ -154,7 +158,7 @@ private:
     const Ref<WebTransportReceiveStreamSource> m_receiveStreamSource;
     const Ref<WebTransportBidirectionalStreamSource> m_bidirectionalStreamSource;
     HashMap<WebTransportStreamIdentifier, Ref<WebTransportReceiveStreamSource>> m_readStreamSources;
-    HashMap<WebTransportStreamIdentifier, Ref<WebTransportSendStream>> m_writeStreams;
+    HashMap<WebTransportStreamIdentifier, Ref<WebTransportSendStreamSink>> m_sendStreamSinks;
     WeakHashSet<WebTransportDatagramsWritable> m_datagramsWritables;
 };
 

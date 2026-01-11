@@ -36,7 +36,7 @@
 namespace WebKit {
 
 WebFramePolicyListenerProxy::WebFramePolicyListenerProxy(Reply&& reply, ShouldExpectSafeBrowsingResult expectSafeBrowsingResult, ShouldExpectAppBoundDomainResult expectAppBoundDomainResult, ShouldWaitForInitialLinkDecorationFilteringData shouldWaitForInitialLinkDecorationFilteringData, ShouldWaitForSiteHasStorageCheck shouldWaitForSiteHasStorageCheck)
-    : m_reply(WTFMove(reply))
+    : m_reply(WTF::move(reply))
 {
     if (expectSafeBrowsingResult == ShouldExpectSafeBrowsingResult::No)
         didReceiveSafeBrowsingResults({ });
@@ -68,7 +68,7 @@ void WebFramePolicyListenerProxy::didReceiveSafeBrowsingResults(RefPtr<BrowsingW
         if (m_reply)
             m_reply(WebCore::PolicyAction::Use, m_policyResult->first.get(), m_policyResult->second, *m_isNavigatingToAppBoundDomain, WasNavigationIntercepted::No);
     } else if (!m_safeBrowsingWarning)
-        m_safeBrowsingWarning = WTFMove(safeBrowsingWarning);
+        m_safeBrowsingWarning = WTF::move(safeBrowsingWarning);
 }
 
 void WebFramePolicyListenerProxy::didReceiveInitialLinkDecorationFilteringData()

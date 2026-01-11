@@ -314,6 +314,10 @@ class WebCore::PaymentSessionError {
 #if ENABLE(APPLE_PAY_MERCHANT_CATEGORY_CODE)
     String merchantCategoryCode();
 #endif
+
+#if ENABLE(APPLE_PAY_DELEGATED_REQUEST)
+    std::optional<bool> isDelegatedRequest();
+#endif
 };
 
 headers: <pal/cocoa/PassKitSoftLink.h>

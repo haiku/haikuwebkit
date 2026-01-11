@@ -49,9 +49,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setPreviewProfileID:(nullable NSString *)profileID;
 
 @property (nonatomic, copy, nullable) NSString *savedActiveProfileID;
-@property (nonatomic, strong) PlatformMenu *menu;
+@property (nonatomic, strong, nullable) PlatformMenu *menu;
 #if PLATFORM(IOS_FAMILY) && !PLATFORM(WATCHOS)
-@property (nonatomic, strong) UIContextMenuInteraction *interaction;
+@property (nonatomic, strong, nullable) UIContextMenuInteraction *interaction;
 #endif
 #if PLATFORM(IOS_FAMILY)
 - (void)notifyMenuWillOpen;

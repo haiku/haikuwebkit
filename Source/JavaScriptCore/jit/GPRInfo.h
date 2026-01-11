@@ -29,6 +29,7 @@
 #include <array>
 #include <wtf/FunctionTraits.h>
 #include <wtf/MathExtras.h>
+#include <wtf/Platform.h>
 #include <wtf/PrintStream.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
@@ -899,6 +900,7 @@ inline NoResultTag extractResult(NoResultTag) { return NoResult; }
 // We use this hack to get the GPRInfo from the GPRReg type in templates because our code is bad and we should feel bad..
 constexpr GPRInfo toInfoFromReg(GPRReg) { return GPRInfo(); }
 
+// FIXME: We should just use a RegisterSet for this check since RegisterSet is constexpr anyway.
 class NoOverlapImpl {
     static constexpr unsigned noOverlapImplRegMask(GPRReg gpr)
     {

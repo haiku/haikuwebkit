@@ -66,6 +66,7 @@
 		44B1A8682A7C5BAD00DC80A6 /* Device.h in Headers */ = {isa = PBXBuildFile; fileRef = 44B1A8622A7C334D00DC80A6 /* Device.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		44B1A8692A7C606000DC80A6 /* UserInterfaceIdiom.h in Headers */ = {isa = PBXBuildFile; fileRef = 44B1A8662A7C339300DC80A6 /* UserInterfaceIdiom.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		44E1A8B021FA54EB00C3048E /* LookupSoftLink.mm in Sources */ = {isa = PBXBuildFile; fileRef = 44E1A8AE21FA54DA00C3048E /* LookupSoftLink.mm */; };
+		46EF05202EE6A96E00238BB9 /* CoreAudioExtras.h in Headers */ = {isa = PBXBuildFile; fileRef = 46EF051F2EE6A96E00238BB9 /* CoreAudioExtras.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		46FF911929196C73006005B5 /* SleepDisablerIOS.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46FF911829196C73006005B5 /* SleepDisablerIOS.mm */; };
 		5157ADFD2B23B9F300C0E095 /* ContactsSoftLink.h in Headers */ = {isa = PBXBuildFile; fileRef = 5157ADFB2B23B9F300C0E095 /* ContactsSoftLink.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		5157ADFE2B23B9F300C0E095 /* ContactsSoftLink.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5157ADFC2B23B9F300C0E095 /* ContactsSoftLink.mm */; };
@@ -95,6 +96,7 @@
 		A10826FA1F576292004772AC /* WebPanel.mm in Sources */ = {isa = PBXBuildFile; fileRef = A10826F81F576292004772AC /* WebPanel.mm */; };
 		A1175B4F1F6B337300C4B9F0 /* PopupMenu.mm in Sources */ = {isa = PBXBuildFile; fileRef = A1175B4D1F6B337300C4B9F0 /* PopupMenu.mm */; };
 		A1175B581F6B470500C4B9F0 /* DefaultSearchProvider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1175B561F6B470500C4B9F0 /* DefaultSearchProvider.cpp */; };
+		A13AB0832EE7AFDA003C1ED5 /* AVRoutingSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = A13AB0822EE7AFDA003C1ED5 /* AVRoutingSPI.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		A15E661B2EDA937A007FB56F /* AVRoutingSoftLink.mm in Sources */ = {isa = PBXBuildFile; fileRef = A15E66192EDA937A007FB56F /* AVRoutingSoftLink.mm */; };
 		A15E66242EDA972C007FB56F /* AVRoutingSoftLink.h in Headers */ = {isa = PBXBuildFile; fileRef = A15E66182EDA937A007FB56F /* AVRoutingSoftLink.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		A1F63CA021A4DBF7006FB43B /* PassKitSoftLink.mm in Sources */ = {isa = PBXBuildFile; fileRef = A1F63C9E21A4DBF7006FB43B /* PassKitSoftLink.mm */; };
@@ -634,6 +636,7 @@
 		44E1A8AD21FA54DA00C3048E /* LookupSoftLink.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LookupSoftLink.h; sourceTree = "<group>"; };
 		44E1A8AE21FA54DA00C3048E /* LookupSoftLink.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LookupSoftLink.mm; sourceTree = "<group>"; };
 		44EEA0FE2747438900594A83 /* NSServicesRolloverButtonCellSPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSServicesRolloverButtonCellSPI.h; sourceTree = "<group>"; };
+		46EF051F2EE6A96E00238BB9 /* CoreAudioExtras.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoreAudioExtras.h; sourceTree = "<group>"; };
 		46FF911829196C73006005B5 /* SleepDisablerIOS.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SleepDisablerIOS.mm; sourceTree = "<group>"; };
 		4996C0F22717642B002C125D /* TCCSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCCSPI.h; sourceTree = "<group>"; };
 		5157ADFB2B23B9F300C0E095 /* ContactsSoftLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContactsSoftLink.h; sourceTree = "<group>"; };
@@ -696,6 +699,7 @@
 		A1175B551F6B470500C4B9F0 /* DefaultSearchProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DefaultSearchProvider.h; sourceTree = "<group>"; };
 		A1175B561F6B470500C4B9F0 /* DefaultSearchProvider.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DefaultSearchProvider.cpp; sourceTree = "<group>"; };
 		A1175B591F6B4A8400C4B9F0 /* NSScrollViewSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSScrollViewSPI.h; sourceTree = "<group>"; };
+		A13AB0822EE7AFDA003C1ED5 /* AVRoutingSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AVRoutingSPI.h; sourceTree = "<group>"; };
 		A15E66182EDA937A007FB56F /* AVRoutingSoftLink.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AVRoutingSoftLink.h; sourceTree = "<group>"; };
 		A15E66192EDA937A007FB56F /* AVRoutingSoftLink.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AVRoutingSoftLink.mm; sourceTree = "<group>"; };
 		A169B040248EF03900EE8B7B /* PassKitInstallmentsSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PassKitInstallmentsSPI.h; sourceTree = "<group>"; };
@@ -936,6 +940,7 @@
 		0C5AF90D1F43A4A4002EAC02 /* ios */ = {
 			isa = PBXGroup;
 			children = (
+				A13AB0822EE7AFDA003C1ED5 /* AVRoutingSPI.h */,
 				42EB2CA22D0388A400ECB173 /* AXRuntimeSPI.h */,
 				3C963637289DC1C600570DD6 /* BarcodeSupportSPI.h */,
 				F4F0A54B2B634D88001A54E5 /* BrowserEngineKitSPI.h */,
@@ -1015,6 +1020,7 @@
 			children = (
 				416E995123DAE6BD00E871CB /* AudioToolboxSoftLink.cpp */,
 				416E995223DAE6BE00E871CB /* AudioToolboxSoftLink.h */,
+				46EF051F2EE6A96E00238BB9 /* CoreAudioExtras.h */,
 				0CF99CA61F738436007EE793 /* CoreMediaSoftLink.cpp */,
 				0CF99CA71F738437007EE793 /* CoreMediaSoftLink.h */,
 				1C77C8C725D7972000635E0C /* CoreTextSoftLink.cpp */,
@@ -1418,6 +1424,7 @@
 				DD20DDDB27BC90D70093D175 /* AVFoundationSPI.h in Headers */,
 				DD20DDDC27BC90D70093D175 /* AVKitSPI.h in Headers */,
 				A15E66242EDA972C007FB56F /* AVRoutingSoftLink.h in Headers */,
+				A13AB0832EE7AFDA003C1ED5 /* AVRoutingSPI.h in Headers */,
 				DD20DDDD27BC90D70093D175 /* AVStreamDataParserSPI.h in Headers */,
 				42EB2CA32D0388A400ECB173 /* AXRuntimeSPI.h in Headers */,
 				DD20DDDE27BC90D70093D175 /* AXSpeechManagerSPI.h in Headers */,
@@ -1434,6 +1441,7 @@
 				DD20DE6527BC90F90093D175 /* config.h in Headers */,
 				5157ADFD2B23B9F300C0E095 /* ContactsSoftLink.h in Headers */,
 				5157AE072B23CD8100C0E095 /* ContactsSPI.h in Headers */,
+				46EF05202EE6A96E00238BB9 /* CoreAudioExtras.h in Headers */,
 				DD20DDCE27BC90D70093D175 /* CoreAudioSPI.h in Headers */,
 				4177B3DA296CB8C3009711F0 /* CoreCryptoSPI.h in Headers */,
 				7B47F2A328587B9700E793C8 /* CoreGraphicsSoftLink.h in Headers */,
@@ -1646,8 +1654,10 @@
 			buildPhases = (
 				DDE992FF278D07A100F60D26 /* Product Dependencies */,
 				DD20DD1127BC90B80093D175 /* Headers */,
+				0705994D2EE64D4200BF2459 /* Generate TAPI filelist */,
 				1C09D0391E31C32800725F18 /* Sources */,
 				1C09D03A1E31C32800725F18 /* Frameworks */,
+				070599512EE64DA400BF2459 /* Verify Module */,
 			);
 			buildRules = (
 				DD20DD0427BC7CC70093D175 /* PBXBuildRule */,
@@ -1738,6 +1748,52 @@
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		0705994D2EE64D4200BF2459 /* Generate TAPI filelist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../../WTF/Scripts/generate-tapi-filelist.py",
+				"$(WK_HEADERS_VFS_FILE)",
+			);
+			name = "Generate TAPI filelist";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(PRIVATE_HEADERS_FOLDER_PATH)/PAL.json",
+				"$(DSTROOT)/$(PRIVATE_HEADERS_FOLDER_PATH)/PAL.json",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ ${DEPLOYMENT_LOCATION} != YES ]; then\n    \"${SCRIPT_INPUT_FILE_0}\" --from=\"${WK_HEADERS_VFS_FILE}\" --install-dir=\"${BUILT_PRODUCTS_DIR}${PRIVATE_HEADERS_FOLDER_PATH}\" > \"${SCRIPT_OUTPUT_FILE_0}\"\nelse\n    \"${WTF_BUILD_SCRIPTS_DIR}/generate-tapi-filelist.py\" --from=\"${DSTROOT}${PRIVATE_HEADERS_FOLDER_PATH}\" --install-dir=\"<SDKROOT>${PRIVATE_HEADERS_FOLDER_PATH}\" --relative-to=\"${DSTROOT}${PRIVATE_HEADERS_FOLDER_PATH}\" > \"${SCRIPT_OUTPUT_FILE_1}\"\nfi\n";
+		};
+		070599512EE64DA400BF2459 /* Verify Module */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../../WTF/Scripts/modules-verifier/library-modules-verifier.py",
+				"$(BUILT_PRODUCTS_DIR)/$(PRIVATE_HEADERS_FOLDER_PATH)/PAL.json",
+				"$(DSTROOT)/$(PRIVATE_HEADERS_FOLDER_PATH)/PAL.json",
+			);
+			name = "Verify Module";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ ${DEPLOYMENT_LOCATION} != YES ]; then\n    \"${SCRIPT_INPUT_FILE_0}\" --relative-to=\"${BUILT_PRODUCTS_DIR}${PAL_INSTALL_PATH_PREFIX}${WK_LIBRARY_HEADERS_FOLDER_PATH}\" \"${SCRIPT_INPUT_FILE_1}\"\nelse\n    \"${WTF_BUILD_SCRIPTS_DIR}/modules-verifier/library-modules-verifier.py\" --relative-to=\"${DSTROOT}${PRIVATE_HEADERS_FOLDER_PATH}\"  \"${SCRIPT_INPUT_FILE_2}\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		1C09D0391E31C32800725F18 /* Sources */ = {

@@ -42,6 +42,7 @@
 #include <wtf/TZoneMalloc.h>
 #include <wtf/URL.h>
 #include <wtf/URLHash.h>
+#include <wtf/glib/GMallocString.h>
 #include <wtf/glib/GThreadSafeWeakPtr.h>
 #include <wtf/glib/WTFGType.h>
 #include <wtf/text/StringBuilder.h>
@@ -56,7 +57,7 @@ using WebKitGstRiceStream = struct _WebKitGstRiceStream {
 
     _WebKitGstRiceStream(unsigned streamId, GRefPtr<GstWebRTCICEStream>&& stream)
         : riceStreamId(streamId)
-        , stream(WTFMove(stream))
+        , stream(WTF::move(stream))
     {
     }
 
@@ -64,13 +65,27 @@ using WebKitGstRiceStream = struct _WebKitGstRiceStream {
     GRefPtr<GstWebRTCICEStream> stream;
 };
 
+using StreamHashMap = HashMap<unsigned, std::unique_ptr<WebKitGstRiceStream>, WTF::IntHash<unsigned>, WTF::UnsignedWithZeroKeyHashTraits<unsigned>>;
+
 typedef struct _WebKitGstIceAgentPrivate {
+    ~_WebKitGstIceAgentPrivate()
+    {
+        if (onCandidateNotify)
+            onCandidateNotify(onCandidateData);
+
+        if (recvSource)
+            g_source_destroy(recvSource.get());
+
+        for (const auto& [sessionId, stream] : streams)
+            iceBackend->finalizeStream(stream->stream->stream_id);
+    }
+
     RefPtr<RiceBackendClient> backendClient;
     Markable<ScriptExecutionContextIdentifier> identifier;
     RefPtr<SocketProvider> socketProvider;
     GRefPtr<RiceAgent> agent;
 
-    Vector<std::unique_ptr<WebKitGstRiceStream>> streams;
+    StreamHashMap streams;
 
     RefPtr<RunLoop> runLoop;
 
@@ -88,6 +103,8 @@ typedef struct _WebKitGstIceAgentPrivate {
 
     HashSet<URL> turnServers;
     Vector<GRefPtr<RiceTurnConfig>> turnConfigs;
+
+    GRefPtr<GSource> recvSource;
 } WebKitGstIceAgentPrivate;
 
 typedef struct _WebKitGstIceAgent {
@@ -122,6 +139,24 @@ static void webkitGstWebRTCIceAgentSetForceRelay(GstWebRTCICE*, gboolean)
     GST_FIXME("Not implemented yet.");
 }
 
+static void webkitGstWebRTCIceAgentSetRiceStunServer(WebKitGstIceAgent* agent, StringView host, uint16_t port)
+{
+    const auto& iceAgent = agent->priv->agent;
+    if (!iceAgent) [[unlikely]]
+        return;
+
+    auto address = makeString(host, ':', port);
+    auto addressString = address.ascii();
+    GUniquePtr<RiceAddress> stunAddress(rice_address_new_from_string(addressString.data()));
+    if (!stunAddress) {
+        GST_WARNING_OBJECT(agent, "Unable to make use of STUN server %s", addressString.data());
+        return;
+    }
+
+    rice_agent_add_stun_server(iceAgent.get(), RICE_TRANSPORT_TYPE_UDP, stunAddress.get());
+    rice_agent_add_stun_server(iceAgent.get(), RICE_TRANSPORT_TYPE_TCP, stunAddress.get());
+}
+
 static void webkitGstWebRTCIceAgentSetStunServer(GstWebRTCICE* ice, const gchar* uri)
 {
     auto backend = WEBKIT_GST_WEBRTC_ICE_BACKEND(ice);
@@ -133,6 +168,11 @@ static void webkitGstWebRTCIceAgentSetStunServer(GstWebRTCICE* ice, const gchar*
     const auto& host = url.host();
     auto port = url.port().value_or(3478);
 
+    if (URL::hostIsIPAddress(host)) {
+        webkitGstWebRTCIceAgentSetRiceStunServer(backend, host, port);
+        return;
+    }
+
     backend->priv->iceBackend->resolveAddress(host.toString(), [weakAgent = GThreadSafeWeakPtr(backend), port](ExceptionOr<String>&& result) mutable {
         auto agent = weakAgent.get();
         if (!agent) [[unlikely]]
@@ -141,20 +181,11 @@ static void webkitGstWebRTCIceAgentSetStunServer(GstWebRTCICE* ice, const gchar*
             GST_WARNING_OBJECT(agent.get(), "Unable to configure STUN server on ICE agent: %s", result.exception().message().utf8().data());
             return;
         }
-        const auto& iceAgent = agent->priv->agent;
-        if (!iceAgent) [[unlikely]]
-            return;
 
-        auto& host = result.returnValue();
-        auto address = makeString(host, ':', port);
+        auto address = result.returnValue();
         auto addressString = address.ascii();
-        GST_DEBUG_OBJECT(agent.get(), "STUN server address resolved to %s", addressString.data());
-        GUniquePtr<RiceAddress> stunAddress(rice_address_new_from_string(addressString.data()));
-        if (stunAddress) {
-            rice_agent_add_stun_server(iceAgent.get(), RICE_TRANSPORT_TYPE_UDP, stunAddress.get());
-            rice_agent_add_stun_server(iceAgent.get(), RICE_TRANSPORT_TYPE_TCP, stunAddress.get());
-        } else
-            GST_WARNING_OBJECT(agent.get(), "Unable to make use of STUN server %s", address.ascii().data());
+        GST_DEBUG_OBJECT(agent.get(), "STUN address resolved to %s", addressString.data());
+        webkitGstWebRTCIceAgentSetRiceStunServer(agent.get(), address, port);
     });
 }
 
@@ -214,6 +245,25 @@ Expected<URL, URLValidationError> validateTurnServerURL(const String& turnUrl)
     return url;
 }
 
+static void webkitGstWebRTCIceAgentAddRiceTurnServer(WebKitGstIceAgent* agent, const String& address, bool isTurns, const String& user, const String& password, const std::array<RiceTransportType, 4>& relays, unsigned nRelay)
+{
+    const auto& iceAgent = agent->priv->agent;
+    if (!iceAgent) [[unlikely]]
+        return;
+
+    GUniquePtr<RiceAddress> riceAddress(rice_address_new_from_string(address.ascii().data()));
+    GUniquePtr<RiceCredentials> credentials(rice_credentials_new(g_strdup(user.utf8().data()), g_strdup(password.utf8().data())));
+    GRefPtr<RiceTlsConfig> tlsConfig;
+    if (isTurns)
+        tlsConfig = adoptGRef(rice_tls_config_new_rustls_with_ip(riceAddress.get()));
+
+    auto family = rice_address_get_family(riceAddress.get());
+    for (unsigned i = 0; i < nRelay; i++) {
+        auto config = adoptGRef(rice_turn_config_new(relays[i], riceAddress.get(), credentials.get(), 1, &family, tlsConfig.get()));
+        agent->priv->turnConfigs.append(WTF::move(config));
+    }
+}
+
 static void addTurnServer(WebKitGstIceAgent* agent, const URL& url)
 {
     GST_INFO_OBJECT(agent, "Adding TURN server %s", url.string().utf8().data());
@@ -237,7 +287,14 @@ static void addTurnServer(WebKitGstIceAgent* agent, const URL& url)
 
     RELEASE_ASSERT(url.port());
     auto port = url.port().value();
-    agent->priv->iceBackend->resolveAddress(url.host().toString(), [weakAgent = GThreadSafeWeakPtr(agent), isTurns, port, nRelay, user = url.user(), password = url.password(), relays = WTFMove(relays)](ExceptionOr<String>&& result) mutable {
+
+    const auto& host = url.host();
+    if (URL::hostIsIPAddress(host)) {
+        webkitGstWebRTCIceAgentAddRiceTurnServer(agent, url.hostAndPort(), isTurns, url.user(), url.password(), relays, nRelay);
+        return;
+    }
+
+    agent->priv->iceBackend->resolveAddress(url.host().toString(), [weakAgent = GThreadSafeWeakPtr(agent), isTurns, port, nRelay, user = url.user(), password = url.password(), relays = WTF::move(relays)](ExceptionOr<String>&& result) mutable {
         auto agent = weakAgent.get();
         if (!agent) [[unlikely]]
             return;
@@ -245,24 +302,10 @@ static void addTurnServer(WebKitGstIceAgent* agent, const URL& url)
             GST_WARNING_OBJECT(agent.get(), "Unable to configure TURN server on ICE agent: %s", result.exception().message().utf8().data());
             return;
         }
-        const auto& iceAgent = agent->priv->agent;
-        if (!iceAgent) [[unlikely]]
-            return;
 
         auto turnAddress = makeString(result.returnValue(), ':', port);
-        auto turnAddressString = turnAddress.ascii();
-        GST_DEBUG_OBJECT(agent.get(), "TURN address resolved to %s", turnAddressString.data());
-        GUniquePtr<RiceAddress> address(rice_address_new_from_string(turnAddressString.data()));
-        GUniquePtr<RiceCredentials> credentials(rice_credentials_new(g_strdup(user.utf8().data()), g_strdup(password.utf8().data())));
-        GRefPtr<RiceTlsConfig> tlsConfig;
-        if (isTurns)
-            tlsConfig = adoptGRef(rice_tls_config_new_rustls_with_ip(address.get()));
-
-        auto family = rice_address_get_family(address.get());
-        for (unsigned i = 0; i < nRelay; i++) {
-            auto config = adoptGRef(rice_turn_config_new(relays[i], address.get(), credentials.get(), 1, &family, tlsConfig.get()));
-            agent->priv->turnConfigs.append(WTFMove(config));
-        }
+        GST_DEBUG_OBJECT(agent.get(), "TURN address resolved to %s", turnAddress.ascii().data());
+        webkitGstWebRTCIceAgentAddRiceTurnServer(agent.get(), turnAddress, isTurns, user, password, relays, nRelay);
     });
 }
 
@@ -300,7 +343,7 @@ static void webkitGstWebRTCIceAgentSetTurnServer(GstWebRTCICE* ice, const gchar*
         GST_ERROR_OBJECT(ice, "Error validating TURN URI: %s", validationResult.error().data.utf8().data());
         return;
     }
-    backend->priv->turnServer = WTFMove(turnUrl);
+    backend->priv->turnServer = WTF::move(turnUrl);
 }
 
 static gchar* webkitGstWebRTCIceAgentGetTurnServer(GstWebRTCICE* ice)
@@ -309,19 +352,30 @@ static gchar* webkitGstWebRTCIceAgentGetTurnServer(GstWebRTCICE* ice)
     return g_strdup(backend->priv->turnServer.utf8().data());
 }
 
-static GstWebRTCICEStream* webkitGstWebRTCIceAgentAddStream(GstWebRTCICE* ice, guint)
+static GstWebRTCICEStream* webkitGstWebRTCIceAgentAddStream(GstWebRTCICE* ice, guint sessionId)
 {
     auto backend = WEBKIT_GST_WEBRTC_ICE_BACKEND(ice);
     if (!backend->priv->iceBackend)
         return nullptr;
 
+    if (backend->priv->streams.contains(sessionId)) {
+        GST_ERROR_OBJECT(ice, "Stream already added for session %u", sessionId);
+        return nullptr;
+    }
+
     auto riceStream = adoptGRef(rice_agent_add_stream(backend->priv->agent.get()));
     auto streamId = static_cast<unsigned>(rice_stream_get_id(riceStream.get()));
     [[maybe_unused]] auto component = adoptGRef(rice_stream_add_component(riceStream.get()));
 
-    auto stream = GST_WEBRTC_ICE_STREAM(webkitGstWebRTCCreateIceStream(backend, WTFMove(riceStream)));
-    backend->priv->streams.append(WTF::makeUnique<WebKitGstRiceStream>(streamId, GRefPtr(stream)));
-    return stream;
+    auto stream = adoptGRef(GST_WEBRTC_ICE_STREAM(webkitGstWebRTCCreateIceStream(backend, WTF::move(riceStream))));
+    backend->priv->streams.add(sessionId, WTF::makeUnique<WebKitGstRiceStream>(streamId, WTF::move(stream)));
+    auto item = backend->priv->streams.find(sessionId);
+
+    // Until GStreamer 1.26.10 the GstWebRTC transport stream wasn't complying with the transfer full annotation for this function.
+    // https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/10312
+    if (gst_check_version(1, 26, 10))
+        return item->value->stream.ref();
+    return item->value->stream.get();
 }
 
 static gboolean webkitGstWebRTCIceAgentGetIsController(GstWebRTCICE* ice)
@@ -418,7 +472,7 @@ static void webkitGstWebRTCIceAgentAddCandidate(GstWebRTCICE* ice, GstWebRTCICES
         return;
     }
 
-    iceBackend->resolveAddress(WTFMove(localAddress.address), [promise = GRefPtr(promise), riceStream = WTFMove(riceStream), prefix = WTFMove(localAddress.prefix), suffix = WTFMove(localAddress.suffix), backend](auto&& result) mutable {
+    iceBackend->resolveAddress(WTF::move(localAddress.address), [promise = GRefPtr(promise), riceStream = WTF::move(riceStream), prefix = WTF::move(localAddress.prefix), suffix = WTF::move(localAddress.suffix), backend](auto&& result) mutable {
         if (result.hasException()) {
             auto& errorMessage = result.exception().message();
             auto errorMessageString = errorMessage.utf8();
@@ -563,15 +617,6 @@ static void webkitGstWebRTCIceAgentClose(GstWebRTCICE* ice, GstPromise* promise)
 }
 #endif
 
-static void webkitGstWebRTCIceAgentFinalize(GObject* object)
-{
-    auto backend = WEBKIT_GST_WEBRTC_ICE_BACKEND(object);
-
-    if (backend->priv->onCandidateNotify)
-        backend->priv->onCandidateNotify(backend->priv->onCandidateData);
-    G_OBJECT_CLASS(webkit_gst_webrtc_ice_backend_parent_class)->finalize(object);
-}
-
 static void webkitGstWebRTCIceAgentConstructed(GObject* object)
 {
     G_OBJECT_CLASS(webkit_gst_webrtc_ice_backend_parent_class)->constructed(object);
@@ -596,41 +641,45 @@ static void webkitGstWebRTCIceAgentConstructed(GObject* object)
     priv->agent = adoptGRef(rice_agent_new(true, true));
 }
 
-static void findStreamAndApply(const Vector<std::unique_ptr<WebKitGstRiceStream>>& streams, unsigned streamId, Function<void(const WebKitGstIceStream*)> callback)
+static void findStreamAndApply(const StreamHashMap& streams, unsigned streamId, Function<void(const WebKitGstIceStream*)> callback)
 {
-    auto index = streams.findIf([streamId](const auto& item) {
-        return item->riceStreamId == streamId;
-    });
-    if (index == notFound) [[unlikely]]
+    for (auto& riceStream : streams.values()) {
+        if (riceStream->riceStreamId != streamId)
+            continue;
+
+        callback(WEBKIT_GST_WEBRTC_ICE_STREAM(riceStream->stream.get()));
         return;
-    callback(WEBKIT_GST_WEBRTC_ICE_STREAM(streams[index]->stream.get()));
+    }
 }
 
-static void webkitGstWebRTCIceAgentConfigure(WebKitGstIceAgent* backend, RefPtr<SocketProvider>&& socketProvider, ScriptExecutionContextIdentifier identifier)
+static bool webkitGstWebRTCIceAgentConfigure(WebKitGstIceAgent* backend, RefPtr<SocketProvider>&& socketProvider, ScriptExecutionContextIdentifier identifier)
 {
     auto priv = backend->priv;
-    priv->socketProvider = WTFMove(socketProvider);
+    priv->socketProvider = WTF::move(socketProvider);
     priv->identifier = identifier;
     priv->backendClient = RiceBackendClient::create();
     priv->iceBackend = priv->socketProvider->createRiceBackend(*priv->backendClient);
+    if (!priv->iceBackend)
+        return false;
+
     priv->backendClient->setIncomingDataCallback([weakThis = GThreadSafeWeakPtr(backend)](unsigned streamId, RTCIceProtocol protocol, String&& from, String&& to, SharedMemory::Handle&& data) mutable {
         auto self = weakThis.get();
         if (!self)
             return;
-        findStreamAndApply(self->priv->streams, streamId, [protocol, from = WTFMove(from), to = WTFMove(to), data = WTFMove(data)](const auto* stream) mutable {
-            webkitGstWebRTCIceStreamHandleIncomingData(stream, protocol, WTFMove(from), WTFMove(to), WTFMove(data));
+        findStreamAndApply(self->priv->streams, streamId, [protocol, from = WTF::move(from), to = WTF::move(to), data = WTF::move(data)](const auto* stream) mutable {
+            webkitGstWebRTCIceStreamHandleIncomingData(stream, protocol, WTF::move(from), WTF::move(to), WTF::move(data));
         });
     });
 
-    auto source = agentSourceNew(GThreadSafeWeakPtr(backend));
-    g_source_attach(source.get(), priv->runLoop->mainContext());
+    priv->recvSource = agentSourceNew(GThreadSafeWeakPtr(backend));
+    g_source_attach(priv->recvSource.get(), priv->runLoop->mainContext());
+    return true;
 }
 
 static void webkit_gst_webrtc_ice_backend_class_init(WebKitGstIceAgentClass* klass)
 {
     auto gobjectClass = G_OBJECT_CLASS(klass);
     gobjectClass->constructed = webkitGstWebRTCIceAgentConstructed;
-    gobjectClass->finalize = webkitGstWebRTCIceAgentFinalize;
 
     auto iceClass = GST_WEBRTC_ICE_CLASS(klass);
     iceClass->set_on_ice_candidate = webkitGstWebRTCIceAgentSetOnIceCandidate;
@@ -671,7 +720,10 @@ WebKitGstIceAgent* webkitGstWebRTCCreateIceAgent(const String& name, ScriptExecu
 
     auto agent = reinterpret_cast<WebKitGstIceAgent*>(g_object_new(WEBKIT_TYPE_GST_WEBRTC_ICE_BACKEND, "name", name.ascii().data(), nullptr));
     gst_object_ref_sink(agent);
-    webkitGstWebRTCIceAgentConfigure(agent, WTFMove(socketProvider), context->identifier());
+    if (!webkitGstWebRTCIceAgentConfigure(agent, WTF::move(socketProvider), context->identifier())) {
+        gst_object_unref(agent);
+        return nullptr;
+    }
     return agent;
 }
 
@@ -714,7 +766,7 @@ GstWebRTCICETransport* webkitGstWebRTCIceAgentCreateTransport(WebKitGstIceAgent*
         break;
     };
     auto isController = webkitGstWebRTCIceAgentGetIsController(GST_WEBRTC_ICE(agent));
-    return GST_WEBRTC_ICE_TRANSPORT(webkitGstWebRTCCreateIceTransport(agent, WTFMove(stream), gstComponent, isController));
+    return GST_WEBRTC_ICE_TRANSPORT(webkitGstWebRTCCreateIceTransport(agent, WTF::move(stream), gstComponent, isController));
 }
 
 void webkitGstWebRTCIceAgentSend(WebKitGstIceAgent* agent, unsigned streamId, RTCIceProtocol protocol, String&& from, String&& to, SharedMemory::Handle&& data)
@@ -723,25 +775,12 @@ void webkitGstWebRTCIceAgentSend(WebKitGstIceAgent* agent, unsigned streamId, RT
     if (!backend)
         return;
 
-    backend->send(streamId, protocol, WTFMove(from), WTFMove(to), WTFMove(data));
+    backend->send(streamId, protocol, WTF::move(from), WTF::move(to), WTF::move(data));
 }
 
 void webkitGstWebRTCIceAgentWakeup(WebKitGstIceAgent* agent)
 {
     g_main_context_wakeup(agent->priv->runLoop->mainContext());
-}
-
-void webkitGstWebRTCIceAgentFinalizeStream(WebKitGstIceAgent* agent, unsigned streamId)
-{
-    auto backend = agent->priv->iceBackend;
-    if (!backend)
-        return;
-
-    backend->finalizeStream(streamId);
-
-    agent->priv->streams.removeAllMatching([streamId](const auto& item) {
-        return item->riceStreamId == streamId;
-    });
 }
 
 void webkitGstWebRTCIceAgentGatheringDoneForStream(WebKitGstIceAgent* agent, unsigned streamId)
@@ -754,8 +793,7 @@ void webkitGstWebRTCIceAgentGatheringDoneForStream(WebKitGstIceAgent* agent, uns
 void webkitGstWebRTCIceAgentLocalCandidateGatheredForStream(WebKitGstIceAgent* agent, unsigned streamId, RiceAgentGatheredCandidate& candidate)
 {
     findStreamAndApply(agent->priv->streams, streamId, [&](const auto* stream) {
-        GUniquePtr<char> sdpCandidate(rice_candidate_to_sdp_string(&candidate.gathered.candidate));
-        auto sdp = CStringView::unsafeFromUTF8(sdpCandidate.get());
+        auto sdp = GMallocString::unsafeAdoptFromUTF8(rice_candidate_to_sdp_string(&candidate.gathered.candidate));
         ASSERT(startsWith(sdp.span(), "a="_s));
         String strippedSdp(sdp.span().subspan(2));
 

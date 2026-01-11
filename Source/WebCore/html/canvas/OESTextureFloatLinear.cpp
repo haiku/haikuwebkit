@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(OESTextureFloatLinear);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(OESTextureFloatLinear);
 
 OESTextureFloatLinear::OESTextureFloatLinear(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::OESTextureFloatLinear)

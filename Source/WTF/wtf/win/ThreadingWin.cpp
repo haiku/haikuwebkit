@@ -241,7 +241,7 @@ Thread& Thread::initializeCurrentTLS()
     thread->initializeInThread();
     initializeCurrentThreadEvenIfNonWTFCreated();
 
-    return initializeTLS(WTFMove(thread));
+    return initializeTLS(WTF::move(thread));
 }
 
 ThreadIdentifier Thread::currentID()
@@ -284,7 +284,7 @@ Thread* Thread::currentMayBeNull()
 
 Thread& Thread::initializeTLS(Ref<Thread>&& thread)
 {
-    s_threadHolder.thread = WTFMove(thread);
+    s_threadHolder.thread = WTF::move(thread);
     return *s_threadHolder.thread;
 }
 

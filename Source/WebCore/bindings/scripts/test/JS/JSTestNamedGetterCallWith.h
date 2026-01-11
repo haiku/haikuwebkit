@@ -32,7 +32,7 @@ public:
     static JSTestNamedGetterCallWith* create(JSC::Structure* structure, JSDOMGlobalObject* globalObject, Ref<TestNamedGetterCallWith>&& impl)
     {
         SUPPRESS_UNCOUNTED_LOCAL auto& vm = globalObject->vm();
-        JSTestNamedGetterCallWith* ptr = new (NotNull, JSC::allocateCell<JSTestNamedGetterCallWith>(vm)) JSTestNamedGetterCallWith(structure, *globalObject, WTFMove(impl));
+        JSTestNamedGetterCallWith* ptr = new (NotNull, JSC::allocateCell<JSTestNamedGetterCallWith>(vm)) JSTestNamedGetterCallWith(structure, *globalObject, WTF::move(impl));
         ptr->finishCreation(vm);
         return ptr;
     }

@@ -25,7 +25,7 @@
 #include "config.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
 
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "Settings.h"
 #include "StyleLengthResolution.h"
 

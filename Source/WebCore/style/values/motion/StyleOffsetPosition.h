@@ -36,7 +36,7 @@ namespace Style {
 struct OffsetPosition {
     OffsetPosition(CSS::Keyword::Auto keyword) : m_value { keyword} { }
     OffsetPosition(CSS::Keyword::Normal keyword) : m_value { keyword} { }
-    OffsetPosition(Position&& position) : m_value { WTFMove(position) } { }
+    OffsetPosition(Position&& position) : m_value { WTF::move(position) } { }
     OffsetPosition(const Position& position) : m_value { position } { }
 
 #if ENABLE(THREADED_ANIMATIONS)

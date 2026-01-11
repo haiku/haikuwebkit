@@ -1,4 +1,3 @@
-Modules/websockets/WorkerThreadableWebSocketChannel.h
 [ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.h
 bindings/js/JSLazyEventListener.cpp
 css/CSSToLengthConversionData.h
@@ -8,7 +7,6 @@ css/query/MediaQueryEvaluator.h
 dom/CollectionIndexCache.h
 dom/Node.cpp
 dom/Node.h
-editing/TextCheckingHelper.h
 inspector/InstrumentingAgents.h
 inspector/agents/WebHeapAgent.cpp
 layout/formattingContexts/inline/AbstractLineBuilder.h
@@ -26,12 +24,8 @@ layout/layouttree/LayoutChildIterator.h
 layout/layouttree/LayoutContainingBlockChainIterator.h
 layout/layouttree/LayoutDescendantIterator.h
 layout/layouttree/LayoutIterator.h
-loader/DocumentThreadableLoader.h
-loader/WorkerThreadableLoader.h
-page/FrameSnapshotting.cpp
 [ iOS ] page/ios/ContentChangeObserver.h
 platform/graphics/TextRunIterator.h
-platform/graphics/ca/TileCoverageMap.h
 [ iOS ] platform/ios/DeviceMotionClientIOS.h
 [ iOS ] platform/ios/DeviceOrientationClientIOS.h
 rendering/BackgroundPainter.h
@@ -87,5 +81,4 @@ style/StyleScope.h
 style/StyleTreeResolver.h
 style/Styleable.h
 style/calc/StyleCalculationTree+Conversion.h
-style/values/color/StyleColorResolutionState.h
 svg/properties/SVGPropertyOwnerRegistry.h

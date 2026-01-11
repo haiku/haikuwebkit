@@ -62,7 +62,7 @@ static void updateEnhancedSecurityDomains(HashSet<RegistrableDomain>&& domains)
 void EnhancedSecurityTracking::initializeWithWebsiteDataStore(WebsiteDataStore& websiteDataStore)
 {
     websiteDataStore.fetchEnhancedSecurityOnlyDomains([](HashSet<RegistrableDomain>&& domains) {
-        updateEnhancedSecurityDomains(WTFMove(domains));
+        updateEnhancedSecurityDomains(WTF::move(domains));
     });
 }
 

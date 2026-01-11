@@ -86,6 +86,10 @@ void ViewGestureController::platformTeardown()
         removeSwipeSnapshot();
 }
 
+void ViewGestureController::platformDisconnectFromProcess()
+{
+}
+
 double ViewGestureController::resistanceForDelta(double deltaScale, double currentScale, double minMagnification, double maxMagnification)
 {
     // Zoom out with slight acceleration, until we reach minimum scale.

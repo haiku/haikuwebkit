@@ -45,7 +45,7 @@
 #include "RenderInline.h"
 #include "RenderListBox.h"
 #include "RenderObjectDocument.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderSVGModelObject.h"
 #include "RenderTheme.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
@@ -262,7 +262,7 @@ void BorderPainter::paintBorder(const LayoutRect& rect, const RenderStyle& style
 
             return std::tuple<BorderShape, BorderEdges> {
                 BorderShape::shapeForBorderRect(style, rect, borderWidths, closedEdges),
-                WTFMove(edges)
+                WTF::move(edges)
             };
         }
         }
@@ -437,7 +437,7 @@ bool BorderPainter::paintNinePieceImageImpl(const LayoutRect& rect, const Render
     if (!image->canRender(m_renderer.ptr(), style.usedZoom()))
         return false;
 
-    CheckedPtr modelObject = dynamicDowncast<RenderBoxModelObject>(m_renderer.get());
+    CheckedPtr modelObject = dynamicDowncast<RenderBoxModelObject>(m_renderer);
     if (!modelObject)
         return false;
 

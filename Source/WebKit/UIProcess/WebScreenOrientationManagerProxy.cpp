@@ -131,7 +131,7 @@ void WebScreenOrientationManagerProxy::lock(WebCore::ScreenOrientationLockType l
         return;
     }
 
-    m_currentLockRequest = WTFMove(completionHandler);
+    m_currentLockRequest = WTF::move(completionHandler);
     auto resolvedLockedOrientation = resolveScreenOrientationLockType(m_currentOrientation, lockType);
     bool shouldOrientationChange = m_currentOrientation != resolvedLockedOrientation;
 

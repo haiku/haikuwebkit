@@ -12,5 +12,4 @@ PASS [video] getSynchronizationSources() does not contain SSRCs older than 10 se
 FAIL [video] RTCRtpSynchronizationSource.timestamp is comparable to performance.timeOrigin + performance.now() assert_true: expected true got false
 PASS [video] RTCRtpSynchronizationSource.source is a number
 PASS [audio-only] RTCRtpSynchronizationSource.audioLevel is a number [0, 1]
-FAIL [audio-only] RTCRtpSynchronizationSource.voiceActivityFlag is a boolean assert_equals: expected "boolean" but got "undefined"
 

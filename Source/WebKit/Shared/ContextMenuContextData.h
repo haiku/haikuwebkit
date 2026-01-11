@@ -94,7 +94,7 @@ public:
     ContextMenuContextData(const WebCore::IntPoint& menuLocation, WebCore::AttributedString&& controlledSelection, const Vector<String>& selectedTelephoneNumbers, bool isEditable)
         : m_type(Type::ServicesMenu)
         , m_menuLocation(menuLocation)
-        , m_controlledSelection(WTFMove(controlledSelection))
+        , m_controlledSelection(WTF::move(controlledSelection))
         , m_selectedTelephoneNumbers(selectedTelephoneNumbers)
         , m_selectionIsEditable(isEditable)
     {

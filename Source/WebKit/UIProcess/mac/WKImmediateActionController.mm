@@ -305,7 +305,7 @@
             _currentQLPreviewMenuItem = item.get();
 
             if (RefPtr textIndicator = _hitTestResultData.linkTextIndicator)
-                RefPtr { _page.get() }->setTextIndicator(WTFMove(textIndicator), WebCore::TextIndicatorLifetime::Permanent);
+                RefPtr { _page.get() }->setTextIndicator(WTF::move(textIndicator), WebCore::TextIndicatorLifetime::Permanent);
 
             return (id<NSImmediateActionAnimationController>)item.autorelease();
         }
@@ -435,7 +435,7 @@
         page->protectedLegacyMainFrameProcess()->send(Messages::WebPage::DataDetectorsDidPresentUI(overlayID), page->webPageIDInMainFrameProcess());
     } interactionChangedHandler:^() {
         if (RefPtr detectedDataTextIndicator = _hitTestResultData.platformData.detectedDataTextIndicator)
-            page->setTextIndicator(WTFMove(detectedDataTextIndicator), WebCore::TextIndicatorLifetime::Permanent);
+            page->setTextIndicator(WTF::move(detectedDataTextIndicator), WebCore::TextIndicatorLifetime::Permanent);
         page->protectedLegacyMainFrameProcess()->send(Messages::WebPage::DataDetectorsDidChangeUI(overlayID), page->webPageIDInMainFrameProcess());
     } interactionStoppedHandler:^() {
         page->protectedLegacyMainFrameProcess()->send(Messages::WebPage::DataDetectorsDidHideUI(overlayID), page->webPageIDInMainFrameProcess());
@@ -469,7 +469,7 @@
     _currentActionContext = (WKDDActionContext *)[actionContext contextForView:view.get() altMode:YES interactionStartedHandler:^() {
     } interactionChangedHandler:^() {
         if (RefPtr linkTextIndicator = _hitTestResultData.linkTextIndicator)
-            page->setTextIndicator(WTFMove(linkTextIndicator), WebCore::TextIndicatorLifetime::Permanent);
+            page->setTextIndicator(WTF::move(linkTextIndicator), WebCore::TextIndicatorLifetime::Permanent);
     } interactionStoppedHandler:^() {
         [self _clearImmediateActionState];
     }];

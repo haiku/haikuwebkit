@@ -59,7 +59,7 @@ public:
     void setHandles(BufferSetBackendHandle&& handles)
     {
         Locker locker { m_lock };
-        m_handles = WTFMove(handles);
+        m_handles = WTF::move(handles);
         m_condition.notifyOne();
     }
 
@@ -92,7 +92,7 @@ class RemoteImageBufferSetProxyFlusher final : public ThreadSafeImageBufferSetFl
 public:
     RemoteImageBufferSetProxyFlusher(ImageBufferSetIdentifier identifier, Ref<RemoteImageBufferSetProxyFlushFence> flushState, unsigned)
         : m_identifier(identifier)
-        , m_flushState(WTFMove(flushState))
+        , m_flushState(WTF::move(flushState))
     { }
 
     bool flushAndCollectHandles(HashMap<ImageBufferSetIdentifier, std::unique_ptr<BufferSetBackendHandle>>& handlesMap) final
@@ -233,7 +233,7 @@ void RemoteImageBufferSetProxy::close()
 
 void RemoteImageBufferSetProxy::setConfiguration(RemoteImageBufferSetConfiguration&& configuration)
 {
-    m_configuration = WTFMove(configuration);
+    m_configuration = WTF::move(configuration);
     m_remoteNeedsConfigurationUpdate = true;
 }
 
@@ -248,7 +248,7 @@ std::unique_ptr<ThreadSafeImageBufferSetFlusher> RemoteImageBufferSetProxy::flus
         RELEASE_ASSERT(!isMainRunLoop());
 
         BufferSetBackendHandle handle;
-        handle.bufferHandle = WTFMove(outputData.backendHandle);
+        handle.bufferHandle = WTF::move(outputData.backendHandle);
 
         auto createBufferAndBackendInfo = [&](const std::optional<WebCore::RenderingResourceIdentifier>& bufferIdentifier) {
             if (bufferIdentifier)
@@ -260,9 +260,9 @@ std::unique_ptr<ThreadSafeImageBufferSetFlusher> RemoteImageBufferSetProxy::flus
         handle.backBufferInfo = createBufferAndBackendInfo(outputData.bufferCacheIdentifiers.back);
         handle.secondaryBackBufferInfo = createBufferAndBackendInfo(outputData.bufferCacheIdentifiers.secondaryBack);
 
-        pendingFlush->setHandles(WTFMove(handle));
+        pendingFlush->setHandles(WTF::move(handle));
     });
-    return makeUnique<RemoteImageBufferSetProxyFlusher>(identifier(), WTFMove(pendingFlush), m_generation);
+    return makeUnique<RemoteImageBufferSetProxyFlusher>(identifier(), WTF::move(pendingFlush), m_generation);
 }
 
 void RemoteImageBufferSetProxy::willPrepareForDisplay()
@@ -320,7 +320,7 @@ std::optional<WebCore::DynamicContentScalingDisplayList> RemoteImageBufferSetPro
     auto [handle] = sendResult.takeReply();
     if (!handle)
         return std::nullopt;
-    return WTFMove(handle);
+    return WTF::move(handle);
 }
 #endif
 

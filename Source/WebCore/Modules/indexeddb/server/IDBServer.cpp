@@ -46,7 +46,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(IDBBackingStore);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(IDBServer);
 
 IDBServer::IDBServer(const String& databaseDirectoryPath, SpaceRequester&& spaceRequester, Lock& lock)
-    : m_spaceRequester(WTFMove(spaceRequester))
+    : m_spaceRequester(WTF::move(spaceRequester))
     , m_lock(lock)
 {
     ASSERT(!isMainThread());
@@ -543,7 +543,7 @@ static void getDatabaseNameAndVersionFromOriginDirectory(const String& directory
             continue;
 
         if (auto nameAndVersion = SQLiteIDBBackingStore::databaseNameAndVersionFromFile(fullDatabasePath))
-            result.append(WTFMove(*nameAndVersion));
+            result.append(WTF::move(*nameAndVersion));
     }
 }
 
@@ -564,7 +564,7 @@ void IDBServer::getAllDatabaseNamesAndVersions(IDBConnectionIdentifier serverCon
             visitedDatabasePaths.add(path);
 
         if (auto nameAndVersion = database->nameAndVersion())
-            result.append(WTFMove(*nameAndVersion));
+            result.append(WTF::move(*nameAndVersion));
     }
 
     auto oldDirectory = IDBDatabaseIdentifier::databaseDirectoryRelativeToRoot(origin, m_databaseDirectoryPath, "v0"_s);
@@ -577,18 +577,18 @@ void IDBServer::getAllDatabaseNamesAndVersions(IDBConnectionIdentifier serverCon
     if (!connection)
         return;
 
-    connection->didGetAllDatabaseNamesAndVersions(requestIdentifier, WTFMove(result));
+    connection->didGetAllDatabaseNamesAndVersions(requestIdentifier, WTF::move(result));
 }
 
 static void collectOriginsForVersion(const String& versionPath, HashSet<WebCore::SecurityOriginData>& securityOrigins)
 {
     for (auto& databaseIdentifier : FileSystem::listDirectory(versionPath)) {
         if (auto securityOrigin = SecurityOriginData::fromDatabaseIdentifier(databaseIdentifier)) {
-            securityOrigins.add(WTFMove(*securityOrigin));
+            securityOrigins.add(WTF::move(*securityOrigin));
         
             for (auto& databaseIdentifier : FileSystem::listDirectory(FileSystem::pathByAppendingComponent(versionPath, databaseIdentifier))) {
                 if (auto securityOrigin = SecurityOriginData::fromDatabaseIdentifier(databaseIdentifier))
-                    securityOrigins.add(WTFMove(*securityOrigin));
+                    securityOrigins.add(WTF::move(*securityOrigin));
             }
         }
     }

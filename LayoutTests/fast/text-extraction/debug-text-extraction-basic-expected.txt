@@ -11,13 +11,13 @@ root
         section,aria-label='Interactive Elements'
             button,uid=…,events=[click],aria-describedby='This button does nothing',aria-label='Test button','Click Me',[…]
             'This button does nothing',[…]
-            input,'text',uid=…,placeholder='Enter text here'
+            input,'text',uid=…,[…],placeholder='Enter text here'
             uid=…,role='button',events=[click,keyboard],'Clickable Div',[…]
         section,aria-label='ARIA Labeling Examples'
             'Name Field\n\n        \nDescription',[…]
-            input,'text',uid=…,aria-labelledby='Name Field',placeholder='Your name'
+            input,'text',uid=…,[…],aria-labelledby='Name Field',placeholder='Your name'
             role='region',aria-labelledby='Description','This region is labeled by another element.',[…]
-            input,'text',uid=…,aria-labelledby='Name Field',placeholder='Full name'
+            input,'text',uid=…,[…],aria-labelledby='Name Field',placeholder='Full name'
             'User Profile',[…]
             role='group',aria-labelledby='User Profile'
                 'Username:',[…]
@@ -42,7 +42,11 @@ root
             'Link to',[…]
             subscript
                 'WebKit home page:',[…]
-                link,uid=…,url='https://webkit.org/'
+                link,uid=…,[…],url='https://webkit.org/'
+            strikethrough
+                'This',[…]
+                link,uid=…,url='https://www.apple.com/','link',[…]
+                'was deleted',[…]
     role='contentinfo'
         'Footer content with',[…]
         role='img',aria-label='copyright symbol','©',[…]

@@ -60,7 +60,7 @@ struct IDBIterateCursorData;
 namespace IDBClient {
 
 class IDBConnectionToServer final : public ThreadSafeRefCounted<IDBConnectionToServer>, public CanMakeThreadSafeCheckedPtr<IDBConnectionToServer> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED_EXPORT(IDBConnectionToServer, WEBCORE_EXPORT);
+    WTF_MAKE_TZONE_ALLOCATED_EXPORT(IDBConnectionToServer, WEBCORE_EXPORT);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(IDBConnectionToServer);
 public:
     WEBCORE_EXPORT static Ref<IDBConnectionToServer> create(IDBConnectionToServerDelegate&, PAL::SessionID);

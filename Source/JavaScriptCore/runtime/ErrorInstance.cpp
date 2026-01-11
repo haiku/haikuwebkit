@@ -52,7 +52,7 @@ ErrorInstance* ErrorInstance::create(JSGlobalObject* globalObject, String&& mess
     VM& vm = globalObject->vm();
     Structure* structure = globalObject->errorStructure(errorType);
     ErrorInstance* instance = new (NotNull, allocateCell<ErrorInstance>(vm)) ErrorInstance(vm, structure, errorType);
-    instance->finishCreation(vm, WTFMove(message), lineColumn, WTFMove(sourceURL), WTFMove(stackString), WTFMove(cause));
+    instance->finishCreation(vm, WTF::move(message), lineColumn, WTF::move(sourceURL), WTF::move(stackString), WTF::move(cause));
     return instance;
 }
 
@@ -118,7 +118,7 @@ void ErrorInstance::finishCreation(VM& vm, const String& message, JSValue cause,
     std::unique_ptr<Vector<StackFrame>> stackTrace = getStackTrace(vm, this, useCurrentFrame, nullptr, nullptr, subclassCaller);
     {
         Locker locker { cellLock() };
-        m_stackTrace = WTFMove(stackTrace);
+        m_stackTrace = WTF::move(stackTrace);
     }
     vm.writeBarrier(this);
 
@@ -135,7 +135,7 @@ void ErrorInstance::finishCreation(VM& vm, const String& message, JSValue cause,
     }
 
     if (!messageWithSource.isNull())
-        putDirect(vm, vm.propertyNames->message, jsString(vm, WTFMove(messageWithSource)), static_cast<unsigned>(PropertyAttribute::DontEnum));
+        putDirect(vm, vm.propertyNames->message, jsString(vm, WTF::move(messageWithSource)), static_cast<unsigned>(PropertyAttribute::DontEnum));
 
     if (!cause.isEmpty())
         putDirect(vm, vm.propertyNames->cause, cause, static_cast<unsigned>(PropertyAttribute::DontEnum));
@@ -149,7 +149,7 @@ void ErrorInstance::finishCreation(VM& vm, const String& message, JSValue cause,
     std::unique_ptr<Vector<StackFrame>> stackTrace = getStackTrace(vm, this, /* useCurrentFrame */ true, owner, callLinkInfo);
     {
         Locker locker { cellLock() };
-        m_stackTrace = WTFMove(stackTrace);
+        m_stackTrace = WTF::move(stackTrace);
     }
     vm.writeBarrier(this);
     if (!message.isNull())
@@ -165,12 +165,12 @@ void ErrorInstance::finishCreation(VM& vm, String&& message, LineColumn lineColu
     ASSERT(inherits(info()));
 
     m_lineColumn = lineColumn;
-    m_sourceURL = WTFMove(sourceURL);
-    m_stackString = WTFMove(stackString);
+    m_sourceURL = WTF::move(sourceURL);
+    m_stackString = WTF::move(stackString);
     if (!message.isNull())
-        putDirect(vm, vm.propertyNames->message, jsString(vm, WTFMove(message)), static_cast<unsigned>(PropertyAttribute::DontEnum));
+        putDirect(vm, vm.propertyNames->message, jsString(vm, WTF::move(message)), static_cast<unsigned>(PropertyAttribute::DontEnum));
     if (!cause.isNull())
-        putDirect(vm, vm.propertyNames->cause, jsString(vm, WTFMove(cause)), static_cast<unsigned>(PropertyAttribute::DontEnum));
+        putDirect(vm, vm.propertyNames->cause, jsString(vm, WTF::move(cause)), static_cast<unsigned>(PropertyAttribute::DontEnum));
 }
 
 // Based on ErrorPrototype's errorProtoFuncToString(), but is modified to
@@ -299,9 +299,9 @@ bool ErrorInstance::materializeErrorInfoIfNeeded(VM& vm)
         putDirect(vm, vm.propertyNames->line, jsNumber(m_lineColumn.line), attributes);
         putDirect(vm, vm.propertyNames->column, jsNumber(m_lineColumn.column), attributes);
         if (!m_sourceURL.isEmpty())
-            putDirect(vm, vm.propertyNames->sourceURL, jsString(vm, WTFMove(m_sourceURL)), attributes);
+            putDirect(vm, vm.propertyNames->sourceURL, jsString(vm, WTF::move(m_sourceURL)), attributes);
 
-        putDirect(vm, vm.propertyNames->stack, jsString(vm, WTFMove(m_stackString)), attributes);
+        putDirect(vm, vm.propertyNames->stack, jsString(vm, WTF::move(m_stackString)), attributes);
     }
 
     m_errorInfoMaterialized = true;

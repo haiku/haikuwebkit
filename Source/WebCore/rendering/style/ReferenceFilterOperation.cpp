@@ -35,8 +35,8 @@ namespace Style {
 
 ReferenceFilterOperation::ReferenceFilterOperation(URL&& url, AtomString&& fragment)
     : FilterOperation(Type::Reference)
-    , m_url(WTFMove(url))
-    , m_fragment(WTFMove(fragment))
+    , m_url(WTF::move(url))
+    , m_fragment(WTF::move(fragment))
 {
 }
 

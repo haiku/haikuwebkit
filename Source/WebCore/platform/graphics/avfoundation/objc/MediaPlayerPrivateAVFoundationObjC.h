@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2011-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,7 +86,7 @@ public:
     static void registerMediaEngine(MediaEngineRegistrar);
 
     void setAsset(RetainPtr<id>&&);
-    void didEnd() final;
+    void didEnd(double) final;
     void metadataLoaded() final;
 
     void processCue(NSArray *, NSArray *, const MediaTime&);

@@ -42,8 +42,8 @@ class StreamConnectionWorkQueue;
 struct StreamServerConnectionHandle {
     WTF_MAKE_NONCOPYABLE(StreamServerConnectionHandle);
     StreamServerConnectionHandle(Connection::Handle&& connection, StreamConnectionBuffer::Handle&& bufferHandle)
-        : outOfStreamConnection(WTFMove(connection))
-        , buffer(WTFMove(bufferHandle))
+        : outOfStreamConnection(WTF::move(connection))
+        , buffer(WTF::move(bufferHandle))
     { }
     StreamServerConnectionHandle(StreamServerConnectionHandle&&) = default;
     StreamServerConnectionHandle& operator=(StreamServerConnectionHandle&&) = default;
@@ -196,7 +196,7 @@ void StreamServerConnection::sendSyncReply(Connection::SyncRequestID syncRequest
     } else {
         // Asynchronously replying from the current thread is supported. Note: This is not thread safe,
         // as any other thread might execute before the buffer release.
-        m_connection->sendSyncReply(WTFMove(encoder));
+        m_connection->sendSyncReply(WTF::move(encoder));
     }
 }
 

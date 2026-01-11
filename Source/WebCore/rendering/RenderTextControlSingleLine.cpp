@@ -45,7 +45,7 @@
 #include "RenderLayerScrollableArea.h"
 #include "RenderObjectInlines.h"
 #include "RenderScrollbar.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+SettersInlines.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
 #include "StyleResolver.h"
@@ -61,11 +61,11 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderTextControlSingleLine);
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderTextControlInnerBlock);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderTextControlSingleLine);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderTextControlInnerBlock);
 
 RenderTextControlSingleLine::RenderTextControlSingleLine(Type type, HTMLInputElement& element, RenderStyle&& style)
-    : RenderTextControl(type, element, WTFMove(style))
+    : RenderTextControl(type, element, WTF::move(style))
 {
     ASSERT(isRenderTextControlSingleLine());
 }
@@ -268,7 +268,7 @@ void RenderTextControlSingleLine::layout()
         // The placeholder gets layout last, after the parent text control and its other children,
         // so in order to get the correct overflow from the placeholder we need to recompute it now.
         if (neededLayout)
-            computeOverflow(clientLogicalBottom());
+            computeOverflow(flippedContentBoxRect());
     }
 
 #if PLATFORM(IOS_FAMILY)
@@ -307,7 +307,7 @@ bool RenderTextControlSingleLine::nodeAtPoint(const HitTestRequest& request, Hit
     return true;
 }
 
-void RenderTextControlSingleLine::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)
+void RenderTextControlSingleLine::styleDidChange(Style::Difference diff, const RenderStyle* oldStyle)
 {
     RenderTextControl::styleDidChange(diff, oldStyle);
 
@@ -323,7 +323,7 @@ void RenderTextControlSingleLine::styleDidChange(StyleDifference diff, const Ren
         containerRenderer->mutableStyle().setHeight(CSS::Keyword::Auto { });
         containerRenderer->mutableStyle().setWidth(CSS::Keyword::Auto { });
     }
-    if (diff == StyleDifference::Layout) {
+    if (diff == Style::DifferenceResult::Layout) {
         if (auto innerTextRenderer = innerTextElement()->renderer())
             innerTextRenderer->setNeedsLayout(MarkContainingBlockChain);
         if (auto* placeholder = inputElement().placeholderElement()) {
@@ -523,7 +523,7 @@ RenderTextControlInnerBlock* RenderTextControlSingleLine::innerTextRenderer() co
 }
 
 RenderTextControlInnerBlock::RenderTextControlInnerBlock(Element& element, RenderStyle&& style)
-    : RenderBlockFlow(Type::TextControlInnerBlock, element, WTFMove(style))
+    : RenderBlockFlow(Type::TextControlInnerBlock, element, WTF::move(style))
 {
     ASSERT(isRenderTextControlInnerBlock());
 }

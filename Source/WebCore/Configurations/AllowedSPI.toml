@@ -40,7 +40,7 @@ symbols = [
 request = "rdar://157890562"
 symbols = [
     # Only used for benchmarking, see 293525@main.
-    "nw_parameters_set_source_application_by_bundle_id",
+    "nw_parameters_set_source_application",
 ]
 
 [[temporary-usage]]
@@ -72,4 +72,16 @@ request = "rdar://161241270"
 cleanup = "rdar://161241477"
 symbols = [
     "CTFontGetUIFontType",
+]
+
+[[temporary-usage]]
+request = "rdar://161402565"
+cleanup = "rdar://161402756"
+symbols = [
+    "FPFontCreateMemorySafeFontsFromData",
+]
+
+[[staging]]
+symbols = [
+    "MACaptionAppearanceCopyPreviewText",
 ]

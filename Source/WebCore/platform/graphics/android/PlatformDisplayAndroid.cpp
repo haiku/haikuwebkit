@@ -50,7 +50,7 @@ std::unique_ptr<PlatformDisplayAndroid> PlatformDisplayAndroid::create()
 }
 
 PlatformDisplayAndroid::PlatformDisplayAndroid(Ref<GLDisplay>&& glDisplay)
-    : PlatformDisplay(WTFMove(glDisplay))
+    : PlatformDisplay(WTF::move(glDisplay))
 {
 #if ENABLE(WEBGL) && defined(EGL_PLATFORM_ANDROID_KHR)
     m_anglePlatform = EGL_PLATFORM_ANDROID_KHR;

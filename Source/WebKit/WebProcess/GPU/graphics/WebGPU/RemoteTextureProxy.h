@@ -45,7 +45,7 @@ class RemoteTextureProxy final : public WebCore::WebGPU::Texture {
 public:
     static Ref<RemoteTextureProxy> create(Ref<RemoteGPUProxy>&& root, ConvertToBackingContext& convertToBackingContext, WebGPUIdentifier identifier, bool isCanvasBacking = false)
     {
-        return adoptRef(*new RemoteTextureProxy(WTFMove(root), convertToBackingContext, identifier, isCanvasBacking));
+        return adoptRef(*new RemoteTextureProxy(WTF::move(root), convertToBackingContext, identifier, isCanvasBacking));
     }
 
     virtual ~RemoteTextureProxy();
@@ -70,7 +70,7 @@ private:
     template<typename T>
     WARN_UNUSED_RETURN IPC::Error send(T&& message)
     {
-        return root().protectedStreamClientConnection()->send(WTFMove(message), backing());
+        return root().protectedStreamClientConnection()->send(WTF::move(message), backing());
     }
 
     RefPtr<WebCore::WebGPU::TextureView> createView(const std::optional<WebCore::WebGPU::TextureViewDescriptor>&) final;

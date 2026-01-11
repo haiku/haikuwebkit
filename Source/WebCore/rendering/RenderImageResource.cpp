@@ -33,12 +33,12 @@
 #include "RenderElement.h"
 #include "RenderImage.h"
 #include "RenderImageResourceStyleImage.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderImageResource);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderImageResource);
 
 RenderImageResource::RenderImageResource() = default;
 
@@ -70,7 +70,7 @@ void RenderImageResource::setCachedImage(CachedResourceHandle<CachedImage>&& new
         // removeClient may have destroyed the renderer.
         return;
     }
-    m_cachedImage = WTFMove(newImage);
+    m_cachedImage = WTF::move(newImage);
     m_cachedImageRemoveClientIsNeeded = true;
     if (!m_cachedImage)
         return;

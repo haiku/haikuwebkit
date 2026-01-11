@@ -34,7 +34,11 @@
 
 #if defined(__has_include)
 #if __has_include(<WebKitAdditions/pas_mte_additions.h>)
+// FIXME: Properly support using WKA in modules.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnon-modular-include-in-module"
 #include <WebKitAdditions/pas_mte_additions.h>
+#pragma clang diagnostic pop
 #endif // __has_include(<WebKitAdditions/pas_mte_additions.h>)
 #if __has_include(<libproc.h>)
 #include <libproc.h>
@@ -149,7 +153,7 @@ extern Slot g_config[];
         /* We're only checking one tag-granule, so it's not perfect, \
          * but it does mean that a potential attacker would at least \
          * need to know the tag for some of their target range. */ \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "ldr xzr, [%0]\n\t" \
             "msr tco, #1" \
@@ -159,7 +163,7 @@ extern Slot g_config[];
         ); \
     } while (0)
 #define PAS_MTE_SET_TCO_UNCHECKED do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "msr tco, #1" \
             : \
@@ -168,7 +172,7 @@ extern Slot g_config[];
         ); \
     } while (0)
 #define PAS_MTE_CLEAR_TCO do { \
-        asm volatile( \
+        __asm__ volatile( \
             ".arch_extension memtag\n\t" \
             "msr tco, #0" \
             : \

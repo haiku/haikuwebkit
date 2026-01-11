@@ -661,7 +661,7 @@ bool ordinarySetSlow(JSGlobalObject* globalObject, JSObject* object, PropertyNam
         object->getOwnPropertyDescriptor(globalObject, propertyName, ownDescriptor);
         RETURN_IF_EXCEPTION(scope, false);
     }
-    RELEASE_AND_RETURN(scope, ordinarySetWithOwnDescriptor(globalObject, object, propertyName, value, receiver, WTFMove(ownDescriptor), shouldThrow));
+    RELEASE_AND_RETURN(scope, ordinarySetWithOwnDescriptor(globalObject, object, propertyName, value, receiver, WTF::move(ownDescriptor), shouldThrow));
 }
 
 // https://tc39.es/ecma262/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ordinarysetwithowndescriptor

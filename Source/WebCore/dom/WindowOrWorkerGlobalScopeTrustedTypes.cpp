@@ -70,7 +70,7 @@ DOMWindowTrustedTypes* DOMWindowTrustedTypes::from(LocalDOMWindow& window)
     if (!supplement) {
         auto newSupplement = makeUnique<DOMWindowTrustedTypes>(window);
         supplement = newSupplement.get();
-        provideTo(&window, supplementName(), WTFMove(newSupplement));
+        provideTo(&window, supplementName(), WTF::move(newSupplement));
     }
     return supplement;
 }
@@ -101,7 +101,7 @@ WorkerGlobalScopeTrustedTypes* WorkerGlobalScopeTrustedTypes::from(WorkerGlobalS
     if (!supplement) {
         auto newSupplement = makeUnique<WorkerGlobalScopeTrustedTypes>(scope);
         supplement = newSupplement.get();
-        provideTo(&scope, supplementName(), WTFMove(newSupplement));
+        provideTo(&scope, supplementName(), WTF::move(newSupplement));
     }
     return supplement;
 }

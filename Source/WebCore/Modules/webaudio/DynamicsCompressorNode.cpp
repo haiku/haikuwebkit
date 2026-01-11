@@ -42,7 +42,7 @@ static constexpr unsigned defaultNumberOfOutputChannels = 2;
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(DynamicsCompressorNode);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(DynamicsCompressorNode);
 
 ExceptionOr<Ref<DynamicsCompressorNode>> DynamicsCompressorNode::create(BaseAudioContext& context, const DynamicsCompressorOptions& options)
 {

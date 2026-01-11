@@ -32,7 +32,7 @@ public:
     static JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns* create(JSC::Structure* structure, JSDOMGlobalObject* globalObject, Ref<TestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns>&& impl)
     {
         SUPPRESS_UNCOUNTED_LOCAL auto& vm = globalObject->vm();
-        JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns* ptr = new (NotNull, JSC::allocateCell<JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns>(vm)) JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns(structure, *globalObject, WTFMove(impl));
+        JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns* ptr = new (NotNull, JSC::allocateCell<JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns>(vm)) JSTestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns(structure, *globalObject, WTF::move(impl));
         ptr->finishCreation(vm);
         return ptr;
     }

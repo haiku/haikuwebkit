@@ -108,7 +108,7 @@ std::optional<WebKit::PlatformClass> ArgumentCoder<WebKit::PlatformClass>::decod
         return std::nullopt;
     return {
         WebKit::PlatformClass {
-            WTFMove(*value)
+            WTF::move(*value)
         }
     };
 }
@@ -146,8 +146,8 @@ std::optional<WebKit::CoreIPCAVOutputContext> ArgumentCoder<WebKit::CoreIPCAVOut
         return std::nullopt;
     return {
         WebKit::CoreIPCAVOutputContext {
-            WTFMove(*AVOutputContextSerializationKeyContextID),
-            WTFMove(*AVOutputContextSerializationKeyContextType)
+            WTF::move(*AVOutputContextSerializationKeyContextID),
+            WTF::move(*AVOutputContextSerializationKeyContextType)
         }
     };
 }
@@ -226,13 +226,13 @@ std::optional<WebKit::CoreIPCNSSomeFoundationType> ArgumentCoder<WebKit::CoreIPC
         return std::nullopt;
     return {
         WebKit::CoreIPCNSSomeFoundationType {
-            WTFMove(*StringKey),
-            WTFMove(*NumberKey),
-            WTFMove(*OptionalNumberKey),
-            WTFMove(*ArrayKey),
-            WTFMove(*OptionalArrayKey),
-            WTFMove(*DictionaryKey),
-            WTFMove(*OptionalDictionaryKey)
+            WTF::move(*StringKey),
+            WTF::move(*NumberKey),
+            WTF::move(*OptionalNumberKey),
+            WTF::move(*ArrayKey),
+            WTF::move(*OptionalArrayKey),
+            WTF::move(*DictionaryKey),
+            WTF::move(*OptionalDictionaryKey)
         }
     };
 }
@@ -261,7 +261,7 @@ std::optional<WebKit::CoreIPCclass NSSomeOtherFoundationType> ArgumentCoder<WebK
         return std::nullopt;
     return {
         WebKit::CoreIPCclass NSSomeOtherFoundationType {
-            WTFMove(*DictionaryKey)
+            WTF::move(*DictionaryKey)
         }
     };
 }
@@ -355,15 +355,15 @@ std::optional<WebKit::CoreIPCDDScannerResult> ArgumentCoder<WebKit::CoreIPCDDSca
         return std::nullopt;
     return {
         WebKit::CoreIPCDDScannerResult {
-            WTFMove(*StringKey),
-            WTFMove(*NumberKey),
-            WTFMove(*OptionalNumberKey),
-            WTFMove(*ArrayKey),
-            WTFMove(*OptionalArrayKey),
-            WTFMove(*DictionaryKey),
-            WTFMove(*OptionalDictionaryKey),
-            WTFMove(*DataArrayKey),
-            WTFMove(*SecTrustArrayKey)
+            WTF::move(*StringKey),
+            WTF::move(*NumberKey),
+            WTF::move(*OptionalNumberKey),
+            WTF::move(*ArrayKey),
+            WTF::move(*OptionalArrayKey),
+            WTF::move(*DictionaryKey),
+            WTF::move(*OptionalDictionaryKey),
+            WTF::move(*DataArrayKey),
+            WTF::move(*SecTrustArrayKey)
         }
     };
 }

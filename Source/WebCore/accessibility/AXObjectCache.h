@@ -40,6 +40,7 @@
 #include <wtf/HashSet.h>
 #include <wtf/ListHashSet.h>
 #include <wtf/Platform.h>
+#include <wtf/ProcessID.h>
 #include <wtf/WeakHashMap.h>
 #include <wtf/WeakHashSet.h>
 
@@ -153,6 +154,32 @@ struct AriaNotifyData {
     String language;
 };
 
+struct AccessibilityRemoteToken {
+    AccessibilityRemoteToken()
+#if !PLATFORM(MAC)
+        : uuid(WTF::UUID::createVersion4())
+        , pid(0)
+#endif
+    { }
+
+#if PLATFORM(MAC)
+    AccessibilityRemoteToken(Vector<uint8_t> bytes)
+        : bytes(bytes)
+#else
+    AccessibilityRemoteToken(WTF::UUID uuid, ProcessID pid)
+        : uuid(uuid)
+        , pid(pid)
+#endif
+    { }
+
+#if PLATFORM(MAC)
+    Vector<uint8_t> bytes;
+#else
+    WTF::UUID uuid;
+    ProcessID pid;
+#endif
+};
+
 #if PLATFORM(COCOA)
 // When this is updated, WebCoreArgumentCoders.serialization.in must be updated as well.
 struct LiveRegionAnnouncementData {
@@ -167,6 +194,29 @@ struct AXTextChangeContext {
     VisibleSelection selection;
 };
 #endif // PLATFORM(COCOA)
+
+struct AXNotificationWithData {
+    using DataVariant = Variant<std::monostate, AriaNotifyData
+#if PLATFORM(COCOA)
+        , LiveRegionAnnouncementData
+#endif
+    >;
+
+    AXNotification notification;
+    DataVariant data;
+
+    AXNotificationWithData(AXNotification notification)
+        : notification(notification)
+        , data(std::monostate { }) { }
+
+    AXNotificationWithData(AXNotification notification, const AriaNotifyData& data)
+        : notification(notification), data(data) { }
+
+#if PLATFORM(COCOA)
+    AXNotificationWithData(AXNotification notification, const LiveRegionAnnouncementData& data)
+        : notification(notification), data(data) { }
+#endif
+};
 
 class AccessibilityReplacedText {
 public:
@@ -191,6 +241,21 @@ enum class AXTextChange : uint8_t { Inserted, Deleted, Replaced, AttributesChang
 #endif
 
 enum class PostTarget { Element, ObservableParent };
+
+struct DeferredNotificationData {
+    // The renderer or element to post a notification for.
+    SingleThreadWeakPtr<RenderObject> renderer { nullptr };
+    WeakPtr<Element, WeakPtrImplWithEventTargetData> element { nullptr };
+    // The notification to post.
+    AXNotification notification;
+
+    DeferredNotificationData() = delete;
+
+    explicit DeferredNotificationData(RenderObject& renderer, AXNotification notification)
+        : renderer(renderer)
+        , notification(notification)
+    { }
+};
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(AXObjectCache);
 class AXObjectCache final : public CanMakeWeakPtr<AXObjectCache>, public CanMakeCheckedPtr<AXObjectCache>
@@ -314,7 +379,7 @@ public:
             // We only need to handle DOM changes for things that don't have renderers.
             // If something does have a renderer, we would already get children-changed notifications
             // from the render tree.
-            childrenChanged(get(node));
+            childrenChanged(RefPtr { get(node) }.get());
         }
     }
     void childrenChanged(RenderObject&, RenderObject* newChild = nullptr);
@@ -338,7 +403,7 @@ public:
     void onSelectedTextChanged(const VisiblePositionRange&, AccessibilityObject* = nullptr);
     void onSlottedContentChange(const HTMLSlotElement&);
     void onStyleChange(Element&, OptionSet<Style::Change>, const RenderStyle* oldStyle, const RenderStyle* newStyle);
-    void onStyleChange(RenderText&, StyleDifference, const RenderStyle* oldStyle, const RenderStyle& newStyle);
+    void onStyleChange(RenderText&, Style::Difference, const RenderStyle* oldStyle, const RenderStyle& newStyle);
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     void onAccessibilityPaintStarted();
     void onAccessibilityPaintFinished();
@@ -533,8 +598,11 @@ public:
             postNotification(*object, notification);
     }
     void postNotification(AccessibilityObject&, AXNotification);
+    void postDeferredNotification(RenderObject&, AXNotification);
     void postARIANotifyNotification(Node&, const String&, const AriaNotifyOptions&);
+#if PLATFORM(COCOA)
     void postLiveRegionNotification(AccessibilityObject&, LiveRegionStatus, const AttributedString&);
+#endif
     // Requests clients to announce to the user the given message in the way they deem appropriate.
     WEBCORE_EXPORT void announce(const String&);
 
@@ -630,7 +698,7 @@ private:
     void buildIsolatedTree();
     void updateIsolatedTree(AccessibilityObject&, AXNotification);
     void updateIsolatedTree(AccessibilityObject*, AXNotification);
-    void updateIsolatedTree(const Vector<std::pair<Ref<AccessibilityObject>, AXNotification>>&);
+    void updateIsolatedTree(const Vector<std::pair<Ref<AccessibilityObject>, AXNotificationWithData>>&);
     void updateIsolatedTree(AccessibilityObject*, AXProperty) const;
     void updateIsolatedTree(AccessibilityObject&, AXProperty) const;
     void startUpdateTreeSnapshotTimer();
@@ -658,12 +726,11 @@ protected:
 
 #if PLATFORM(COCOA)
     WEBCORE_EXPORT void postPlatformAnnouncementNotification(const String&);
-    WEBCORE_EXPORT void postPlatformARIANotifyNotification(const String&, NotifyPriority, InterruptBehavior, const String&);
-    WEBCORE_EXPORT void postPlatformLiveRegionNotification(AccessibilityObject&, LiveRegionStatus, const AttributedString&);
+    WEBCORE_EXPORT void postPlatformARIANotifyNotification(AccessibilityObject&, const AriaNotifyData&);
+    WEBCORE_EXPORT void postPlatformLiveRegionNotification(AccessibilityObject&, const LiveRegionAnnouncementData&);
 #else
     void postPlatformAnnouncementNotification(const String&) { }
-    void postPlatformARIANotifyNotification(const String&, NotifyPriority, InterruptBehavior, const String&) { }
-    void postPlatformLiveRegionNotification(AccessibilityObject&, LiveRegionStatus, const AttributedString&) { }
+    void postPlatformARIANotifyNotification(AccessibilityObject&, const AriaNotifyData&) { }
 #endif
 
     void frameLoadingEventPlatformNotification(RenderView*, AXLoadingEvent);
@@ -759,6 +826,7 @@ private:
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     void handleRowspanChanged(AccessibilityNodeObject&);
 #endif
+    void handleDeferredNotification(const DeferredNotificationData&);
 
     // aria-modal or modal <dialog> related
     bool isModalElement(Element&) const;
@@ -848,7 +916,7 @@ private:
 #endif
 
     Timer m_notificationPostTimer;
-    Vector<std::pair<Ref<AccessibilityObject>, AXNotification>> m_notificationsToPost;
+    Vector<std::pair<Ref<AccessibilityObject>, AXNotificationWithData>> m_notificationsToPost;
 
 #if PLATFORM(COCOA)
     Timer m_passwordNotificationTimer;
@@ -903,7 +971,9 @@ private:
     WeakHashSet<AccessibilityObject> m_deferredUnconnectedObjects;
 #if PLATFORM(MAC)
     HashMap<PreSortedObjectType, Vector<Ref<AccessibilityObject>>, IntHash<PreSortedObjectType>, WTF::StrongEnumHashTraits<PreSortedObjectType>> m_deferredUnsortedObjects;
+    Vector<WeakPtr<Document, WeakPtrImplWithEventTargetData>> m_deferredDocumentsWithNewRenderTrees;
 #endif
+    Vector<DeferredNotificationData> m_deferredNotifications;
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     Timer m_buildIsolatedTreeTimer;

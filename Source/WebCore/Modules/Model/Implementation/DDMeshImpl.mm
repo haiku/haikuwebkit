@@ -46,8 +46,8 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(DDMeshImpl);
 
 DDMeshImpl::DDMeshImpl(WebGPU::WebGPUPtr<WGPUDDMesh>&& ddMesh, Vector<UniqueRef<WebCore::IOSurface>>&& renderBuffers, ConvertToBackingContext& convertToBackingContext)
     : m_convertToBackingContext(convertToBackingContext)
-    , m_backing(WTFMove(ddMesh))
-    , m_renderBuffers(WTFMove(renderBuffers))
+    , m_backing(WTF::move(ddMesh))
+    , m_renderBuffers(WTF::move(renderBuffers))
 {
 }
 

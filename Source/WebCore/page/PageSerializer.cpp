@@ -206,8 +206,8 @@ void PageSerializer::serializeFrame(LocalFrame* frame)
     m_resources.append({ url, document->suggestedMIMEType(), SharedBuffer::create(textEncoding.encode(text, PAL::UnencodableHandling::Entities)) });
     m_resourceURLs.add(url);
 
-    for (auto&& node : WTFMove(serializedNodes)) {
-        RefPtr element = dynamicDowncast<Element>(WTFMove(node));
+    for (auto&& node : WTF::move(serializedNodes)) {
+        RefPtr element = dynamicDowncast<Element>(WTF::move(node));
         if (!element)
             continue;
         // We have to process in-line style as it might contain some resources (typically background images).

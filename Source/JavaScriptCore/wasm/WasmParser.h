@@ -75,35 +75,35 @@ protected:
 
     explicit ParserBase(std::span<const uint8_t>);
 
-    bool WARN_UNUSED_RETURN consumeCharacter(char);
-    bool WARN_UNUSED_RETURN consumeString(const char*);
-    bool WARN_UNUSED_RETURN consumeUTF8String(Name&, size_t);
+    WARN_UNUSED_RETURN bool consumeCharacter(char);
+    WARN_UNUSED_RETURN bool consumeString(const char*);
+    WARN_UNUSED_RETURN bool consumeUTF8String(Name&, size_t);
 
-    bool WARN_UNUSED_RETURN parseVarUInt1(uint8_t&);
-    bool WARN_UNUSED_RETURN parseInt7(int8_t&);
-    bool WARN_UNUSED_RETURN peekInt7(int8_t&);
-    bool WARN_UNUSED_RETURN parseUInt7(uint8_t&);
-    bool WARN_UNUSED_RETURN peekUInt8(uint8_t&);
-    bool WARN_UNUSED_RETURN parseUInt8(uint8_t&);
-    bool WARN_UNUSED_RETURN parseUInt32(uint32_t&);
-    bool WARN_UNUSED_RETURN parseUInt64(uint64_t&);
-    bool WARN_UNUSED_RETURN parseImmByteArray16(v128_t&);
-    bool WARN_UNUSED_RETURN parseVarUInt32(uint32_t&);
-    bool WARN_UNUSED_RETURN peekVarUInt32(uint32_t&);
-    bool WARN_UNUSED_RETURN parseVarUInt64(uint64_t&);
+    WARN_UNUSED_RETURN bool parseVarUInt1(uint8_t&);
+    WARN_UNUSED_RETURN bool parseInt7(int8_t&);
+    WARN_UNUSED_RETURN bool peekInt7(int8_t&);
+    WARN_UNUSED_RETURN bool parseUInt7(uint8_t&);
+    WARN_UNUSED_RETURN bool peekUInt8(uint8_t&);
+    WARN_UNUSED_RETURN bool parseUInt8(uint8_t&);
+    WARN_UNUSED_RETURN bool parseUInt32(uint32_t&);
+    WARN_UNUSED_RETURN bool parseUInt64(uint64_t&);
+    WARN_UNUSED_RETURN bool parseImmByteArray16(v128_t&);
+    WARN_UNUSED_RETURN bool parseVarUInt32(uint32_t&);
+    WARN_UNUSED_RETURN bool peekVarUInt32(uint32_t&);
+    WARN_UNUSED_RETURN bool parseVarUInt64(uint64_t&);
 
-    bool WARN_UNUSED_RETURN parseVarInt32(int32_t&);
-    bool WARN_UNUSED_RETURN parseVarInt64(int64_t&);
+    WARN_UNUSED_RETURN bool parseVarInt32(int32_t&);
+    WARN_UNUSED_RETURN bool parseVarInt64(int64_t&);
 
-    bool WARN_UNUSED_RETURN parseValueType(const ModuleInformation&, Type&);
-    bool WARN_UNUSED_RETURN parseRefType(const ModuleInformation&, Type&);
-    bool WARN_UNUSED_RETURN parseExternalKind(ExternalKind&);
-    bool WARN_UNUSED_RETURN parseHeapType(const ModuleInformation&, int32_t&);
+    WARN_UNUSED_RETURN bool parseValueType(const ModuleInformation&, Type&);
+    WARN_UNUSED_RETURN bool parseRefType(const ModuleInformation&, Type&);
+    WARN_UNUSED_RETURN bool parseExternalKind(ExternalKind&);
+    WARN_UNUSED_RETURN bool parseHeapType(const ModuleInformation&, int32_t&);
 
     size_t m_offset = 0;
 
     template <typename ...Args>
-    NEVER_INLINE UnexpectedResult WARN_UNUSED_RETURN fail(Args... args) const
+    WARN_UNUSED_RETURN NEVER_INLINE UnexpectedResult fail(Args... args) const
     {
         using namespace FailureHelper; // See ADL comment in namespace above.
         return UnexpectedResult(makeString("WebAssembly.Module doesn't parse at byte "_s, m_offset, ": "_s, makeString(args)...));
@@ -121,7 +121,7 @@ protected:
 #define WASM_FAIL_IF_HELPER_FAILS(helper) do {                      \
         auto helperResult = helper;                                 \
         if (!helperResult) [[unlikely]]                             \
-            return makeUnexpected(WTFMove(helperResult.error()));   \
+            return makeUnexpected(WTF::move(helperResult.error()));   \
     } while (0)
 
 private:

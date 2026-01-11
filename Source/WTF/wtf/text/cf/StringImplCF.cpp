@@ -69,7 +69,7 @@ namespace StringWrapperCFAllocator {
         if (isMainThread())
             underlyingString = std::exchange(currentString(), nullptr);
 
-        auto [ wrapper, trailingBytes ] = createWithTrailingBytes<StringImplWrapper, StringWrapperCFAllocatorMalloc>(size, StringImplWrapper { WTFMove(underlyingString) });
+        auto [ wrapper, trailingBytes ] = createWithTrailingBytes<StringImplWrapper, StringWrapperCFAllocatorMalloc>(size, StringImplWrapper { WTF::move(underlyingString) });
         return trailingBytes;
     }
 

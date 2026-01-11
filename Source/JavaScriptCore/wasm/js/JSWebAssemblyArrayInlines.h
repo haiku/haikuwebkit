@@ -35,17 +35,17 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace JSC {
 
-
 TypeInfoBlob JSWebAssemblyArray::typeInfoBlob()
 {
     return TypeInfoBlob(0, TypeInfo(WebAssemblyGCObjectType, StructureFlags));
 }
 
-WebAssemblyGCStructure* JSWebAssemblyArray::createStructure(VM& vm, JSGlobalObject* globalObject, Ref<const Wasm::TypeDefinition>&& type, Ref<const Wasm::RTT>&& rtt)
+WebAssemblyGCStructure* JSWebAssemblyArray::createStructure(VM& vm, JSGlobalObject* globalObject, Ref<const Wasm::TypeDefinition>&& unexpandedType, Ref<const Wasm::RTT>&& rtt)
 {
+    Ref<const Wasm::TypeDefinition> type { unexpandedType->expand() };
     RELEASE_ASSERT(type->is<Wasm::ArrayType>());
     RELEASE_ASSERT(rtt->kind() == Wasm::RTTKind::Array);
-    return WebAssemblyGCStructure::create(vm, globalObject, TypeInfo(WebAssemblyGCObjectType, StructureFlags), info(), WTFMove(type), WTFMove(rtt));
+    return WebAssemblyGCStructure::create(vm, globalObject, TypeInfo(WebAssemblyGCObjectType, StructureFlags), info(), WTF::move(unexpandedType), WTF::move(type), WTF::move(rtt));
 }
 
 template<typename T>
@@ -130,7 +130,6 @@ auto JSWebAssemblyArray::visitSpanNonVector(auto functor)
 
 uint64_t JSWebAssemblyArray::get(uint32_t index)
 {
-    // V128 is not supported in IPInt.
     return visitSpanNonVector([&](auto span) ALWAYS_INLINE_LAMBDA -> uint64_t {
         return span[index];
     });

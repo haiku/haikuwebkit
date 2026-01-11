@@ -48,7 +48,7 @@ class CtapAuthenticator final : public FidoAuthenticator {
 public:
     static Ref<CtapAuthenticator> create(Ref<CtapDriver>&& driver, fido::AuthenticatorGetInfoResponse&& info)
     {
-        return adoptRef(*new CtapAuthenticator(WTFMove(driver), WTFMove(info)));
+        return adoptRef(*new CtapAuthenticator(WTF::move(driver), WTF::move(info)));
     }
 
 private:

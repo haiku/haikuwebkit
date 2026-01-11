@@ -44,7 +44,6 @@ public:
     void update(const RemoteScrollingTree&, WebCore::ProcessIdentifier, const WebCore::AcceleratedTimelinesUpdate&);
     RemoteProgressBasedTimeline* get(const TimelineID&) const;
     void updateTimelinesForNode(const WebCore::ScrollingTreeScrollingNode&);
-    bool hasTimelineForNode(const WebCore::ScrollingTreeScrollingNode&) const;
     HashSet<Ref<RemoteProgressBasedTimeline>> timelinesForScrollingNodeIDForTesting(WebCore::ScrollingNodeID) const;
 
 private:

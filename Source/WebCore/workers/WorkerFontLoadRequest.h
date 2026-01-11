@@ -44,13 +44,12 @@ struct FontCustomPlatformData;
 
 class WorkerFontLoadRequest final : public FontLoadRequest, public ThreadableLoaderClient, public RefCounted<WorkerFontLoadRequest> {
     WTF_MAKE_TZONE_ALLOCATED(WorkerFontLoadRequest);
-    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WorkerFontLoadRequest);
 public:
     static Ref<WorkerFontLoadRequest> create(URL&&, LoadedFromOpaqueSource);
 
     void load(WorkerGlobalScope&);
 
-    // FontLoadRequest.
+    // FontLoadRequest, ThreadableLoaderClient.
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 
@@ -73,6 +72,8 @@ private:
     void didReceiveData(const SharedBuffer&) final;
     void didFinishLoading(ScriptExecutionContextIdentifier, std::optional<ResourceLoaderIdentifier>, const NetworkLoadMetrics&) final;
     void didFail(std::optional<ScriptExecutionContextIdentifier>, const ResourceError&) final;
+
+    RefPtr<FontCustomPlatformData> loadCustomFont(SharedBuffer&, const String&);
 
     URL m_url;
     LoadedFromOpaqueSource m_loadedFromOpaqueSource;

@@ -35,7 +35,6 @@
 #include <WebCore/SourceBufferParserWebM.h>
 #include <WebCore/TimeRanges.h>
 #include <WebCore/VideoFrameMetadata.h>
-#include "WebAVSampleBufferListener.h"
 #include "WebMResourceClient.h"
 #include <wtf/HashFunctions.h>
 #include <wtf/LoggerHelper.h>
@@ -73,7 +72,6 @@ class VideoTrackPrivateWebM;
 class MediaPlayerPrivateWebM
     : public MediaPlayerPrivateInterface
     , public WebMResourceClientParent
-    , public WebAVSampleBufferListenerClient
     , private LoggerHelper
     , public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<MediaPlayerPrivateWebM, WTF::DestructionThread::Main> {
     WTF_MAKE_TZONE_ALLOCATED(MediaPlayerPrivateWebM);

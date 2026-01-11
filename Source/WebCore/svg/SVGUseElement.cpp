@@ -55,7 +55,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(SVGUseElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SVGUseElement);
 
 inline SVGUseElement::SVGUseElement(const QualifiedName& tagName, Document& document)
     : SVGGraphicsElement(tagName, document, makeUniqueRef<PropertyRegistry>(*this))
@@ -158,6 +158,13 @@ FloatRect SVGUseElement::getBBox(StyleUpdateStrategy styleUpdateStrategy)
     auto bbox = SVGGraphicsElement::getBBox(styleUpdateStrategy);
     if (bbox.isEmpty())
         return { };
+
+    if (document().settings().layerBasedSVGEngineEnabled()) {
+        auto* transformableContainer = dynamicDowncast<RenderSVGTransformableContainer>(renderer());
+        ASSERT(transformableContainer);
+        bbox.move(transformableContainer->additionalContainerTranslation());
+        return bbox;
+    }
 
     auto* transformableContainer = dynamicDowncast<LegacyRenderSVGTransformableContainer>(renderer());
     ASSERT(transformableContainer && transformableContainer->isObjectBoundingBoxValid());
@@ -319,8 +326,8 @@ RefPtr<SVGElement> SVGUseElement::targetClone() const
 RenderPtr<RenderElement> SVGUseElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
     if (document().settings().layerBasedSVGEngineEnabled())
-        return createRenderer<RenderSVGTransformableContainer>(*this, WTFMove(style));
-    return createRenderer<LegacyRenderSVGTransformableContainer>(*this, WTFMove(style));
+        return createRenderer<RenderSVGTransformableContainer>(*this, WTF::move(style));
+    return createRenderer<LegacyRenderSVGTransformableContainer>(*this, WTF::move(style));
 }
 
 static bool isDirectReference(const SVGElement& element)
@@ -335,21 +342,39 @@ static bool isDirectReference(const SVGElement& element)
         || element.hasTagName(textTag);
 }
 
+SVGGraphicsElement* SVGUseElement::visibleTargetGraphicsElement() const
+{
+    RefPtr clone = this->targetClone();
+    auto* targetElement = dynamicDowncast<SVGGraphicsElement>(clone.get());
+    if (!targetElement)
+        return nullptr;
+
+    CheckedPtr renderer = targetElement->renderer();
+    if (!renderer)
+        return nullptr;
+
+    auto& style = renderer->style();
+    if (style.display() == DisplayType::None || style.usedVisibility() != Visibility::Visible)
+        return nullptr;
+
+    // Spec: "If a <use> element is a child of a clipPath element, it must directly
+    // reference <path>, <text> or basic shapes elements. Indirect references are an
+    // error and the clipPath element must be ignored."
+    if (!isDirectReference(*targetElement))
+        return nullptr;
+
+    return targetElement;
+}
+
 Path SVGUseElement::toClipPath()
 {
     RELEASE_ASSERT(!document().settings().layerBasedSVGEngineEnabled());
 
-    RefPtr targetClone = dynamicDowncast<SVGGraphicsElement>(this->targetClone());
-    if (!targetClone)
+    RefPtr element = visibleTargetGraphicsElement();
+    if (!element)
         return { };
 
-    if (!isDirectReference(*targetClone)) {
-        // Spec: Indirect references are an error (14.3.5)
-        protectedDocument()->checkedSVGExtensions()->reportError("Not allowed to use indirect reference in <clip-path>"_s);
-        return { };
-    }
-
-    Path path = targetClone->toClipPath();
+    Path path = element->toClipPath();
     SVGLengthContext lengthContext(this);
     // FIXME: Find a way to do this without manual resolution of x/y here. It's potentially incorrect.
     path.translate(FloatSize(x().value(lengthContext), y().value(lengthContext)));
@@ -468,7 +493,7 @@ RefPtr<SVGElement> SVGUseElement::findTarget(AtomString* targetID) const
 
     auto targetResult = targetElementFromIRIString(original->href(), original->treeScope(), original->externalDocument());
     if (targetID) {
-        *targetID = WTFMove(targetResult.identifier);
+        *targetID = WTF::move(targetResult.identifier);
         // If the reference is external, don't return the target ID to the caller.
         // The caller would use the target ID to wait for a pending resource on the wrong document.
         // If we ever want the change that and let the caller to wait on the external document,
@@ -658,9 +683,9 @@ void SVGUseElement::updateExternalDocument()
         options.mode = FetchOptions::Mode::SameOrigin;
         options.destination = FetchOptions::Destination::Image;
         options.sniffContent = ContentSniffingPolicy::DoNotSniffContent;
-        CachedResourceRequest request { ResourceRequest { WTFMove(externalDocumentURL) }, options };
+        CachedResourceRequest request { ResourceRequest { WTF::move(externalDocumentURL) }, options };
         request.setInitiator(*this);
-        m_externalDocument = document->protectedCachedResourceLoader()->requestSVGDocument(WTFMove(request)).value_or(nullptr);
+        m_externalDocument = document->protectedCachedResourceLoader()->requestSVGDocument(WTF::move(request)).value_or(nullptr);
         if (CachedResourceHandle externalDocument = m_externalDocument)
             externalDocument->addClient(*this);
     }

@@ -202,7 +202,7 @@ MarkupAccumulator::MarkupAccumulator(Vector<Ref<Node>>* nodes, ResolveURLs resol
     , m_resolveURLs(resolveURLs)
     , m_serializationSyntax(serializationSyntax)
     , m_serializeShadowRoots(serializeShadowRoots)
-    , m_explicitShadowRoots(WTFMove(explicitShadowRoots))
+    , m_explicitShadowRoots(WTF::move(explicitShadowRoots))
     , m_exclusionRules(exclusionRules)
 {
     ASSERT(serializeShadowRoots != SerializeShadowRoots::AllForInterchange || explicitShadowRoots.isEmpty());
@@ -213,8 +213,8 @@ MarkupAccumulator::~MarkupAccumulator() = default;
 void MarkupAccumulator::enableURLReplacement(HashMap<String, String>&& replacementURLStrings, HashMap<Ref<CSSStyleSheet>, String>&& replacementURLStringsForCSSStyleSheet)
 {
     m_serializationContext = CSS::SerializationContext {
-        WTFMove(replacementURLStrings),
-        WTFMove(replacementURLStringsForCSSStyleSheet),
+        WTF::move(replacementURLStrings),
+        WTF::move(replacementURLStringsForCSSStyleSheet),
         true,
     };
 }
@@ -274,7 +274,7 @@ void MarkupAccumulator::serializeNodesWithNamespaces(Node& targetNode, Serialize
         Namespaces namespaceHash;
         namespaceHash.set(xmlAtom().impl(), XMLNames::xmlNamespaceURI->impl());
         namespaceHash.set(XMLNames::xmlNamespaceURI->impl(), xmlAtom().impl());
-        namespaceStack.append(WTFMove(namespaceHash));
+        namespaceStack.append(WTF::move(namespaceHash));
     } else
         namespaceStack.constructAndAppend();
 
@@ -320,7 +320,7 @@ void MarkupAccumulator::serializeNodesWithNamespaces(Node& targetNode, Serialize
 
         while (current != &targetNode) {
             if (RefPtr nextSibling = current->nextSibling()) {
-                current = WTFMove(nextSibling);
+                current = WTF::move(nextSibling);
                 namespaceStack.removeLast();
                 namespaceStack.append(namespaceStack.last());
                 break;
@@ -741,7 +741,7 @@ QualifiedName MarkupAccumulator::xmlAttributeSerialization(const Attribute& attr
             bool prefixIsAlreadyMappedToOtherNS = foundNS && foundNS != attribute.namespaceURI().impl();
             if (attribute.prefix().isEmpty() || !foundNS || prefixIsAlreadyMappedToOtherNS) {
                 if (RefPtr prefix = namespaces ? namespaces->get(attribute.namespaceURI().impl()) : nullptr)
-                    prefixedName.setPrefix(AtomString(WTFMove(prefix)));
+                    prefixedName.setPrefix(AtomString(WTF::move(prefix)));
                 else {
                     bool shouldBeDeclaredUsingAppendNamespace = !attribute.prefix().isEmpty() && !foundNS;
                     if (!shouldBeDeclaredUsingAppendNamespace && attribute.localName() != xmlnsAtom() && namespaces)

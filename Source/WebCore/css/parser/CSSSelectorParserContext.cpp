@@ -42,7 +42,6 @@ CSSSelectorParserContext::CSSSelectorParserContext(const CSSParserContext& conte
     , targetTextPseudoElementEnabled(context.targetTextPseudoElementEnabled)
     , thumbAndTrackPseudoElementsEnabled(context.thumbAndTrackPseudoElementsEnabled)
     , viewTransitionsEnabled(context.propertySettings.viewTransitionsEnabled)
-    , cssAppearanceBaseEnabled(context.cssAppearanceBaseEnabled)
     , webkitMediaTextTrackDisplayQuirkEnabled(context.webkitMediaTextTrackDisplayQuirkEnabled)
 {
 }
@@ -56,7 +55,6 @@ CSSSelectorParserContext::CSSSelectorParserContext(const Document& document)
     , targetTextPseudoElementEnabled(document.settings().targetTextPseudoElementEnabled())
     , thumbAndTrackPseudoElementsEnabled(document.settings().thumbAndTrackPseudoElementsEnabled())
     , viewTransitionsEnabled(document.settings().viewTransitionsEnabled())
-    , cssAppearanceBaseEnabled(document.settings().cssAppearanceBaseEnabled())
     , webkitMediaTextTrackDisplayQuirkEnabled(document.quirks().needsWebKitMediaTextTrackDisplayQuirk())
 {
 }
@@ -72,7 +70,6 @@ void add(Hasher& hasher, const CSSSelectorParserContext& context)
         context.targetTextPseudoElementEnabled,
         context.thumbAndTrackPseudoElementsEnabled,
         context.viewTransitionsEnabled,
-        context.cssAppearanceBaseEnabled,
         context.webkitMediaTextTrackDisplayQuirkEnabled
     );
 }

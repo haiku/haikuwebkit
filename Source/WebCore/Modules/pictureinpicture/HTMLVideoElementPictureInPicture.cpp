@@ -45,7 +45,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLVideoElementPictureInPicture);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLVideoElementPictureInPicture);
 
 HTMLVideoElementPictureInPicture::HTMLVideoElementPictureInPicture(HTMLVideoElement& videoElement)
     : m_videoElement(videoElement)
@@ -80,7 +80,7 @@ HTMLVideoElementPictureInPicture& HTMLVideoElementPictureInPicture::from(HTMLVid
 {
     if (!Supplement<HTMLVideoElement>::from(&videoElement, supplementName())) {
         auto newSupplement = makeUniqueWithoutRefCountedCheck<HTMLVideoElementPictureInPicture>(videoElement);
-        provideTo(&videoElement, supplementName(), WTFMove(newSupplement));
+        provideTo(&videoElement, supplementName(), WTF::move(newSupplement));
     }
     return *downcast<HTMLVideoElementPictureInPicture>(Supplement<HTMLVideoElement>::from(&videoElement, supplementName()));
 }
@@ -93,7 +93,7 @@ Ref<HTMLVideoElementPictureInPicture> HTMLVideoElementPictureInPicture::protecte
 void HTMLVideoElementPictureInPicture::providePictureInPictureTo(HTMLVideoElement& videoElement)
 {
     auto newSupplement = makeUniqueWithoutRefCountedCheck<HTMLVideoElementPictureInPicture>(videoElement);
-    provideTo(&videoElement, supplementName(), WTFMove(newSupplement));
+    provideTo(&videoElement, supplementName(), WTF::move(newSupplement));
 }
 
 void HTMLVideoElementPictureInPicture::requestPictureInPicture(HTMLVideoElement& videoElement, Ref<DeferredPromise>&& promise)
@@ -131,7 +131,7 @@ void HTMLVideoElementPictureInPicture::requestPictureInPicture(HTMLVideoElement&
     }
 
     if (videoElement.webkitSupportsPresentationMode(HTMLVideoElement::VideoPresentationMode::PictureInPicture)) {
-        videoElementPictureInPicture->m_enterPictureInPicturePromise = WTFMove(promise);
+        videoElementPictureInPicture->m_enterPictureInPicturePromise = WTF::move(promise);
         videoElement.webkitSetPresentationMode(HTMLVideoElement::VideoPresentationMode::PictureInPicture);
     } else
         promise->reject(ExceptionCode::NotSupportedError, "The video element does not support the Picture-in-Picture mode."_s);
@@ -166,7 +166,7 @@ void HTMLVideoElementPictureInPicture::exitPictureInPicture(Ref<DeferredPromise>
         return;
     }
 
-    m_exitPictureInPicturePromise = WTFMove(promise);
+    m_exitPictureInPicturePromise = WTF::move(promise);
     videoElement->webkitSetPresentationMode(HTMLVideoElement::VideoPresentationMode::Inline);
 }
 
@@ -183,7 +183,7 @@ void HTMLVideoElementPictureInPicture::didEnterPictureInPicture(const IntSize& w
     PictureInPictureEvent::Init initializer;
     initializer.bubbles = true;
     initializer.pictureInPictureWindow = m_pictureInPictureWindow;
-    videoElement->scheduleEvent(PictureInPictureEvent::create(eventNames().enterpictureinpictureEvent, WTFMove(initializer)));
+    videoElement->scheduleEvent(PictureInPictureEvent::create(eventNames().enterpictureinpictureEvent, WTF::move(initializer)));
 
     if (m_enterPictureInPicturePromise) {
         m_enterPictureInPicturePromise->resolve<IDLInterface<PictureInPictureWindow>>(*m_pictureInPictureWindow);
@@ -204,7 +204,7 @@ void HTMLVideoElementPictureInPicture::didExitPictureInPicture()
     PictureInPictureEvent::Init initializer;
     initializer.bubbles = true;
     initializer.pictureInPictureWindow = m_pictureInPictureWindow;
-    videoElement->scheduleEvent(PictureInPictureEvent::create(eventNames().leavepictureinpictureEvent, WTFMove(initializer)));
+    videoElement->scheduleEvent(PictureInPictureEvent::create(eventNames().leavepictureinpictureEvent, WTF::move(initializer)));
 
     if (m_exitPictureInPicturePromise) {
         m_exitPictureInPicturePromise->resolve();

@@ -40,6 +40,8 @@ PACKAGES+=(
     hunspell
     hunspell-en-gb
     hunspell-en-us
+    hyphen-en-gb
+    hyphen-en-us
     weston
     xvfb
     $(aptIfExists python-psutil)

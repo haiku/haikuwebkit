@@ -134,13 +134,14 @@ class RemoteGraphicsContextGL;
 class GPUConnectionToWebProcess
     : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<GPUConnectionToWebProcess, WTF::DestructionThread::Main>
     , public WebCore::NowPlayingManagerClient
-    , IPC::Connection::Client {
+    , public IPC::Connection::Client {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(GPUConnectionToWebProcess);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(GPUConnectionToWebProcess);
 public:
     static Ref<GPUConnectionToWebProcess> create(GPUProcess&, WebCore::ProcessIdentifier, PAL::SessionID, IPC::Connection::Handle&&, GPUProcessConnectionParameters&&);
     virtual ~GPUConnectionToWebProcess();
 
+    // IPC::Connection::Client, WebCore::NowPlayingManagerClient.
     void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
     void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
 
@@ -472,7 +473,7 @@ private:
 #endif
 
 #if ENABLE(ROUTING_ARBITRATION) && HAVE(AVAUDIO_ROUTING_ARBITER)
-    std::unique_ptr<LocalAudioSessionRoutingArbitrator> m_routingArbitrator;
+    const std::unique_ptr<LocalAudioSessionRoutingArbitrator> m_routingArbitrator;
 #endif
 #if ENABLE(IPC_TESTING_API)
     const Ref<IPCTester> m_ipcTester;

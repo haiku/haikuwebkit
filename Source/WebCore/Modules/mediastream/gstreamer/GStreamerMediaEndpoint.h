@@ -165,7 +165,7 @@ private:
 
     ExceptionOr<Backends> createTransceiverBackends(const String& kind, const RTCRtpTransceiverInit&, GStreamerRtpSenderBackend::Source&&, PeerConnectionBackend::IgnoreNegotiationNeededFlag);
 
-    void processSDPMessage(const GstSDPMessage*, Function<void(unsigned index, StringView mid, const GstSDPMedia*)>);
+    void processSDPMessage(const GstSDPMessage*, Function<void(unsigned index, CStringView mid, const GstSDPMedia*)>);
 
     WARN_UNUSED_RETURN GRefPtr<GstPad> requestPad(const GRefPtr<GstCaps>&, const String& mediaStreamID);
 

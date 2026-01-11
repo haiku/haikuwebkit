@@ -38,7 +38,7 @@ class StyleFilterImage final : public StyleGeneratedImage, private CachedImageCl
 public:
     static Ref<StyleFilterImage> create(RefPtr<StyleImage> image, Style::Filter filter)
     {
-        return adoptRef(*new StyleFilterImage(WTFMove(image), WTFMove(filter)));
+        return adoptRef(*new StyleFilterImage(WTF::move(image), WTF::move(filter)));
     }
     virtual ~StyleFilterImage();
 

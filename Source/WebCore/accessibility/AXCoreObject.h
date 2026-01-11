@@ -222,7 +222,7 @@ struct AccessibilityText {
     AccessibilityTextSource textSource;
 
     AccessibilityText(String&& text, AccessibilityTextSource source)
-        : text(WTFMove(text))
+        : text(WTF::move(text))
         , textSource(source)
     { }
     AccessibilityText(const String& text, AccessibilityTextSource source)
@@ -255,6 +255,7 @@ enum class AccessibilityOrientation : uint8_t {
     Horizontal
 };
 
+enum class DescendIntoContainers : bool { No, Yes };
 enum class DidTimeout : bool { No, Yes };
 enum class IncludeListMarkerText : bool { No, Yes };
 enum class IncludeImageAltText : bool { No, Yes };
@@ -271,6 +272,8 @@ struct TextUnderElementMode {
     bool includeFocusableContent { false };
     bool considerHiddenState { true };
     bool inHiddenSubtree { false };
+    IncludeListMarkerText includeListMarkers { IncludeListMarkerText::No };
+    DescendIntoContainers descendIntoContainers { DescendIntoContainers::No };
     TrimWhitespace trimWhitespace { TrimWhitespace::Yes };
     CheckedPtr<Node> ignoredChildNode { nullptr };
 
@@ -823,7 +826,8 @@ public:
     }
     // This should be the visible text that's actually on the screen if possible.
     // If there's alternative text (e.g. provided by description()), that can override the title.
-    virtual String title() const;
+    // The `computedText` parameter is a performance optimization for callsites that have already computed the AccessibilityText.
+    virtual String title(Vector<AccessibilityText>* computedText = nullptr) const;
     // This is the value of the title HTML / SVG attribute, differing from the above function which refers to
     // the notion of "title" accessibility text, a composite of many different attributes and page text.
     virtual String titleAttribute() const = 0;
@@ -1027,6 +1031,7 @@ public:
 
     enum class IncludeGroupMembers : bool { No, Yes };
     virtual std::optional<AXStitchGroup> stitchGroup(IncludeGroupMembers = IncludeGroupMembers::Yes) const { return { }; }
+    std::optional<AXStitchGroup> stitchGroupIfRepresentative() const;
     std::optional<AXID> stitchedIntoID() const
     {
         if (std::optional stitchGroup = this->stitchGroup(IncludeGroupMembers::No))
@@ -1158,7 +1163,7 @@ public:
     virtual AccessibilityChildrenVector allSortedNonRootWebAreas() const = 0;
     AccessibilityChildrenVector crossFrameSortedDescendants(size_t limit, PreSortedObjectType) const;
 #endif // PLATFORM(MAC)
-    virtual AXCoreObject* liveRegionAncestor(bool excludeIfOff = true) const = 0;
+    AXCoreObject* liveRegionAncestor(bool excludeIfOff = true) const;
     virtual const String explicitLiveRegionStatus() const = 0;
     const String liveRegionStatus() const;
     virtual const String explicitLiveRegionRelevant() const = 0;
@@ -1242,7 +1247,9 @@ public:
     virtual void setPreventKeyboardDOMEventDispatch(bool) = 0;
     virtual Style::SpeakAs speakAs() const = 0;
     String speechHint() const;
-    String descriptionAttributeValue() const;
+
+    // The `computedText` parameter is a performance optimization for callsites that have already computed the AccessibilityText.
+    String descriptionAttributeValue(Vector<AccessibilityText>* computedText = nullptr) const;
     String helpTextAttributeValue() const;
 
     virtual bool hasApplePDFAnnotationAttribute() const = 0;
@@ -1260,11 +1267,11 @@ public:
     // style of pointer-events:none.
     virtual bool hasPointerEventsNone() const = 0;
     AXCoreObject* clickableSelfOrNonInteractiveAncestor();
-    virtual AXCoreObject* clickableSelfOrAncestor(ClickHandlerFilter = ClickHandlerFilter::ExcludeBody) const = 0;
-    virtual AXCoreObject* focusableAncestor() = 0;
-    virtual AXCoreObject* editableAncestor() const = 0;
-    virtual AXCoreObject* highestEditableAncestor() = 0;
-    virtual AXCoreObject* exposedTableAncestor(bool includeSelf = false) const = 0;
+    AXCoreObject* clickableSelfOrAncestor(ClickHandlerFilter = ClickHandlerFilter::ExcludeBody) const;
+    AXCoreObject* focusableAncestor() const;
+    AXCoreObject* editableAncestor() const;
+    AXCoreObject* highestEditableAncestor() const;
+    AXCoreObject* exposedTableAncestor(bool includeSelf = false) const;
     AXCoreObject* detailsAncestor() const;
 
     virtual AccessibilityChildrenVector documentLinks() = 0;
@@ -1511,29 +1518,6 @@ T* crossFrameFindAncestor(const T& object, bool includeSelf, const MatchFunction
     });
 }
 
-template<typename T>
-T* focusableAncestor(T& startObject)
-{
-    return findAncestor<T>(startObject, false, [] (const auto& ancestor) {
-        return ancestor.canSetFocusAttribute();
-    });
-}
-
-template<typename T>
-T* clickableSelfOrAncestor(const T& startObject, ClickHandlerFilter filter)
-{
-    if (filter == ClickHandlerFilter::IncludeBody) {
-        return clickableSelfOrAncestor<T>(startObject, [] (const T&) {
-            return false;
-        });
-    }
-
-    return clickableSelfOrAncestor<T>(startObject, [] (const T& ancestor) {
-        // Stop iterating if we get to the <body>.
-        return ancestor.hasBodyTag();
-    });
-}
-
 template<typename T, typename F>
 T* clickableSelfOrAncestor(const T& startObject, const F& shouldStop)
 {
@@ -1548,33 +1532,6 @@ T* clickableSelfOrAncestor(const T& startObject, const F& shouldStop)
 }
 
 template<typename T>
-T* editableAncestor(const T& startObject)
-{
-    return findAncestor<T>(startObject, false, [] (const auto& ancestor) {
-        return ancestor.isTextControl() || ancestor.isEditableWebArea();
-    });
-}
-
-template<typename T>
-T* highestEditableAncestor(T& startObject)
-{
-    RefPtr<T> editableAncestor = startObject.editableAncestor();
-    RefPtr<T> previousEditableAncestor;
-    while (editableAncestor) {
-        if (editableAncestor == previousEditableAncestor) {
-            if (RefPtr<T> parent = editableAncestor->parentObject()) {
-                editableAncestor = parent->editableAncestor();
-                continue;
-            }
-            break;
-        }
-        previousEditableAncestor = editableAncestor;
-        editableAncestor = editableAncestor->editableAncestor();
-    }
-    return previousEditableAncestor.unsafeGet();
-}
-
-template<typename T>
 T* findRelatedObjectInAncestry(const T& object, AXRelation relation, const T& descendant)
 {
     auto relatedObjects = object.relatedObjects(relation);
@@ -1586,22 +1543,6 @@ T* findRelatedObjectInAncestry(const T& object, AXRelation relation, const T& de
             return ancestor.unsafeGet();
     }
     return nullptr;
-}
-
-template<typename T>
-T* liveRegionAncestor(const T& object, bool excludeIfOff)
-{
-    return findAncestor<T>(object, true, [excludeIfOff] (const T& object) {
-        return object.supportsLiveRegion(excludeIfOff);
-    });
-}
-
-template<typename T>
-T* exposedTableAncestor(const T& object, bool includeSelf = false)
-{
-    return findAncestor<T>(object, includeSelf, [] (const T& object) {
-        return object.isExposableTable();
-    });
 }
 
 template<typename T, typename F>
@@ -1772,6 +1713,66 @@ inline AXCoreObject* AXCoreObject::axScrollView() const
 {
     return Accessibility::findAncestor(*this, true, [] (const auto& ancestor) {
         return ancestor.isScrollView();
+    });
+}
+
+inline AXCoreObject* AXCoreObject::editableAncestor() const
+{
+    return Accessibility::findAncestor(*this, false, [] (const auto& ancestor) {
+        return ancestor.isTextControl() || ancestor.isEditableWebArea();
+    });
+}
+
+inline AXCoreObject* AXCoreObject::highestEditableAncestor() const
+{
+    RefPtr editableAncestor = this->editableAncestor();
+    RefPtr<AXCoreObject> previousEditableAncestor;
+    while (editableAncestor) {
+        if (editableAncestor == previousEditableAncestor) {
+            if (RefPtr parent = editableAncestor->parentObject()) {
+                editableAncestor = parent->editableAncestor();
+                continue;
+            }
+            break;
+        }
+        previousEditableAncestor = editableAncestor;
+        editableAncestor = editableAncestor->editableAncestor();
+    }
+    return previousEditableAncestor.unsafeGet();
+}
+
+inline AXCoreObject* AXCoreObject::focusableAncestor() const
+{
+    return Accessibility::findAncestor(*this, false, [] (const auto& ancestor) {
+        return ancestor.canSetFocusAttribute();
+    });
+}
+
+inline AXCoreObject* AXCoreObject::clickableSelfOrAncestor(ClickHandlerFilter filter) const
+{
+    if (filter == ClickHandlerFilter::IncludeBody) {
+        return Accessibility::clickableSelfOrAncestor(*this, [] (const AXCoreObject&) {
+            return false;
+        });
+    }
+
+    return Accessibility::clickableSelfOrAncestor(*this, [] (const AXCoreObject& ancestor) {
+        // Stop iterating if we get to the <body>.
+        return ancestor.hasBodyTag();
+    });
+}
+
+inline AXCoreObject* AXCoreObject::liveRegionAncestor(bool excludeIfOff) const
+{
+    return Accessibility::findAncestor(*this, true, [excludeIfOff] (const auto& object) {
+        return object.supportsLiveRegion(excludeIfOff);
+    });
+}
+
+inline AXCoreObject* AXCoreObject::exposedTableAncestor(bool includeSelf) const
+{
+    return Accessibility::findAncestor(*this, includeSelf, [] (const auto& object) {
+        return object.isExposableTable();
     });
 }
 

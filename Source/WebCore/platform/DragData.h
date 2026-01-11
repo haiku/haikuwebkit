@@ -119,9 +119,9 @@ public:
     bool containsFiles() const;
     unsigned numberOfFiles() const;
     OptionSet<DragDestinationAction> dragDestinationActionMask() const { return m_dragDestinationActionMask; }
-    void setFileNames(Vector<String>& fileNames) { m_fileNames = WTFMove(fileNames); }
+    void setFileNames(Vector<String>& fileNames) { m_fileNames = WTF::move(fileNames); }
     const Vector<String>& fileNames() const { return m_fileNames; }
-    void setPromisedFileMIMETypes(Vector<String>&& types) { m_promisedFileMIMETypes = WTFMove(types); }
+    void setPromisedFileMIMETypes(Vector<String>&& types) { m_promisedFileMIMETypes = WTF::move(types); }
     const Vector<String>& promisedFileMIMETypes() const { return m_promisedFileMIMETypes; }
     void disallowFileAccess();
 #if PLATFORM(COCOA)

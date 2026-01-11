@@ -44,7 +44,7 @@ class ReadableStream;
 class ReadableStreamReadRequest;
 
 class ReadableStreamDefaultReader : public ScriptWrappable, public RefCountedAndCanMakeWeakPtr<ReadableStreamDefaultReader> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(ReadableStreamDefaultReader);
+    WTF_MAKE_TZONE_ALLOCATED(ReadableStreamDefaultReader);
 public:
     static ExceptionOr<Ref<ReadableStreamDefaultReader>> create(JSDOMGlobalObject&, ReadableStream&);
 

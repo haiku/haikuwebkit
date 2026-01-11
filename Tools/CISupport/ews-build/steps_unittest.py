@@ -5984,6 +5984,7 @@ BuildVersion:	23F79'''),
             .log('stdio', stdout='''Linux kodama-ews 5.0.4-arch1-1-ARCH #1 SMP PREEMPT Sat Mar 23 21:00:33 UTC 2019 x86_64 GNU/Linux'''),
             ExpectShell(command=['uptime'], workdir='wkdir', timeout=60, log_environ=False).exit(0)
             .log('stdio', stdout=' 6:31  up 22 seconds, 12:05, 2 users, load averages: 3.17 7.23 5.45'),
+            ExpectShell(command=['if test -f /etc/build-info; then cat /etc/build-info; else cat /etc/os-release; fi'], workdir='wkdir', timeout=60, log_environ=False).exit(0),
         )
         self.expect_outcome(result=SUCCESS, state_string='Printed configuration')
         return self.run_step()
@@ -5998,6 +5999,7 @@ BuildVersion:	23F79'''),
             ExpectShell(command=['date'], workdir='wkdir', timeout=60, log_environ=False).exit(0),
             ExpectShell(command=['uname', '-a'], workdir='wkdir', timeout=60, log_environ=False).exit(0),
             ExpectShell(command=['uptime'], workdir='wkdir', timeout=60, log_environ=False).exit(0),
+            ExpectShell(command=['if test -f /etc/build-info; then cat /etc/build-info; else cat /etc/os-release; fi'], workdir='wkdir', timeout=60, log_environ=False).exit(0),
         )
         self.expect_outcome(result=SUCCESS, state_string='Printed configuration')
         return self.run_step()

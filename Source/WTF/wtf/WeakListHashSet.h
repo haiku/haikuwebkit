@@ -56,7 +56,6 @@ public:
             , m_beginPosition { set.m_set.begin() }
             , m_endPosition { set.m_set.end() }
         {
-            skipEmptyBuckets();
         }
 
         WeakListHashSetIteratorBase(const ListHashSetType& set, IteratorType position)
@@ -65,7 +64,6 @@ public:
             , m_beginPosition { set.m_set.begin() }
             , m_endPosition { set.m_set.end() }
         {
-            skipEmptyBuckets();
         }
 
         ~WeakListHashSetIteratorBase() = default;
@@ -81,7 +79,6 @@ public:
         {
             ASSERT(m_position != m_endPosition);
             ++m_position;
-            skipEmptyBuckets();
             m_set.increaseOperationCountSinceLastCleanup();
         }
 
@@ -92,12 +89,6 @@ public:
             while (m_position != m_beginPosition && !get())
                 --m_position;
             m_set.increaseOperationCountSinceLastCleanup();
-        }
-
-        void skipEmptyBuckets()
-        {
-            while (m_position != m_endPosition && !get())
-                ++m_position;
         }
 
         const ListHashSetType& m_set;
@@ -320,10 +311,12 @@ public:
     bool hasNullReferences() const
     {
         unsigned count = 0;
-        auto result = std::ranges::any_of(m_set, [&](auto& iterator) {
+        for (auto _ : m_set) {
+            UNUSED_VARIABLE(_);
             ++count;
-            return !iterator.get();
-        });
+        }
+
+        bool result = count != m_set.size();
         if (result)
             increaseOperationCountSinceLastCleanup(count);
         else
@@ -339,11 +332,10 @@ public:
 
     void checkConsistency() { } // To be implemented.
 
-    bool removeNullReferences()
+    void removeNullReferences()
     {
-        bool didRemove = m_set.removeIf([] (auto& value) { return !value.get(); });
+        m_set.removeWeakNullEntries();
         cleanupHappened();
-        return didRemove;
     }
 
     T& first()

@@ -75,7 +75,7 @@ static ResourceRequest makePrefetchRequest(URL&& url, const Vector<String>& tags
 
     String referrer = SecurityPolicy::generateReferrerHeader(*referrerPolicy, url, referrerURL, OriginAccessPatternsForWebProcess::singleton());
 
-    ResourceRequest request { WTFMove(url) };
+    ResourceRequest request { WTF::move(url) };
     request.setPriority(ResourceLoadPriority::VeryLow);
 
     // https://html.spec.whatwg.org/multipage/speculative-loading.html#the-sec-speculation-tags-header
@@ -94,7 +94,7 @@ static ResourceRequest makePrefetchRequest(URL&& url, const Vector<String>& tags
     request.setHTTPHeaderField(HTTPHeaderName::SecPurpose, "prefetch"_s);
 
     if (!referrer.isEmpty())
-        request.setHTTPReferrer(WTFMove(referrer));
+        request.setHTTPReferrer(WTF::move(referrer));
 
     return request;
 }
@@ -138,11 +138,11 @@ void DocumentPrefetcher::prefetch(const URL& url, const Vector<String>& tags, st
         CachingPolicy::AllowCachingMainResourcePrefetch
     );
     prefetchOptions.destination = FetchOptions::Destination::Document;
-    CachedResourceRequest prefetchRequest(WTFMove(request), prefetchOptions);
+    CachedResourceRequest prefetchRequest(WTF::move(request), prefetchOptions);
     if (lowPriority)
         prefetchRequest.setPriority(ResourceLoadPriority::Low);
 
-    auto resourceErrorOr = document->protectedCachedResourceLoader()->requestRawResource(WTFMove(prefetchRequest));
+    auto resourceErrorOr = document->protectedCachedResourceLoader()->requestRawResource(WTF::move(prefetchRequest));
 
     if (!resourceErrorOr)
         return;
@@ -175,21 +175,62 @@ void DocumentPrefetcher::notifyFinished(CachedResource& resource, const NetworkL
         resource.removeClient(*this);
 }
 
+void DocumentPrefetcher::removePrefetch(const URL& url)
+{
+    auto it = m_prefetchedData.find(url);
+    if (it == m_prefetchedData.end())
+        return;
+
+    if (auto& resource = it->value.resource) {
+        if (resource->hasClient(*this))
+            resource->removeClient(*this);
+        MemoryCache::singleton().remove(*resource);
+    }
+    m_prefetchedData.remove(it);
+}
+
 bool DocumentPrefetcher::wasPrefetched(const URL& url) const
 {
     return m_prefetchedData.contains(url);
 }
 
-Box<NetworkLoadMetrics> DocumentPrefetcher::takePrefetchedNetworkLoadMetrics(const URL& url)
+Box<NetworkLoadMetrics> DocumentPrefetcher::takePrefetchedResourceMetrics(const URL& url)
 {
     auto it = m_prefetchedData.find(url);
     if (it != m_prefetchedData.end() && it->value.metrics) {
-        auto metrics = WTFMove(it->value.metrics);
+        auto metrics = WTF::move(it->value.metrics);
+        if (it->value.resource)
+            MemoryCache::singleton().remove(*it->value.resource);
         m_prefetchedData.remove(it);
         return metrics;
     }
     return { };
 }
 
+void DocumentPrefetcher::clearPrefetchedResourcesExcept(const URL& url)
+{
+    m_prefetchedData.removeIf([&url](auto& entry) {
+        if (entry.key != url) {
+            if (entry.value.resource)
+                MemoryCache::singleton().remove(*entry.value.resource);
+            return true;
+        }
+        return false;
+    });
+}
+
+// https://wicg.github.io/nav-speculation/prefetch.html#clear-prefetch-cache
+void DocumentPrefetcher::clearPrefetchedResourcesForOrigin(const SecurityOrigin& origin)
+{
+    m_prefetchedData.removeIf([&origin](auto& entry) {
+        Ref urlOrigin = SecurityOrigin::create(entry.key);
+        if (origin.isSameOriginAs(urlOrigin)) {
+            if (entry.value.resource)
+                MemoryCache::singleton().remove(*entry.value.resource);
+            return true;
+        }
+        return false;
+    });
+}
 
 } // namespace WebCore

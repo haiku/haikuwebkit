@@ -80,7 +80,7 @@ BlobResourceSynchronousLoader::BlobResourceSynchronousLoader(ResourceError& erro
 void BlobResourceSynchronousLoader::willSendRequestAsync(ResourceHandle*, ResourceRequest&& request, ResourceResponse&&, CompletionHandler<void(ResourceRequest&&)>&& completionHandler)
 {
     ASSERT_NOT_REACHED();
-    completionHandler(WTFMove(request));
+    completionHandler(WTF::move(request));
 }
 
 #if USE(PROTECTION_SPACE_AUTH_CALLBACK)
@@ -271,7 +271,7 @@ bool BlobResourceHandle::shouldAbortDispatchDidReceiveResponse()
 
 void BlobResourceHandle::didReceiveResponse(ResourceResponse&& response)
 {
-    client()->didReceiveResponseAsync(this, WTFMove(response), [this, protectedThis = Ref { *this }] {
+    client()->didReceiveResponseAsync(this, WTF::move(response), [this, protectedThis = Ref { *this }] {
         buffer().resize(bufferSize);
         readAsync();
     });

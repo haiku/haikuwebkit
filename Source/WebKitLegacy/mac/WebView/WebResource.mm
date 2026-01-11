@@ -82,7 +82,7 @@ static NSString * const WebResourceResponseKey =          @"WebResourceResponse"
     self = [super init];
     if (!self)
         return nil;
-    coreResource = WTFMove(passedResource);
+    coreResource = WTF::move(passedResource);
     return self;
 }
 
@@ -256,7 +256,7 @@ static NSString * const WebResourceResponseKey =          @"WebResourceResponse"
     if (!self)
         return nil;
 
-    _private = [[WebResourcePrivate alloc] initWithCoreResource:WTFMove(coreResource)];
+    _private = [[WebResourcePrivate alloc] initWithCoreResource:WTF::move(coreResource)];
     return self;
 }
 

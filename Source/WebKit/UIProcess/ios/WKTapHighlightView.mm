@@ -65,7 +65,7 @@
 
 - (void)setCornerRadii:(WebCore::FloatRoundedRect::Radii&&)radii
 {
-    _cornerRadii = WTFMove(radii);
+    _cornerRadii = WTF::move(radii);
 }
 
 - (void)setFrames:(Vector<WebCore::FloatRect>&&)frames
@@ -89,7 +89,7 @@
 
     [super setFrame:viewFrame];
 
-    _innerFrames = WTFMove(frames);
+    _innerFrames = WTF::move(frames);
     for (auto& frame : _innerFrames)
         frame.moveBy(-viewFrame.location());
 
@@ -127,7 +127,7 @@
 
     [super setFrame:viewFrame];
 
-    _innerQuads = WTFMove(quads);
+    _innerQuads = WTF::move(quads);
     for (auto& quad : _innerQuads)
         quad.move(-viewFrame.x(), -viewFrame.y());
 

@@ -56,11 +56,6 @@ namespace Greedy {
 // Experiments
 static constexpr bool eagerGroupsExhaustiveSearch = false;
 
-// Quickly filters out short ranges from live range splitting consideration.
-static constexpr size_t splitMinRangeSize = 8;
-
-static constexpr unsigned spillCostSizeBias = 50000;
-
 static constexpr float unspillableCost = std::numeric_limits<float>::infinity();
 static constexpr float fastTmpSpillCost = std::numeric_limits<float>::max();
 static constexpr float maxSpillableSpillCost = std::numeric_limits<float>::max();
@@ -78,13 +73,16 @@ static bool verbose() { return Options::airGreedyRegAllocVerbose(); }
 
 // Terminology / core data-structures:
 //
-// Point: a position within the IR stream. There are two points associated with each
-// instruction: early and late. The early point for an instruction occurs immediately
+// Point: a position within the IR stream. There are four points associated with each
+// instruction, see PointOffsets. The early point for an instruction occurs immediately
 // before the instruction and the late occurs immediately following. Early use/defs
 // for that instruction are modeled as occurring at the early point whereas late use/defs
 // are modeled as occurring at the late point. The late point for an instruction and
 // early point for the subsequent instruction are distinct in order to avoid false
-// conflicts, e.g. when a late use is followed by an early def.
+// conflicts, e.g. when a late use is followed by an early def. Two "gap" points, Pre & Post,
+// exist for each instruction to allow distinguishing e.g. a Tmp being live into a block from
+// a Tmp becoming live due to an early def by the first instruction of the block
+// (and sinilarly for block exits and late use).
 //
 // Interval: contiguous set of points, represented by a half open interval [begin, end).
 //
@@ -127,6 +125,20 @@ static bool verbose() { return Options::airGreedyRegAllocVerbose(); }
 
 using Point = uint32_t;
 using Interval = WTF::Range<Point>;
+
+enum PointOffsets {
+    Pre = 0,
+    Early = 1,
+    // Inst lives between the Early and Late points.
+    Late = 2,
+    Post = 3,
+    PointsPerInst
+};
+
+// Quickly filters out short ranges from live range splitting consideration.
+static constexpr size_t splitMinRangeSize = 4 * PointOffsets::PointsPerInst;
+
+static constexpr unsigned spillCostSizeBias = 25000 * PointOffsets::PointsPerInst;
 
 class LiveRange {
 public:
@@ -533,7 +545,7 @@ struct TmpData {
     void dump(PrintStream& out) const
     {
         out.print("{stage = ", stage, " liveRange = ", liveRange, ", preferredReg = ", preferredReg,
-            ", coalescables = ", listDump(coalescables), ", subGroup0 = ", subGroup0, ", subGroup1 = ", subGroup1,
+            ", coalescables = ", listDump(coalescables), ", parentGroup = ", parentGroup, ", subGroup0 = ", subGroup0, ", subGroup1 = ", subGroup1,
             ", useDefCost = ", useDefCost, ", spillability = ", spillability, ", assigned = ", assigned, ", spilled = ", pointerDump(spillSlot), ", splitMetadataIndex = ", splitMetadataIndex, "}");
     }
 
@@ -591,16 +603,60 @@ struct TmpData {
     Reg assigned;
 };
 
-// SplitMetadata tracks a Tmp that is split and the new Tmps that are used to carry the value
-// across the "gaps".
-struct SplitMetadata {
-    void dump(PrintStream& out) const
+class UseDefList {
+public:
+    using List = Vector<Point, 4>;
+
+    void add(Point instPoint)
     {
-        out.print(originalTmp, " : { ", listDump(gapTmps), " } ");
+        if (m_instPoints.isEmpty() || m_instPoints.last() != instPoint) {
+            ASSERT(m_instPoints.isEmpty() || m_instPoints.last() < instPoint);
+            m_instPoints.append(instPoint);
+        }
     }
 
+    const List& useDefs() { return m_instPoints; }
+
+private:
+    List m_instPoints;
+};
+
+// SplitMetadata tracks a Tmp that has been split into multiple Tmps in an effort
+// to either allocate the original Tmp or the split Tmps, depending on the split type.
+struct SplitMetadata {
+    enum class Type : uint8_t {
+        Invalid,
+        AroundClobbers,
+        IntraBlock,
+    };
+
+    struct Split {
+        Tmp tmp;
+        Point lastDefPoint;
+
+        void dump(PrintStream& out) const
+        {
+            out.print(tmp);
+            if (lastDefPoint)
+                out.print(" defPoint=", lastDefPoint);
+        }
+    };
+
+    SplitMetadata()
+        : type(Type::Invalid) { }
+
+    SplitMetadata(Type t, Tmp tmp)
+        : type(t)
+        , originalTmp(tmp) { }
+
+    void dump(PrintStream& out) const
+    {
+        out.print(originalTmp, " : ", type, " { ", listDump(splits), " } ");
+    }
+
+    Type type;
     Tmp originalTmp;
-    Vector<Tmp> gapTmps;
+    Vector<Split> splits;
 };
 
 class GreedyAllocator {
@@ -610,6 +666,7 @@ public:
         , m_blockToHeadPoint(code.size())
         , m_tailPoints(code.size())
         , m_map(code)
+        , m_useDefLists()
         , m_splitMetadata(1) // Sacrifice index 0.
         , m_regRanges(Reg::maxIndex() + 1)
         , m_insertionSets(code.size())
@@ -630,6 +687,7 @@ public:
         buildLiveRanges();
         initSpillCosts<GP>();
         initSpillCosts<FP>();
+        coalesceWithPinnedRegisters();
         finalizeGroups<GP>();
         finalizeGroups<FP>();
 
@@ -646,6 +704,8 @@ public:
         assignRegisters();
         fixSpillsAfterTerminals(m_code);
 
+        m_stats[GP].didSpill += m_didSpill[GP];
+        m_stats[FP].didSpill += m_didSpill[FP];
         m_stats[GP].numTmpsOut = m_code.numTmps(GP);
         m_stats[FP].numTmpsOut = m_code.numTmps(FP);
     }
@@ -667,18 +727,25 @@ public:
         };
         for (Reg r : m_allowedRegistersInPriorityOrder[GP])
             dumpRegTmpData(r);
+        m_code.pinnedRegisters().forEachReg([&](Reg r) {
+            if (bankForReg(r) == GP)
+                dumpRegTmpData(r);
+        });
         for (Reg r : m_allowedRegistersInPriorityOrder[FP])
             dumpRegTmpData(r);
+        m_code.pinnedRegisters().forEachReg([&](Reg r) {
+            if (bankForReg(r) == FP)
+                dumpRegTmpData(r);
+        });
         m_code.forEachTmp([&](Tmp tmp) {
             out.println("    ", tmp, ": ", m_map[tmp], " useWidth=", m_tmpWidth.useWidth(tmp));
         });
+        out.println("Splits:\n", listDump(m_splitMetadata, "\n"));
         out.println("Stats (GP):", m_stats[GP]);
         out.println("Stats (FP):", m_stats[FP]);
     }
 
 private:
-    static constexpr Point pointsPerInst = 2;
-
     template<Bank bank>
     void dumpRegRanges(PrintStream& out) const
     {
@@ -686,15 +753,24 @@ private:
             if (!m_regRanges[r].isEmpty())
                 out.println("    ", r, ": ", m_regRanges[r]);
         }
+        m_code.pinnedRegisters().forEachReg([&](Reg r) {
+            if (bankForReg(r) == bank)
+                out.println("    ", r, ": ", m_regRanges[r]);
+        });
     }
 
     void buildRegisterSets()
     {
         forEachBank([&] (Bank bank) {
             m_allowedRegistersInPriorityOrder[bank] = m_code.regsInPriorityOrder(bank);
-            for (Reg r : m_allowedRegistersInPriorityOrder[bank])
+            for (Reg r : m_allowedRegistersInPriorityOrder[bank]) {
                 m_allAllowedRegisters.add(r, IgnoreVectors);
+                ASSERT(m_code.mutableRegs().contains(r, IgnoreVectors));
+                ASSERT(!m_code.pinnedRegisters().contains(r, IgnoreVectors));
+                ASSERT(!m_code.isPinned(r));
+            }
         });
+        ASSERT(m_allAllowedRegisters == m_code.mutableRegs().buildScalarRegisterSet());
     }
 
     void buildIndices()
@@ -707,12 +783,12 @@ private:
                 m_tailPoints[i] = tailPosition;
                 continue;
             }
-            // Two points per instruction: early and late.
-            tailPosition = headPosition + 2 * block->size() - 1;
+            tailPosition = headPosition + block->size() * PointOffsets::PointsPerInst - 1;
             m_blockToHeadPoint[block] = headPosition;
             m_tailPoints[i] = tailPosition;
-            headPosition += block->size() * pointsPerInst;
+            headPosition += block->size() * PointOffsets::PointsPerInst;
         }
+        m_stats[GP].numInsts += (tailPosition + 1) / PointOffsets::PointsPerInst;
     }
 
     BasicBlock* findBlockContainingPoint(Point point)
@@ -732,30 +808,47 @@ private:
 
     Point positionOfTail(BasicBlock* block)
     {
-        return positionOfHead(block) + block->size() * pointsPerInst - 1;
+        return positionOfHead(block) + block->size() * PointOffsets::PointsPerInst - 1;
     }
 
     static size_t instIndex(Point positionOfHead, Point point)
     {
-        return (point - positionOfHead) / pointsPerInst;
+        return (point - positionOfHead) / PointOffsets::PointsPerInst;
+    }
+
+    static Point pointAtOffset(Point point, PointOffsets offset)
+    {
+        static_assert(!(PointOffsets::PointsPerInst & (PointOffsets::PointsPerInst - 1)));
+        return (point & ~(PointOffsets::PointsPerInst - 1)) + offset;
+    }
+
+    static Point positionOfEarly(Point positionOfHead, unsigned instIndex)
+    {
+        ASSERT(!(positionOfHead % PointOffsets::PointsPerInst));
+        return positionOfHead + instIndex * PointOffsets::PointsPerInst + PointOffsets::Early;
+    }
+
+    static Point positionOfLate(Point positionOfHead, unsigned instIndex)
+    {
+        ASSERT(!(positionOfHead % PointOffsets::PointsPerInst));
+        return positionOfHead + instIndex * PointOffsets::PointsPerInst + PointOffsets::Late;
     }
 
     static Point positionOfEarly(Interval interval)
     {
-        static_assert(!(pointsPerInst & (pointsPerInst - 1)));
-        return interval.begin() & ~static_cast<Point>(pointsPerInst - 1);
+        return pointAtOffset(interval.begin(), PointOffsets::Early);
     }
 
     static Interval earlyInterval(Point positionOfEarly)
     {
-        ASSERT(!(positionOfEarly % pointsPerInst));
+        ASSERT((positionOfEarly % PointOffsets::PointsPerInst) == PointOffsets::Early);
         return Interval(positionOfEarly);
     }
 
     static Interval lateInterval(Point positionOfEarly)
     {
-        ASSERT(!(positionOfEarly % pointsPerInst));
-        return Interval(positionOfEarly + 1);
+        ASSERT((positionOfEarly % PointOffsets::PointsPerInst) == PointOffsets::Early);
+        return Interval(positionOfEarly + (PointOffsets::Late - PointOffsets::Early));
     }
 
     static Interval earlyAndLateInterval(Point positionOfEarly)
@@ -763,7 +856,7 @@ private:
         return earlyInterval(positionOfEarly) | lateInterval(positionOfEarly);
     }
 
-    static Interval interval(Point positionOfEarly, Arg::Timing timing)
+    static Interval intervalForTiming(Point positionOfEarly, Arg::Timing timing)
     {
         switch (timing) {
         case Arg::OnlyEarly:
@@ -803,9 +896,23 @@ private:
         return tmp;
     }
 
+    template<Bank bank>
+    Tmp groupForTmp(Tmp tmp)
+    {
+        while (Tmp parent = m_map.get<bank>(tmp).parentGroup)
+            tmp = parent;
+        return tmp;
+    }
+
     Reg assignedReg(Tmp tmp)
     {
         return m_map[groupForTmp(tmp)].assigned;
+    }
+
+    template<Bank bank>
+    Reg assignedReg(Tmp tmp)
+    {
+        return m_map.get<bank>(groupForTmp<bank>(tmp)).assigned;
     }
 
     StackSlot* spillSlot(Tmp tmp)
@@ -851,13 +958,13 @@ private:
 
         auto checkConflicts = [&](BasicBlock* block, const typename TmpLiveness<bank>::LocalCalc& localCalc) {
             for (Tmp a : localCalc.live()) {
-                Tmp aGrp = groupForTmp(a);
-                Reg aReg = assignedReg(a);
+                Tmp aGrp = groupForTmp<bank>(a);
+                Reg aReg = assignedReg<bank>(a);
                 if (!aReg)
                     continue;
                 for (Tmp b : localCalc.live()) {
-                    Tmp bGrp = groupForTmp(b);
-                    Reg bReg = assignedReg(b);
+                    Tmp bGrp = groupForTmp<bank>(b);
+                    Reg bReg = assignedReg<bank>(b);
                     if (aGrp == bGrp) {
                         // Coalesced a & b so they better have the same register.
                         if (aReg != bReg)
@@ -866,8 +973,16 @@ private:
                         // a & b interfere so b must either have been spilled or assigned a different register.
                         if (!bReg)
                             continue;
-                        if (aReg == bReg)
+                        if (aReg == bReg) {
+                            if (m_code.isPinned(aReg)) {
+                                // It's okay if both Tmps were coalseced to the same pinned register.
+                                TmpData& regData = m_map[Tmp(aReg)];
+                                if (regData.coalescables.containsIf([a](auto& with) { return with.tmp == a; })
+                                    && regData.coalescables.containsIf([b](auto& with) { return with.tmp == b; }))
+                                    continue;
+                            }
                             fail(block, a, b);
+                        }
                     }
                 }
             }
@@ -883,8 +998,8 @@ private:
             checkConflicts(block, localCalc);
         }
         if (anyFailures) {
-            dataLogLn("IR:");
-            dataLogLn(m_code);
+            dataLogLn("IR:\n", m_code);
+            dataLogLn("State:\n", *this);
             RELEASE_ASSERT_NOT_REACHED();
         }
     }
@@ -898,7 +1013,6 @@ private:
 #if ASSERT_ENABLED
         UnifiedTmpLiveness::LiveAtHead assertOnlyLiveAtHead = liveness.liveAtHead();
 #endif
-
         // Find non-rare blocks.
         m_fastBlocks.push(m_code[0]);
         while (BasicBlock* block = m_fastBlocks.pop()) {
@@ -948,6 +1062,14 @@ private:
             return intervals.first().contains(point);
         };
 
+        auto assertPinnedRegsAreLive = [&]() {
+#if ASSERT_ENABLED
+            m_code.pinnedRegisters().forEachReg([&](Reg reg) {
+                ASSERT(isLiveAt(Tmp(reg), 0));
+            });
+#endif
+        };
+
         // Remove def from any coalescable pair of a live tmp. We now know from liveness analysis
         // that these pairs are not coalescable.
         auto pruneCoalescable = [&](Inst& inst, Tmp def, Point point) {
@@ -976,6 +1098,8 @@ private:
                 end = point + 1; // +1 since Interval end is not inclusive
         };
         auto markDef = [&](Tmp tmp, Point point)  {
+            if (tmp.isReg() && m_code.isPinned(tmp.reg())) [[unlikely]]
+                return; // Model pinned registers as never being killed
             Point end = activeEnds[tmp];
             if (!end) [[unlikely]]
                 end = point + 1; // Dead def / clobber
@@ -993,19 +1117,29 @@ private:
                     if (inst.args[0].isReg() || inst.args[1].isReg()) {
                         unsigned regIdx = inst.args[0].isReg() ? 0 : 1;
                         Reg reg = inst.args[regIdx].reg();
+                        Tmp other = inst.args[regIdx ^ 1].tmp();
+                        if (other.isReg())
+                            continue;
                         if (m_allAllowedRegisters.contains(reg, IgnoreVectors)) {
-                            Tmp other = inst.args[regIdx ^ 1].tmp();
                             if (!m_map[other].preferredReg)
                                 m_map[other].preferredReg = inst.args[regIdx].reg();
+                            continue;
                         }
-                    } else {
-                        ASSERT(inst.args[0].isTmp() && inst.args[1].isTmp());
-                        addMaybeCoalescable(inst.args[0].tmp(), inst.args[1].tmp(), block);
-                        addMaybeCoalescable(inst.args[1].tmp(), inst.args[0].tmp(), block);
+                        if (!m_code.isPinned(reg))
+                            continue;
+                        // Pinned registers fall-through
                     }
+                    ASSERT(inst.args[0].isTmp() && inst.args[1].isTmp());
+                    addMaybeCoalescable(inst.args[0].tmp(), inst.args[1].tmp(), block);
+                    addMaybeCoalescable(inst.args[1].tmp(), inst.args[0].tmp(), block);
                 }
             }
         }
+
+        Point funcEndPoint = m_tailPoints[m_code.size() - 1];
+        m_code.pinnedRegisters().forEachReg([&](Reg reg) {
+            markUse(Tmp(reg), funcEndPoint); // Pinned registers are always live
+        });
 
         // Second pass: Run liveness analysis and build the LiveRange for each Tmp. Also,
         // prune conflicts from the coalescables.
@@ -1032,8 +1166,7 @@ private:
             if (blockAfter) {
                 Point blockAfterPositionOfHead = this->positionOfHead(blockAfter);
                 for (Tmp tmp : liveness.liveAtHead(blockAfter)) {
-                    // FIXME: rdar://145150735, remove pinned register liveness special cases
-                    ASSERT(activeEnds[tmp] || (tmp.isReg() && !m_allAllowedRegisters.contains(tmp.reg(), IgnoreVectors)));
+                    ASSERT(activeEnds[tmp]);
                     // If tmp was live at the head of the next block but not live at the
                     // tail of the current block, close the interval.
                     if (liveAtTailMarkers[tmp] > positionOfTail) {
@@ -1042,11 +1175,12 @@ private:
                     }
                 }
             }
+            assertPinnedRegsAreLive();
 
             for (unsigned instIndex = block->size(); instIndex--;) {
                 Inst& inst = block->at(instIndex);
-                Point positionOfEarly = positionOfHead + instIndex * pointsPerInst;
-                Point positionOfLate = positionOfEarly + 1;
+                Point positionOfEarly = this->positionOfEarly(positionOfHead, instIndex);
+                Point positionOfLate = this->positionOfLate(positionOfHead, instIndex);
 
                 lateUses.shrink(0);
                 lateDefs.shrink(0);
@@ -1115,6 +1249,13 @@ private:
             for (Tmp tmp : liveness.liveAtHead(blockAfter))
                 markDef(tmp, firstBlockPositionOfHead);
         }
+        assertPinnedRegsAreLive();
+        // Pinned registers are never killed, so markDef never completes their live-range. Do it now.
+        m_code.pinnedRegisters().forEachReg([&](Reg reg) {
+            Tmp tmp = Tmp(reg);
+            ASSERT(activeEnds[tmp] == funcEndPoint + 1 && !m_map[tmp].liveRange.size());
+            m_map[tmp].liveRange.prepend({ 0, activeEnds[tmp] });
+        });
 
 #if ASSERT_ENABLED
         m_code.forEachTmp([&](Tmp tmp) {
@@ -1144,6 +1285,25 @@ private:
         return IterationStatus::Continue;
     }
 
+    void coalesceWithPinnedRegisters()
+    {
+        // If a Tmp is in a pinned register's coalescables set, that means the
+        // Tmp's defs are always moves from the pinned register. Since no other
+        // Tmps can be assigned to the pinned register, might as well assign
+        // the coalescable tmps to the pinned register upfront.
+        // Doing this eagerly could be the wrong decision if these Tmps are
+        // coalescable with other Tmps, but that doesn't seem to happen in practice.
+        m_code.pinnedRegisters().forEachReg([&](Reg reg) {
+            Tmp tmp = Tmp(reg);
+            TmpData& data = m_map[tmp];
+            for (auto& with : data.coalescables) {
+                ASSERT(!with.tmp.isReg());
+                coalesceWithPinned(with.tmp, m_map[with.tmp], reg);
+                m_stats[tmp.bank()].numCoalescedPinned++;
+            }
+        });
+    }
+
     template <Bank bank>
     void finalizeGroups()
     {
@@ -1163,13 +1323,17 @@ private:
 
         m_code.forEachTmp<bank>([&](Tmp tmp) {
             ASSERT(!tmp.isReg());
-            TmpData& data = m_map[tmp];
+            TmpData& data = m_map.get<bank>(tmp);
+            if (data.stage != Stage::New) {
+                ASSERT(assignedReg(tmp) && m_code.isPinned(assignedReg(tmp)));
+                return; // Already coalesced with a pinned register
+            }
             std::ranges::sort(data.coalescables, [this](const auto& a, const auto& b) {
                     if (a.moveCost != b.moveCost)
                         return a.moveCost > b.moveCost;
                     // Favor coalescing shorter live ranges.
-                    auto aSize = m_map[a.tmp].liveRange.size();
-                    auto bSize = m_map[b.tmp].liveRange.size();
+                    auto aSize = m_map.get<bank>(a.tmp).liveRange.size();
+                    auto bSize = m_map.get<bank>(b.tmp).liveRange.size();
                     if (aSize != bSize)
                         return aSize < bSize;
                     return a.tmp.tmpIndex(bank) < b.tmp.tmpIndex(bank);
@@ -1193,12 +1357,12 @@ private:
             bool conflicts = false;
             forEachTmpInGroup(group0, worklist0, [&](Tmp tmp0) {
                 ASSERT(!conflicts);
-                TmpData& data0 = m_map[tmp0];
+                TmpData& data0 = m_map.get<bank>(tmp0);
                 ASSERT(!data0.subGroup0 && !data0.subGroup1);
                 forEachTmpInGroup(group1, worklist1, [&](Tmp tmp1) {
                     ASSERT(!conflicts);
                     ASSERT(tmp0 != tmp1);
-                    TmpData& data1 = m_map[tmp1];
+                    TmpData& data1 = m_map.get<bank>(tmp1);
                     if (!data0.coalescables.containsIf([tmp1](auto& with) { return with.tmp == tmp1; })
                         && data0.liveRange.overlaps(data1.liveRange)) {
                         conflicts = true;
@@ -1212,7 +1376,7 @@ private:
         };
 
         auto addSubGroup = [this](Tmp group, TmpData& groupData, Tmp& subGroupField, Tmp subGroup) {
-            TmpData& subGroupData = m_map[subGroup];
+            TmpData& subGroupData = m_map.get<bank>(subGroup);
             subGroupField = subGroup;
             subGroupData.parentGroup = group;
             subGroupData.stage = Stage::Coalesced;
@@ -1230,8 +1394,8 @@ private:
 
         for (Move& move : moves) {
             dataLogLnIf(verbose(), "Processing move: ", move);
-            Tmp group0 = groupForTmp(move.tmp0);
-            Tmp group1 = groupForTmp(move.tmp1);
+            Tmp group0 = groupForTmp<bank>(move.tmp0);
+            Tmp group1 = groupForTmp<bank>(move.tmp1);
             if (group0 == group1) {
                 dataLogLnIf(verbose(), "Already grouped transitively into ", group0);
                 continue;
@@ -1245,12 +1409,12 @@ private:
                 addSubGroup(newGrp, newGrpData, newGrpData.subGroup1, group1);
                 newGrpData.validate();
                 m_map.append(newGrp, newGrpData);
-                dataLogLnIf(verbose(), "Created group ", newGrp, ": ", m_map[newGrp]);
+                dataLogLnIf(verbose(), "Created group ", newGrp, ": ", m_map.get<bank>(newGrp));
             }
         }
         if (verbose()) {
             m_code.forEachTmp<bank>([&](Tmp tmp) {
-                TmpData& data = m_map[tmp];
+                TmpData& data = m_map.get<bank>(tmp);
                 if (!data.parentGroup && data.isGroup()) {
                     dataLog("Group: ", tmp, " = { ");
                     CommaPrinter comma;
@@ -1289,12 +1453,12 @@ private:
         }
 
         for (Reg reg : m_allowedRegistersInPriorityOrder[bank])
-            m_map[Tmp(reg)].spillability = TmpData::Spillability::Unspillable;
+            m_map.get<bank>(Tmp(reg)).spillability = TmpData::Spillability::Unspillable;
 
         m_code.forEachTmp<bank>([&](Tmp tmp) {
             ASSERT(tmp.bank() == bank);
             ASSERT(!tmp.isReg());
-            TmpData& tmpData = m_map[tmp];
+            TmpData& tmpData = m_map.get<bank>(tmp);
             ASSERT(tmpData.useDefCost == 0.0f);
             auto index = AbsoluteTmpMapper<bank>::absoluteIndex(tmp);
             float useDefCost = m_useCounts.numWarmUsesAndDefs<bank>(index);
@@ -1303,7 +1467,7 @@ private:
             tmpData.useDefCost = useDefCost;
 
             if (cannotSpillInPlace.contains(tmp)
-                && tmpData.liveRange.intervals().size() == 1 && tmpData.liveRange.size() <= pointsPerInst) {
+                && tmpData.liveRange.intervals().size() == 1 && tmpData.liveRange.size() <= PointOffsets::PointsPerInst) {
                 tmpData.spillability = TmpData::Spillability::Unspillable;
                 m_stats[bank].numUnspillableTmps++;
             }
@@ -1312,7 +1476,7 @@ private:
         m_code.forEachFastTmp([&](Tmp tmp) {
             if (tmp.bank() != bank)
                 return;
-            m_map[tmp].spillability = TmpData::Spillability::FastTmp;
+            m_map.get<bank>(tmp).spillability = TmpData::Spillability::FastTmp;
             m_stats[bank].numFastTmps++;
             dataLogLnIf(verbose(), "FastTmp: ", tmp);
         });
@@ -1374,15 +1538,19 @@ private:
         CompilerTimingScope timingScope("Air"_s, "GreedyRegAlloc::allocateRegisters"_s);
 
         for (Reg reg : m_allowedRegistersInPriorityOrder[bank])
-            assign(Tmp(reg), m_map[Tmp(reg)], reg);
+            assign(Tmp(reg), m_map.get<bank>(Tmp(reg)), reg);
 
         m_code.forEachTmp<bank>([&](Tmp tmp) {
             ASSERT(!tmp.isReg());
-            TmpData& tmpData = m_map[tmp];
+            TmpData& tmpData = m_map.get<bank>(tmp);
             if (tmpData.parentGroup)
                 return;
             if (tmpData.liveRange.intervals().isEmpty())
                 return;
+            if (tmpData.stage != Stage::New) {
+                ASSERT(assignedReg(tmp) && m_code.isPinned(assignedReg(tmp)));
+                return;
+            }
             m_stats[bank].maxLiveRangeSize = std::max(m_stats[bank].maxLiveRangeSize, static_cast<unsigned>(tmpData.liveRange.size()));
             setStageAndEnqueue(tmp, tmpData, Stage::TryAllocate);
         });
@@ -1392,7 +1560,7 @@ private:
                 auto entry = m_queue.dequeue();
                 Tmp tmp = entry.tmp();
                 ASSERT(tmp && tmp.bank() == bank);
-                TmpData& tmpData = m_map[tmp];
+                TmpData& tmpData = m_map.get<bank>(tmp);
                 if (verbose()) {
                     StringPrintStream out;
                     out.println("Pop: ", entry, " tmp: ", tmpData);
@@ -1406,7 +1574,7 @@ private:
                 if (tmpData.stage != Stage::TrySplit && tryEvict<bank>(tmp, tmpData))
                     continue;
 
-                ASSERT(&tmpData == &m_map[tmp]); // Verify m_map hasn't been resized on this path
+                ASSERT(&tmpData == &m_map.get<bank>(tmp)); // Verify m_map hasn't been resized on this path
                 switch (tmpData.stage) {
                 case Stage::TryAllocate: {
                     // If we couldn't allocate tmp, allow it to split next time.
@@ -1438,9 +1606,10 @@ private:
                 }
                 RELEASE_ASSERT_NOT_REACHED();
             }
-            if (m_didSpill) {
+            if (m_needsEmitSpillCode) {
                 emitSpillCodeAndEnqueueNewTmps<bank>();
-                m_didSpill = false;
+                m_needsEmitSpillCode = false;
+                m_didSpill[bank] = true;
             }
             // Process the spill/fill tmps,
         } while (!m_queue.isEmpty());
@@ -1449,7 +1618,7 @@ private:
     template <Bank bank>
     bool tryAllocate(Tmp tmp, TmpData& tmpData)
     {
-        ASSERT(&m_map[tmp] == &tmpData);
+        ASSERT(&m_map.get<bank>(tmp) == &tmpData);
         ASSERT(!assignedReg(tmp));
         ASSERT(!tmpData.parentGroup);
 
@@ -1471,8 +1640,8 @@ private:
             // FIXME: this will check coalescables within the group, which is wasteful and common.
             // But without doing this, we won't try to coalescables between partially split groups.
             IterationStatus status = forEachTmpInGroup(tmp, worklist, [&](Tmp member) {
-                for (auto& with : m_map[member].coalescables) {
-                    Reg r = assignedReg(with.tmp);
+                for (auto& with : m_map.get<bank>(member).coalescables) {
+                    Reg r = assignedReg<bank>(with.tmp);
                     if (r) {
                         if (tryAllocateToReg(r))
                             return IterationStatus::Done;
@@ -1487,7 +1656,7 @@ private:
             }
         } else {
             for (auto& with : tmpData.coalescables) {
-                Reg r = m_map[with.tmp].assigned;
+                Reg r = m_map.get<bank>(with.tmp).assigned;
                 if (r) {
                     if (tryAllocateToReg(r))
                         return true;
@@ -1514,7 +1683,7 @@ private:
     template <Bank bank>
     bool tryEvict(Tmp tmp, TmpData& tmpData)
     {
-        ASSERT(&m_map[tmp] == &tmpData);
+        ASSERT(&m_map.get<bank>(tmp) == &tmpData);
         ASSERT(tmp.bank() == bank);
 
         auto failOutOfRegisters = [this](Tmp tmp) {
@@ -1524,9 +1693,9 @@ private:
             out.println("Unspillable Conflicts:");
             for (Reg r : m_allowedRegistersInPriorityOrder[bank]) {
                 out.print("  ", r, ": ");
-                m_regRanges[r].forEachConflict(m_map[tmp].liveRange, widthForConflicts<bank>(tmp),
+                m_regRanges[r].forEachConflict(m_map.get<bank>(tmp).liveRange, widthForConflicts<bank>(tmp),
                     [&](auto& conflict) -> IterationStatus {
-                        if (m_map[conflict.tmp].spillCost() == unspillableCost)
+                        if (m_map.get<bank>(conflict.tmp).spillCost() == unspillableCost)
                             out.print("{", conflict.tmp, ", ", conflict.interval, "}, ");
                         return IterationStatus::Continue;
                     });
@@ -1557,7 +1726,7 @@ private:
                     if (visited.quickGet(conflictTmpIndex))
                         return IterationStatus::Continue;
                     visited.quickSet(conflictTmpIndex);
-                    auto cost = m_map[conflict.tmp].spillCost();
+                    auto cost = m_map.get<bank>(conflict.tmp).spillCost();
                     if (cost == unspillableCost) {
                         conflictsSpillCost = unspillableCost;
                         return IterationStatus::Done;
@@ -1583,7 +1752,7 @@ private:
         // It's cheaper to spill all the already-assigned conflicting tmps, so evict them in favor of assigning 'tmp'.
         m_regRanges[bestEvictReg].forEachConflict(liveRange, widthForConflicts<bank>(tmp),
             [&](auto& conflict) -> IterationStatus {
-                TmpData& conflictData = m_map[conflict.tmp];
+                TmpData& conflictData = m_map.get<bank>(conflict.tmp);
                 evict(conflict.tmp, conflictData, bestEvictReg);
                 setStageAndEnqueue(conflict.tmp, conflictData, Stage::TryAllocate);
                 return IterationStatus::Continue;
@@ -1592,14 +1761,27 @@ private:
         return true;
     }
 
-    void assign(Tmp tmp, TmpData& tmpData, Reg reg)
+    void assignImpl(Tmp tmp, TmpData& tmpData, Reg reg)
     {
-        m_regRanges[reg].add(tmp, tmpData.liveRange);
         ASSERT(tmpData.stage != Stage::Assigned && tmpData.stage != Stage::Spilled);
+        ASSERT(&m_map[tmp] == &tmpData);
         tmpData.stage = Stage::Assigned;
         tmpData.assigned = reg;
         dataLogLnIf(verbose(), "Assigned ", tmp, " to ", reg);
         tmpData.validate();
+    }
+
+    void coalesceWithPinned(Tmp tmp, TmpData& tmpData, Reg reg)
+    {
+        ASSERT(m_code.isPinned(reg));
+        assignImpl(tmp, tmpData, reg);
+    }
+
+    void assign(Tmp tmp, TmpData& tmpData, Reg reg)
+    {
+        ASSERT(m_allAllowedRegisters.contains(reg, IgnoreVectors));
+        m_regRanges[reg].add(tmp, tmpData.liveRange);
+        assignImpl(tmp, tmpData, reg);
     }
 
     void evict(Tmp tmp, TmpData& tmpData, Reg reg)
@@ -1618,18 +1800,21 @@ private:
     bool trySplit(Tmp tmp, TmpData& tmpData)
     {
         ASSERT(tmpData.spillCost() != unspillableCost); // Should have evicted.
-        if (trySplitGroup(tmp, tmpData))
+        if (trySplitGroup<bank>(tmp, tmpData))
             return true;
-        return trySplitAroundClobbers<bank>(tmp, tmpData);
+        if (trySplitAroundClobbers<bank>(tmp, tmpData))
+            return true;
+        return trySplitIntraBlock<bank>(tmp, tmpData);
     }
 
+    template<Bank bank>
     bool trySplitGroup(Tmp tmp, TmpData& tmpData)
     {
         if (!tmpData.isGroup())
             return false;
         auto enqueueSubgroup = [&](Tmp subGrp) {
-            m_map[subGrp].parentGroup = Tmp();
-            setStageAndEnqueue(subGrp, m_map[subGrp], Stage::TryAllocate);
+            m_map.get<bank>(subGrp).parentGroup = Tmp();
+            setStageAndEnqueue(subGrp, m_map.get<bank>(subGrp), Stage::TryAllocate);
         };
         enqueueSubgroup(tmpData.subGroup0);
         enqueueSubgroup(tmpData.subGroup1);
@@ -1712,8 +1897,7 @@ private:
         tmpData.splitMetadataIndex = m_splitMetadata.size();
         setStageAndEnqueue(tmp, tmpData, Stage::TryAllocate);
 
-        SplitMetadata metadata;
-        metadata.originalTmp = tmp;
+        SplitMetadata metadata(SplitMetadata::Type::AroundClobbers, tmp);
         // Create tmps to carry the value across register clobbering instructions. These tmps
         // might spill or be assigned another register.
         for (Interval hole : holeRange.intervals()) {
@@ -1731,11 +1915,160 @@ private:
             // analysis (see lowerAfterRegAlloc()), and that's unlikely to be worth it.
             Interval gapInterval = hole | Interval(hole.begin() - 1);
             Tmp gapTmp = newTmp(tmp, freq, gapInterval);
-            metadata.gapTmps.append(gapTmp);
-            setStageAndEnqueue(gapTmp, m_map[gapTmp], Stage::TryAllocate);
+            metadata.splits.append({ gapTmp, 0 });
+            setStageAndEnqueue(gapTmp, m_map.get<bank>(gapTmp), Stage::TryAllocate);
         }
-        dataLogLnIf(verbose(), "Split (clobbers): reg = ", bestSplitReg, " spillCost = ", m_map[tmp].spillCost(), " splitCost = ", minSplitCost, " split tmp = ", metadata);
-        m_splitMetadata.append(WTFMove(metadata));
+        dataLogLnIf(verbose(), "Split (clobbers): reg = ", bestSplitReg, " spillCost = ", m_map.get<bank>(tmp).spillCost(), " splitCost = ", minSplitCost, " split tmp = ", metadata);
+        m_splitMetadata.append(WTF::move(metadata));
+        m_stats[bank].numSplitAroundClobbers++;
+        return true;
+    }
+
+    // Note that the use/def lists are computed only once and not kept up to date.
+    // So after a Tmp is split or spilled that Tmp's use/def list may include instructions that now
+    // reference the new split tmp or spill slot rather than the Tmp itself.
+    void ensureUseDefLists()
+    {
+        if (m_hasUseDefLists)
+            return;
+
+        m_useDefLists.resize(m_code);
+
+        for (BasicBlock* block : m_code) {
+            Point instPoint = this->positionOfHead(block);
+            for (Inst& inst : block->insts()) {
+                inst.forEachArg([&](Arg& arg, Arg::Role, Bank, Width) {
+                    arg.forEachTmpFast([&](Tmp& tmp) {
+                        m_useDefLists[tmp].add(instPoint);
+                    });
+                });
+                instPoint += PointOffsets::PointsPerInst;
+            }
+        }
+        m_hasUseDefLists = true;
+    }
+
+    // forEachUseDefWithin calls `func` for each instruction in the given interval that
+    // uses or defs the given tmp, up to the end of the basic block.
+    // Returns the unprocessed portion of the interval (if interval spans multiple blocks).
+    // `cursor` can be used to perform a "sort-merge join" when the caller is making queries over a sorted set of intervals for the same tmp
+    template<typename Func>
+    Interval forEachUseDefWithin(Tmp tmp, Interval interval, size_t& cursor, const Func& func)
+    {
+        auto& useDefs = m_useDefLists[tmp].useDefs();
+
+        Point start = pointAtOffset(interval.begin(), PointOffsets::Pre);
+        Point end = interval.end();
+
+        ASSERT(useDefs.isEmpty() || !cursor || useDefs[cursor - 1] < start);
+
+        size_t i = cursor;
+        for (; i < useDefs.size(); i++) {
+            if (start <= useDefs[i])
+                break;
+        }
+        if (i == useDefs.size() || end <= useDefs[i]) {
+            cursor = i;
+            return { }; // No more use/defs in `interval`
+        }
+
+        BasicBlock* block = findBlockContainingPoint(useDefs[i]);
+        Point positionOfHead = this->positionOfHead(block);
+        Point positionOfTail = this->positionOfTail(block);
+        Point last = std::min(positionOfTail, end - 1);
+
+        do {
+            func(useDefs[i], block->at(instIndex(positionOfHead, useDefs[i])));
+            i++;
+        } while (i < useDefs.size() && useDefs[i] <= last);
+        cursor = i - 1; // i-1 since the next interval may include this final instruction
+        return { last + 1, end }; // Return the unprocessed portion of interval
+    }
+
+    template<Bank bank>
+    bool trySplitIntraBlock(Tmp tmp, TmpData& tmpData)
+    {
+        if (tmpData.splitMetadataIndex)
+            return false;
+
+        unsigned tmpIndex = AbsoluteTmpMapper<bank>::absoluteIndex(tmp);
+        if (bank == GP && m_useCounts.isConstDef<bank>(tmpIndex))
+            return false; // Constant will be rematerialized instead
+
+        // Don't split an already intra-block tmp. Otherwise, we might recursively try to
+        // split a cluster tmp that couldn't be allocated.
+        BasicBlock* startBlock = findBlockContainingPoint(tmpData.liveRange.intervals().first().begin());
+        Point last = tmpData.liveRange.intervals().last().end() - 1;
+        if (last <= positionOfTail(startBlock))
+            return false; // Tmp's live range is already block local
+
+        ensureUseDefLists();
+
+        SplitMetadata* metadata = nullptr;
+        Vector<Tmp*, 8> tmpPtrs;
+        size_t cursor = 0;
+
+        size_t numIntervals = tmpData.liveRange.intervals().size();
+        for (size_t i = 0; i < numIntervals; i++) {
+            // Note: this loop calls newTmp() which invalidates the tmpData reference.
+            Interval interval = *(m_map.get<bank>(tmp).liveRange.intervals().begin() + i);
+            Interval remaining = interval;
+
+            do {
+                Point lastDefPoint = 0;
+                Interval cluster = { };
+                tmpPtrs.shrink(0);
+
+                remaining = forEachUseDefWithin(tmp, remaining, cursor, [&](Point point, Inst& inst) {
+                    inst.forEachTmp([&](Tmp& t, Arg::Role role, Bank, Width) {
+                        if (t == tmp && !Arg::isColdUse(role)) {
+                            Point early = point + PointOffsets::Early;
+                            tmpPtrs.append(&t);
+                            if (Arg::isAnyDef(role))
+                                lastDefPoint = early; // Remember where the fixup store to spill is needed
+                            cluster |= intervalForTiming(early, Arg::timing(role));
+                        }
+                    });
+                });
+
+                if (tmpPtrs.size() > 1) {
+                    ASSERT(cluster);
+                    if (!metadata) {
+                        m_map.get<bank>(tmp).splitMetadataIndex = m_splitMetadata.size();
+                        m_splitMetadata.constructAndAppend(SplitMetadata::Type::IntraBlock, tmp);
+                        metadata = &m_splitMetadata.last();
+                    }
+                    Point pre = pointAtOffset(cluster.begin(), PointOffsets::Pre);
+                    // If the Tmp is live into the cluster then cluster range is extended to model the fixup load from
+                    // the Tmp's spill slot before the first use. This also allows insertSplitIntraBlockFixupCode()
+                    // to quickly determine whether the fixup load is needed.
+                    if (interval.contains(pre))
+                        cluster |= Interval(pre);
+                    // Likewise, if the cluster defs Tmp then a store to Tmp's spill slot will be needed after the final def point.
+                    if (lastDefPoint)
+                        cluster |= Interval(pointAtOffset(lastDefPoint, PointOffsets::Post));
+
+                    BasicBlock* block = findBlockContainingPoint(cluster.begin());
+                    Tmp clusterTmp = newTmp(tmp, tmpPtrs.size() * adjustedBlockFrequency(block), cluster);
+                    m_stats[bank].numSplitIntraBlockClusterTmps++;
+                    for (auto& ptr : tmpPtrs)
+                        *ptr = clusterTmp; // Within this cluster, use clusterTmp rather than Tmp
+                    metadata->splits.append({ clusterTmp, lastDefPoint });
+                    setStageAndEnqueue(clusterTmp, m_map.get<bank>(clusterTmp), Stage::TryAllocate);
+                }
+            } while (remaining);
+        }
+
+        if (!metadata) {
+            m_stats[bank].numSplitIntraBlockNoCluster++;
+            return false;
+        }
+
+        // The original Tmp is spilled, but the cluster Tmps will hopefully carry the value in registers
+        // within the cluster intervals.
+        spill(tmp, m_map.get<bank>(tmp));
+        m_stats[bank].numSplitIntraBlock++;
+        dataLogLnIf(verbose(), "Split (intra-block): ", *metadata);
         return true;
     }
 
@@ -1756,23 +2089,28 @@ private:
         ASSERT(!tmpData.isGroup()); // Should have been split
         tmpData.stage = Stage::Spilled;
 
+        m_stats[tmp.bank()].numSpilledTmps++;
         dataLogLnIf(verbose(), "Spilled ", tmp);
+
         if (tmpData.splitMetadataIndex) {
-            // Splitting didn't prevent originalTmp from spilling after all, so no point assigning
-            // registers or stack slots to the gap tmps for this split.
-            dataLogLnIf(verbose(), "   evicting tmps created during split");
             auto& metadata = m_splitMetadata[tmpData.splitMetadataIndex];
-            ASSERT(metadata.originalTmp == tmp);
-            for (Tmp gapTmp : metadata.gapTmps) {
-                Reg reg = m_map[gapTmp].assigned;
-                if (reg)
-                    evict(gapTmp, m_map[gapTmp], reg);
-                m_map[gapTmp].stage = Stage::Replaced;
+            if (metadata.type == SplitMetadata::Type::AroundClobbers) {
+                // Splitting didn't prevent originalTmp from spilling after all, so no point assigning
+                // registers or stack slots to the gap tmps for this split.
+                dataLogLnIf(verbose(), "   evicting tmps created during split");
+                ASSERT(metadata.originalTmp == tmp);
+                for (auto& split : metadata.splits) {
+                    Tmp gapTmp = split.tmp;
+                    Reg reg = m_map[gapTmp].assigned;
+                    if (reg)
+                        evict(gapTmp, m_map[gapTmp], reg);
+                    m_map[gapTmp].stage = Stage::Replaced;
+                }
             }
         }
         // Batch the generation of spill/fill tmps so that we can limit traversals of the code while
         // not tracking each tmp's use/defs explicitly.
-        m_didSpill = true;
+        m_needsEmitSpillCode = true;
         tmpData.validate();
     }
 
@@ -1811,17 +2149,33 @@ private:
     void emitSpillCodeAndEnqueueNewTmps()
     {
         m_code.forEachTmp<bank>([&](Tmp tmp) {
-            TmpData& tmpData = m_map[tmp];
+            TmpData& tmpData = m_map.get<bank>(tmp);
             if (tmpData.stage == Stage::Spilled && !tmpData.spillSlot) {
                 tmpData.spillSlot = m_code.addStackSlot(stackSlotMinimumWidth(m_tmpWidth.requiredWidth(tmp)), StackSlotKind::Spill);
                 m_stats[bank].numSpillStackSlots++;
+            }
+            if (tmpData.splitMetadataIndex) {
+                auto& metadata = m_splitMetadata[tmpData.splitMetadataIndex];
+                if (metadata.type == SplitMetadata::Type::IntraBlock) {
+                    // Redirect spilled intra-block cluster tmps to the spill slot of the original tmp.
+                    ASSERT(tmpData.stage == Stage::Spilled && spillSlot(tmp));
+                    for (auto& split : metadata.splits) {
+                        Tmp clusterTmp = split.tmp;
+                        TmpData& clusterData = m_map.get<bank>(clusterTmp);
+                        if (clusterData.stage == Stage::Spilled) {
+                            if (!clusterData.spillSlot)
+                                clusterData.spillSlot = spillSlot(tmp);
+                            ASSERT(spillSlot(clusterTmp) == spillSlot(tmp));
+                        }
+                    }
+                }
             }
         });
         for (BasicBlock* block : m_code) {
             Point positionOfHead = this->positionOfHead(block);
             for (unsigned instIndex = 0; instIndex < block->size(); ++instIndex) {
                 Inst& inst = block->at(instIndex);
-                unsigned indexOfEarly = positionOfHead + instIndex * 2;
+                unsigned indexOfEarly = positionOfEarly(positionOfHead, instIndex);
 
                 // The TmpWidth analysis will say that a Move only stores 32 bits into the destination,
                 // if the source only had 32 bits worth of non-zero bits. Same for the source: it will
@@ -1877,7 +2231,7 @@ private:
                         // If the Tmp holds a constant then we want to rematerialize its
                         // value rather than loading it from the stack.
                         unsigned tmpIndex = AbsoluteTmpMapper<bank>::absoluteIndex(arg.tmp());
-                        ASSERT_IMPLIES(Arg::isColdUse(role), m_map[arg.tmp()].hasColdUse);
+                        ASSERT_IMPLIES(Arg::isColdUse(role), m_map.get<bank>(arg.tmp()).hasColdUse);
                         if (!Arg::isColdUse(role) && m_useCounts.isConstDef<bank>(tmpIndex)) {
                             int64_t value = m_useCounts.constant<bank>(tmpIndex);
                             Arg oldArg = arg;
@@ -1925,6 +2279,7 @@ private:
                             scratchForTmp = arg.tmp();
                         }
                         arg = Arg::stack(spilled);
+                        m_stats[bank].numInPlaceSpill++;
                     });
 
                 if (didSpill && canUseMove32IfDidSpill)
@@ -1965,7 +2320,7 @@ private:
                     ASSERT_IMPLIES(canRematerializeConstant, !(Arg::isAnyUse(role) && Arg::isAnyDef(role)));
                     ASSERT_IMPLIES(canRematerializeConstant, role != Arg::Scratch);
 
-                    bool canKillDef = canRematerializeConstant && !m_map[originalTmp].hasColdUse;
+                    bool canKillDef = canRematerializeConstant && !m_map.get<bank>(originalTmp).hasColdUse;
 
                     if (Arg::isAnyUse(role) || (!canKillDef && Arg::isAnyDef(role)))
                         tmp = addSpillTmpWithInterval(tmp, intervalForSpill(indexOfEarly, role));
@@ -2015,35 +2370,93 @@ private:
     void insertFixupCode()
     {
         for (auto& metadata : m_splitMetadata) {
-            if (!metadata.originalTmp)
-                continue;
-            if (spillSlot(metadata.originalTmp))
-                continue; // If spilled, better to not split after all. See spill().
-            ASSERT(assignedReg(metadata.originalTmp));
-            // Emit moves to and from the gapTmps (or stack stot) that fill the split holes.
-            for (Tmp gapTmp : metadata.gapTmps) {
-                TmpData& gapData = m_map[gapTmp];
-                for (auto& interval : gapData.liveRange.intervals()) {
-                    ASSERT(interval.distance() == 2);
-                    Point lastPoint = interval.end() - 1;
-                    BasicBlock* block = findBlockContainingPoint(lastPoint);
-                    unsigned instIndex = this->instIndex(positionOfHead(block), lastPoint);
-                    Inst& inst = block->at(instIndex);
-
-                    Arg arg = gapTmp;
-                    StackSlot* spilled = spillSlot(gapTmp);
-                    if (spilled)
-                        arg = Arg::stack(spilled);
-                    Opcode move = moveOpcode(gapTmp);
-                    m_insertionSets[block].insert(instIndex, splitMoveFrom, move, inst.origin, metadata.originalTmp, arg);
-                    m_insertionSets[block].insert(instIndex + 1, splitMoveTo, move, inst.origin, arg, metadata.originalTmp);
-                    dataLogLnIf(verbose(), "Inserted Moves around clobber tmp=", metadata.originalTmp, " gapTmp=", gapTmp, " gapReg = ", assignedReg(gapTmp), " block=", *block, " index=", instIndex, " inst = ", inst);
-                }
+            switch (metadata.type) {
+            case SplitMetadata::Type::Invalid:
+                break;
+            case SplitMetadata::Type::AroundClobbers:
+                insertSplitAroundClobbersFixupCode(metadata);
+                break;
+            case SplitMetadata::Type::IntraBlock:
+                insertSplitIntraBlockFixupCode(metadata);
+                break;
             }
         }
-
         for (BasicBlock* block : m_code)
             m_insertionSets[block].execute(block);
+    }
+
+    void insertSplitAroundClobbersFixupCode(SplitMetadata& metadata)
+    {
+        ASSERT(metadata.type == SplitMetadata::Type::AroundClobbers);
+
+        if (spillSlot(metadata.originalTmp)) {
+            m_stats[metadata.originalTmp.bank()].numSplitAroundClobberSpilled++;
+            return; // If spilled, better to not split after all. See spill().
+        }
+        ASSERT(assignedReg(metadata.originalTmp));
+        // Emit moves to and from the gapTmps (or stack stot) that fill the split holes.
+        for (auto& split : metadata.splits) {
+            Tmp gapTmp = split.tmp;
+            TmpData& gapData = m_map[gapTmp];
+            for (auto& interval : gapData.liveRange.intervals()) {
+                ASSERT(interval.distance() == 2);
+                Point lastPoint = interval.end() - 1;
+                BasicBlock* block = findBlockContainingPoint(lastPoint);
+                unsigned instIndex = this->instIndex(positionOfHead(block), lastPoint);
+                Inst& inst = block->at(instIndex);
+
+                Arg arg = gapTmp;
+                StackSlot* spilled = spillSlot(gapTmp);
+                if (spilled)
+                    arg = Arg::stack(spilled);
+                Opcode move = moveOpcode(gapTmp);
+                m_insertionSets[block].insert(instIndex, splitMoveFrom, move, inst.origin, metadata.originalTmp, arg);
+                m_insertionSets[block].insert(instIndex + 1, splitMoveTo, move, inst.origin, arg, metadata.originalTmp);
+                dataLogLnIf(verbose(), "Inserted Moves around clobber tmp=", metadata.originalTmp, " gapTmp=", gapTmp, " gapReg = ", assignedReg(gapTmp), " block=", *block, " index=", instIndex, " inst = ", inst);
+            }
+        }
+    }
+
+    void insertSplitIntraBlockFixupCode(SplitMetadata& metadata)
+    {
+        ASSERT(metadata.type == SplitMetadata::Type::IntraBlock);
+
+        Tmp originalTmp = metadata.originalTmp;
+        Bank bank = originalTmp.bank();
+        Opcode move = moveOpcode(originalTmp);
+        StackSlot* spilled = spillSlot(originalTmp);
+        ASSERT(spilled);
+
+        for (auto& split : metadata.splits) {
+            Tmp clusterTmp = split.tmp;
+            if (spillSlot(clusterTmp)) {
+                ASSERT(spillSlot(clusterTmp) == spillSlot(originalTmp));
+                m_stats[bank].numSplitIntraBlockClusterTmpsSpilled++;
+                continue; // No fixup needed since the same spill slot is used
+            }
+
+            LiveRange& clusterRange = m_map[clusterTmp].liveRange;
+            ASSERT(clusterRange.intervals().size() == 1);
+            const Interval& clusterInterval = clusterRange.intervals().first();
+
+            BasicBlock* block = findBlockContainingPoint(clusterInterval.begin());
+            Point positionOfHead = this->positionOfHead(block);
+
+            // trySplitIntraBlock includes the Pre point in the cluster interval iff the original Tmp is live into the cluster.
+            if (pointAtOffset(clusterInterval.begin(), PointOffsets::Pre) == clusterInterval.begin()) {
+                unsigned instIndex = this->instIndex(positionOfHead, clusterInterval.begin());
+                m_insertionSets[block].insert(instIndex, splitMoveFrom, move, block->at(instIndex).origin, Arg::stack(spilled), clusterTmp);
+                m_stats[bank].numSplitIntraBlockLoad++;
+            } else
+                ASSERT(split.lastDefPoint);
+
+            // Need to store back into the original Tmp's spill slot only if the cluster def'ed the Tmp
+            if (split.lastDefPoint) {
+                unsigned instIndex = this->instIndex(positionOfHead, split.lastDefPoint);
+                m_insertionSets[block].insert(instIndex + 1, splitMoveTo, move, block->at(instIndex).origin, clusterTmp, Arg::stack(spilled));
+                m_stats[bank].numSplitIntraBlockStore++;
+            }
+        }
     }
 
     bool mayBeCoalescable(Inst& inst)
@@ -2112,7 +2525,8 @@ private:
                         return;
                     Reg reg = assignedReg(tmp);
                     if (!reg) {
-                        dataLogLn("Failed to allocate reg: BB", *block, " inst=", inst, " tmp=", tmp);
+                        dataLogLn("Failed to allocate register: BB", *block, " inst=", inst, " tmp=", tmp);
+                        dataLogLn("Reg Alloc State: ", *this);
                         RELEASE_ASSERT_NOT_REACHED();
                     }
                     tmp = Tmp(reg);
@@ -2136,6 +2550,7 @@ private:
     IndexMap<BasicBlock*, Point> m_blockToHeadPoint;
     Vector<Point> m_tailPoints;
     TmpMap<TmpData> m_map;
+    TmpMap<UseDefList> m_useDefLists;
     Vector<SplitMetadata> m_splitMetadata;
     IndexMap<Reg, RegisterRange> m_regRanges;
     PriorityQueue<TmpPriority, TmpPriority::isHigherPriority> m_queue;
@@ -2144,7 +2559,9 @@ private:
     UseCounts m_useCounts;
     TmpWidth m_tmpWidth;
     std::array<AirAllocateRegistersStats, numBanks> m_stats = { GP, FP };
-    bool m_didSpill { false };
+    std::array<bool, numBanks> m_didSpill { };
+    bool m_needsEmitSpillCode { false };
+    bool m_hasUseDefLists { false };
 };
 
 } // namespace JSC::B3::Air::Greedy

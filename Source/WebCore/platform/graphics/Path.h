@@ -137,7 +137,7 @@ private:
 WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, const Path&);
 
 inline Path::Path(PathSegment&& segment)
-    : m_data(WTFMove(segment))
+    : m_data(WTF::move(segment))
 {
 }
 

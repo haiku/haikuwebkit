@@ -103,7 +103,7 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-WTF_MAKE_PREFERABLY_COMPACT_TZONE_OR_ISO_ALLOCATED_IMPL(RenderObject);
+WTF_MAKE_PREFERABLY_COMPACT_TZONE_ALLOCATED_IMPL(RenderObject);
 WTF_MAKE_PREFERABLY_COMPACT_TZONE_ALLOCATED_IMPL(RenderObject::RenderObjectRareData);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderObject::CachedImageListener);
 
@@ -656,7 +656,7 @@ RenderElement* RenderObject::markContainingBlocksForLayout(RenderElement* layout
             simplifiedNormalFlowLayout = true;
 
         hasOutOfFlowPosition = ancestor->isOutOfFlowPositioned();
-        ancestor = WTFMove(container);
+        ancestor = WTF::move(container);
     }
     return { };
 }
@@ -704,7 +704,7 @@ void RenderObject::invalidateContainerPreferredLogicalWidths()
             // We can optimize this case and not go up any further.
             break;
         }
-        ancestor = WTFMove(container);
+        ancestor = WTF::move(container);
     }
 }
 
@@ -932,9 +932,9 @@ RenderObject::RepaintContainerStatus RenderObject::containerForRepaint() const
         // flow thread. Otherwise we will need to catch the repaint call and send it to the flow thread.
         CheckedPtr repaintContainerFragmentedFlow = repaintContainer ? repaintContainer->enclosingFragmentedFlow() : nullptr;
         if (!repaintContainerFragmentedFlow || repaintContainerFragmentedFlow != parentRenderFragmentedFlow)
-            repaintContainer = WTFMove(parentRenderFragmentedFlow);
+            repaintContainer = WTF::move(parentRenderFragmentedFlow);
     }
-    return { fullRepaintAlreadyScheduled, WTFMove(repaintContainer) };
+    return { fullRepaintAlreadyScheduled, WTF::move(repaintContainer) };
 }
 
 void RenderObject::propagateRepaintToParentWithOutlineAutoIfNeeded(const RenderLayerModelObject& repaintContainer, const LayoutRect& repaintRect) const
@@ -951,7 +951,7 @@ void RenderObject::propagateRepaintToParentWithOutlineAutoIfNeeded(const RenderL
             CheckedPtr enclosingMultiColumnFlow = previousMultiColumnSet->multiColumnFlow();
             CheckedPtr renderMultiColumnPlaceholder = enclosingMultiColumnFlow->findColumnSpannerPlaceholder(downcast<RenderBox>(*renderer));
             ASSERT(renderMultiColumnPlaceholder);
-            renderer = WTFMove(renderMultiColumnPlaceholder);
+            renderer = WTF::move(renderMultiColumnPlaceholder);
         }
 
         bool rendererHasOutlineAutoAncestor = renderer->hasOutlineAutoAncestor() || originalRenderer->hasOutlineAutoAncestor();
@@ -964,10 +964,10 @@ void RenderObject::propagateRepaintToParentWithOutlineAutoIfNeeded(const RenderL
             continue;
         // Issue repaint on the correct repaint container.
         LayoutRect adjustedRepaintRect = repaintRect;
-        adjustedRepaintRect.inflate(originalRenderer->outlineStyleForRepaint().outlineSize());
+        adjustedRepaintRect.inflate(originalRenderer->outlineStyleForRepaint().usedOutlineSize());
         if (!repaintRectNeedsConverting)
             repaintContainer.repaintRectangle(adjustedRepaintRect);
-        else if (CheckedPtr rendererWithOutline = dynamicDowncast<RenderLayerModelObject>(originalRenderer.get())) {
+        else if (CheckedPtr rendererWithOutline = dynamicDowncast<RenderLayerModelObject>(*originalRenderer)) {
             adjustedRepaintRect = LayoutRect(repaintContainer.localToContainerQuad(FloatRect(adjustedRepaintRect), rendererWithOutline.get()).boundingBox());
             rendererWithOutline->repaintRectangle(adjustedRepaintRect);
         }
@@ -1628,7 +1628,7 @@ LayoutSize RenderObject::offsetFromAncestorContainer(const RenderElement& contai
         LayoutSize currentOffset = currentContainer->offsetFromContainer(*nextContainer, referencePoint);
         offset += currentOffset;
         referencePoint.move(currentOffset);
-        currentContainer = WTFMove(nextContainer);
+        currentContainer = WTF::move(nextContainer);
     } while (currentContainer != &container);
 
     return offset;
@@ -1887,8 +1887,8 @@ void RenderObject::updateHitTestResult(HitTestResult& result, const LayoutPoint&
         result.setInnerNode(node.get());
         if (!result.innerNonSharedNode())
             result.setInnerNonSharedNode(node.get());
-        result.setLocalPoint(point);
         result.setPseudoElementIdentifier(style().pseudoElementIdentifier());
+        result.setLocalPoint(point);
     }
 }
 
@@ -1973,7 +1973,7 @@ PositionWithAffinity RenderObject::createPositionWithAffinity(int offset, Affini
             return PositionWithAffinity(firstPositionInOrBeforeNode(element.get()));
 
         // Repeat at the next level up.
-        child = WTFMove(parent);
+        child = WTF::move(parent);
     }
 
     // Everything was anonymous. Give up.
@@ -2064,6 +2064,12 @@ FloatRect RenderObject::repaintRectInLocalCoordinates(RepaintRectCalculation) co
 {
     ASSERT_NOT_REACHED();
     return FloatRect();
+}
+
+FloatRect RenderObject::decoratedBoundingBox() const
+{
+    ASSERT_NOT_REACHED();
+    return { };
 }
 
 AffineTransform RenderObject::localTransform() const
@@ -2247,7 +2253,7 @@ static Vector<FloatRect> borderAndTextRects(const SimpleRange& range, Coordinate
 
     HashSet<RefPtr<Element>> selectedElementsSet;
     for (Ref node : intersectingNodesWithDeprecatedZeroOffsetStartQuirk(range)) {
-        if (RefPtr element = dynamicDowncast<Element>(WTFMove(node)))
+        if (RefPtr element = dynamicDowncast<Element>(WTF::move(node)))
             selectedElementsSet.add(element.releaseNonNull());
     }
 
@@ -2537,7 +2543,7 @@ static void makeBidiSelectionVisuallyContiguousIfNeeded(const SelectionEndpointD
         // For a single line selection, simply merge the end into the start and remove other selection geometries on the same line.
         startGeometry->setQuad({ selectionStartTop, selectionEndTop, selectionEndBottom, selectionStartBottom });
         startGeometry->setContainsEnd(true);
-        geometries.append(WTFMove(*startGeometry));
+        geometries.append(WTF::move(*startGeometry));
         return;
     }
 
@@ -2563,7 +2569,7 @@ static void makeBidiSelectionVisuallyContiguousIfNeeded(const SelectionEndpointD
     startGeometry->setQuad(makeSelectionQuad(start, selectionBoundsOnFirstLine, directions.firstLine == TextDirection::LTR));
     endGeometry->setDirection(directions.lastLine);
     endGeometry->setQuad(makeSelectionQuad(end, selectionBoundsOnLastLine, directions.lastLine == TextDirection::RTL));
-    geometries.appendList({ WTFMove(*startGeometry), WTFMove(*endGeometry) });
+    geometries.appendList({ WTF::move(*startGeometry), WTF::move(*endGeometry) });
 }
 
 static void adjustTextDirectionForCoalescedGeometries(const SelectionEndpointDirections& directions, const SimpleRange& range, Vector<SelectionGeometry>& geometries)
@@ -2651,7 +2657,7 @@ auto RenderObject::collectSelectionGeometriesInternal(const SimpleRange& range) 
             continue;
 
         if (auto layerID = primaryLayerID(*renderer))
-            intersectingLayerIDs.append(WTFMove(*layerID));
+            intersectingLayerIDs.append(WTF::move(*layerID));
 
         if (!separateFromPreviousLine)
             separateFromPreviousLine = shouldRenderSelectionOnSeparateLine(renderer.get()) || shouldRenderPreviousSelectionOnSeparateLine(previousRenderer.get(), renderer->previousSibling());
@@ -2821,7 +2827,7 @@ auto RenderObject::collectSelectionGeometriesInternal(const SimpleRange& range) 
             selectionGeometry.setLogicalWidth(selectionGeometry.maxX() - selectionGeometry.logicalLeft());
     }
 
-    return { WTFMove(geometries), maxLineNumber, hasRightToLeftText && hasLeftToRightText, WTFMove(intersectingLayerIDs) };
+    return { WTF::move(geometries), maxLineNumber, hasRightToLeftText && hasLeftToRightText, WTF::move(intersectingLayerIDs) };
 }
 
 static bool coalesceSelectionGeometryWithAdjacentQuadsIfPossible(SelectionGeometry& current, const SelectionGeometry& next)
@@ -2945,7 +2951,7 @@ auto RenderObject::collectSelectionGeometries(const SimpleRange& range) -> Selec
         adjustTextDirectionForCoalescedGeometries(directions, range, coalescedGeometries);
     }
 
-    return { WTFMove(coalescedGeometries), WTFMove(intersectingLayerIDs) };
+    return { WTF::move(coalescedGeometries), WTF::move(intersectingLayerIDs) };
 }
 
 #endif

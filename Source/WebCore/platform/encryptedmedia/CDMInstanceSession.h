@@ -30,6 +30,7 @@
 #include <WebCore/CDMKeyStatus.h>
 #include <WebCore/CDMMessageType.h>
 #include <WebCore/CDMSessionType.h>
+#include <WebCore/CDMTypesForward.h>
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Vector.h>
@@ -59,7 +60,7 @@ public:
     virtual ~CDMInstanceSessionClient() = default;
 
     using KeyStatus = CDMKeyStatus;
-    using KeyStatusVector = Vector<std::pair<Ref<SharedBuffer>, KeyStatus>>;
+    using KeyStatusVector = Vector<std::pair<CDMKeyID, KeyStatus>>;
     virtual void updateKeyStatuses(KeyStatusVector&&) = 0;
     virtual void sendMessage(CDMMessageType, Ref<SharedBuffer>&& message) = 0;
     virtual void sessionIdChanged(const String&) = 0;

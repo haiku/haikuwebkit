@@ -37,6 +37,7 @@
 namespace WebCore {
 
 class Document;
+class Settings;
 
 struct CSSParserContext {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(CSSParserContext);
@@ -88,6 +89,7 @@ struct CSSParserContext {
     bool cssTextTransformMathAutoEnabled : 1 { false };
     bool cssInternalAutoBaseParsingEnabled : 1 { false };
     bool webkitMediaTextTrackDisplayQuirkEnabled : 1 { false };
+    bool cssMathDepthEnabled : 1 { false };
 
     // Settings, those affecting properties.
     CSSPropertySettings propertySettings;
@@ -95,6 +97,7 @@ struct CSSParserContext {
     CSSParserContext(CSSParserMode, const URL& baseURL = URL());
     WEBCORE_EXPORT CSSParserContext(const Document&);
     CSSParserContext(const Document&, const URL& baseURL, ASCIILiteral charset = ""_s);
+    CSSParserContext(const Settings&);
 
     void setUASheetMode();
 

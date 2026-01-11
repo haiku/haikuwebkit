@@ -38,7 +38,7 @@ static ExceptionOr<Vector<uint8_t>> wrapKeyAESKWCryptoKit(const Vector<uint8_t>&
     auto rv = PAL::AesKw::wrap(data.span(), key.span());
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return Exception { ExceptionCode::OperationError };
-    return WTFMove(rv.result);
+    return WTF::move(rv.result);
 #else
     UNUSED_PARAM(key);
     UNUSED_PARAM(data);
@@ -52,7 +52,7 @@ static ExceptionOr<Vector<uint8_t>> unwrapKeyAESKWCryptoKit(const Vector<uint8_t
     auto rv = PAL::AesKw::unwrap(data.span(), key.span());
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return Exception { ExceptionCode::OperationError };
-    return WTFMove(rv.result);
+    return WTF::move(rv.result);
 #else
     UNUSED_PARAM(key);
     UNUSED_PARAM(data);

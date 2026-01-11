@@ -112,11 +112,11 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebGLRenderingContext);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebGLRenderingContext);
 
 std::unique_ptr<WebGLRenderingContext> WebGLRenderingContext::create(CanvasBase& canvas, WebGLContextAttributes&& attributes)
 {
-    return std::unique_ptr<WebGLRenderingContext>(new WebGLRenderingContext(canvas, Type::WebGL1, WTFMove(attributes)));
+    return std::unique_ptr<WebGLRenderingContext>(new WebGLRenderingContext(canvas, Type::WebGL1, WTF::move(attributes)));
 }
 
 WebGLRenderingContext::~WebGLRenderingContext()
@@ -294,8 +294,8 @@ WebGLAny WebGLRenderingContext::getFramebufferAttachmentParameter(GCGLenum targe
         return static_cast<unsigned>(GraphicsContextGL::RENDERBUFFER);
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME:
         if (isTexture)
-            return std::get<RefPtr<WebGLTexture>>(WTFMove(*object));
-        return std::get<RefPtr<WebGLRenderbuffer>>(WTFMove(*object));
+            return std::get<RefPtr<WebGLTexture>>(WTF::move(*object));
+        return std::get<RefPtr<WebGLRenderbuffer>>(WTF::move(*object));
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL:
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE:
         if (!isTexture)

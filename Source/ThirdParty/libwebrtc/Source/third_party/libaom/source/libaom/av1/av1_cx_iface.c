@@ -3560,6 +3560,15 @@ static aom_codec_err_t encoder_encode(aom_codec_alg_priv_t *ctx,
 
 #endif  // CONFIG_FPMT_TEST
       if (!simulate_parallel_frame) {
+        // Add a range check here to give an error for frame_parallel_level
+        // array out-of-bounds access.
+        if (cpi->gf_frame_index >= MAX_STATIC_GF_GROUP_LENGTH) {
+          aom_internal_error(&ppi->error, AOM_CODEC_ERROR,
+                             "cpi->gf_frame_index is out of range");
+        }
+
+        // May need a better way for checking the frame's frame_parallel_level,
+        // especially for the first frame of the following gop.
         if (ppi->gf_group.frame_parallel_level[cpi->gf_frame_index] == 0) {
           status = av1_get_compressed_data(cpi, &cpi_data);
         } else if (ppi->gf_group.frame_parallel_level[cpi->gf_frame_index] ==

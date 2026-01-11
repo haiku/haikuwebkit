@@ -207,9 +207,9 @@ void WebExtensionAPICookies::get(NSDictionary *details, Ref<WebExtensionCallback
     if (!parsedDetails)
         return;
 
-    auto [sessionID, name, url] = WTFMove(parsedDetails.value());
+    auto [sessionID, name, url] = WTF::move(parsedDetails.value());
 
-    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesGet(sessionID, name, url), [protectedThis = Ref { *this }, callback = WTFMove(callback)](Expected<std::optional<WebExtensionCookieParameters>, WebExtensionError>&& result) {
+    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesGet(sessionID, name, url), [protectedThis = Ref { *this }, callback = WTF::move(callback)](Expected<std::optional<WebExtensionCookieParameters>, WebExtensionError>&& result) {
         if (!result) {
             callback->reportError(result.error().createNSString().get());
             return;
@@ -242,7 +242,7 @@ void WebExtensionAPICookies::getAll(NSDictionary *details, Ref<WebExtensionCallb
     if (!parsedDetails)
         return;
 
-    auto [sessionID, name, url] = WTFMove(parsedDetails.value());
+    auto [sessionID, name, url] = WTF::move(parsedDetails.value());
 
     static NSDictionary<NSString *, id> *types = @{
         domainKey: NSString.class,
@@ -271,7 +271,7 @@ void WebExtensionAPICookies::getAll(NSDictionary *details, Ref<WebExtensionCallb
     if (details[sessionKey])
         filterParameters.session = objectForKey<NSNumber>(details, sessionKey).boolValue;
 
-    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesGetAll(sessionID, url, WTFMove(filterParameters)), [protectedThis = Ref { *this }, callback = WTFMove(callback)](Expected<Vector<WebExtensionCookieParameters>, WebExtensionError>&& result) {
+    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesGetAll(sessionID, url, WTF::move(filterParameters)), [protectedThis = Ref { *this }, callback = WTF::move(callback)](Expected<Vector<WebExtensionCookieParameters>, WebExtensionError>&& result) {
         if (!result) {
             callback->reportError(result.error().createNSString().get());
             return;
@@ -289,7 +289,7 @@ void WebExtensionAPICookies::set(NSDictionary *details, Ref<WebExtensionCallback
     if (!parsedDetails)
         return;
 
-    auto [sessionID, name, url] = WTFMove(parsedDetails.value());
+    auto [sessionID, name, url] = WTF::move(parsedDetails.value());
 
     static NSDictionary<NSString *, id> *types = @{
         domainKey: NSString.class,
@@ -335,7 +335,7 @@ void WebExtensionAPICookies::set(NSDictionary *details, Ref<WebExtensionCallback
         }
     }
 
-    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesSet(sessionID, cookieParameters), [protectedThis = Ref { *this }, callback = WTFMove(callback)](Expected<std::optional<WebExtensionCookieParameters>, WebExtensionError>&& result) {
+    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesSet(sessionID, cookieParameters), [protectedThis = Ref { *this }, callback = WTF::move(callback)](Expected<std::optional<WebExtensionCookieParameters>, WebExtensionError>&& result) {
         if (!result) {
             callback->reportError(result.error().createNSString().get());
             return;
@@ -353,9 +353,9 @@ void WebExtensionAPICookies::remove(NSDictionary *details, Ref<WebExtensionCallb
     if (!parsedDetails)
         return;
 
-    auto [sessionID, name, url] = WTFMove(parsedDetails.value());
+    auto [sessionID, name, url] = WTF::move(parsedDetails.value());
 
-    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesRemove(sessionID, name, url), [protectedThis = Ref { *this }, callback = WTFMove(callback)](Expected<std::optional<WebExtensionCookieParameters>, WebExtensionError>&& result) {
+    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesRemove(sessionID, name, url), [protectedThis = Ref { *this }, callback = WTF::move(callback)](Expected<std::optional<WebExtensionCookieParameters>, WebExtensionError>&& result) {
         if (!result) {
             callback->reportError(result.error().createNSString().get());
             return;
@@ -369,7 +369,7 @@ void WebExtensionAPICookies::getAllCookieStores(Ref<WebExtensionCallbackHandler>
 {
     // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/cookies/getAllCookieStores
 
-    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesGetAllCookieStores(), [protectedThis = Ref { *this }, callback = WTFMove(callback)](Expected<HashMap<PAL::SessionID, Vector<WebExtensionTabIdentifier>>, WebExtensionError>&& result) {
+    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::CookiesGetAllCookieStores(), [protectedThis = Ref { *this }, callback = WTF::move(callback)](Expected<HashMap<PAL::SessionID, Vector<WebExtensionTabIdentifier>>, WebExtensionError>&& result) {
         if (!result) {
             callback->reportError(result.error().createNSString().get());
             return;

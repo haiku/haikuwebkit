@@ -795,9 +795,9 @@ RetainPtr<WebView> createWebViewAndOffscreenWindow()
 #else
     // Initialize the global UIViews, and set the key UIWindow to be painted.
     if (!gWebBrowserView) {
-        gWebBrowserView = WTFMove(webBrowserView);
-        gWebScrollView = WTFMove(scrollView);
-        gDrtWindow = WTFMove(drtWindow);
+        gWebBrowserView = WTF::move(webBrowserView);
+        gWebScrollView = WTF::move(scrollView);
+        gDrtWindow = WTF::move(drtWindow);
         [uiWindow makeKeyAndVisible];
         [uiWindow retain];
     }
@@ -1421,7 +1421,7 @@ static RetainPtr<NSString> dumpFramesAsText(WebFrame *frame)
     // a CFString via fromUTF8WithLatin1Fallback().createCFString() which can be appended to
     // the result without any conversion.
     if (auto utf8Result = WTF::String(innerText).tryGetUTF8()) {
-        auto string = WTFMove(utf8Result.value());
+        auto string = WTF::move(utf8Result.value());
         [result appendFormat:@"%@\n", String::fromUTF8WithLatin1Fallback(string.span()).createCFString().get()];
     } else
         [result appendString:@"\n"];
@@ -1581,7 +1581,7 @@ void setWaitToDumpWatchdog(RetainPtr<CFRunLoopTimerRef>&& timer)
 {
     ASSERT(timer);
     ASSERT(shouldSetWaitToDumpWatchdog());
-    waitToDumpWatchdog = WTFMove(timer);
+    waitToDumpWatchdog = WTF::move(timer);
     CFRunLoopAddTimer(CFRunLoopGetCurrent(), waitToDumpWatchdog.get(), kCFRunLoopCommonModes);
 }
 
@@ -1890,7 +1890,7 @@ static WTR::TestOptions testOptionsForTest(const WTR::TestCommand& command)
     WTR::merge(features, WTR::hardcodedFeaturesBasedOnPathForTest(command));
     WTR::merge(features, WTR::featureDefaultsFromTestHeaderForTest(command, WTR::TestOptions::keyTypeMapping()));
 
-    return WTR::TestOptions { WTFMove(features) };
+    return WTR::TestOptions { WTF::move(features) };
 }
 
 static void runTest(const std::string& inputLine)
@@ -2008,6 +2008,7 @@ static void runTest(const std::string& inputLine)
 
     lastMousePosition = NSZeroPoint;
     lastClickPosition = NSZeroPoint;
+    lastButtonDown = 0;
 
     prevTestBFItem() = [[[mainFrame webView] backForwardList] currentItem];
 

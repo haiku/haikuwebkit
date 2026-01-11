@@ -139,7 +139,7 @@ static void resizeScene(UIWindowScene *scene, CGSize size, BOOL useDefaultSceneG
         if (updateSceneGeometryEnabled)
             [scene setUsesDefaultGeometry:useDefaultSceneGeometry];
 #endif
-        [scene mrui_requestResizeToSize:size options:nil completion:makeBlockPtr([completionHandler = WTFMove(completionHandler)](CGSize sizeReceived, NSError *error) mutable {
+        [scene mrui_requestResizeToSize:size options:nil completion:makeBlockPtr([completionHandler = WTF::move(completionHandler)](CGSize sizeReceived, NSError *error) mutable {
             completionHandler();
         }).get()];
     } completion:nil];
@@ -964,7 +964,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _fullScreenState = WebKit::WaitingToEnterFullScreen;
 
     WeakObjCPtr<WKFullScreenWindowController> weakSelf { self };
-    page->fullscreenClient().requestPresentingViewController([logIdentifier = OBJC_LOGIDENTIFIER, self, weakSelf = WTFMove(weakSelf), mediaDimensions, completionHandler = WTFMove(completionHandler)] (UIViewController *viewController, NSError *error) mutable {
+    page->fullscreenClient().requestPresentingViewController([logIdentifier = OBJC_LOGIDENTIFIER, self, weakSelf = WTF::move(weakSelf), mediaDimensions, completionHandler = WTF::move(completionHandler)] (UIViewController *viewController, NSError *error) mutable {
         RetainPtr strongSelf = weakSelf.get();
         if (!strongSelf)
             return completionHandler(false);
@@ -996,7 +996,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             return completionHandler(false);
         }
 
-        [self _enterFullScreen:mediaDimensions windowScene:windowScene completionHandler:WTFMove(completionHandler)];
+        [self _enterFullScreen:mediaDimensions windowScene:windowScene completionHandler:WTF::move(completionHandler)];
     });
 }
 
@@ -1052,7 +1052,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
         OBJC_ALWAYS_LOG(OBJC_LOGIDENTIFIER, "(QL) presentation updated");
 
-        manager->prepareQuickLookImageURL([strongSelf = retainPtr(self), self, window = retainPtr([webView window]), completionHandler = WTFMove(completionHandler), logIdentifier = OBJC_LOGIDENTIFIER] (URL&& url) mutable {
+        manager->prepareQuickLookImageURL([strongSelf = retainPtr(self), self, window = retainPtr([webView window]), completionHandler = WTF::move(completionHandler), logIdentifier = OBJC_LOGIDENTIFIER] (URL&& url) mutable {
             UIWindowScene *scene = [window windowScene];
             _previewWindowController = adoptNS([WebKit::allocWKPreviewWindowControllerInstance() initWithURL:url.createNSURL().get() sceneID:scene._sceneIdentifier]);
             [_previewWindowController setDelegate:self];
@@ -1155,7 +1155,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     WKSnapshotConfiguration* config = nil;
     auto logIdentifier = OBJC_LOGIDENTIFIER;
-    [webView takeSnapshotWithConfiguration:config completionHandler:makeBlockPtr([self, protectedSelf = RetainPtr { self }, logIdentifier, completionHandler = WTFMove(completionHandler)] (UIImage * snapshotImage, NSError * error) mutable {
+    [webView takeSnapshotWithConfiguration:config completionHandler:makeBlockPtr([self, protectedSelf = RetainPtr { self }, logIdentifier, completionHandler = WTF::move(completionHandler)] (UIImage * snapshotImage, NSError * error) mutable {
         RetainPtr<WKWebView> webView = self._webView;
         auto page = [self._webView _page];
         if (!page)
@@ -1187,7 +1187,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         if (auto* manager = self._manager)
             manager->setAnimatingFullScreen(true);
 
-        page->updateRenderingWithForcedRepaint([protectedSelf, self, logIdentifier = logIdentifier, completionHandler = WTFMove(completionHandler)] mutable {
+        page->updateRenderingWithForcedRepaint([protectedSelf, self, logIdentifier = logIdentifier, completionHandler = WTF::move(completionHandler)] mutable {
             if (_exitRequested) {
                 _exitRequested = NO;
                 OBJC_ERROR_LOG(logIdentifier, "repaint completed, but exit requested");
@@ -1202,7 +1202,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
                 return completionHandler(false);
             }
 
-            [self._webView _doAfterNextVisibleContentRectAndPresentationUpdate:makeBlockPtr([self, protectedSelf, logIdentifier, completionHandler = WTFMove(completionHandler)] mutable {
+            [self._webView _doAfterNextVisibleContentRectAndPresentationUpdate:makeBlockPtr([self, protectedSelf, logIdentifier, completionHandler = WTF::move(completionHandler)] mutable {
                 OBJC_ALWAYS_LOG(logIdentifier, "presentation updated");
                 WebKit::WKWebViewState().applyTo(self._webView);
                 return completionHandler(true);
@@ -1267,7 +1267,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     }
 #endif
 
-    [_rootViewController presentViewController:_fullscreenViewController.get() animated:shouldAnimateEnterFullscreenTransition completion:makeBlockPtr([self, weakSelf = WeakObjCPtr { self }, completionHandler = WTFMove(completionHandler), logIdentifier = OBJC_LOGIDENTIFIER] mutable {
+    [_rootViewController presentViewController:_fullscreenViewController.get() animated:shouldAnimateEnterFullscreenTransition completion:makeBlockPtr([self, weakSelf = WeakObjCPtr { self }, completionHandler = WTF::move(completionHandler), logIdentifier = OBJC_LOGIDENTIFIER] mutable {
         RetainPtr strongSelf = weakSelf.get();
         if (!strongSelf)
             return completionHandler(false);
@@ -1303,7 +1303,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
                     // We may have lost key status during the transition into fullscreen
                     [protectedSelf->_window makeKeyAndVisible];
                 };
-                [self _performSpatialFullScreenTransition:YES completionHandler:WTFMove(completionHandler)];
+                [self _performSpatialFullScreenTransition:YES completionHandler:WTF::move(completionHandler)];
             }
 #endif
 
@@ -1357,7 +1357,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     if (auto* manager = self._manager) {
         OBJC_ALWAYS_LOG(OBJC_LOGIDENTIFIER);
-        manager->requestRestoreFullScreen(WTFMove(completionHandler));
+        manager->requestRestoreFullScreen(WTF::move(completionHandler));
         return;
     }
 
@@ -1475,7 +1475,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     }
 #endif
 
-    [self _dismissFullscreenViewController:WTFMove(completionHandler)];
+    [self _dismissFullscreenViewController:WTF::move(completionHandler)];
 }
 
 - (void)_reinsertWebViewUnderPlaceholder
@@ -1572,7 +1572,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     auto* page = [self._webView _page].get();
     if (page && page->isViewFocused())
-        page->updateRenderingWithForcedRepaint(WTFMove(completionHandlerAfterRenderingUpdateIfFocused));
+        page->updateRenderingWithForcedRepaint(WTF::move(completionHandlerAfterRenderingUpdateIfFocused));
     else
         completionHandlerAfterRenderingUpdateIfFocused();
 
@@ -1644,7 +1644,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
                             videoPresentationInterface->failedToRestoreFullscreen();
                     };
 
-                    [self requestRestoreFullScreen:WTFMove(completion)];
+                    [self requestRestoreFullScreen:WTF::move(completion)];
                 }
             } else
                 _enterRequested = YES;
@@ -1774,7 +1774,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (WebKit::useSpatialFullScreenTransition()) {
         [UIView performWithoutAnimation:^{
             CompletionHandler<void()> completionHandler = []() { };
-            [self _performSpatialFullScreenTransition:NO completionHandler:WTFMove(completionHandler)];
+            [self _performSpatialFullScreenTransition:NO completionHandler:WTF::move(completionHandler)];
         }];
     }
 #endif
@@ -1913,7 +1913,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     if (!_fullscreenViewController) {
         OBJC_ERROR_LOG(OBJC_LOGIDENTIFIER, "no fullscreenViewController");
-        [self _completedExitFullScreen:WTFMove(completionHandler)];
+        [self _completedExitFullScreen:WTF::move(completionHandler)];
         return;
     }
     OBJC_ALWAYS_LOG(OBJC_LOGIDENTIFIER);
@@ -1922,15 +1922,15 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (WebKit::useSpatialFullScreenTransition()) {
         [self _configureSpatialFullScreenTransition];
 
-        [self _performSpatialFullScreenTransition:NO completionHandler:[self, strongSelf = retainPtr(self), completionHandler = WTFMove(completionHandler)] mutable {
-            [self _completedExitFullScreen:WTFMove(completionHandler)];
+        [self _performSpatialFullScreenTransition:NO completionHandler:[self, strongSelf = retainPtr(self), completionHandler = WTF::move(completionHandler)] mutable {
+            [self _completedExitFullScreen:WTF::move(completionHandler)];
         }];
         return;
     }
 #endif // PLATFORM(VISION)
 
     [_fullscreenViewController setAnimating:YES];
-    [_fullscreenViewController dismissViewControllerAnimated:YES completion:makeBlockPtr([self, weakSelf = WeakObjCPtr { self }, completionHandler = WTFMove(completionHandler), logIdentifier = OBJC_LOGIDENTIFIER] mutable {
+    [_fullscreenViewController dismissViewControllerAnimated:YES completion:makeBlockPtr([self, weakSelf = WeakObjCPtr { self }, completionHandler = WTF::move(completionHandler), logIdentifier = OBJC_LOGIDENTIFIER] mutable {
         RetainPtr strongSelf = weakSelf.get();
         if (!strongSelf || ![strongSelf.get()._webView _page])
             return completionHandler();
@@ -1940,11 +1940,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         if (_interactiveDismissTransitionCoordinator.get().animator.context.transitionWasCancelled)
             [_fullscreenViewController setAnimating:NO];
         else
-            [strongSelf _completedExitFullScreen:WTFMove(completionHandler)];
+            [strongSelf _completedExitFullScreen:WTF::move(completionHandler)];
 
         _interactiveDismissTransitionCoordinator = nil;
 #else
-        [strongSelf _completedExitFullScreen:WTFMove(completionHandler)];
+        [strongSelf _completedExitFullScreen:WTF::move(completionHandler)];
 #endif
     }).get()];
 }
@@ -2167,8 +2167,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         allowSceneGeometryUpdates = page->preferences().updateSceneGeometryEnabled();
 #endif
 
-    auto completion = makeBlockPtr([controller = retainPtr(controller), inWindow = retainPtr(inWindow), originalState = retainPtr(originalState), enter, allowSceneGeometryUpdates, completionHandler = WTFMove(completionHandler)] (BOOL finished) mutable {
-        WebKit::resizeScene([inWindow windowScene], [inWindow bounds].size, !enter, allowSceneGeometryUpdates, [controller, inWindow, originalState, enter, completionHandler = WTFMove(completionHandler)] mutable {
+    auto completion = makeBlockPtr([controller = retainPtr(controller), inWindow = retainPtr(inWindow), originalState = retainPtr(originalState), enter, allowSceneGeometryUpdates, completionHandler = WTF::move(completionHandler)] (BOOL finished) mutable {
+        WebKit::resizeScene([inWindow windowScene], [inWindow bounds].size, !enter, allowSceneGeometryUpdates, [controller, inWindow, originalState, enter, completionHandler = WTF::move(completionHandler)] mutable {
             Class inWindowClass = enter ? [UIWindow class] : [originalState windowClass];
             object_setClass(inWindow.get(), inWindowClass);
 

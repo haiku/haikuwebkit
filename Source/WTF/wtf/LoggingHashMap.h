@@ -29,6 +29,7 @@
 #include <wtf/HashMap.h>
 #include <wtf/LoggingHashID.h>
 #include <wtf/LoggingHashTraits.h>
+#include <wtf/StringPrintStream.h>
 
 namespace WTF {
 
@@ -76,7 +77,7 @@ public:
     LoggingHashMap(LoggingHashMap&& other)
         : m_map(other.m_map)
     {
-        dataLog("auto* ", m_id, " = new HashMap(WTFMove(*", other.m_id, "));");
+        dataLog("auto* ", m_id, " = new HashMap(WTF::move(*", other.m_id, "));");
     }
     
     LoggingHashMap& operator=(const LoggingHashMap& other)
@@ -87,8 +88,8 @@ public:
     
     LoggingHashMap& operator=(LoggingHashMap&& other)
     {
-        dataLog("*", m_id, " = WTFMove(*", other.m_id, ");\n");
-        m_map = WTFMove(other.m_map);
+        dataLog("*", m_id, " = WTF::move(*", other.m_id, ");\n");
+        m_map = WTF::move(other.m_map);
     }
     
     void swap(LoggingHashMap& other)
@@ -189,7 +190,7 @@ public:
         LoggingValueTraits::print(string, passedValue);
         string.print(");\n");
         dataLog(string.toCString());
-        return set(WTFMove(key), std::forward<PassedType>(passedValue));
+        return set(WTF::move(key), std::forward<PassedType>(passedValue));
     }
     
     template<typename PassedType>
@@ -215,7 +216,7 @@ public:
         LoggingValueTraits::print(string, passedValue);
         string.print(");\n");
         dataLog(string.toCString());
-        return add(WTFMove(key), std::forward<PassedType>(passedValue));
+        return add(WTF::move(key), std::forward<PassedType>(passedValue));
     }
     
     template<typename PassedType>
@@ -227,7 +228,7 @@ public:
     template<typename PassedType>
     AddResult fastAdd(KeyType&& key, PassedType&& passedValue) LIFETIME_BOUND
     {
-        return add(WTFMove(key), std::forward<PassedType>(passedValue));
+        return add(WTF::move(key), std::forward<PassedType>(passedValue));
     }
     
     template<typename Func>
@@ -264,7 +265,7 @@ public:
         string.print("[] () { return ");
         bool didCallFunctor = false;
         auto result = m_map.ensure(
-            WTFMove(key),
+            WTF::move(key),
             [&] () {
                 didCallFunctor = true;
                 auto result = func();

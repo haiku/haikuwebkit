@@ -124,7 +124,7 @@ JSGenericTypedArrayView<Adaptor>* JSGenericTypedArrayView<Adaptor>::create(JSGlo
         return nullptr;
     }
 
-    ConstructionContext context(vm, structure, WTFMove(buffer), byteOffset, length);
+    ConstructionContext context(vm, structure, WTF::move(buffer), byteOffset, length);
     ASSERT(context);
     JSGenericTypedArrayView* result =
         new (NotNull, allocateCell<JSGenericTypedArrayView>(vm))
@@ -154,13 +154,13 @@ JSGenericTypedArrayView<Adaptor>* JSGenericTypedArrayView<Adaptor>::tryCreate(JS
         throwTypeError(globalObject, scope, typedArrayBufferHasBeenDetachedErrorMessage);
         return nullptr;
     }
-    return create(vm, structure, WTFMove(impl));
+    return create(vm, structure, WTF::move(impl));
 }
 
 template<typename Adaptor>
 JSGenericTypedArrayView<Adaptor>* JSGenericTypedArrayView<Adaptor>::create(Structure* structure, JSGlobalObject* globalObject, RefPtr<typename Adaptor::ViewType>&& impl)
 {
-    return create(globalObject->vm(), structure, WTFMove(impl));
+    return create(globalObject->vm(), structure, WTF::move(impl));
 }
 
 template<typename Adaptor>

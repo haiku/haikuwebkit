@@ -35,13 +35,28 @@ namespace WTF {
 #define CHECK_REF_COUNTED_LIFECYCLE 0
 #endif
 
-// This base class holds debugging code, to share among refcounting subclasses.
+enum class RefCountIsThreadSafe : bool { No, Yes };
+
+// This class holds debugging code to share among refcounting classes.
 class RefCountDebugger {
 public:
-    enum class RefCountIsThreadSafe : bool { No, Yes };
-
     WTF_EXPORT_PRIVATE static void logRefDuringDestruction(const void*);
     WTF_EXPORT_PRIVATE static void printRefDuringDestructionLogAndCrash (const void*) NO_RETURN_DUE_TO_CRASH;
+
+    RefCountDebugger()
+#if ASSERT_ENABLED
+        : m_isOwnedByMainThread(isMainThread())
+#endif
+    {
+    }
+
+    ~RefCountDebugger()
+    {
+#if CHECK_REF_COUNTED_LIFECYCLE
+        ASSERT(m_deletionHasBegun);
+        ASSERT(!m_adoptionIsRequired);
+#endif
+    }
 
     void willRef(unsigned refCount, RefCountIsThreadSafe isThreadSafe = RefCountIsThreadSafe::No) const
     {
@@ -50,6 +65,13 @@ public:
 
 #if CHECK_REF_COUNTED_LIFECYCLE
         ASSERT(!m_adoptionIsRequired);
+#endif
+    }
+
+    void adopted()
+    {
+#if CHECK_REF_COUNTED_LIFECYCLE
+        m_adoptionIsRequired = false;
 #endif
     }
 
@@ -75,14 +97,6 @@ public:
 #if ASSERT_ENABLED
         areThreadingChecksEnabledGlobally = true;
 #endif
-    }
-
-protected:
-    RefCountDebugger()
-#if ASSERT_ENABLED
-        : m_isOwnedByMainThread(isMainThread())
-#endif
-    {
     }
 
     void applyRefDuringDestructionCheck() const
@@ -113,14 +127,6 @@ protected:
             // that call deref, or ref/deref from a single thread.
             ASSERT_WITH_MESSAGE(m_isOwnedByMainThread == isMainThread(), "Unsafe to ref/deref from different threads");
         }
-#endif
-    }
-
-    ~RefCountDebugger()
-    {
-#if CHECK_REF_COUNTED_LIFECYCLE
-        ASSERT(m_deletionHasBegun);
-        ASSERT(!m_adoptionIsRequired);
 #endif
     }
 
@@ -161,10 +167,6 @@ protected:
 
 private:
 
-#if CHECK_REF_COUNTED_LIFECYCLE
-    friend void adopted(RefCountDebugger*);
-#endif
-
 #if ASSERT_ENABLED
     mutable bool m_isOwnedByMainThread;
     bool m_areThreadingChecksEnabled { true };
@@ -175,14 +177,5 @@ private:
     mutable bool m_adoptionIsRequired { true };
 #endif
 };
-
-#if CHECK_REF_COUNTED_LIFECYCLE
-inline void adopted(RefCountDebugger* object)
-{
-    if (!object)
-        return;
-    object->m_adoptionIsRequired = false;
-}
-#endif
 
 } // namespace WTF

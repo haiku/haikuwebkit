@@ -43,6 +43,10 @@
 #include "EventRegion.h"
 #include "GraphicsContext.h"
 #include "GraphicsLayer.h"
+#include "GraphicsLayerFilterAnimationValue.h"
+#include "GraphicsLayerFloatAnimationValue.h"
+#include "GraphicsLayerKeyframeValueList.h"
+#include "GraphicsLayerTransformAnimationValue.h"
 #include "HTMLBodyElement.h"
 #include "HTMLCanvasElement.h"
 #include "HTMLModelElement.h"
@@ -88,6 +92,7 @@
 #include "ScrollingCoordinator.h"
 #include "Settings.h"
 #include "StyleResolver.h"
+#include "StyleTransformResolver.h"
 #include "Styleable.h"
 #include "TiledBacking.h"
 #include "ViewTransition.h"
@@ -374,20 +379,20 @@ void RenderLayerBacking::willDestroyLayer(const GraphicsLayer* layer)
         compositor().layerTiledBackingUsageChanged(layer, false);
 }
 
-static void clearBackingSharingLayerProviders(SingleThreadWeakListHashSet<RenderLayer>& sharingLayers, const RenderLayer& providerLayer, OptionSet<UpdateBackingSharingFlags> flags)
+static void clearBackingSharingLayerProviders(InlineWeakKeyListHashSet<RenderLayer>& sharingLayers, const RenderLayer& providerLayer, OptionSet<UpdateBackingSharingFlags> flags)
 {
-    for (auto& layer : sharingLayers) {
+    for (auto& layer : sharingLayers | dereferenceView) {
         if (layer.backingProviderLayer() == &providerLayer)
             layer.setBackingProviderLayer(nullptr, flags);
     }
 }
 
-void RenderLayerBacking::setBackingSharingLayers(SingleThreadWeakListHashSet<RenderLayer>&& sharingLayers)
+void RenderLayerBacking::setBackingSharingLayers(InlineWeakKeyListHashSet<RenderLayer>&& sharingLayers)
 {
     bool sharingLayersChanged = m_backingSharingLayers.computeSize() != sharingLayers.computeSize();
     clearBackingSharingLayerProviders(m_backingSharingLayers, m_owningLayer, { UpdateBackingSharingFlags::DuringCompositingUpdate });
 
-    for (auto& oldSharingLayer : m_backingSharingLayers) {
+    for (auto& oldSharingLayer : m_backingSharingLayers | dereferenceView) {
         if (!sharingLayers.contains(oldSharingLayer))
             sharingLayersChanged = true;
     }
@@ -397,9 +402,9 @@ void RenderLayerBacking::setBackingSharingLayers(SingleThreadWeakListHashSet<Ren
             setRequiresOwnBackingStore(true);
     }
 
-    auto oldSharingLayers = std::exchange(m_backingSharingLayers, WTFMove(sharingLayers));
+    auto oldSharingLayers = std::exchange(m_backingSharingLayers, WTF::move(sharingLayers));
 
-    for (auto& layer : m_backingSharingLayers)
+    for (auto& layer : m_backingSharingLayers | dereferenceView)
         layer.setBackingProviderLayer(&m_owningLayer, { UpdateBackingSharingFlags::DuringCompositingUpdate });
 }
 
@@ -734,7 +739,7 @@ void RenderLayerBacking::updateTransform(const RenderStyle& style)
             }
         }
     } else if (m_owningLayer.isTransformed())
-        m_owningLayer.updateTransformFromStyle(t, style, RenderStyle::individualTransformOperations());
+        m_owningLayer.updateTransformFromStyle(t, style, Style::TransformResolver::individualTransformOperations);
     
     if (m_contentsContainmentLayer) {
         m_contentsContainmentLayer->setTransform(t);
@@ -1053,7 +1058,7 @@ bool RenderLayerBacking::updateCompositedBounds()
 
     // If the backing provider has overflow:clip, we know all sharing layers are affected by the clip because they are containing-block descendants.
     if (!renderer().hasNonVisibleOverflow()) {
-        for (auto& layer : m_backingSharingLayers) {
+        for (auto& layer : m_backingSharingLayers | dereferenceView) {
             auto* boundsRootLayer = &m_owningLayer;
             ASSERT(layer.isDescendantOf(m_owningLayer));
             auto offset = layer.offsetFromAncestor(&m_owningLayer);
@@ -2147,7 +2152,7 @@ void RenderLayerBacking::updateEventRegion()
 #if ENABLE(INTERACTION_REGIONS_IN_EVENT_REGION)
         eventRegionContext.copyInteractionRegionsToEventRegion(renderer().document().settings().interactionRegionMinimumCornerRadius());
 #endif
-        graphicsLayer->setEventRegion(WTFMove(eventRegion));
+        graphicsLayer->setEventRegion(WTF::move(eventRegion));
     };
 
     auto updateEventRegionForLayer = [&](GraphicsLayer& graphicsLayer) {
@@ -2184,7 +2189,7 @@ void RenderLayerBacking::updateEventRegion()
         eventRegionContext.copyInteractionRegionsToEventRegion(renderer().document().settings().interactionRegionMinimumCornerRadius());
 #endif
         eventRegion.translate(toIntSize(roundedIntPoint(layerOffset)));
-        graphicsLayer.setEventRegion(WTFMove(eventRegion));
+        graphicsLayer.setEventRegion(WTF::move(eventRegion));
     };
 
     updateEventRegionForLayer(*m_graphicsLayer);
@@ -2213,7 +2218,7 @@ void RenderLayerBacking::clearInteractionRegions()
 
         EventRegion eventRegion = graphicsLayer.eventRegion();
         eventRegion.clearInteractionRegions();
-        graphicsLayer.setEventRegion(WTFMove(eventRegion));
+        graphicsLayer.setEventRegion(WTF::move(eventRegion));
     };
 
     clearInteractionRegionsForLayer(*m_graphicsLayer);
@@ -2272,7 +2277,7 @@ bool RenderLayerBacking::updateAncestorClippingStack(Vector<CompositedClipData>&
     }
     
     if (!m_ancestorClippingStack) {
-        m_ancestorClippingStack = makeUnique<LayerAncestorClippingStack>(WTFMove(clippingData));
+        m_ancestorClippingStack = makeUnique<LayerAncestorClippingStack>(WTF::move(clippingData));
         LOG_WITH_STREAM(Compositing, stream << "layer " << &m_owningLayer << " ancestorClippingStack " << *m_ancestorClippingStack);
         return true;
     }
@@ -2282,10 +2287,10 @@ bool RenderLayerBacking::updateAncestorClippingStack(Vector<CompositedClipData>&
         return false;
     }
     
-    m_ancestorClippingStack->updateWithClipData(scrollingCoordinator, WTFMove(clippingData));
+    m_ancestorClippingStack->updateWithClipData(scrollingCoordinator, WTF::move(clippingData));
     LOG_WITH_STREAM(Compositing, stream << "layer " << &m_owningLayer << " ancestorClippingStack " << *m_ancestorClippingStack);
     if (m_overflowControlsHostLayerAncestorClippingStack)
-        m_overflowControlsHostLayerAncestorClippingStack->updateWithClipData(scrollingCoordinator, WTFMove(clippingData));
+        m_overflowControlsHostLayerAncestorClippingStack->updateWithClipData(scrollingCoordinator, WTF::move(clippingData));
     return true;
 }
 
@@ -2295,9 +2300,9 @@ void RenderLayerBacking::ensureOverflowControlsHostLayerAncestorClippingStack(co
     auto clippingData = m_ancestorClippingStack->compositedClipData();
 
     if (m_overflowControlsHostLayerAncestorClippingStack)
-        m_overflowControlsHostLayerAncestorClippingStack->updateWithClipData(scrollingCoordinator, WTFMove(clippingData));
+        m_overflowControlsHostLayerAncestorClippingStack->updateWithClipData(scrollingCoordinator, WTF::move(clippingData));
     else
-        m_overflowControlsHostLayerAncestorClippingStack = makeUnique<LayerAncestorClippingStack>(WTFMove(clippingData));
+        m_overflowControlsHostLayerAncestorClippingStack = makeUnique<LayerAncestorClippingStack>(WTF::move(clippingData));
 
     ensureClippingStackLayers(*m_overflowControlsHostLayerAncestorClippingStack);
 
@@ -2952,7 +2957,7 @@ static bool canDirectlyCompositeBackgroundBackgroundImage(const RenderElement& r
 
     // FIXME: Allow color+image compositing when it makes sense.
     // For now bailing out.
-    if (style.visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor).isVisible())
+    if (style.visitedDependentBackgroundColorApplyingColorFilter().isVisible())
         return false;
 
     // FIXME: support gradients with isGeneratedImage.
@@ -2994,7 +2999,7 @@ Color RenderLayerBacking::rendererBackgroundColor() const
     if (!backgroundRenderer)
         backgroundRenderer = &renderer();
 
-    return backgroundRenderer->style().visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor);
+    return backgroundRenderer->style().visitedDependentBackgroundColorApplyingColorFilter();
 }
 
 void RenderLayerBacking::updateDirectlyCompositedBackgroundColor(PaintedContentsInfo& contentsInfo, bool& didUpdateContentsRect)
@@ -3855,7 +3860,7 @@ void RenderLayerBacking::paintIntoLayer(const GraphicsLayer* graphicsLayer, Grap
         if (is<EventRegionContext>(regionContext))
             sharingLayerPaintFlags.add(RenderLayer::PaintLayerFlag::CollectingEventRegion);
 
-        for (auto& layer : m_backingSharingLayers)
+        for (auto& layer : m_backingSharingLayers | dereferenceView)
             paintOneLayer(layer, sharingLayerPaintFlags);
     }
 
@@ -3917,7 +3922,7 @@ static RefPtr<Pattern> patternForDescription(PatternDescription description, Flo
         fontDescription.setSpecifiedSize(10);
         fontDescription.setComputedSize(10);
         fontDescription.setWeight(FontSelectionValue(500));
-        FontCascade font(WTFMove(fontDescription));
+        FontCascade font(WTF::move(fontDescription));
         font.update(nullptr);
 
         TextRun textRun = TextRun(StringView { description.name });
@@ -4062,7 +4067,7 @@ void RenderLayerBacking::paintDebugOverlays(const GraphicsLayer* graphicsLayer, 
 
 #if ENABLE(TOUCH_ACTION_REGIONS)
     if (visibleDebugOverlayRegions.contains(DebugOverlayRegions::TouchActionRegion)) {
-        const TouchAction touchActionList[] = {
+        constexpr std::array touchActionList {
             TouchAction::None,
             TouchAction::Manipulation,
             TouchAction::PanX,
@@ -4243,13 +4248,15 @@ void RenderLayerBacking::paintContents(const GraphicsLayer& graphicsLayer, Graph
         auto* scrollableArea = m_owningLayer.scrollableArea();
         ASSERT(scrollableArea);
 
-        auto cornerRect = scrollableArea->overflowControlsRects().scrollCornerOrResizerRect();
+        auto controlsRects = scrollableArea->overflowControlsRects();
+        auto cornerRect = controlsRects.scrollCornerOrResizerRect();
         GraphicsContextStateSaver stateSaver(context);
         context.translate(-cornerRect.location());
         LayoutRect transformedClip = LayoutRect(clip);
         transformedClip.moveBy(cornerRect.location());
-        scrollableArea->paintScrollCorner(context, IntPoint(), snappedIntRect(transformedClip));
-        scrollableArea->paintResizer(context, IntPoint(), transformedClip);
+
+        scrollableArea->paintScrollCorner(context, IntPoint(), controlsRects.scrollCorner, snappedIntRect(transformedClip));
+        scrollableArea->paintResizer(context, IntPoint(), controlsRects.resizer, transformedClip);
     }
 #ifndef NDEBUG
     renderer().page().setIsPainting(false);
@@ -4301,7 +4308,7 @@ bool RenderLayerBacking::getCurrentTransform(const GraphicsLayer* graphicsLayer,
         return false;
 
     if (m_owningLayer.isTransformed()) {
-        transform = m_owningLayer.currentTransform(RenderStyle::individualTransformOperations());
+        transform = m_owningLayer.currentTransform(Style::TransformResolver::individualTransformOperations);
         return true;
     }
     return false;
@@ -4419,13 +4426,13 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const GraphicsLayerAn
     if (!renderer().isSVGLayerAwareRenderer())
         referenceBoxRect = snappedIntRect(LayoutRect(referenceBoxRect));
 
-    KeyframeValueList rotateVector(AnimatedProperty::Rotate);
-    KeyframeValueList scaleVector(AnimatedProperty::Scale);
-    KeyframeValueList translateVector(AnimatedProperty::Translate);
-    KeyframeValueList transformVector(AnimatedProperty::Transform);
-    KeyframeValueList opacityVector(AnimatedProperty::Opacity);
-    KeyframeValueList filterVector(AnimatedProperty::Filter);
-    KeyframeValueList backdropFilterVector(AnimatedProperty::WebkitBackdropFilter);
+    GraphicsLayerKeyframeValueList rotateVector(AnimatedProperty::Rotate);
+    GraphicsLayerKeyframeValueList scaleVector(AnimatedProperty::Scale);
+    GraphicsLayerKeyframeValueList translateVector(AnimatedProperty::Translate);
+    GraphicsLayerKeyframeValueList transformVector(AnimatedProperty::Transform);
+    GraphicsLayerKeyframeValueList opacityVector(AnimatedProperty::Opacity);
+    GraphicsLayerKeyframeValueList filterVector(AnimatedProperty::Filter);
+    GraphicsLayerKeyframeValueList backdropFilterVector(AnimatedProperty::WebkitBackdropFilter);
 
     for (auto& currentKeyframe : keyframes) {
         const RenderStyle* keyframeStyle = currentKeyframe.style();
@@ -4437,25 +4444,25 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const GraphicsLayerAn
         auto* tf = currentKeyframe.timingFunction();
 
         if (currentKeyframe.animatesProperty(CSSPropertyRotate))
-            rotateVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->rotate(), referenceBoxRect.size()).get(), tf));
+            rotateVector.insert(makeUnique<GraphicsLayerTransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->rotate(), referenceBoxRect.size()).get(), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyScale))
-            scaleVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->scale(), referenceBoxRect.size()).get(), tf));
+            scaleVector.insert(makeUnique<GraphicsLayerTransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->scale(), referenceBoxRect.size()).get(), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyTranslate))
-            translateVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->translate(), referenceBoxRect.size()).get(), tf));
+            translateVector.insert(makeUnique<GraphicsLayerTransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->translate(), referenceBoxRect.size()).get(), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyTransform))
-            transformVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->transform(), referenceBoxRect.size()), tf));
+            transformVector.insert(makeUnique<GraphicsLayerTransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->transform(), referenceBoxRect.size()), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyOpacity))
-            opacityVector.insert(makeUnique<FloatAnimationValue>(offset, keyframeStyle->opacity().value.value, tf));
+            opacityVector.insert(makeUnique<GraphicsLayerFloatAnimationValue>(offset, keyframeStyle->opacity().value.value, tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyFilter))
-            filterVector.insert(makeUnique<FilterAnimationValue>(offset, Style::toPlatform(keyframeStyle->filter()), tf));
+            filterVector.insert(makeUnique<GraphicsLayerFilterAnimationValue>(offset, Style::toPlatform(keyframeStyle->filter()), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyWebkitBackdropFilter) || currentKeyframe.animatesProperty(CSSPropertyBackdropFilter))
-            backdropFilterVector.insert(makeUnique<FilterAnimationValue>(offset, Style::toPlatform(keyframeStyle->backdropFilter()), tf));
+            backdropFilterVector.insert(makeUnique<GraphicsLayerFilterAnimationValue>(offset, Style::toPlatform(keyframeStyle->backdropFilter()), tf));
     }
 
     bool didAnimate = false;
@@ -4535,10 +4542,10 @@ void RenderLayerBacking::updateAcceleratedEffectsAndBaseValues(HashSet<Ref<Accel
                     hasInterpolatingEffect = true;
                 effectTimelines.add(Ref { *acceleratedEffect->timeline() });
                 weakAcceleratedEffects.add(acceleratedEffect.ptr());
-                acceleratedEffects.append(WTFMove(acceleratedEffect));
+                acceleratedEffects.append(WTF::move(acceleratedEffect));
             }
         }
-        effectStack->setAcceleratedEffects(WTFMove(weakAcceleratedEffects));
+        effectStack->setAcceleratedEffects(WTF::move(weakAcceleratedEffects));
     }
 
     // If all of the effects in the stack are either idle, paused or filling, then the
@@ -4550,7 +4557,7 @@ void RenderLayerBacking::updateAcceleratedEffectsAndBaseValues(HashSet<Ref<Accel
     else
         acceleratedEffects.clear();
 
-    m_graphicsLayer->setAcceleratedEffectsAndBaseValues(WTFMove(acceleratedEffects), WTFMove(baseValues));
+    m_graphicsLayer->setAcceleratedEffectsAndBaseValues(WTF::move(acceleratedEffects), WTF::move(baseValues));
 
     m_owningLayer.setNeedsPostLayoutCompositingUpdate();
     m_owningLayer.setNeedsCompositingGeometryUpdate();

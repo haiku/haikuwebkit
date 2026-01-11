@@ -442,7 +442,7 @@ Thread& Thread::initializeCurrentTLS()
     thread->initializeInThread();
     initializeCurrentThreadEvenIfNonWTFCreated();
 
-    return initializeTLS(WTFMove(thread));
+    return initializeTLS(WTF::move(thread));
 }
 
 bool Thread::signal(int signalNumber)

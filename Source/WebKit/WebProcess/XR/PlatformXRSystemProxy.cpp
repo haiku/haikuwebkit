@@ -62,7 +62,7 @@ Ref<WebPage> PlatformXRSystemProxy::protectedPage() const
 
 void PlatformXRSystemProxy::enumerateImmersiveXRDevices(CompletionHandler<void(const PlatformXR::DeviceList&)>&& completionHandler)
 {
-    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::EnumerateImmersiveXRDevices(), [this, weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)](Vector<XRDeviceInfo>&& devicesInfos) mutable {
+    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::EnumerateImmersiveXRDevices(), [this, weakThis = WeakPtr { *this }, completionHandler = WTF::move(completionHandler)](Vector<XRDeviceInfo>&& devicesInfos) mutable {
         if (!weakThis)
             return;
 
@@ -71,7 +71,7 @@ void PlatformXRSystemProxy::enumerateImmersiveXRDevices(CompletionHandler<void(c
             if (auto device = deviceByIdentifier(deviceInfo.identifier))
                 devices.append(*device);
             else
-                devices.append(XRDeviceProxy::create(WTFMove(deviceInfo), *this));
+                devices.append(XRDeviceProxy::create(WTF::move(deviceInfo), *this));
         }
         m_devices.swap(devices);
         completionHandler(m_devices);
@@ -80,7 +80,7 @@ void PlatformXRSystemProxy::enumerateImmersiveXRDevices(CompletionHandler<void(c
 
 void PlatformXRSystemProxy::requestPermissionOnSessionFeatures(const WebCore::SecurityOriginData& securityOriginData, PlatformXR::SessionMode mode, const PlatformXR::Device::FeatureList& granted, const PlatformXR::Device::FeatureList& consentRequired, const PlatformXR::Device::FeatureList& consentOptional, const PlatformXR::Device::FeatureList& requiredFeaturesRequested, const PlatformXR::Device::FeatureList& optionalFeaturesRequested, CompletionHandler<void(std::optional<PlatformXR::Device::FeatureList>&&)>&& completionHandler)
 {
-    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestPermissionOnSessionFeatures(securityOriginData, mode, granted, consentRequired, consentOptional, requiredFeaturesRequested, optionalFeaturesRequested), WTFMove(completionHandler));
+    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestPermissionOnSessionFeatures(securityOriginData, mode, granted, consentRequired, consentOptional, requiredFeaturesRequested, optionalFeaturesRequested), WTF::move(completionHandler));
 }
 
 void PlatformXRSystemProxy::initializeTrackingAndRendering(std::optional<WebCore::XRCanvasConfiguration>&& optionalInit)
@@ -91,7 +91,7 @@ void PlatformXRSystemProxy::initializeTrackingAndRendering(std::optional<WebCore
         colorFormat = optionalInit->colorFormat;
         depthStencilFormat = optionalInit->depthStencilFormat;
     }
-    protectedPage()->send(Messages::PlatformXRSystem::InitializeTrackingAndRendering(WTFMove(colorFormat), WTFMove(depthStencilFormat)));
+    protectedPage()->send(Messages::PlatformXRSystem::InitializeTrackingAndRendering(WTF::move(colorFormat), WTF::move(depthStencilFormat)));
 }
 
 void PlatformXRSystemProxy::shutDownTrackingAndRendering()
@@ -106,7 +106,7 @@ void PlatformXRSystemProxy::didCompleteShutdownTriggeredBySystem()
 
 void PlatformXRSystemProxy::requestFrame(std::optional<PlatformXR::RequestData>&& requestData, PlatformXR::Device::RequestFrameCallback&& callback)
 {
-    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestFrame(WTFMove(requestData)), WTFMove(callback));
+    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestFrame(WTF::move(requestData)), WTF::move(callback));
 }
 
 std::optional<PlatformXR::LayerHandle> PlatformXRSystemProxy::createLayerProjection(uint32_t width, uint32_t height, bool alpha)
@@ -134,10 +134,10 @@ void PlatformXRSystemProxy::submitFrame(Vector<PlatformXR::Device::Layer>&& laye
             .handle = layer.handle,
             .visible = layer.visible,
             .views = layer.views,
-            .fenceFD = WTFMove(layer.fenceFD)
+            .fenceFD = WTF::move(layer.fenceFD)
         });
     }
-    protectedPage()->send(Messages::PlatformXRSystem::SubmitFrame(WTFMove(deviceLayers)));
+    protectedPage()->send(Messages::PlatformXRSystem::SubmitFrame(WTF::move(deviceLayers)));
 }
 #else
 void PlatformXRSystemProxy::submitFrame()
@@ -192,11 +192,11 @@ void PlatformXRSystemProxy::deref() const
 #if ENABLE(WEBXR_HIT_TEST)
 void PlatformXRSystemProxy::requestHitTestSource(const PlatformXR::HitTestOptions& options, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&& completionHandler)
 {
-    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestHitTestSource(options), [protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)](Expected<PlatformXR::HitTestSource, WebCore::ExceptionData> exceptionOrSource) mutable {
+    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestHitTestSource(options), [protectedThis = Ref { *this }, completionHandler = WTF::move(completionHandler)](Expected<PlatformXR::HitTestSource, WebCore::ExceptionData> exceptionOrSource) mutable {
         if (exceptionOrSource)
-            completionHandler(WTFMove(exceptionOrSource).value());
+            completionHandler(WTF::move(exceptionOrSource).value());
         else
-            completionHandler(WTFMove(exceptionOrSource).error().toException());
+            completionHandler(WTF::move(exceptionOrSource).error().toException());
     });
 }
 
@@ -207,11 +207,11 @@ void PlatformXRSystemProxy::deleteHitTestSource(PlatformXR::HitTestSource source
 
 void PlatformXRSystemProxy::requestTransientInputHitTestSource(const PlatformXR::TransientInputHitTestOptions& options, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::TransientInputHitTestSource>)>&& completionHandler)
 {
-    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestTransientInputHitTestSource(options), [protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)](Expected<PlatformXR::TransientInputHitTestSource, WebCore::ExceptionData> exceptionOrSource) mutable {
+    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestTransientInputHitTestSource(options), [protectedThis = Ref { *this }, completionHandler = WTF::move(completionHandler)](Expected<PlatformXR::TransientInputHitTestSource, WebCore::ExceptionData> exceptionOrSource) mutable {
         if (exceptionOrSource)
-            completionHandler(WTFMove(exceptionOrSource).value());
+            completionHandler(WTF::move(exceptionOrSource).value());
         else
-            completionHandler(WTFMove(exceptionOrSource).error().toException());
+            completionHandler(WTF::move(exceptionOrSource).error().toException());
     });
 }
 

@@ -796,11 +796,11 @@ void VideoPresentationInterfaceMac::requestHideAndExitPiP()
         model->requestFullscreenMode(m_mode & ~HTMLMediaElementEnums::VideoFullscreenModePictureInPicture);
         model->willExitPictureInPicture();
     } else {
-        auto callback = [model = WTFMove(model), mode = m_mode] () {
+        auto callback = [model = WTF::move(model), mode = m_mode] () {
             model->requestFullscreenMode(mode & ~HTMLMediaElementEnums::VideoFullscreenModePictureInPicture);
             model->willExitPictureInPicture();
         };
-        setDocumentBecameVisibleCallback(WTFMove(callback));
+        setDocumentBecameVisibleCallback(WTF::move(callback));
     }
 
 }

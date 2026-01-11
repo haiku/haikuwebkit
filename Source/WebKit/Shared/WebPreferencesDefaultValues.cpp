@@ -454,6 +454,16 @@ bool defaultFacebookLiveRecordingQuirkEnabled()
 #endif
 }
 
+bool defaultFontFaceSetConstructorEnabled()
+{
+#if PLATFORM(COCOA)
+    static bool newSDK = linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::NoFontFaceSetConstructor);
+    return !newSDK;
+#else
+    return false;
+#endif
+}
+
 #if !PLATFORM(COCOA)
 bool defaultContentInsetBackgroundFillEnabled()
 {

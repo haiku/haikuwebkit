@@ -120,7 +120,7 @@ Vector<uint8_t> AuthenticationExtensionsClientInputs::toCBOR() const
         clientInputsMap[cbor::CBORValue("prf")] = cbor::CBORValue(prfMap);
     }
 
-    auto clientInputs = cbor::CBORWriter::write(cbor::CBORValue(WTFMove(clientInputsMap)));
+    auto clientInputs = cbor::CBORWriter::write(cbor::CBORValue(WTF::move(clientInputsMap)));
     ASSERT(clientInputs);
 
     return *clientInputs;

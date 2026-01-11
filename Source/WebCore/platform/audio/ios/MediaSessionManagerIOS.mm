@@ -47,9 +47,14 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaSessionManageriOS);
 
 RefPtr<PlatformMediaSessionManager> PlatformMediaSessionManager::create(PageIdentifier pageIdentifier)
 {
-    auto manager = adoptRef(new MediaSessionManageriOS(pageIdentifier));
-    MediaSessionHelper::sharedHelper().addClient(*manager);
+    Ref manager = MediaSessionManageriOS::create(pageIdentifier);
+    MediaSessionHelper::sharedHelper().addClient(manager);
     return manager;
+}
+
+Ref<MediaSessionManageriOS> MediaSessionManageriOS::create(PageIdentifier pageIdentifier)
+{
+    return adoptRef(*new MediaSessionManageriOS(pageIdentifier));
 }
 
 MediaSessionManageriOS::MediaSessionManageriOS(PageIdentifier pageIdentifier)
@@ -120,7 +125,7 @@ void MediaSessionManageriOS::configureWirelessTargetMonitoring()
 void MediaSessionManageriOS::sessionWillBeginPlayback(PlatformMediaSessionInterface& session, CompletionHandler<void(bool)>&& completionHandler)
 {
     auto logSiteIdentifier = LOGIDENTIFIER;
-    MediaSessionManagerCocoa::sessionWillBeginPlayback(session, [weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTFMove(completionHandler), strongSession = RefPtr { &session }, logSiteIdentifier = WTFMove(logSiteIdentifier)](bool canBegin) mutable {
+    MediaSessionManagerCocoa::sessionWillBeginPlayback(session, [weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTF::move(completionHandler), strongSession = RefPtr { &session }, logSiteIdentifier = WTF::move(logSiteIdentifier)](bool canBegin) mutable {
 
         UNUSED_PARAM(logSiteIdentifier);
 
@@ -219,7 +224,7 @@ void MediaSessionManageriOS::activeVideoRouteDidChange(SupportsAirPlayVideo supp
     if (!nowPlayingSession)
         return;
 
-    nowPlayingSession->setPlaybackTarget(WTFMove(playbackTarget));
+    nowPlayingSession->setPlaybackTarget(WTF::move(playbackTarget));
     nowPlayingSession->setShouldPlayToPlaybackTarget(supportsAirPlayVideo == SupportsAirPlayVideo::Yes);
 }
 

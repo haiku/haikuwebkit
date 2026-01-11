@@ -102,7 +102,6 @@ public:
 
     virtual IntSize presentationSize() const = 0;
     virtual uint32_t pixelFormat() const = 0;
-    virtual RefPtr<NativeImage> copyNativeImage() const = 0;
 
     virtual bool isRemoteProxy() const { return false; }
     virtual bool isLibWebRTC() const { return false; }
@@ -118,6 +117,7 @@ public:
 
     void initializeCharacteristics(MediaTime presentationTime, bool isMirrored, Rotation);
 
+    RefPtr<NativeImage> copyNativeImage() const;
     const PlatformVideoColorSpace& colorSpace() const { return m_colorSpace; }
 
     bool hasNoTransformation() const { return m_rotation == VideoFrameRotation::None && !m_isMirrored; }

@@ -140,7 +140,7 @@ private:
         bool m_canTriggerCompositingOnInline { false };
     };
 
-    WillChangeAnimatableFeatures(Ref<Data> data) : m_data { WTFMove(data) } { }
+    WillChangeAnimatableFeatures(Ref<Data> data) : m_data { WTF::move(data) } { }
 
     Ref<Data> m_data;
 };
@@ -149,7 +149,7 @@ private:
 // https://drafts.csswg.org/css-will-change/#propdef-will-change
 struct WillChange {
     WillChange(CSS::Keyword::Auto) : m_data { nullptr} { }
-    WillChange(WillChangeAnimatableFeatures&& animateableFeatures) : m_data { WTFMove(animateableFeatures.m_data) } { }
+    WillChange(WillChangeAnimatableFeatures&& animateableFeatures) : m_data { WTF::move(animateableFeatures.m_data) } { }
 
     WillChange(WillChangeAnimatableFeature::Feature feature, CSSPropertyID propertyID = CSSPropertyInvalid) : m_data { WillChangeAnimatableFeatures::Data::create(feature, propertyID) } { }
 

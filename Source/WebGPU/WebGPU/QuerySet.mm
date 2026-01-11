@@ -60,7 +60,7 @@ Ref<QuerySet> Device::createQuerySet(const WGPUQuerySetDescriptor& descriptor)
         if (!querySetWithOffset.buffer)
             return QuerySet::createInvalid(*this);
 
-        return QuerySet::create(WTFMove(querySetWithOffset), count, type, *this);
+        return QuerySet::create(WTF::move(querySetWithOffset), count, type, *this);
 #else
         return QuerySet::createInvalid(*this);
 #endif
@@ -87,7 +87,7 @@ QuerySet::QuerySet(id<MTLBuffer> buffer, uint32_t count, WGPUQueryType type, Dev
 
 QuerySet::QuerySet(CounterSampleBuffer&& buffer, uint32_t count, WGPUQueryType type, Device& device)
     : m_device(device)
-    , m_timestampBufferWithOffset(WTFMove(buffer))
+    , m_timestampBufferWithOffset(WTF::move(buffer))
     , m_count(count)
     , m_type(type)
 {

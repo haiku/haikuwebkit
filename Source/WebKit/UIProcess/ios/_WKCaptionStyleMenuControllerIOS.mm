@@ -67,7 +67,7 @@ static const UIMenuIdentifier WKCaptionStyleMenuSystemSettingsIdentifier = @"WKC
 {
 #if HAVE(AVLEGIBLEMEDIAOPTIONSMENUCONTROLLER)
     if (AVKitLibrary() && getAVLegibleMediaOptionsMenuControllerClassSingleton())
-        return [[_WKCaptionStyleMenuControllerAVKit alloc] init];
+        return [[[_WKCaptionStyleMenuControllerAVKit alloc] init] autorelease];
 #endif
     return [[[super alloc] init] autorelease];
 }

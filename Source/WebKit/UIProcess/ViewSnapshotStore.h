@@ -96,13 +96,13 @@ public:
     void setViewScrollPosition(WebCore::IntPoint scrollPosition) { m_viewScrollPosition = scrollPosition; }
     WebCore::IntPoint viewScrollPosition() const { return m_viewScrollPosition; }
 
-    void setComputedObscuredInset(WebCore::FloatBoxExtent&& inset) { m_computedObscuredInset = WTFMove(inset); }
+    void setComputedObscuredInset(WebCore::FloatBoxExtent&& inset) { m_computedObscuredInset = WTF::move(inset); }
     const WebCore::FloatBoxExtent computedObscuredInset() const { return m_computedObscuredInset; }
 
     void setDeviceScaleFactor(float deviceScaleFactor) { m_deviceScaleFactor = deviceScaleFactor; }
     float deviceScaleFactor() const { return m_deviceScaleFactor; }
 
-    void setOrigin(WebCore::SecurityOriginData&& origin) { m_origin = WTFMove(origin); }
+    void setOrigin(WebCore::SecurityOriginData&& origin) { m_origin = WTF::move(origin); }
     const WebCore::SecurityOriginData& origin() const { return m_origin; }
 
 #if HAVE(IOSURFACE)

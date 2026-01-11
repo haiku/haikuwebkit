@@ -102,7 +102,6 @@ class ServiceWorkerContainer;
 class SocketProvider;
 class WeakPtrImplWithEventTargetData;
 class WebCoreOpaqueRoot;
-class WebTransport;
 enum class AdvancedPrivacyProtections : uint16_t;
 enum class CrossOriginMode : bool;
 enum class LoadedFromOpaqueSource : bool;
@@ -241,6 +240,12 @@ public:
     WEBCORE_EXPORT void ref();
     WEBCORE_EXPORT void deref();
 
+    uint32_t checkedPtrCount() const final { return CanMakeThreadSafeCheckedPtr::checkedPtrCount(); }
+    uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeThreadSafeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
+    void incrementCheckedPtrCount() const final { CanMakeThreadSafeCheckedPtr::incrementCheckedPtrCount(); }
+    void decrementCheckedPtrCount() const final { CanMakeThreadSafeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() override { CanMakeThreadSafeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
+
     enum class IncludeConsoleLog : bool { No, Yes };
     WEBCORE_EXPORT bool requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory, IncludeConsoleLog = IncludeConsoleLog::Yes);
 
@@ -252,13 +257,13 @@ public:
         template<typename T>
             requires (!std::derived_from<T, Task> && std::convertible_to<T, Function<void(ScriptExecutionContext&)>>)
         Task(T task)
-            : m_task(WTFMove(task))
+            : m_task(WTF::move(task))
             , m_isCleanupTask(false)
         {
         }
 
         Task(Function<void()>&& task)
-            : m_task([task = WTFMove(task)](ScriptExecutionContext&) { task(); })
+            : m_task([task = WTF::move(task)](ScriptExecutionContext&) { task(); })
             , m_isCleanupTask(false)
         {
         }
@@ -266,7 +271,7 @@ public:
         template<typename T>
             requires std::convertible_to<T, Function<void(ScriptExecutionContext&)>>
         Task(CleanupTaskTag, T task)
-            : m_task(WTFMove(task))
+            : m_task(WTF::move(task))
             , m_isCleanupTask(true)
         {
         }
@@ -335,7 +340,7 @@ public:
     WEBCORE_EXPORT JSC::JSGlobalObject* globalObject() const;
 
     WEBCORE_EXPORT String domainForCachePartition() const;
-    void setDomainForCachePartition(String&& domain) { m_domainForCachePartition = WTFMove(domain); }
+    void setDomainForCachePartition(String&& domain) { m_domainForCachePartition = WTF::move(domain); }
 
     bool allowsMediaDevices() const;
     ServiceWorker* activeServiceWorker() const { return m_activeServiceWorker.get(); }
@@ -387,8 +392,6 @@ public:
 
     bool isAlwaysOnLoggingAllowed() const;
 
-    void createdWebTransport(WebTransport&);
-
 protected:
     class AddConsoleMessageTask : public Task {
     public:
@@ -424,12 +427,13 @@ private:
 
     void checkConsistency() const;
     WEBCORE_EXPORT GuaranteedSerialFunctionDispatcher& nativePromiseDispatcher();
+    WEBCORE_EXPORT Ref<GuaranteedSerialFunctionDispatcher> protectedNativePromiseDispatcher();
 
     WeakHashSet<MessagePort, WeakPtrImplWithEventTargetData> m_messagePorts;
     WeakHashSet<ContextDestructionObserver> m_destructionObservers;
     WeakHashSet<ActiveDOMObject> m_activeDOMObjects;
 
-    HashMap<int, RefPtr<DOMTimer>> m_timeouts;
+    HashMap<int, Ref<DOMTimer>> m_timeouts;
 
     struct PendingException;
     std::unique_ptr<Vector<std::unique_ptr<PendingException>>> m_pendingExceptions;
@@ -467,9 +471,8 @@ private:
     bool m_willprocessMessageWithMessagePortsSoon { false };
     bool m_hasLoggedAuthenticatedEncryptionWarning { false };
 
-    RefPtr<GuaranteedSerialFunctionDispatcher> m_nativePromiseDispatcher;
+    const RefPtr<GuaranteedSerialFunctionDispatcher> m_nativePromiseDispatcher;
     WeakHashSet<NativePromiseRequest> m_nativePromiseRequests;
-    ThreadSafeWeakHashSet<WebTransport> m_activeWebTransports;
 };
 
 WebCoreOpaqueRoot root(ScriptExecutionContext*);

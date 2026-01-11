@@ -31,7 +31,7 @@
 #include "InlineItem.h"
 #include "InlineTextItem.h"
 #include "LayoutElementBox.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "TextUtil.h"
 
 namespace WebCore {
@@ -855,7 +855,7 @@ InlineContentBreaker::OverflowingTextContent InlineContentBreaker::processOverfl
     return { overflowingRunIndex };
 }
 
-OptionSet<InlineContentBreaker::WordBreakRule> InlineContentBreaker::wordBreakBehavior(const RenderStyle& style, bool hasWrapOpportunityAtPreviousPosition) const
+EnumSet<InlineContentBreaker::WordBreakRule> InlineContentBreaker::wordBreakBehavior(const RenderStyle& style, bool hasWrapOpportunityAtPreviousPosition) const
 {
     // Disregard any prohibition against line breaks mandated by the word-break property.
     // The different wrapping opportunities must not be prioritized.
@@ -867,7 +867,7 @@ OptionSet<InlineContentBreaker::WordBreakRule> InlineContentBreaker::wordBreakBe
     if (style.wordBreak() == WordBreak::BreakAll)
         return { WordBreakRule::AtArbitraryPositionWithinWords };
 
-    auto includeHyphenationIfAllowed = [&](std::optional<InlineContentBreaker::WordBreakRule> wordBreakRule) -> OptionSet<InlineContentBreaker::WordBreakRule> {
+    auto includeHyphenationIfAllowed = [&](std::optional<InlineContentBreaker::WordBreakRule> wordBreakRule) -> EnumSet<InlineContentBreaker::WordBreakRule> {
         auto hyphenationIsAllowed = !n_hyphenationIsDisabled && style.hyphens() == Hyphens::Auto && canHyphenate(Style::toPlatform(style.computedLocale()));
         if (hyphenationIsAllowed) {
             if (wordBreakRule)

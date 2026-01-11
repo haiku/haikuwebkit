@@ -215,7 +215,7 @@ Seconds LocalDOMWindow::transientActivationDuration()
     return defaultTransientActivationDuration;
 }
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(LocalDOMWindow);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(LocalDOMWindow);
 
 typedef HashCountedSet<LocalDOMWindow*> LocalDOMWindowSet;
 
@@ -676,7 +676,7 @@ ExceptionOr<Ref<NodeList>> LocalDOMWindow::collectMatchingElementsInFlatTree(Nod
             result.append(element.releaseNonNull());
     }
 
-    return Ref<NodeList> { StaticElementList::create(WTFMove(result)) };
+    return Ref<NodeList> { StaticElementList::create(WTF::move(result)) };
 }
 
 ExceptionOr<RefPtr<Element>> LocalDOMWindow::matchingElementInFlatTree(Node& scope, const String& selectors)
@@ -914,7 +914,7 @@ ExceptionOr<Storage*> LocalDOMWindow::sessionStorage()
         return nullptr;
 
     Ref storageArea = page->storageNamespaceProvider().sessionStorageArea(*document);
-    m_sessionStorage = Storage::create(*this, WTFMove(storageArea));
+    m_sessionStorage = Storage::create(*this, WTF::move(storageArea));
     if (hasEventListeners(eventNames().storageEvent))
         windowsInterestedInStorageEvents().add(*this);
     return m_sessionStorage.get();
@@ -950,13 +950,13 @@ ExceptionOr<Storage*> LocalDOMWindow::localStorage()
         return nullptr;
 
     Ref storageArea = page->storageNamespaceProvider().localStorageArea(*document);
-    m_localStorage = Storage::create(*this, WTFMove(storageArea));
+    m_localStorage = Storage::create(*this, WTF::move(storageArea));
     if (hasEventListeners(eventNames().storageEvent))
         windowsInterestedInStorageEvents().add(*this);
     return m_localStorage.get();
 }
 
-void LocalDOMWindow::processPostMessage(JSC::JSGlobalObject& lexicalGlobalObject, const String& sourceOrigin, const MessageWithMessagePorts& message, RefPtr<WindowProxy>&& incumbentWindowProxy, RefPtr<SecurityOrigin>&& targetOrigin)
+void LocalDOMWindow::processPostMessage(JSC::JSGlobalObject& lexicalGlobalObject, Ref<SecurityOrigin>&& sourceOrigin, const MessageWithMessagePorts& message, RefPtr<WindowProxy>&& incumbentWindowProxy, RefPtr<SecurityOrigin>&& targetOrigin)
 {
     // Capture stack trace only when inspector front-end is loaded as it may be time consuming.
     RefPtr document = this->document();
@@ -968,7 +968,7 @@ void LocalDOMWindow::processPostMessage(JSC::JSGlobalObject& lexicalGlobalObject
 
     auto userGestureToForward = UserGestureIndicator::currentUserGesture();
 
-    document->checkedEventLoop()->queueTask(TaskSource::PostedMessageQueue, [this, protectedThis = Ref { *this }, message = message, incumbentWindowProxy = WTFMove(incumbentWindowProxy), sourceOrigin, userGestureToForward = WTFMove(userGestureToForward), postMessageIdentifier, stackTrace = WTFMove(stackTrace), targetOrigin = WTFMove(targetOrigin)]() mutable {
+    document->checkedEventLoop()->queueTask(TaskSource::PostedMessageQueue, [this, protectedThis = Ref { *this }, message = message, incumbentWindowProxy = WTF::move(incumbentWindowProxy), sourceOrigin = WTF::move(sourceOrigin), userGestureToForward = WTF::move(userGestureToForward), postMessageIdentifier, stackTrace = WTF::move(stackTrace), targetOrigin = WTF::move(targetOrigin)]() mutable {
         if (!isCurrentlyDisplayedInFrame())
             return;
 
@@ -1000,8 +1000,8 @@ void LocalDOMWindow::processPostMessage(JSC::JSGlobalObject& lexicalGlobalObject
         UserGestureIndicator userGestureIndicator(userGestureToForward);
         InspectorInstrumentation::willDispatchPostMessage(frame, postMessageIdentifier);
 
-        auto ports = MessagePort::entanglePorts(*document, WTFMove(message.transferredPorts));
-        auto event = MessageEvent::create(*globalObject, message.message.releaseNonNull(), sourceOrigin, { }, incumbentWindowProxy ? std::make_optional(MessageEventSource(WTFMove(incumbentWindowProxy))) : std::nullopt, WTFMove(ports));
+        auto ports = MessagePort::entanglePorts(*document, WTF::move(message.transferredPorts));
+        auto event = MessageEvent::create(*globalObject, message.message.releaseNonNull(), WTF::move(sourceOrigin), { }, incumbentWindowProxy ? std::make_optional(MessageEventSource(WTF::move(incumbentWindowProxy))) : std::nullopt, WTF::move(ports));
         if (scope.exception()) [[unlikely]] {
             // Currently, we assume that the only way we can get here is if we have a termination.
             RELEASE_ASSERT(vm.hasPendingTerminationException());
@@ -1030,26 +1030,26 @@ ExceptionOr<void> LocalDOMWindow::postMessage(JSC::JSGlobalObject& lexicalGlobal
         return targetSecurityOrigin.releaseException();
 
     Vector<Ref<MessagePort>> ports;
-    auto messageData = SerializedScriptValue::create(lexicalGlobalObject, messageValue, WTFMove(options.transfer), ports, SerializationForStorage::No, SerializationContext::WindowPostMessage);
+    auto messageData = SerializedScriptValue::create(lexicalGlobalObject, messageValue, WTF::move(options.transfer), ports, SerializationForStorage::No, SerializationContext::WindowPostMessage);
     if (messageData.hasException())
         return messageData.releaseException();
 
-    auto disentangledPorts = MessagePort::disentanglePorts(WTFMove(ports));
+    auto disentangledPorts = MessagePort::disentanglePorts(WTF::move(ports));
     if (disentangledPorts.hasException())
         return disentangledPorts.releaseException();
 
     // Capture the source of the message. We need to do this synchronously
     // in order to capture the source of the message correctly.
-    auto sourceOrigin = sourceDocument->securityOrigin().toString();
+    Ref sourceOrigin = sourceDocument->securityOrigin();
 
     // Schedule the message.
     RefPtr incumbentWindowProxy = incumbentWindow.frame() ? &incumbentWindow.frame()->windowProxy() : nullptr;
     MessageWithMessagePorts message { messageData.releaseReturnValue(), disentangledPorts.releaseReturnValue() };
-    processPostMessage(lexicalGlobalObject, sourceOrigin, message, WTFMove(incumbentWindowProxy), targetSecurityOrigin.releaseReturnValue());
+    processPostMessage(lexicalGlobalObject, WTF::move(sourceOrigin), message, WTF::move(incumbentWindowProxy), targetSecurityOrigin.releaseReturnValue());
     return { };
 }
 
-void LocalDOMWindow::postMessageFromRemoteFrame(JSC::JSGlobalObject& lexicalGlobalObject, RefPtr<WindowProxy>&& source, const String& sourceOrigin, std::optional<WebCore::SecurityOriginData>&& targetOriginData, const WebCore::MessageWithMessagePorts& message)
+void LocalDOMWindow::postMessageFromRemoteFrame(JSC::JSGlobalObject& lexicalGlobalObject, RefPtr<WindowProxy>&& source, const WebCore::SecurityOriginData& sourceOrigin, std::optional<WebCore::SecurityOriginData>&& targetOriginData, const WebCore::MessageWithMessagePorts& message)
 {
     if (!frame())
         return;
@@ -1058,7 +1058,7 @@ void LocalDOMWindow::postMessageFromRemoteFrame(JSC::JSGlobalObject& lexicalGlob
     if (targetOriginData)
         targetOrigin = targetOriginData->securityOrigin();
 
-    processPostMessage(lexicalGlobalObject, sourceOrigin, message, WTFMove(source), WTFMove(targetOrigin));
+    processPostMessage(lexicalGlobalObject, sourceOrigin.securityOrigin(), message, WTF::move(source), WTF::move(targetOrigin));
 }
 
 DOMSelection* LocalDOMWindow::getSelection()
@@ -1518,7 +1518,7 @@ void LocalDOMWindow::setStatus(const String& string)
 void LocalDOMWindow::disownOpener()
 {
     if (RefPtr frame = localFrame())
-        frame->disownOpener();
+        frame->disownOpener(Frame::NotifyUIProcess::Yes);
 }
 
 String LocalDOMWindow::origin() const
@@ -1545,7 +1545,7 @@ RefPtr<Document> LocalDOMWindow::protectedDocument() const
 
 void LocalDOMWindow::overrideTransientActivationDurationForTesting(std::optional<Seconds>&& override)
 {
-    transientActivationDurationOverrideForTesting() = WTFMove(override);
+    transientActivationDurationOverrideForTesting() = WTF::move(override);
 }
 
 // When the current high resolution time is greater than or equal to the last activation timestamp in W, and
@@ -1920,9 +1920,9 @@ ExceptionOr<int> LocalDOMWindow::setTimeout(std::unique_ptr<ScheduledAction> act
             return 0;
     }
 
-    action->addArguments(WTFMove(arguments));
+    action->addArguments(WTF::move(arguments));
 
-    return DOMTimer::install(*context, WTFMove(action), Seconds::fromMilliseconds(timeout), DOMTimer::Type::SingleShot);
+    return DOMTimer::install(*context, WTF::move(action), Seconds::fromMilliseconds(timeout), DOMTimer::Type::SingleShot);
 }
 
 void LocalDOMWindow::clearTimeout(int timeoutId)
@@ -1943,9 +1943,9 @@ ExceptionOr<int> LocalDOMWindow::setInterval(std::unique_ptr<ScheduledAction> ac
             return 0;
     }
 
-    action->addArguments(WTFMove(arguments));
+    action->addArguments(WTF::move(arguments));
 
-    return DOMTimer::install(*context, WTFMove(action), Seconds::fromMilliseconds(timeout), DOMTimer::Type::Repeating);
+    return DOMTimer::install(*context, WTF::move(action), Seconds::fromMilliseconds(timeout), DOMTimer::Type::Repeating);
 }
 
 void LocalDOMWindow::clearInterval(int timeoutId)
@@ -1957,7 +1957,7 @@ void LocalDOMWindow::clearInterval(int timeoutId)
 int LocalDOMWindow::requestAnimationFrame(Ref<RequestAnimationFrameCallback>&& callback)
 {
     RefPtr document = this->document();
-    return document ? document->requestAnimationFrame(WTFMove(callback)) : 0;
+    return document ? document->requestAnimationFrame(WTF::move(callback)) : 0;
 }
 
 int LocalDOMWindow::webkitRequestAnimationFrame(Ref<RequestAnimationFrameCallback>&& callback)
@@ -1967,7 +1967,7 @@ int LocalDOMWindow::webkitRequestAnimationFrame(Ref<RequestAnimationFrameCallbac
         protectedDocument()->addConsoleMessage(MessageSource::JS, MessageLevel::Warning, "webkitRequestAnimationFrame() is deprecated and will be removed. Please use requestAnimationFrame() instead."_s);
         firstTime = false;
     }
-    return requestAnimationFrame(WTFMove(callback));
+    return requestAnimationFrame(WTF::move(callback));
 }
 
 void LocalDOMWindow::cancelAnimationFrame(int id)
@@ -1979,7 +1979,7 @@ void LocalDOMWindow::cancelAnimationFrame(int id)
 int LocalDOMWindow::requestIdleCallback(Ref<IdleRequestCallback>&& callback, const IdleRequestOptions& options)
 {
     RefPtr document = this->document();
-    return document ? document->requestIdleCallback(WTFMove(callback), Seconds::fromMilliseconds(options.timeout)) : 0;
+    return document ? document->requestIdleCallback(WTF::move(callback), Seconds::fromMilliseconds(options.timeout)) : 0;
 }
 
 void LocalDOMWindow::cancelIdleCallback(int id)
@@ -1995,7 +1995,7 @@ void LocalDOMWindow::createImageBitmap(ImageBitmap::Source&& source, ImageBitmap
         promise.reject(ExceptionCode::InvalidStateError);
         return;
     }
-    ImageBitmap::createPromise(*document, WTFMove(source), WTFMove(options), WTFMove(promise));
+    ImageBitmap::createPromise(*document, WTF::move(source), WTF::move(options), WTF::move(promise));
 }
 
 void LocalDOMWindow::createImageBitmap(ImageBitmap::Source&& source, int sx, int sy, int sw, int sh, ImageBitmapOptions&& options, ImageBitmap::Promise&& promise)
@@ -2005,7 +2005,7 @@ void LocalDOMWindow::createImageBitmap(ImageBitmap::Source&& source, int sx, int
         promise.reject(ExceptionCode::InvalidStateError);
         return;
     }
-    ImageBitmap::createPromise(*document, WTFMove(source), WTFMove(options), sx, sy, sw, sh, WTFMove(promise));
+    ImageBitmap::createPromise(*document, WTF::move(source), WTF::move(options), sx, sy, sw, sh, WTF::move(promise));
 }
 
 bool LocalDOMWindow::isSecureContext() const
@@ -2053,7 +2053,7 @@ bool LocalDOMWindow::isSameSecurityOriginAsMainFrame() const
 
 bool LocalDOMWindow::addEventListener(const AtomString& eventType, Ref<EventListener>&& listener, const AddEventListenerOptions& options)
 {
-    if (!EventTarget::addEventListener(eventType, WTFMove(listener), options))
+    if (!EventTarget::addEventListener(eventType, WTF::move(listener), options))
         return false;
 
     RefPtr document = this->document();
@@ -2064,8 +2064,17 @@ bool LocalDOMWindow::addEventListener(const AtomString& eventType, Ref<EventList
         if (typeInfo.isInCategory(EventCategory::Wheel)) {
             document->didAddWheelEventHandler(*document);
             document->invalidateEventListenerRegions();
-        } else if (isTouchRelatedEventType(typeInfo, *document))
+        } else if (isTouchRelatedEventType(typeInfo, *document)) {
             document->didAddTouchEventHandler(*document);
+#if ENABLE(TOUCH_EVENT_REGIONS)
+            document->invalidateEventListenerRegions();
+#endif
+        } else if (typeInfo.isInCategory(EventCategory::Gesture)) {
+#if ENABLE(TOUCH_EVENT_REGIONS)
+            document->didAddTouchEventHandler(*document);
+            document->invalidateEventListenerRegions();
+#endif
+        }
         else if (eventType == eventNames.storageEvent)
             didAddStorageEventListener(*this);
     }
@@ -2322,8 +2331,17 @@ bool LocalDOMWindow::removeEventListener(const AtomString& eventType, EventListe
         if (typeInfo.isInCategory(EventCategory::Wheel)) {
             document->didRemoveWheelEventHandler(*document);
             document->invalidateEventListenerRegions();
-        } else if (isTouchRelatedEventType(typeInfo, *document))
+        } else if (isTouchRelatedEventType(typeInfo, *document)) {
             document->didRemoveTouchEventHandler(*document);
+#if ENABLE(TOUCH_EVENT_REGIONS)
+            document->invalidateEventListenerRegions();
+#endif
+        } else if (typeInfo.isInCategory(EventCategory::Gesture)) {
+#if ENABLE(TOUCH_EVENT_REGIONS)
+            document->didRemoveTouchEventHandler(*document);
+            document->invalidateEventListenerRegions();
+#endif
+        }
     }
 
     switch (typeInfo.type()) {
@@ -2816,7 +2834,7 @@ ExceptionOr<RefPtr<Frame>> LocalDOMWindow::createWindow(const String& urlString,
     RefPtr openerDocumentLoader = openerFrame.document() ? openerFrame.document()->loader() : nullptr;
     if (openerDocumentLoader)
         resourceRequest.setIsAppInitiated(openerDocumentLoader->lastNavigationWasAppInitiated());
-    FrameLoadRequest frameLoadRequest { *activeDocument, activeDocument->protectedSecurityOrigin(), WTFMove(resourceRequest), frameName, initiatedByMainFrame };
+    FrameLoadRequest frameLoadRequest { *activeDocument, activeDocument->protectedSecurityOrigin(), WTF::move(resourceRequest), frameName, initiatedByMainFrame };
     frameLoadRequest.setShouldOpenExternalURLsPolicy(activeDocument->shouldOpenExternalURLsPolicyToPropagate());
 
     // https://html.spec.whatwg.org/#the-rules-for-choosing-a-browsing-context-given-a-browsing-context-name (Step 8.2)
@@ -2832,7 +2850,7 @@ ExceptionOr<RefPtr<Frame>> LocalDOMWindow::createWindow(const String& urlString,
     }
     bool noopener = windowFeatures.wantsNoOpener();
 
-    auto [newFrame, created] = WebCore::createWindow(openerFrame, WTFMove(frameLoadRequest), WTFMove(windowFeatures));
+    auto [newFrame, created] = WebCore::createWindow(openerFrame, WTF::move(frameLoadRequest), WTF::move(windowFeatures));
     if (!newFrame)
         return RefPtr<Frame> { nullptr };
 
@@ -2858,11 +2876,11 @@ ExceptionOr<RefPtr<Frame>> LocalDOMWindow::createWindow(const String& urlString,
         prepareDialogFunction(*localNewFrame->document()->protectedWindow());
 
     if (created == CreatedNewPage::Yes) {
-        ResourceRequest resourceRequest { WTFMove(completedURL), referrer, ResourceRequestCachePolicy::UseProtocolCachePolicy };
+        ResourceRequest resourceRequest { WTF::move(completedURL), referrer, ResourceRequestCachePolicy::UseProtocolCachePolicy };
         FrameLoader::addSameSiteInfoToRequestIfNeeded(resourceRequest, openerDocument.get());
-        FrameLoadRequest frameLoadRequest { activeWindow.protectedDocument().releaseNonNull(), activeWindow.document()->protectedSecurityOrigin(), WTFMove(resourceRequest), selfTargetFrameName(), initiatedByMainFrame };
+        FrameLoadRequest frameLoadRequest { activeWindow.protectedDocument().releaseNonNull(), activeWindow.document()->protectedSecurityOrigin(), WTF::move(resourceRequest), selfTargetFrameName(), initiatedByMainFrame };
         frameLoadRequest.setShouldOpenExternalURLsPolicy(activeDocument->shouldOpenExternalURLsPolicyToPropagate());
-        newFrame->changeLocation(WTFMove(frameLoadRequest));
+        newFrame->changeLocation(WTF::move(frameLoadRequest));
     } else if (!urlString.isEmpty()) {
         LockHistory lockHistory = UserGestureIndicator::processingUserGesture() ? LockHistory::No : LockHistory::Yes;
         newFrame->protectedNavigationScheduler()->scheduleLocationChange(*activeDocument, activeDocument->protectedSecurityOrigin(), completedURL, referrer, lockHistory, LockBackForwardList::No);
@@ -3078,7 +3096,7 @@ void LocalDOMWindow::subscribeToPushService(const Vector<uint8_t>& applicationSe
 {
     LOG(Push, "LocalDOMWindow::subscribeToPushService");
 
-    platformStrategies()->pushStrategy()->windowSubscribeToPushService(toScope(*this), applicationServerKey, [protectedThis = Ref { *this }, promise = WTFMove(promise)](auto&& result) mutable {
+    platformStrategies()->pushStrategy()->windowSubscribeToPushService(toScope(*this), applicationServerKey, [protectedThis = Ref { *this }, promise = WTF::move(promise)](auto&& result) mutable {
         LOG(Push, "LocalDOMWindow::subscribeToPushService completed");
         if (result.hasException()) {
             promise.reject(result.releaseException());
@@ -3093,9 +3111,9 @@ void LocalDOMWindow::unsubscribeFromPushService(std::optional<PushSubscriptionId
 {
     LOG(Push, "LocalDOMWindow::unsubscribeFromPushService");
 
-    platformStrategies()->pushStrategy()->windowUnsubscribeFromPushService(toScope(*this), subscriptionIdentifier, [promise = WTFMove(promise)](auto&& result) mutable {
+    platformStrategies()->pushStrategy()->windowUnsubscribeFromPushService(toScope(*this), subscriptionIdentifier, [promise = WTF::move(promise)](auto&& result) mutable {
         LOG(Push, "LocalDOMWindow::unsubscribeFromPushService completed");
-        promise.settle(WTFMove(result));
+        promise.settle(WTF::move(result));
     });
 }
 
@@ -3103,7 +3121,7 @@ void LocalDOMWindow::getPushSubscription(DOMPromiseDeferred<IDLNullable<IDLInter
 {
     LOG(Push, "LocalDOMWindow::getPushSubscription");
 
-    platformStrategies()->pushStrategy()->windowGetPushSubscription(toScope(*this), [protectedThis = Ref { *this }, promise = WTFMove(promise)](auto&& result) mutable {
+    platformStrategies()->pushStrategy()->windowGetPushSubscription(toScope(*this), [protectedThis = Ref { *this }, promise = WTF::move(promise)](auto&& result) mutable {
         LOG(Push, "LocalDOMWindow::getPushSubscription completed");
         if (result.hasException()) {
             promise.reject(result.releaseException());
@@ -3116,7 +3134,7 @@ void LocalDOMWindow::getPushSubscription(DOMPromiseDeferred<IDLNullable<IDLInter
             return;
         }
 
-        promise.resolve(PushSubscription::create(WTFMove(*optionalPushSubscriptionData), protectedThis.ptr()).ptr());
+        promise.resolve(PushSubscription::create(WTF::move(*optionalPushSubscriptionData), protectedThis.ptr()).ptr());
     });
 }
 
@@ -3124,9 +3142,9 @@ void LocalDOMWindow::getPushPermissionState(DOMPromiseDeferred<IDLEnumeration<Pu
 {
     LOG(Push, "LocalDOMWindow::getPushPermissionState");
 
-    platformStrategies()->pushStrategy()->windowGetPushPermissionState(toScope(*this), [promise = WTFMove(promise)](auto&& result) mutable {
+    platformStrategies()->pushStrategy()->windowGetPushPermissionState(toScope(*this), [promise = WTF::move(promise)](auto&& result) mutable {
         LOG(Push, "LocalDOMWindow::getPushPermissionState completed");
-        promise.settle(WTFMove(result));
+        promise.settle(WTF::move(result));
     });
 }
 

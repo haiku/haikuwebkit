@@ -48,11 +48,11 @@ constexpr unsigned maxSampleRate = 192000;
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(MediaElementAudioSourceNode);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaElementAudioSourceNode);
 
 ExceptionOr<Ref<MediaElementAudioSourceNode>> MediaElementAudioSourceNode::create(BaseAudioContext& context, MediaElementAudioSourceOptions&& options)
 {
-    RefPtr mediaElement = WTFMove(options.mediaElement);
+    RefPtr mediaElement = WTF::move(options.mediaElement);
     RELEASE_ASSERT(mediaElement);
 
     if (!mediaElement || mediaElement->audioSourceNode())
@@ -70,7 +70,7 @@ ExceptionOr<Ref<MediaElementAudioSourceNode>> MediaElementAudioSourceNode::creat
 
 MediaElementAudioSourceNode::MediaElementAudioSourceNode(BaseAudioContext& context, Ref<HTMLMediaElement>&& mediaElement)
     : AudioNode(context, NodeTypeMediaElementAudioSource)
-    , m_mediaElement(WTFMove(mediaElement))
+    , m_mediaElement(WTF::move(mediaElement))
 {
     // Default to stereo. This could change depending on what the media element .src is set to.
     addOutput(2);

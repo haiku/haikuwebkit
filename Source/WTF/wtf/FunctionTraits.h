@@ -27,6 +27,7 @@
 
 #include <tuple>
 #include <type_traits>
+#include <wtf/Platform.h>
 
 namespace WTF {
 

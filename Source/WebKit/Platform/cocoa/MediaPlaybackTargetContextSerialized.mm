@@ -81,25 +81,25 @@ MediaPlaybackTargetContextSerialized::MediaPlaybackTargetContextSerialized(const
 
 #if HAVE(WK_SECURE_CODING_AVOUTPUTCONTEXT)
 MediaPlaybackTargetContextSerialized::MediaPlaybackTargetContextSerialized(String&& deviceName, bool hasActiveRoute, bool supportsRemoteVideoPlayback, MediaPlaybackTargetType targetType, MediaPlaybackTargetMockState state, CoreIPCAVOutputContext&& context, std::optional<WTF::UUID>&& identifier)
-    : m_deviceName { WTFMove(deviceName) }
+    : m_deviceName { WTF::move(deviceName) }
     , m_hasActiveRoute { hasActiveRoute }
     , m_supportsRemoteVideoPlayback { supportsRemoteVideoPlayback }
     , m_targetType { targetType }
     , m_state { state }
-    , m_context { WTFMove(context) }
-    , m_identifier { WTFMove(identifier) }
+    , m_context { WTF::move(context) }
+    , m_identifier { WTF::move(identifier) }
 {
 }
 #else
 MediaPlaybackTargetContextSerialized::MediaPlaybackTargetContextSerialized(String&& deviceName, bool hasActiveRoute, bool supportsRemoteVideoPlayback, MediaPlaybackTargetType targetType, MediaPlaybackTargetMockState state, String&& contextID, String&& contextType, std::optional<WTF::UUID>&& identifier)
-    : m_deviceName(WTFMove(deviceName))
+    : m_deviceName(WTF::move(deviceName))
     , m_hasActiveRoute(hasActiveRoute)
     , m_supportsRemoteVideoPlayback(supportsRemoteVideoPlayback)
     , m_targetType(targetType)
     , m_state(state)
-    , m_contextID(WTFMove(contextID))
-    , m_contextType(WTFMove(contextType))
-    , m_identifier { WTFMove(identifier) }
+    , m_contextID(WTF::move(contextID))
+    , m_contextType(WTF::move(contextType))
+    , m_identifier { WTF::move(identifier) }
 {
 }
 #endif
@@ -124,7 +124,7 @@ Ref<MediaPlaybackTarget> MediaPlaybackTargetContextSerialized::playbackTarget() 
     propertyList[@"AVOutputContextSerializationKeyContextType"] = m_contextType.createNSString().get();
     auto unarchiver = adoptNS([[WKKeyedCoder alloc] initWithDictionary:propertyList]);
     auto outputContext = adoptNS([[PAL::getAVOutputContextClassSingleton() alloc] initWithCoder:unarchiver.get()]);
-    return MediaPlaybackTargetCocoa::create(WTFMove(outputContext));
+    return MediaPlaybackTargetCocoa::create(WTF::move(outputContext));
 #endif
 }
 

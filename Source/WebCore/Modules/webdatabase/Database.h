@@ -166,7 +166,7 @@ private:
     bool m_opened { false };
     bool m_new { false };
 
-    UniqueRef<SQLiteDatabase> m_sqliteDatabase;
+    const UniqueRef<SQLiteDatabase> m_sqliteDatabase;
 
     const Ref<DatabaseAuthorizer> m_databaseAuthorizer;
 

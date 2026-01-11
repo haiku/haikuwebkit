@@ -44,12 +44,12 @@ using namespace WebCore;
 Ref<WebBackForwardListItem> WebBackForwardListItem::create(Ref<FrameState>&& mainFrameState, WebPageProxyIdentifier pageID, std::optional<FrameIdentifier> navigatedFrameID, BrowsingContextGroup* browsingContextGroup)
 {
     RELEASE_ASSERT(RunLoop::isMain());
-    return adoptRef(*new WebBackForwardListItem(WTFMove(mainFrameState), pageID, navigatedFrameID, browsingContextGroup));
+    return adoptRef(*new WebBackForwardListItem(WTF::move(mainFrameState), pageID, navigatedFrameID, browsingContextGroup));
 }
 
 WebBackForwardListItem::WebBackForwardListItem(Ref<FrameState>&& mainFrameState, WebPageProxyIdentifier pageID, std::optional<FrameIdentifier> navigatedFrameID, BrowsingContextGroup* browsingContextGroup)
     : m_identifier(*mainFrameState->itemID)
-    , m_mainFrameItem(WebBackForwardListFrameItem::create(*this, nullptr, WTFMove(mainFrameState)))
+    , m_mainFrameItem(WebBackForwardListFrameItem::create(*this, nullptr, WTF::move(mainFrameState)))
     , m_navigatedFrameID(navigatedFrameID)
     , m_pageID(pageID)
     , m_lastProcessIdentifier(navigatedFrameItem().identifier().processIdentifier())
@@ -154,7 +154,7 @@ RefPtr<WebBackForwardCacheEntry> WebBackForwardListItem::protectedBackForwardCac
 
 void WebBackForwardListItem::setBackForwardCacheEntry(RefPtr<WebBackForwardCacheEntry>&& backForwardCacheEntry)
 {
-    m_backForwardCacheEntry = WTFMove(backForwardCacheEntry);
+    m_backForwardCacheEntry = WTF::move(backForwardCacheEntry);
 }
 
 SuspendedPageProxy* WebBackForwardListItem::suspendedPage() const

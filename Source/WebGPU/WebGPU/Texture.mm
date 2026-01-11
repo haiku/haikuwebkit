@@ -2991,7 +2991,7 @@ Ref<Texture> Device::createTexture(const WGPUTextureDescriptor& descriptor)
     setOwnerWithIdentity(texture);
     texture.label = fromAPI(descriptor.label).createNSString().get();
 
-    return Texture::create(texture, descriptor, WTFMove(viewFormats), *this);
+    return Texture::create(texture, descriptor, WTF::move(viewFormats), *this);
 }
 
 Texture::Texture(id<MTLTexture> texture, const WGPUTextureDescriptor& descriptor, Vector<WGPUTextureFormat>&& viewFormats, Device& device)
@@ -3004,7 +3004,7 @@ Texture::Texture(id<MTLTexture> texture, const WGPUTextureDescriptor& descriptor
     , m_dimension(descriptor.dimension)
     , m_format(descriptor.format)
     , m_usage(descriptor.usage)
-    , m_viewFormats(WTFMove(viewFormats))
+    , m_viewFormats(WTF::move(viewFormats))
     , m_device(device)
 {
 }

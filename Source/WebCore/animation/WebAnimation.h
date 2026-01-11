@@ -62,7 +62,7 @@ struct ResolutionContext;
 }
 
 class WebAnimation : public RefCounted<WebAnimation>, public EventTarget, public ActiveDOMObject, public CanMakeCheckedPtr<WebAnimation> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebAnimation);
+    WTF_MAKE_TZONE_ALLOCATED(WebAnimation);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebAnimation);
 public:
     static Ref<WebAnimation> create(Document&, AnimationEffect*);
@@ -74,7 +74,7 @@ public:
     void deref() const final { RefCounted::deref(); }
     USING_CAN_MAKE_WEAKPTR(EventTarget);
 
-    WEBCORE_EXPORT static HashSet<CheckedPtr<WebAnimation>>& instances();
+    WEBCORE_EXPORT static HashSet<CheckedRef<WebAnimation>>& instances();
 
     virtual bool isStyleOriginatedAnimation() const { return false; }
     virtual bool isCSSAnimation() const { return false; }
@@ -167,6 +167,7 @@ public:
     void willChangeRenderer();
 
     bool isRelevant() const { return m_isRelevant; }
+    bool hasPendingFinishNotification() const { return m_finishNotificationStepsMicrotaskPending; }
     void updateRelevance();
     void effectTimingDidChange();
     void suspendEffectInvalidation();
@@ -275,6 +276,8 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_EVENTTARGET(WebAnimation)
 
 #define SPECIALIZE_TYPE_TRAITS_WEB_ANIMATION(ToValueTypeName, predicate) \
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::ToValueTypeName) \

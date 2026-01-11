@@ -36,11 +36,11 @@ namespace API {
 
 Ref<FrameInfo> FrameInfo::create(WebKit::FrameInfoData&& frameInfoData)
 {
-    return adoptRef(*new FrameInfo(WTFMove(frameInfoData)));
+    return adoptRef(*new FrameInfo(WTF::move(frameInfoData)));
 }
 
 FrameInfo::FrameInfo(WebKit::FrameInfoData&& data)
-    : m_data(WTFMove(data)) { }
+    : m_data(WTF::move(data)) { }
 
 FrameInfo::~FrameInfo() = default;
 

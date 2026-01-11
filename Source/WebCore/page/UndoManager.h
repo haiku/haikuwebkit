@@ -40,7 +40,7 @@ class UndoItem;
 template<typename> class ExceptionOr;
 
 class UndoManager : public RefCountedAndCanMakeWeakPtr<UndoManager> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(UndoManager);
+    WTF_MAKE_TZONE_ALLOCATED(UndoManager);
 public:
     static Ref<UndoManager> create(Document& document)
     {

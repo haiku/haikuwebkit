@@ -115,8 +115,8 @@ public:
     void setNonCJKGlyphOrientation(NonCJKGlyphOrientation orientation) { m_nonCJKGlyphOrientation = enumToUnderlyingType(orientation); }
     void setWidthVariant(FontWidthVariant widthVariant) { m_widthVariant = enumToUnderlyingType(widthVariant); } // Make sure new callers of this sync with FontPlatformData::isForTextCombine()!
     void setSpecifiedLocale(const AtomString&);
-    void setFeatureSettings(FontFeatureSettings&& settings) { m_featureSettings = WTFMove(settings); }
-    void setVariationSettings(FontVariationSettings&& settings) { m_variationSettings = WTFMove(settings); }
+    void setFeatureSettings(FontFeatureSettings&& settings) { m_featureSettings = WTF::move(settings); }
+    void setVariationSettings(FontVariationSettings&& settings) { m_variationSettings = WTF::move(settings); }
     void setFontSynthesisWeight(FontSynthesisLonghandValue value) { m_fontSynthesisWeight =  enumToUnderlyingType(value); }
     void setFontSynthesisStyle(FontSynthesisLonghandValue value) { m_fontSynthesisStyle = enumToUnderlyingType(value); }
     void setFontSynthesisSmallCaps(FontSynthesisLonghandValue value) { m_fontSynthesisCaps = enumToUnderlyingType(value); }
@@ -132,7 +132,7 @@ public:
     void setVariantNumericOrdinal(FontVariantNumericOrdinal variant) { m_variantNumericOrdinal = enumToUnderlyingType(variant); }
     void setVariantNumericSlashedZero(FontVariantNumericSlashedZero variant) { m_variantNumericSlashedZero = enumToUnderlyingType(variant); }
     void setVariantAlternates(const FontVariantAlternates& variant) { m_variantAlternates = variant; }
-    void setVariantAlternates(FontVariantAlternates&& variant) { m_variantAlternates = WTFMove(variant); }
+    void setVariantAlternates(FontVariantAlternates&& variant) { m_variantAlternates = WTF::move(variant); }
     void setVariantEastAsianVariant(FontVariantEastAsianVariant variant) { m_variantEastAsianVariant = enumToUnderlyingType(variant); }
     void setVariantEastAsianWidth(FontVariantEastAsianWidth variant) { m_variantEastAsianWidth = enumToUnderlyingType(variant); }
     void setVariantEastAsianRuby(FontVariantEastAsianRuby variant) { m_variantEastAsianRuby = enumToUnderlyingType(variant); }

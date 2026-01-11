@@ -369,7 +369,7 @@ Ref<MutableStyleProperties> StyleProperties::copyProperties(std::span<const CSSP
             return CSSProperty(property, value.releaseNonNull());
         return std::nullopt;
     });
-    return MutableStyleProperties::create(WTFMove(vector));
+    return MutableStyleProperties::create(WTF::move(vector));
 }
 
 CSSStyleProperties* MutableStyleProperties::cssStyleProperties()

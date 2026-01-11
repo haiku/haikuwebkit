@@ -114,7 +114,7 @@ using FontVerticalDataCache = HashMap<FontPlatformData, RefPtr<OpenTypeVerticalD
 #endif
 
 struct FontCache::FontDataCaches {
-    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(FontCache);
+    WTF_MAKE_STRUCT_TZONE_ALLOCATED(FontDataCaches);
 
     FontDataCache data;
     FontPlatformDataCache platformData;
@@ -122,6 +122,8 @@ struct FontCache::FontDataCaches {
     FontVerticalDataCache verticalData;
 #endif
 };
+
+WTF_MAKE_STRUCT_TZONE_ALLOCATED_IMPL(FontCache::FontDataCaches);
 
 CheckedRef<FontCache> FontCache::forCurrentThread()
 {
@@ -404,7 +406,7 @@ static Function<void()>& fontCacheInvalidationCallback()
 
 void FontCache::registerFontCacheInvalidationCallback(Function<void()>&& callback)
 {
-    fontCacheInvalidationCallback() = WTFMove(callback);
+    fontCacheInvalidationCallback() = WTF::move(callback);
 }
 
 template<typename F>

@@ -148,7 +148,7 @@ static Ref<API::Array> contextMenuItems(const WebKit::WebContextMenu& contextMen
     auto menuItems = contextMenu.items().map([](auto& item) -> RefPtr<API::Object> {
         return WebKit::WebContextMenuItem::create(item);
     });
-    return API::Array::create(WTFMove(menuItems));
+    return API::Array::create(WTF::move(menuItems));
 }
 #endif
 
@@ -407,7 +407,7 @@ void WKBundlePageReplaceStringMatches(WKBundlePageRef pageRef, WKArrayRef matchI
 WKImageRef WKBundlePageCreateSnapshotWithOptions(WKBundlePageRef pageRef, WKRect rect, WKSnapshotOptions options)
 {
     RefPtr<WebKit::WebImage> webImage = WebKit::toProtectedImpl(pageRef)->scaledSnapshotWithOptions(WebKit::toIntRect(rect), 1, WebKit::toSnapshotOptions(options));
-    return toAPILeakingRef(WTFMove(webImage));
+    return toAPILeakingRef(WTF::move(webImage));
 }
 
 WKImageRef WKBundlePageCreateSnapshotInViewCoordinates(WKBundlePageRef pageRef, WKRect rect, WKImageOptions options)
@@ -415,19 +415,19 @@ WKImageRef WKBundlePageCreateSnapshotInViewCoordinates(WKBundlePageRef pageRef, 
     auto snapshotOptions = WebKit::snapshotOptionsFromImageOptions(options);
     snapshotOptions.add(WebKit::SnapshotOption::InViewCoordinates);
     RefPtr<WebKit::WebImage> webImage = WebKit::toProtectedImpl(pageRef)->scaledSnapshotWithOptions(WebKit::toIntRect(rect), 1, snapshotOptions);
-    return toAPILeakingRef(WTFMove(webImage));
+    return toAPILeakingRef(WTF::move(webImage));
 }
 
 WKImageRef WKBundlePageCreateSnapshotInDocumentCoordinates(WKBundlePageRef pageRef, WKRect rect, WKImageOptions options)
 {
     RefPtr<WebKit::WebImage> webImage = WebKit::toProtectedImpl(pageRef)->scaledSnapshotWithOptions(WebKit::toIntRect(rect), 1, WebKit::snapshotOptionsFromImageOptions(options));
-    return toAPILeakingRef(WTFMove(webImage));
+    return toAPILeakingRef(WTF::move(webImage));
 }
 
 WKImageRef WKBundlePageCreateScaledSnapshotInDocumentCoordinates(WKBundlePageRef pageRef, WKRect rect, double scaleFactor, WKImageOptions options)
 {
     RefPtr<WebKit::WebImage> webImage = WebKit::toProtectedImpl(pageRef)->scaledSnapshotWithOptions(WebKit::toIntRect(rect), scaleFactor, WebKit::snapshotOptionsFromImageOptions(options));
-    return toAPILeakingRef(WTFMove(webImage));
+    return toAPILeakingRef(WTF::move(webImage));
 }
 
 double WKBundlePageGetBackingScaleFactor(WKBundlePageRef pageRef)
@@ -674,7 +674,7 @@ void WKBundlePagePostSynchronousMessageForTesting(WKBundlePageRef pageRef, WKStr
     RefPtr<API::Object> returnData;
     WebKit::toProtectedImpl(pageRef)->postSynchronousMessageForTesting(WebKit::toWTFString(messageNameRef), WebKit::toProtectedImpl(messageBodyRef).get(), returnData);
     if (returnRetainedDataRef)
-        *returnRetainedDataRef = WebKit::toAPILeakingRef(WTFMove(returnData));
+        *returnRetainedDataRef = WebKit::toAPILeakingRef(WTF::move(returnData));
 }
 
 bool WKBundlePageIsSuspended(WKBundlePageRef pageRef)

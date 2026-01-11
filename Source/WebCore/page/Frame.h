@@ -80,8 +80,8 @@ public:
     DOMWindow* window() const { return virtualWindow(); }
     RefPtr<DOMWindow> protectedWindow() const;
     FrameTree& tree() const { return m_treeNode; }
-    WEBCORE_EXPORT std::optional<size_t> indexInFrameTreeSiblings() const;
-    WEBCORE_EXPORT Vector<size_t> pathToFrame() const;
+    WEBCORE_EXPORT std::optional<uint64_t> indexInFrameTreeSiblings() const;
+    WEBCORE_EXPORT Vector<uint64_t> pathToFrame() const;
     FrameIdentifier frameID() const { return m_frameID; }
     inline Page* page() const; // Defined in DocumentPage.h.
     inline RefPtr<Page> protectedPage() const; // Defined in DocumentPage.h.
@@ -92,7 +92,7 @@ public:
     Ref<Frame> protectedMainFrame() { return mainFrame(); }
     Ref<const Frame> protectedMainFrame() const { return mainFrame(); }
     bool isMainFrame() const { return this == m_mainFrame.get(); }
-    WEBCORE_EXPORT void disownOpener();
+    WEBCORE_EXPORT void disownOpener(NotifyUIProcess = NotifyUIProcess::No);
     WEBCORE_EXPORT void updateOpener(Frame&, NotifyUIProcess = NotifyUIProcess::Yes);
     WEBCORE_EXPORT void setOpenerForWebKitLegacy(Frame*);
     const Frame* opener() const { return m_opener.get(); }

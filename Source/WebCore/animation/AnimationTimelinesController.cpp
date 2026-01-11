@@ -247,7 +247,7 @@ void AnimationTimelinesController::updateAnimationsAndSendEvents(ReducedResoluti
     // removed from the list of completed transitions otherwise.
     for (auto& completedTransition : completedTransitions) {
         if (RefPtr documentTimeline = dynamicDowncast<DocumentTimeline>(completedTransition->timeline()))
-            documentTimeline->transitionDidComplete(WTFMove(completedTransition));
+            documentTimeline->transitionDidComplete(WTF::move(completedTransition));
     }
 
     for (auto& timeline : timelinesToUpdate) {
@@ -350,7 +350,7 @@ void AnimationTimelinesController::cacheCurrentTime(ReducedResolutionSeconds new
     // start time.
     if (!m_pendingAnimationsProcessingTaskCancellationGroup.hasPendingTask()) {
         CancellableTask task(m_pendingAnimationsProcessingTaskCancellationGroup, std::bind(&AnimationTimelinesController::processPendingAnimations, this));
-        protectedDocument()->checkedEventLoop()->queueTask(TaskSource::InternalAsyncTask, WTFMove(task));
+        protectedDocument()->checkedEventLoop()->queueTask(TaskSource::InternalAsyncTask, WTF::move(task));
     }
 
     if (!m_isSuspended) {

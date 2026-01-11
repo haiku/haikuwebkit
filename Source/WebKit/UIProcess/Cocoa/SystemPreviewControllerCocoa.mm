@@ -152,7 +152,7 @@ static NSString * const _WKARQLWebsiteURLParameterKey = @"ARQLWebsiteURLParamete
     WeakObjCPtr<_WKPreviewControllerDataSource> weakSelf { self };
     // FIXME: rdar://164693881
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    [_itemProvider registerItemForTypeIdentifier:contentType.get() loadHandler:[weakSelf = WTFMove(weakSelf)] (NSItemProviderCompletionHandler completionHandler, Class expectedValueClass, NSDictionary * options) {
+    [_itemProvider registerItemForTypeIdentifier:contentType.get() loadHandler:[weakSelf = WTF::move(weakSelf)] (NSItemProviderCompletionHandler completionHandler, Class expectedValueClass, NSDictionary * options) {
 ALLOW_DEPRECATED_DECLARATIONS_END
         if (auto strongSelf = weakSelf.get()) {
             // If the download happened instantly, the call to finish might have come before this
@@ -353,7 +353,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     auto result = FileSystem::openTemporaryFile("SystemPreview"_s, fileExtension);
     _filePath = result.first;
-    _fileHandle = WTFMove(result.second);
+    _fileHandle = WTF::move(result.second);
     ASSERT(_fileHandle);
 
     if (previewController)
@@ -431,7 +431,7 @@ void SystemPreviewController::begin(const URL& url, const WebCore::SecurityOrigi
 
     m_systemPreviewInfo = systemPreviewInfo;
 
-    auto successHandler = [completionHandler = WTFMove(completionHandler), topOrigin, weakThis = WeakPtr { *this }, url, presentingViewController] (bool success) mutable {
+    auto successHandler = [completionHandler = WTF::move(completionHandler), topOrigin, weakThis = WeakPtr { *this }, url, presentingViewController] (bool success) mutable {
         if (!success || !weakThis)
             return completionHandler();
 
@@ -442,7 +442,7 @@ void SystemPreviewController::begin(const URL& url, const WebCore::SecurityOrigi
         RELEASE_LOG(SystemPreview, "SystemPreview began on %lld", protectedThis->m_systemPreviewInfo.element.nodeIdentifier ? protectedThis->m_systemPreviewInfo.element.nodeIdentifier->toUInt64() : 0);
         auto request = WebCore::ResourceRequest(URL { url });
         bool shouldRunAtForegroundPriority = false;
-        webPageProxy->dataTaskWithRequest(WTFMove(request), topOrigin, shouldRunAtForegroundPriority, [weakThis, completionHandler = WTFMove(completionHandler)] (Ref<API::DataTask>&& task) mutable {
+        webPageProxy->dataTaskWithRequest(WTF::move(request), topOrigin, shouldRunAtForegroundPriority, [weakThis, completionHandler = WTF::move(completionHandler)] (Ref<API::DataTask>&& task) mutable {
             if (!weakThis)
                 return completionHandler();
 
@@ -473,7 +473,7 @@ void SystemPreviewController::begin(const URL& url, const WebCore::SecurityOrigi
 
         protectedThis->m_state = State::Initial;
     };
-    m_allowPreviewCallback = makeBlockPtr([successHandler = WTFMove(successHandler)](bool success) mutable {
+    m_allowPreviewCallback = makeBlockPtr([successHandler = WTF::move(successHandler)](bool success) mutable {
         successHandler(success);
     });
     auto alert = WebKit::createUIAlertController(WEB_UI_NSSTRING(@"View in AR?", "View in AR?"), WEB_UI_NSSTRING(@"You can view this object in 3D and place it in your surroundings using augmented reality.", "You can view this object in 3D and place it in your surroundings using augmented reality."));
@@ -619,7 +619,7 @@ void SystemPreviewController::releaseActivityTokenIfNecessary()
 
 void SystemPreviewController::setCompletionHandlerForLoadTesting(CompletionHandler<void(bool)>&& handler)
 {
-    m_testingCallback = WTFMove(handler);
+    m_testingCallback = WTF::move(handler);
 }
 
 void SystemPreviewController::triggerSystemPreviewAction()

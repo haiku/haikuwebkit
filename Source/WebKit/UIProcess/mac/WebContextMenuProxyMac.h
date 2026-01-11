@@ -27,7 +27,6 @@
 
 #if PLATFORM(MAC)
 
-#include "FrameInfoData.h"
 #include "WebContextMenuProxy.h"
 #include <wtf/RetainPtr.h>
 #include <wtf/WeakObjCPtr.h>
@@ -53,7 +52,7 @@ class WebContextMenuProxyMac final : public WebContextMenuProxy {
 public:
     static auto create(NSView *webView, WebPageProxy& page, FrameInfoData&& frameInfo, ContextMenuContextData&& context, const UserData& userData)
     {
-        return adoptRef(*new WebContextMenuProxyMac(webView, page, WTFMove(frameInfo), WTFMove(context), userData));
+        return adoptRef(*new WebContextMenuProxyMac(webView, page, WTF::move(frameInfo), WTF::move(context), userData));
     }
     ~WebContextMenuProxyMac();
 
@@ -120,7 +119,6 @@ private:
 #if ENABLE(VIDEO)
     RetainPtr<WKCaptionStyleMenuController> m_captionStyleMenuController;
 #endif
-    const FrameInfoData m_frameInfo;
 };
 
 } // namespace WebKit

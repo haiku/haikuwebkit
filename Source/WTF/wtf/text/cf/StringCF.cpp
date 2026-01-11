@@ -48,14 +48,14 @@ String::String(CFStringRef str)
         CFIndex usedBufLen;
         CFIndex convertedSize = CFStringGetBytes(str, CFRangeMake(0, size), kCFStringEncodingISOLatin1, 0, false, byteCast<UInt8>(buffer.characters()), size, &usedBufLen);
         if (static_cast<size_t>(convertedSize) == size && static_cast<size_t>(usedBufLen) == size) {
-            m_impl = StringImpl::adopt(WTFMove(buffer));
+            m_impl = StringImpl::adopt(WTF::move(buffer));
             return;
         }
     }
 
     StringBuffer<char16_t> ucharBuffer(size);
     CFStringCopyCharactersSpan(str, ucharBuffer.span());
-    m_impl = StringImpl::adopt(WTFMove(ucharBuffer));
+    m_impl = StringImpl::adopt(WTF::move(ucharBuffer));
 }
 
 RetainPtr<CFStringRef> String::createCFString() const

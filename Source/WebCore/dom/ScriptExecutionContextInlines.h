@@ -36,7 +36,7 @@ namespace WebCore {
 
 inline bool ScriptExecutionContext::addTimeout(int timeoutId, DOMTimer& timer)
 {
-    return m_timeouts.add(timeoutId, &timer).isNewEntry;
+    return m_timeouts.add(timeoutId, timer).isNewEntry;
 }
 
 inline RefPtr<DOMTimer> ScriptExecutionContext::takeTimeout(int timeoutId)
@@ -67,13 +67,13 @@ void ScriptExecutionContext::enqueueTaskWhenSettled(Ref<Promise>&& promise, Task
 {
     auto request = NativePromiseRequest::create();
     WeakPtr weakRequest { request.get() };
-    auto command = promise->whenSettled(nativePromiseDispatcher(), [weakThis = WeakPtr { *this }, taskSource, task = WTFMove(task), request = WTFMove(request)] (auto&& result) mutable {
+    auto command = promise->whenSettled(protectedNativePromiseDispatcher(), [weakThis = WeakPtr { *this }, taskSource, task = WTF::move(task), request = WTF::move(request)] (auto&& result) mutable {
         request->complete();
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
-        protectedThis->eventLoop().queueTask(taskSource, [task = WTFMove(task), result = WTFMove(result)] () mutable {
-            task(WTFMove(result));
+        protectedThis->eventLoop().queueTask(taskSource, [task = WTF::move(task), result = WTF::move(result)] () mutable {
+            task(WTF::move(result));
         });
     });
     if (weakRequest) {
@@ -85,12 +85,12 @@ void ScriptExecutionContext::enqueueTaskWhenSettled(Ref<Promise>&& promise, Task
 template<typename Promise, typename TaskType, typename Finalizer>
 void ScriptExecutionContext::enqueueTaskWhenSettled(Ref<Promise>&& promise, TaskSource taskSource, TaskType&& task, Finalizer&& finalizer)
 {
-    enqueueTaskWhenSettled(WTFMove(promise), taskSource, CompletionHandlerWithFinalizer<void(typename Promise::Result&&)>(WTFMove(task), WTFMove(finalizer)));
+    enqueueTaskWhenSettled(WTF::move(promise), taskSource, CompletionHandlerWithFinalizer<void(typename Promise::Result&&)>(WTF::move(task), WTF::move(finalizer)));
 }
 
 inline ScriptExecutionContext::AddConsoleMessageTask::AddConsoleMessageTask(std::unique_ptr<Inspector::ConsoleMessage>&& consoleMessage)
     : Task([&consoleMessage](ScriptExecutionContext& context) {
-        context.addConsoleMessage(WTFMove(consoleMessage));
+        context.addConsoleMessage(WTF::move(consoleMessage));
     })
 {
 }

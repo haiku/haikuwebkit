@@ -110,7 +110,7 @@ public:
 protected:
     template<typename... ArgTypes> JSDOMIteratorBase(JSC::Structure* structure, JSWrapper& iteratedObject, IterationKind kind, InternalIterator&& iterator)
         : Base(structure, *iteratedObject.globalObject())
-        , m_iterator(WTFMove(iterator))
+        , m_iterator(WTF::move(iterator))
         , m_kind(kind)
     {
     }
@@ -156,7 +156,7 @@ template<typename JSIterator, typename... ArgTypes> JSC::JSValue iteratorCreate(
         }
         return JSIterator::create(globalObject.vm(), getDOMStructure<JSIterator>(globalObject.vm(), globalObject), thisObject, kind, result.releaseReturnValue());
     } else
-        return JSIterator::create(globalObject.vm(), getDOMStructure<JSIterator>(globalObject.vm(), globalObject), thisObject, kind, WTFMove(result));
+        return JSIterator::create(globalObject.vm(), getDOMStructure<JSIterator>(globalObject.vm(), globalObject), thisObject, kind, WTF::move(result));
 }
 
 template<typename JSWrapper, typename IteratorTraits>

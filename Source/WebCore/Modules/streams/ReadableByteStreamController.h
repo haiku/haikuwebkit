@@ -52,7 +52,7 @@ class UnderlyingSourcePullCallback;
 class UnderlyingSourceStartCallback;
 
 class ReadableByteStreamController : public CanMakeWeakPtr<ReadableByteStreamController> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(ReadableByteStreamController);
+    WTF_MAKE_TZONE_ALLOCATED(ReadableByteStreamController);
 public:
     ~ReadableByteStreamController();
 

@@ -53,7 +53,7 @@ class GPUQueue : public RefCounted<GPUQueue> {
 public:
     static Ref<GPUQueue> create(Ref<WebGPU::Queue>&& backing, WebGPU::Device& device)
     {
-        return adoptRef(*new GPUQueue(WTFMove(backing), device));
+        return adoptRef(*new GPUQueue(WTF::move(backing), device));
     }
 
     String label() const;

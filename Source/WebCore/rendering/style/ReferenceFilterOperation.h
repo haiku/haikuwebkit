@@ -41,7 +41,7 @@ class ReferenceFilterOperation final : public FilterOperation {
 public:
     static Ref<ReferenceFilterOperation> create(URL url, AtomString fragment)
     {
-        return adoptRef(*new ReferenceFilterOperation(WTFMove(url), WTFMove(fragment)));
+        return adoptRef(*new ReferenceFilterOperation(WTF::move(url), WTF::move(fragment)));
     }
     virtual ~ReferenceFilterOperation();
 

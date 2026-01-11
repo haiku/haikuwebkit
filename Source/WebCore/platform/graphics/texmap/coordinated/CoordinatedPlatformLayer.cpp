@@ -163,7 +163,7 @@ void CoordinatedPlatformLayer::setPosition(FloatPoint&& position)
     if (m_position == position)
         return;
 
-    m_position = WTFMove(position);
+    m_position = WTF::move(position);
     m_pendingChanges.add(Change::Position);
     notifyCompositionRequired();
 }
@@ -235,7 +235,7 @@ void CoordinatedPlatformLayer::setAnchorPoint(FloatPoint3D&& point)
     if (m_anchorPoint == point)
         return;
 
-    m_anchorPoint = WTFMove(point);
+    m_anchorPoint = WTF::move(point);
     m_pendingChanges.add(Change::AnchorPoint);
     notifyCompositionRequired();
 }
@@ -252,7 +252,7 @@ void CoordinatedPlatformLayer::setSize(FloatSize&& size)
     if (m_size == size)
         return;
 
-    m_size = WTFMove(size);
+    m_size = WTF::move(size);
     m_pendingChanges.add(Change::Size);
     notifyCompositionRequired();
 }
@@ -329,8 +329,8 @@ void CoordinatedPlatformLayer::setTransformedVisibleRect(IntRect&& transformedVi
     if (m_transformedVisibleRect == transformedVisibleRect && m_transformedVisibleRectIncludingFuture == transformedVisibleRectIncludingFuture)
         return;
 
-    m_transformedVisibleRect = WTFMove(transformedVisibleRect);
-    m_transformedVisibleRectIncludingFuture = WTFMove(transformedVisibleRectIncludingFuture);
+    m_transformedVisibleRect = WTF::move(transformedVisibleRect);
+    m_transformedVisibleRectIncludingFuture = WTF::move(transformedVisibleRectIncludingFuture);
     m_needsTilesUpdate = true;
 }
 
@@ -487,11 +487,11 @@ void CoordinatedPlatformLayer::setContentsBuffer(std::unique_ptr<CoordinatedPlat
     if (!buffer && !m_contentsBuffer.pending && !m_contentsBuffer.committed)
         return;
 
-    m_contentsBuffer.pending = WTFMove(buffer);
+    m_contentsBuffer.pending = WTF::move(buffer);
     m_pendingChanges.add(Change::ContentsBuffer);
 #if ENABLE(DAMAGE_TRACKING)
     if (dirtyRegion)
-        addDamage(WTFMove(*dirtyRegion));
+        addDamage(WTF::move(*dirtyRegion));
 #else
     UNUSED_PARAM(dirtyRegion);
 #endif
@@ -509,7 +509,7 @@ void CoordinatedPlatformLayer::replaceCurrentContentsBufferWithCopy()
     m_contentsBuffer.pending = nullptr;
     if (is<CoordinatedPlatformLayerBufferVideo>(*m_contentsBuffer.committed))
         m_contentsBuffer.pending = downcast<CoordinatedPlatformLayerBufferVideo>(*m_contentsBuffer.committed).copyBuffer();
-    m_contentsBuffer.committed = WTFMove(m_contentsBuffer.pending);
+    m_contentsBuffer.committed = WTF::move(m_contentsBuffer.pending);
     ensureTarget().setContentsLayer(m_contentsBuffer.committed.get());
 }
 #endif
@@ -570,12 +570,12 @@ void CoordinatedPlatformLayer::setDirtyRegion(Damage&& damage)
     ASSERT(m_lock.isHeld());
     auto dirtyRegion = damage.rects();
     if (m_dirtyRegion != dirtyRegion) {
-        m_dirtyRegion = WTFMove(dirtyRegion);
+        m_dirtyRegion = WTF::move(dirtyRegion);
         notifyCompositionRequired();
     }
 
 #if ENABLE(DAMAGE_TRACKING)
-    addDamage(WTFMove(damage));
+    addDamage(WTF::move(damage));
 #endif
 }
 
@@ -583,7 +583,7 @@ void CoordinatedPlatformLayer::setDirtyRegion(Damage&& damage)
 void CoordinatedPlatformLayer::addDamage(Damage&& damage)
 {
     if (!m_damage)
-        m_damage = WTFMove(damage);
+        m_damage = WTF::move(damage);
     else
         m_damage->add(damage);
     m_pendingChanges.add(Change::Damage);
@@ -659,7 +659,7 @@ void CoordinatedPlatformLayer::setChildren(Vector<Ref<CoordinatedPlatformLayer>>
     if (m_children == children)
         return;
 
-    m_children = WTFMove(children);
+    m_children = WTF::move(children);
     m_pendingChanges.add(Change::Children);
     notifyCompositionRequired();
 }
@@ -688,7 +688,7 @@ void CoordinatedPlatformLayer::setDebugBorder(Color&& borderColor, float borderW
     if (m_debugBorderColor == borderColor && m_debugBorderWidth == borderWidth)
         return;
 
-    m_debugBorderColor = WTFMove(borderColor);
+    m_debugBorderColor = WTF::move(borderColor);
     m_debugBorderWidth = borderWidth;
     m_pendingChanges.add(Change::DebugIndicators);
     notifyCompositionRequired();
@@ -1079,7 +1079,7 @@ void CoordinatedPlatformLayer::flushCompositingState(const OptionSet<Composition
 
     if (reasons.containsAny({ CompositionReason::RenderingUpdate, CompositionReason::VideoFrame })) {
         if (m_pendingChanges.contains(Change::ContentsBuffer)) {
-            m_contentsBuffer.committed = WTFMove(m_contentsBuffer.pending);
+            m_contentsBuffer.committed = WTF::move(m_contentsBuffer.pending);
             m_pendingChanges.remove(Change::ContentsBuffer);
         }
 

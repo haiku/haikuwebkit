@@ -640,7 +640,7 @@ MachSendRight RemoteLayerTreeDrawingAreaProxyMac::createFence()
     uint64_t callbackID = connection->installIncomingSyncMessageCallback([rootLayerContext] {
         [rootLayerContext invalidateFences];
     });
-    [CATransaction addCommitHandler:[callbackID, connection = WTFMove(connection)] () mutable {
+    [CATransaction addCommitHandler:[callbackID, connection = WTF::move(connection)] () mutable {
         connection->uninstallIncomingSyncMessageCallback(callbackID);
     } forPhase:kCATransactionPhasePostCommit];
 

@@ -133,7 +133,7 @@ SecurityOrigin::SecurityOrigin(const URL& url)
 }
 
 SecurityOrigin::SecurityOrigin(SecurityOriginData&& data)
-    : m_data(WTFMove(data))
+    : m_data(WTF::move(data))
 {
     initializeShared(m_data.toURL());
 }
@@ -569,15 +569,15 @@ Ref<SecurityOrigin> SecurityOrigin::create(const String& protocol, const String&
 
 Ref<SecurityOrigin> SecurityOrigin::create(SecurityOriginData&& data)
 {
-    return adoptRef(*new SecurityOrigin(WTFMove(data)));
+    return adoptRef(*new SecurityOrigin(WTF::move(data)));
 }
 
 Ref<SecurityOrigin> SecurityOrigin::create(WebCore::SecurityOriginData&& data, String&& domain, String&& filePath, bool universalAccess, bool domainWasSetInDOM, bool canLoadLocalResources, bool enforcesFilePathSeparation, bool needsStorageAccessFromFileURLsQuirk, std::optional<bool> isPotentiallyTrustworthy, bool isLocal)
 {
     auto origin = adoptRef(*new SecurityOrigin);
-    origin->m_data = WTFMove(data);
-    origin->m_domain = WTFMove(domain);
-    origin->m_filePath = WTFMove(filePath);
+    origin->m_data = WTF::move(data);
+    origin->m_domain = WTF::move(domain);
+    origin->m_filePath = WTF::move(filePath);
     origin->m_universalAccess = universalAccess;
     origin->m_domainWasSetInDOM = domainWasSetInDOM;
     origin->m_canLoadLocalResources = canLoadLocalResources;

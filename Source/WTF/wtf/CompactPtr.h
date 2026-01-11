@@ -172,7 +172,7 @@ public:
 
     CompactPtr<T>& operator=(CompactPtr&& other)
     {
-        CompactPtr moved(WTFMove(other));
+        CompactPtr moved(WTF::move(other));
         swap(moved);
         return *this;
     }
@@ -181,7 +181,7 @@ public:
     CompactPtr<T>& operator=(CompactPtr<X>&& other)
     {
         static_assert(std::is_convertible_v<X*, T*>);
-        CompactPtr moved(WTFMove(other));
+        CompactPtr moved(WTF::move(other));
         swap(moved);
         return *this;
     }

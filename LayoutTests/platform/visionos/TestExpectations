@@ -115,6 +115,7 @@ imported/w3c/web-platform-tests/webxr/layers [ Skip ]
 imported/w3c/web-platform-tests/webxr/light-estimation [ Skip ]
 
 # The Digital Credentials API is not supported on visionOS.
+http/tests/digital-credentials/ [ Skip ]
 http/wpt/identity/ [ Skip ]
 imported/w3c/web-platform-tests/digital-credentials/ [ Skip ]
 

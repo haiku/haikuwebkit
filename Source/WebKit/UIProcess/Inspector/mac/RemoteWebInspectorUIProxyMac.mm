@@ -180,7 +180,7 @@ void RemoteWebInspectorUIProxy::platformSave(Vector<InspectorFrontendClient::Sav
         forceSaveAs = true;
     }
 
-    WebInspectorUIProxy::showSavePanel(m_window.get(), platformURL.get(), WTFMove(saveDatas), forceSaveAs, [urlCommonPrefix, protectedThis = Ref { *this }] (NSURL *actualURL) {
+    WebInspectorUIProxy::showSavePanel(m_window.get(), platformURL.get(), WTF::move(saveDatas), forceSaveAs, [urlCommonPrefix, protectedThis = Ref { *this }] (NSURL *actualURL) {
         protectedThis->m_suggestedToActualURLMap.set(urlCommonPrefix.get(), actualURL);
     });
 }
@@ -196,7 +196,7 @@ void RemoteWebInspectorUIProxy::platformLoad(const String& path, CompletionHandl
 void RemoteWebInspectorUIProxy::platformPickColorFromScreen(CompletionHandler<void(const std::optional<WebCore::Color>&)>&& completionHandler)
 {
     auto sampler = adoptNS([[NSColorSampler alloc] init]);
-    [sampler.get() showSamplerWithSelectionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler)](NSColor *selectedColor) mutable {
+    [sampler.get() showSamplerWithSelectionHandler:makeBlockPtr([completionHandler = WTF::move(completionHandler)](NSColor *selectedColor) mutable {
         if (!selectedColor) {
             completionHandler(std::nullopt);
             return;

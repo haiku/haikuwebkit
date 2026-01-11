@@ -25,11 +25,16 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
+
 #if ENABLE(WEBASSEMBLY)
 
+#include <JavaScriptCore/JSExportMacros.h>
+#include <cstdint>
 #include <wtf/DataLog.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
+#include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
 
@@ -59,7 +64,7 @@ public:
     {
     }
 
-    void takeSource(Vector<uint8_t>&& source) { this->source = WTFMove(source); }
+    void takeSource(Vector<uint8_t>&& source) { this->source = WTF::move(source); }
     FunctionDebugInfo& ensureFunctionDebugInfo(FunctionCodeIndex);
 
     Ref<ModuleInformation> moduleInfo;

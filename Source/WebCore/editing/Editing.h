@@ -116,7 +116,7 @@ bool positionBeforeOrAfterNodeIsCandidate(Node&);
 // -------------------------------------------------------------------------
 
 PositionRange positionsForRange(const SimpleRange&);
-WEBCORE_EXPORT HashSet<RefPtr<HTMLImageElement>> visibleImageElementsInRangeWithNonLoadedImages(const SimpleRange&);
+WEBCORE_EXPORT HashSet<Ref<HTMLImageElement>> visibleImageElementsInRangeWithNonLoadedImages(const SimpleRange&);
 WEBCORE_EXPORT SimpleRange adjustToVisuallyContiguousRange(const SimpleRange&);
 
 struct EnclosingLayerInfomation {

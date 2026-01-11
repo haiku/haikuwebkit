@@ -84,7 +84,7 @@ public:
 
     void append(T v)
     {
-        m_data[m_current] = WTFMove(v);
+        m_data[m_current] = WTF::move(v);
         incrementIndex(m_current);
     }
 
@@ -125,15 +125,15 @@ private:
 
 static RetainPtr<CGColorRef> createColor(float r, float g, float b, float a)
 {
-    CGFloat components[4] = { r, g, b, a };
-    return adoptCF(CGColorCreate(sRGBColorSpaceSingleton(), components));
+    std::array<CGFloat, 4> components { r, g, b, a };
+    return adoptCF(CGColorCreate(sRGBColorSpaceSingleton(), components.data()));
 }
 
 struct HistoricMemoryCategoryInfo {
     HistoricMemoryCategoryInfo() { } // Needed for std::array.
 
     HistoricMemoryCategoryInfo(unsigned category, SRGBA<uint8_t> color, String name, bool subcategory = false)
-        : name(WTFMove(name))
+        : name(WTF::move(name))
         , color(cachedCGColor(color))
         , isSubcategory(subcategory)
         , type(category)

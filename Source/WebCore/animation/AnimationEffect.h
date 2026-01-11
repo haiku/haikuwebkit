@@ -49,7 +49,7 @@ struct SingleAnimationRange;
 }
 
 class AnimationEffect : public RefCountedAndCanMakeWeakPtr<AnimationEffect> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(AnimationEffect);
+    WTF_MAKE_TZONE_ALLOCATED(AnimationEffect);
 public:
     virtual ~AnimationEffect();
 

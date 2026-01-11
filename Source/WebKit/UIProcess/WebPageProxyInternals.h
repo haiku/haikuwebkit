@@ -49,6 +49,7 @@
 #include <WebCore/PrivateClickMeasurement.h>
 #include <WebCore/RegistrableDomain.h>
 #include <WebCore/ResourceRequest.h>
+#include <WebCore/SecurityOriginData.h>
 #include <WebCore/SpatialBackdropSource.h>
 #include <pal/HysteresisActivity.h>
 #include <wtf/UUID.h>
@@ -147,7 +148,7 @@ private:
         if (domain.isEmpty())
             return;
 
-        m_visitedDomains.prependOrMoveToFirst(WTFMove(domain));
+        m_visitedDomains.prependOrMoveToFirst(WTF::move(domain));
 
         if (m_visitedDomains.size() > maxVisitedDomainsSize)
             m_visitedDomains.removeLast();
@@ -222,7 +223,6 @@ struct WebPageProxy::Internals final : WebPopupMenuProxy::Client
     , EndowmentStateTrackerClient
 #endif
 #if ENABLE(SPEECH_SYNTHESIS)
-    , WebCore::PlatformSpeechSynthesisUtteranceClient
     , WebCore::PlatformSpeechSynthesizerClient
 #endif
 #if ENABLE(WIRELESS_PLAYBACK_TARGET) && !PLATFORM(IOS_FAMILY)
@@ -446,7 +446,7 @@ public:
 
     EnhancedSecurityTracking enhancedSecurityTracker;
 
-    explicit Internals(WebPageProxy&);
+    explicit Internals(WebPageProxy&, std::optional<WebCore::SecurityOriginData>);
 
     Ref<WebPageProxy> protectedPage() const;
 
@@ -524,6 +524,8 @@ public:
     RefPtr<WebPageProxyFrameLoadStateObserver> protectedFrameLoadStateObserver() { return frameLoadStateObserver; }
 #endif
     Ref<GeolocationPermissionRequestManagerProxy> protectedGeolocationPermissionRequestManager() { return geolocationPermissionRequestManager; }
+
+    std::optional<WebCore::SecurityOriginData> openerOrigin;
 };
 
 } // namespace WebKit

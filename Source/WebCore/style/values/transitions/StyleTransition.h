@@ -115,7 +115,7 @@ private:
     const Data& data() const { return m_data.get(); }
 
     Transition(Ref<Data>&& data)
-        : m_data { WTFMove(data) }
+        : m_data { WTF::move(data) }
     {
     }
 

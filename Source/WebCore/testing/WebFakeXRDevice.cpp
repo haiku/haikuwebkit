@@ -71,7 +71,7 @@ SimulatedXRDevice::~SimulatedXRDevice()
 
 void SimulatedXRDevice::setViews(Vector<PlatformXR::FrameData::View>&& views)
 {
-    m_frameData.views = WTFMove(views);
+    m_frameData.views = WTF::move(views);
 }
 
 void SimulatedXRDevice::setNativeBoundsGeometry(const Vector<FakeXRBoundsPoint>& geometry)
@@ -166,7 +166,7 @@ void SimulatedXRDevice::frameTimerFired()
             .requestDepth = false,
             .isForTesting = true
         });
-        data.layers.add(layer.key, WTFMove(layerData));
+        data.layers.add(layer.key, WTF::move(layerData));
     }
 
     for (auto& input : m_inputConnections) {
@@ -196,7 +196,33 @@ void SimulatedXRDevice::frameTimerFired()
     };
     // Non-transient hit test
     for (const auto& pair : m_hitTestSources) {
-        PlatformXR::Ray ray = transformRay(data.origin, pair.value->offsetRay);
+        std::optional<PlatformXR::FrameData::Pose> origin;
+        WTF::switchOn(pair.value->nativeOrigin, [&](const PlatformXR::ReferenceSpaceType& referenceSpaceType) {
+            switch (referenceSpaceType) {
+            case PlatformXR::ReferenceSpaceType::Viewer:
+                origin = data.origin;
+                break;
+            case PlatformXR::ReferenceSpaceType::Local:
+                origin = PlatformXR::FrameData::Pose();
+                break;
+            case PlatformXR::ReferenceSpaceType::LocalFloor:
+                origin = data.floorTransform;
+                break;
+            default:
+                break;
+            }
+        }, [&](const PlatformXR::InputSourceSpaceInfo& inputSource) {
+            auto i = data.inputSources.findIf([&](auto& item) { return item.handle == inputSource.handle; });
+            if (i == notFound)
+                return;
+            if (inputSource.type == PlatformXR::InputSourceSpaceType::TargetRay)
+                origin = data.inputSources[i].pointerOrigin.pose;
+            else
+                origin = data.inputSources[i].gripOrigin.value_or(PlatformXR::FrameData::InputSourcePose { }).pose;
+        });
+        if (!origin)
+            continue;
+        PlatformXR::Ray ray = transformRay(*origin, pair.value->offsetRay);
         data.hitTestResults.add(pair.key, hitTestWorld(ray, pair.value->entityTypes));
     }
     // Transient hit test
@@ -208,17 +234,17 @@ void SimulatedXRDevice::frameTimerFired()
                 results.append({ source.handle, hitTestWorld(ray, pair.value->entityTypes) });
             }
         }
-        data.transientInputHitTestResults.add(pair.key, WTFMove(results));
+        data.transientInputHitTestResults.add(pair.key, WTF::move(results));
     }
 #endif
 
     if (m_FrameCallback)
-        m_FrameCallback(WTFMove(data));
+        m_FrameCallback(WTF::move(data));
 }
 
 void SimulatedXRDevice::requestFrame(std::optional<PlatformXR::RequestData>&&, RequestFrameCallback&& callback)
 {
-    m_FrameCallback = WTFMove(callback);
+    m_FrameCallback = WTF::move(callback);
     if (!m_frameTimer.isActive())
         m_frameTimer.startOneShot(FakeXRFrameTime);
 }
@@ -506,7 +532,7 @@ void WebFakeXRDevice::setViews(const Vector<FakeXRViewInit>& views)
         }
     }
 
-    m_device->setViews(WTFMove(deviceViews));
+    m_device->setViews(WTF::move(deviceViews));
 }
 
 void WebFakeXRDevice::disconnect(DOMPromiseDeferred<void>&& promise)

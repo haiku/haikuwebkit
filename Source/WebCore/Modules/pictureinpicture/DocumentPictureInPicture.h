@@ -37,7 +37,7 @@ class DeferredPromise;
 class Document;
 
 class DocumentPictureInPicture : public Supplement<Document> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(DocumentPictureInPicture);
+    WTF_MAKE_TZONE_ALLOCATED(DocumentPictureInPicture);
 public:
     virtual ~DocumentPictureInPicture();
 

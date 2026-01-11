@@ -43,12 +43,14 @@
 #include "FontDescription.h"
 #include "FontFace.h"
 #include "FontPaletteValues.h"
+#include "Logging.h"
 #include "SVGFontFaceElement.h"
 #include "Settings.h"
 #include "SharedBuffer.h"
 #include "StyleProperties.h"
 #include "StyleResolveForFont.h"
 #include "StyleRule.h"
+#include <wtf/text/TextStream.h>
 
 namespace WebCore {
 
@@ -67,13 +69,13 @@ void CSSFontFace::appendSources(CSSFontFace& fontFace, CSSValueList& srcList, Sc
         // An item in the list either specifies a string (local font name) or a URL (remote font to download).
         if (auto local = dynamicDowncast<CSSFontFaceSrcLocalValue>(src)) {
             if (!local->svgFontFaceElement())
-                fontFace.adoptSource(makeUnique<CSSFontFaceSource>(fontFace, local->fontFaceName()));
+                fontFace.adoptSource(makeUniqueWithoutRefCountedCheck<CSSFontFaceSource>(fontFace, local->fontFaceName()));
             else if (allowDownloading)
-                fontFace.adoptSource(makeUnique<CSSFontFaceSource>(fontFace, local->fontFaceName(),  CheckedRef { *local->svgFontFaceElement() }));
+                fontFace.adoptSource(makeUniqueWithoutRefCountedCheck<CSSFontFaceSource>(fontFace, local->fontFaceName(),  CheckedRef { *local->svgFontFaceElement() }));
         } else {
             if (allowDownloading) {
                 if (auto request = downcast<CSSFontFaceSrcResourceValue>(const_cast<CSSValue&>(src)).fontLoadRequest(*context, isInitiatingElementInUserAgentShadowTree))
-                    fontFace.adoptSource(makeUnique<CSSFontFaceSource>(fontFace, *context->cssFontSelector(), request.releaseNonNull()));
+                    fontFace.adoptSource(makeUniqueWithoutRefCountedCheck<CSSFontFaceSource>(fontFace, *context->cssFontSelector(), request.releaseNonNull()));
             }
         }
     }
@@ -104,6 +106,7 @@ CSSFontFace::CSSFontFace(const SettingsValues* settings, StyleRuleFontFace* conn
     , m_shouldIgnoreFontLoadCompletions(settings && settings->shouldIgnoreFontLoadCompletions)
     , m_fontLoadTimingOverride(settings ? settings->fontLoadTimingOverride : FontLoadTimingOverride::None)
     , m_allowUserInstalledFonts(settings && !settings->shouldAllowUserInstalledFonts ? AllowUserInstalledFonts::No : AllowUserInstalledFonts::Yes)
+    , m_trustedType(settings ? settings->downloadableBinaryFontTrustedTypes : DownloadableBinaryFontTrustedTypes::Any)
     , m_timeoutTimer(*this, &CSSFontFace::timeoutFired)
 {
 }
@@ -156,7 +159,7 @@ void CSSFontFace::setFamily(CSSValue& family)
     });
 }
 
-FontFace* CSSFontFace::existingWrapper()
+FontFace* CSSFontFace::existingWrapper() const
 {
     return m_wrapper.get();
 }
@@ -282,7 +285,7 @@ void CSSFontFace::setUnicodeRange(CSSValueList& list)
     if (ranges == m_ranges)
         return;
 
-    m_ranges = WTFMove(ranges);
+    m_ranges = WTF::move(ranges);
 
     iterateClients(m_clients, [&](CSSFontFaceClient& client) {
         client.fontPropertyChanged(*this);
@@ -309,7 +312,7 @@ void CSSFontFace::setFeatureSettings(CSSValue& featureSettings)
     if (m_featureSettings == settings)
         return;
 
-    m_featureSettings = WTFMove(settings);
+    m_featureSettings = WTF::move(settings);
 
     iterateClients(m_clients, [&](CSSFontFaceClient& client) {
         client.fontPropertyChanged(*this);
@@ -517,9 +520,9 @@ void CSSFontFace::setWrapper(FontFace& newWrapper)
     initializeWrapper();
 }
 
-void CSSFontFace::adoptSource(std::unique_ptr<CSSFontFaceSource>&& source)
+void CSSFontFace::adoptSource(std::unique_ptr<CSSFontFaceSource> source)
 {
-    m_sources.append(WTFMove(source));
+    m_sources.append(WTF::move(source));
 
     // We should never add sources in the middle of loading.
     ASSERT(!m_sourcesPopulated);
@@ -613,15 +616,17 @@ void CSSFontFace::setStatus(Status newStatus)
 void CSSFontFace::fontLoaded(CSSFontFaceSource&)
 {
     Ref<CSSFontFace> protectedThis(*this);
-    
+
+    LOG_WITH_STREAM(Fonts, stream << "CSSFontFace::fontLoaded - " << family() << " " << style() << " " << weight());
+
     fontLoadEventOccurred();
 }
 
-void CSSFontFace::opportunisticallyStartFontDataURLLoading()
+void CSSFontFace::opportunisticallyStartFontDataURLLoading(DownloadableBinaryFontTrustedTypes trustedType)
 {
     // We don't want to go crazy here and blow the cache. Usually these data URLs are the first item in the src: list, so let's just check that one.
     if (!m_sources.isEmpty())
-        CheckedRef { *m_sources[0] }->opportunisticallyStartFontDataURLLoading();
+        Ref { *m_sources[0] }->opportunisticallyStartFontDataURLLoading(trustedType);
 }
 
 size_t CSSFontFace::pump(ExternalResourceDownloadPolicy policy)
@@ -648,7 +653,7 @@ size_t CSSFontFace::pump(ExternalResourceDownloadPolicy policy)
             if (policy == ExternalResourceDownloadPolicy::Allow || !source->requiresExternalResource()) {
                 if (policy == ExternalResourceDownloadPolicy::Allow && m_status == Status::Pending)
                     setStatus(Status::Loading);
-                source->load(protectedDocument().get());
+                source->load(m_trustedType, protectedDocument().get());
             }
         }
 
@@ -683,6 +688,8 @@ size_t CSSFontFace::pump(ExternalResourceDownloadPolicy policy)
 
 void CSSFontFace::load()
 {
+    LOG_WITH_STREAM(Fonts, stream << "CSSFontFace::load - " << family() << " " << style() << " " << weight());
+
     pump(ExternalResourceDownloadPolicy::Allow);
 }
 
@@ -720,7 +727,7 @@ RefPtr<Font> CSSFontFace::font(const FontDescription& fontDescription, bool synt
     for (size_t i = startIndex; i < m_sources.size(); ++i) {
         auto& source = m_sources[i];
         if (source->status() == CSSFontFaceSource::Status::Pending && (policy == ExternalResourceDownloadPolicy::Allow || !source->requiresExternalResource()))
-            source->load(protectedDocument().get());
+            source->load(m_trustedType, protectedDocument().get());
 
         switch (source->status()) {
         case CSSFontFaceSource::Status::Pending:
@@ -757,7 +764,7 @@ void CSSFontFace::updateStyleIfNeeded()
 bool CSSFontFace::hasSVGFontFaceSource() const
 {
     return m_sources.containsIf([](auto& source) {
-        return CheckedRef { *source }->isSVGFontFaceSource();
+        return Ref { *source }->isSVGFontFaceSource();
     });
 }
 

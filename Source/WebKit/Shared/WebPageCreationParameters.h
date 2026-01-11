@@ -74,7 +74,7 @@
 #include "WebExtensionControllerParameters.h"
 #endif
 
-#if (PLATFORM(GTK) || PLATFORM(WPE)) && USE(GBM)
+#if (PLATFORM(GTK) || PLATFORM(WPE)) && (USE(GBM) || OS(ANDROID))
 #include "RendererBufferFormat.h"
 #endif
 
@@ -350,7 +350,7 @@ struct WebPageCreationParameters {
 #endif
 
 #if PLATFORM(GTK) || PLATFORM(WPE)
-#if USE(GBM)
+#if USE(GBM) || OS(ANDROID)
     Vector<RendererBufferFormat> preferredBufferFormats { };
 #endif
 #endif

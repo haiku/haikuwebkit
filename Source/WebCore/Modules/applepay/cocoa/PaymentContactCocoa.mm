@@ -152,7 +152,7 @@ static ApplePayPaymentContact convert(unsigned version, PKContact *contact)
 PaymentContact::PaymentContact() = default;
 
 PaymentContact::PaymentContact(RetainPtr<PKContact>&& pkContact)
-    : m_pkContact { WTFMove(pkContact) }
+    : m_pkContact { WTF::move(pkContact) }
 {
 }
 

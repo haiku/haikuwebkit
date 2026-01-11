@@ -64,8 +64,8 @@ public:
 
     virtual ~RemoteMediaSessionManager();
 
-    void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
-    void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
+    void ref() const final { WebCore::REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::ref(); }
+    void deref() const final { WebCore::REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::deref(); }
 
 protected:
     RemoteMediaSessionManager(WebPage& topPage, WebPage& localPage);

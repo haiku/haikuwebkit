@@ -62,7 +62,7 @@ public:
     using GraphicsContext::drawDisplayList;
     void drawDisplayList(const WebCore::DisplayList::DisplayList&, WebCore::ControlFactory&) final;
 
-    void setClient(ThreadSafeWeakPtr<RemoteImageBufferProxy>&& client) { m_client = WTFMove(client); }
+    void setClient(ThreadSafeWeakPtr<RemoteImageBufferProxy>&& client) { m_client = WTF::move(client); }
     // Returns false if there has not been any potential draws since last call.
     // Returns true if there has been potential draws since last call.
     bool consumeHasDrawn();

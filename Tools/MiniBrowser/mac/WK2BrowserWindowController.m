@@ -171,9 +171,18 @@ static const int testFooterBannerHeight = 58;
     [_webView removeObserver:self forKeyPath:@"URL"];
     [_webView removeObserver:self forKeyPath:@"hasOnlySecureContent"];
     [_webView removeObserver:self forKeyPath:@"_gpuProcessIdentifier"];
-    
+
     [progressIndicator unbind:NSHiddenBinding];
     [progressIndicator unbind:NSValueBinding];
+}
+
+- (void)windowDidLoad
+{
+    [super windowDidLoad];
+
+    // Private windows get separate identifier so they can't merge with regular windows
+    if (_isPrivateBrowsingWindow)
+        self.window.tabbingIdentifier = @"MiniBrowserPrivateWindow";
 }
 
 - (void)userAgentDidChange:(NSNotification *)notification
@@ -619,6 +628,8 @@ static BOOL areEssentiallyEqual(double a, double b)
         [footerBannerLayer setBackgroundColor:[NSColor colorWithSRGBRed:116. / 255. green:187. / 255. blue:251. / 255. alpha:1].CGColor];
         [_webView _setFooterBannerLayer:footerBannerLayer];
     }
+
+    [self updateTitle:_webView.title];
 }
 
 - (void)updateTitleForBadgeChange
@@ -638,6 +649,11 @@ static BOOL areEssentiallyEqual(double a, double b)
 
     if (BrowserAppDelegate.currentBadge)
         title = [title stringByAppendingFormat:@" (%@)", BrowserAppDelegate.currentBadge];
+
+    SettingsController *settings = [[NSApp browserAppDelegate] settingsController];
+    pid_t webPID = _webView._webProcessIdentifier;
+    if (settings.showWebProcessIdentifierInTitle && webPID)
+        title = [title stringByAppendingFormat:@" [%d]", webPID];
 
     self.window.title = title;
 

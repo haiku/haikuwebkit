@@ -65,7 +65,7 @@ struct SVGPropertyTraits<ColorMatrixType> {
 };
 
 class SVGFEColorMatrixElement final : public SVGFilterPrimitiveStandardAttributes {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(SVGFEColorMatrixElement);
+    WTF_MAKE_TZONE_ALLOCATED(SVGFEColorMatrixElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(SVGFEColorMatrixElement);
 public:
     static Ref<SVGFEColorMatrixElement> create(const QualifiedName&, Document&);

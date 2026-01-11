@@ -43,7 +43,7 @@
 namespace WebCore {
 
 CachedRawResource::CachedRawResource(CachedResourceRequest&& request, Type type, PAL::SessionID sessionID, const CookieJar* cookieJar)
-    : CachedResource(WTFMove(request), type, sessionID, cookieJar)
+    : CachedResource(WTF::move(request), type, sessionID, cookieJar)
 {
     ASSERT(isMainOrMediaOrIconOrRawResource());
 }
@@ -150,12 +150,12 @@ static void iterateRedirects(CachedResourceHandle<CachedRawResource>&& handle, C
     if (!handle->hasClient(client) || redirectsInReverseOrder.isEmpty())
         return completionHandler({ });
     auto redirectPair = redirectsInReverseOrder.takeLast();
-    client.redirectReceived(*handle, WTFMove(redirectPair.first), WTFMove(redirectPair.second), [handle = WTFMove(handle), client = WeakPtr { client }, redirectsInReverseOrder = WTFMove(redirectsInReverseOrder), completionHandler = WTFMove(completionHandler)] (ResourceRequest&&) mutable {
+    client.redirectReceived(*handle, WTF::move(redirectPair.first), WTF::move(redirectPair.second), [handle = WTF::move(handle), client = WeakPtr { client }, redirectsInReverseOrder = WTF::move(redirectsInReverseOrder), completionHandler = WTF::move(completionHandler)] (ResourceRequest&&) mutable {
         // Ignore the new request because we can't do anything with it.
         // We're just replying a redirect chain that has already happened.
         if (!client)
             return completionHandler({ });
-        iterateRedirects(WTFMove(handle), *client, WTFMove(redirectsInReverseOrder), WTFMove(completionHandler));
+        iterateRedirects(WTF::move(handle), *client, WTF::move(redirectsInReverseOrder), WTF::move(completionHandler));
     });
 }
 
@@ -168,10 +168,10 @@ void CachedRawResource::didAddClient(CachedResourceClient& c)
         return std::pair<ResourceRequest, ResourceResponse> { pair.m_request, pair.m_redirectResponse };
     });
 
-    iterateRedirects(CachedResourceHandle { this }, client, WTFMove(redirectsInReverseOrder), [this, protectedThis = CachedResourceHandle { this }, client = WeakPtr { client }] (ResourceRequest&&) mutable {
+    iterateRedirects(CachedResourceHandle { this }, client, WTF::move(redirectsInReverseOrder), [this, protectedThis = CachedResourceHandle { this }, client = WeakPtr { client }] (ResourceRequest&&) mutable {
         if (!client || !hasClient(*client))
             return;
-        auto responseProcessedHandler = [this, protectedThis = WTFMove(protectedThis), client] {
+        auto responseProcessedHandler = [this, protectedThis = WTF::move(protectedThis), client] {
             if (!client || !hasClient(*client))
                 return;
             if (RefPtr data = m_data) {
@@ -193,7 +193,7 @@ void CachedRawResource::didAddClient(CachedResourceClient& c)
                 ASSERT(!validationInProgress());
                 response.setSource(ResourceResponse::Source::MemoryCache);
             }
-            client->responseReceived(*this, WTFMove(response), WTFMove(responseProcessedHandler));
+            client->responseReceived(*this, WTF::move(response), WTF::move(responseProcessedHandler));
         } else
             responseProcessedHandler();
     });
@@ -209,10 +209,10 @@ static void iterateClients(CachedResourceClientWalker<CachedRawResourceClient>&&
 {
     RefPtr client = walker.next();
     if (!client)
-        return completionHandler(WTFMove(request));
+        return completionHandler(WTF::move(request));
     const ResourceResponse& responseReference = *response;
-    client->redirectReceived(*handle, WTFMove(request), responseReference, [walker = WTFMove(walker), handle = WTFMove(handle), response = WTFMove(response), completionHandler = WTFMove(completionHandler)] (ResourceRequest&& request) mutable {
-        iterateClients(WTFMove(walker), WTFMove(handle), WTFMove(request), WTFMove(response), WTFMove(completionHandler));
+    client->redirectReceived(*handle, WTF::move(request), responseReference, [walker = WTF::move(walker), handle = WTF::move(handle), response = WTF::move(response), completionHandler = WTF::move(completionHandler)] (ResourceRequest&& request) mutable {
+        iterateClients(WTF::move(walker), WTF::move(handle), WTF::move(request), WTF::move(response), WTF::move(completionHandler));
     });
 }
 
@@ -220,11 +220,11 @@ void CachedRawResource::redirectReceived(ResourceRequest&& request, const Resour
 {
     RELEASE_LOG_ALWAYS("redirectReceived:");
     if (response.isNull())
-        CachedResource::redirectReceived(WTFMove(request), response, WTFMove(completionHandler));
+        CachedResource::redirectReceived(WTF::move(request), response, WTF::move(completionHandler));
     else {
         m_redirectChain.append(RedirectPair(request, response));
-        iterateClients(CachedResourceClientWalker<CachedRawResourceClient>(*this), CachedResourceHandle { this }, WTFMove(request), makeUnique<ResourceResponse>(response), [this, protectedThis = CachedResourceHandle { this }, completionHandler = WTFMove(completionHandler), response] (ResourceRequest&& request) mutable {
-            CachedResource::redirectReceived(WTFMove(request), response, WTFMove(completionHandler));
+        iterateClients(CachedResourceClientWalker<CachedRawResourceClient>(*this), CachedResourceHandle { this }, WTF::move(request), makeUnique<ResourceResponse>(response), [this, protectedThis = CachedResourceHandle { this }, completionHandler = WTF::move(completionHandler), response] (ResourceRequest&& request) mutable {
+            CachedResource::redirectReceived(WTF::move(request), response, WTF::move(completionHandler));
         });
     }
 }
@@ -234,7 +234,7 @@ void CachedRawResource::responseReceived(ResourceResponse&& newResponse)
     CachedResourceHandle protectedThis { this };
     if (!m_resourceLoaderIdentifier)
         m_resourceLoaderIdentifier = m_loader->identifier();
-    CachedResource::responseReceived(WTFMove(newResponse));
+    CachedResource::responseReceived(WTF::move(newResponse));
     CachedResourceClientWalker<CachedRawResourceClient> walker(*this);
     while (RefPtr client = walker.next())
         client->responseReceived(*this, response(), nullptr);
@@ -361,7 +361,7 @@ void CachedRawResource::clear()
 void CachedRawResource::previewResponseReceived(ResourceResponse&& newResponse)
 {
     CachedResourceHandle protectedThis { this };
-    CachedResource::previewResponseReceived(WTFMove(newResponse));
+    CachedResource::previewResponseReceived(WTF::move(newResponse));
     CachedResourceClientWalker<CachedRawResourceClient> walker(*this);
     while (CachedRawResourceClient* c = walker.next())
         c->previewResponseReceived(*this, response());

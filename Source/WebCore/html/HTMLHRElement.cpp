@@ -35,7 +35,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLHRElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLHRElement);
 
 using namespace HTMLNames;
 
@@ -128,7 +128,7 @@ void HTMLHRElement::collectPresentationalHintsForAttribute(const QualifiedName& 
             addPropertyToPresentationalHintStyle(style, CSSPropertyBorderStyle, CSSValueSolid);
             auto darkGrayValue = CSSValuePool::singleton().createColorValue(Color::darkGray);
             style.setProperty(CSSPropertyBorderColor, darkGrayValue);
-            style.setProperty(CSSPropertyBackgroundColor, WTFMove(darkGrayValue));
+            style.setProperty(CSSPropertyBackgroundColor, WTF::move(darkGrayValue));
         }
         break;
     case AttributeNames::sizeAttr:

@@ -335,7 +335,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 - (void)setActiveAnnotation:(PDFAnnotation *)annotation
 {
     RefPtr plugin = _pdfPlugin.get();
-    plugin->setActiveAnnotation({ WTFMove(annotation) });
+    plugin->setActiveAnnotation({ WTF::move(annotation) });
 }
 
 - (id)accessibilityHitTest:(NSPoint)point

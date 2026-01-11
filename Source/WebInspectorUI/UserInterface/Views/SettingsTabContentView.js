@@ -306,6 +306,7 @@ WI.SettingsTabContentView = class SettingsTabContentView extends WI.TabContentVi
         let cssGroup = elementsSettingsView.addGroup(WI.UIString("CSS:"));
         cssGroup.addSetting(WI.settings.cssChangesPerNode, WI.UIString("Show changes only for selected node"));
         cssGroup.addSetting(WI.settings.showCSSPropertySyntaxInDocumentationPopover, WI.UIString("Show property syntax in documentation popover"));
+        cssGroup.addSetting(WI.settings.showUserAgentStyles, WI.UIString("Show user agent styles"));
 
         this._createReferenceLink(elementsSettingsView);
 
@@ -390,11 +391,8 @@ WI.SettingsTabContentView = class SettingsTabContentView extends WI.TabContentVi
                 logEditor.value = channel.level;
                 logEditor.addEventListener(WI.SettingEditor.Event.ValueDidChange, function(event) {
                     for (let target of WI.targets) {
-                        // FIXME: <https://webkit.org/b/298911> Add Console support for FrameTarget.
-                        if (target instanceof WI.FrameTarget)
-                            continue;
-
-                        target.ConsoleAgent.setLoggingChannelLevel(channel.source, this.value);
+                        if (target.hasDomain("Console"))
+                            target.ConsoleAgent.setLoggingChannelLevel(channel.source, this.value);
                     }
                 }, logEditor);
             }
@@ -424,6 +422,13 @@ WI.SettingsTabContentView = class SettingsTabContentView extends WI.TabContentVi
             stylesGroup.addSetting(WI.settings.experimentalEnableStylesJumpToEffective, WI.UIString("Show jump to effective property button"));
             stylesGroup.addSetting(WI.settings.experimentalEnableStylesJumpToVariableDeclaration, WI.UIString("Show jump to variable declaration button"));
             stylesGroup.addSetting(WI.settings.experimentalCSSSortPropertyNameAutocompletionByUsage, WI.UIString("Suggest property names based on usage"));
+
+            experimentalSettingsView.addSeparator();
+        }
+
+        if (InspectorBackend.hasCommand("LayerTree.requestContent")) {
+            let layersGroup = experimentalSettingsView.addGroup(WI.UIString("Layers:"));
+            layersGroup.addSetting(WI.settings.experimentalLayers3DShowLayerContents, WI.UIString("Show layer contents"));
 
             experimentalSettingsView.addSeparator();
         }
@@ -475,6 +480,9 @@ WI.SettingsTabContentView = class SettingsTabContentView extends WI.TabContentVi
             listenForChange(WI.settings.experimentalEnableStylesJumpToVariableDeclaration);
             listenForChange(WI.settings.experimentalCSSSortPropertyNameAutocompletionByUsage);
         }
+
+        if (InspectorBackend.hasCommand("LayerTree.requestContent"))
+            listenForChange(WI.settings.experimentalLayers3DShowLayerContents);
 
         if (hasNetworkEmulatedCondition)
             listenForChange(WI.settings.experimentalEnableNetworkEmulatedCondition);

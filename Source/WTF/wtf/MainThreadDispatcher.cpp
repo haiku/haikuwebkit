@@ -44,7 +44,7 @@ bool MainThreadDispatcher::isCurrent() const
 
 void MainThreadDispatcher::dispatch(Function<void ()>&& function)
 {
-    callOnMainThread(WTFMove(function));
+    callOnMainThread(WTF::move(function));
 }
 
 } // namespace WTF

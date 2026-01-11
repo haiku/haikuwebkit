@@ -85,7 +85,7 @@ void WebSpeechRecognitionConnection::start(WebCore::SpeechRecognitionConnectionC
         return;
     }
 
-    send(Messages::SpeechRecognitionServer::Start(clientIdentifier, lang, continuous, interimResults, maxAlternatives, WTFMove(clientOrigin), coreFrame->mainFrame().frameID(), frame->info()));
+    send(Messages::SpeechRecognitionServer::Start(clientIdentifier, lang, continuous, interimResults, maxAlternatives, WTF::move(clientOrigin), coreFrame->mainFrame().frameID(), frame->info()));
 }
 
 void WebSpeechRecognitionConnection::stop(WebCore::SpeechRecognitionConnectionClientIdentifier clientIdentifier)

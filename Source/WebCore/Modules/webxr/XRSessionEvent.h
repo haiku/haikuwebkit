@@ -33,13 +33,13 @@
 namespace WebCore {
 
 class XRSessionEvent final : public Event {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(XRSessionEvent);
+    WTF_MAKE_TZONE_ALLOCATED(XRSessionEvent);
 public:
     struct Init : EventInit {
         Init() = default;
         Init(RefPtr<WebXRSession>&& session)
             : EventInit()
-            , session(WTFMove(session))
+            , session(WTF::move(session))
         { }
         RefPtr<WebXRSession> session;
     };

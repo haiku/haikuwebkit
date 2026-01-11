@@ -210,7 +210,7 @@ static _WKResourceLoadInfoResourceType toWKResourceLoadInfoResourceType(WebKit::
         static_cast<WebKit::ResourceLoadInfo::Type>(type.get().unsignedCharValue),
     };
 
-    API::Object::constructInWrapper<API::ResourceLoadInfo>(self, WTFMove(info));
+    API::Object::constructInWrapper<API::ResourceLoadInfo>(self, WTF::move(info));
 
     return self;
 }

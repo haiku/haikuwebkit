@@ -158,34 +158,17 @@ PerfLog& PerfLog::singleton()
     return logger.get();
 }
 
-static inline uint32_t getCurrentThreadID()
-{
-#if OS(LINUX)
-    return static_cast<uint32_t>(syscall(__NR_gettid));
-#elif OS(DARWIN)
-    // Ideally we would like to use pthread_threadid_np. But this is 64bit, while required one is 32bit.
-    // For now, as a workaround, we only report lower 32bit of thread ID.
-    uint64_t thread = 0;
-    pthread_threadid_np(NULL, &thread);
-    return static_cast<uint32_t>(thread);
-#elif OS(WINDOWS)
-    return static_cast<uint32_t>(GetCurrentThreadId());
-#else
-    return 0;
-#endif
-}
-
 PerfLog::PerfLog()
 {
     {
-        m_file = FileSystem::createDumpFile(makeString("jit-"_s, getCurrentThreadID(), "-"_s, WTF::getCurrentProcessID(), ".dump"_s), String::fromUTF8(Options::jitDumpDirectory()));
+        m_file = FileSystem::createDumpFile(makeString("jit-"_s, ProfilerSupport::getCurrentThreadID(), "-"_s, WTF::getCurrentProcessID()), ".dump"_s, String::fromUTF8(Options::jitDumpDirectory()));
         RELEASE_ASSERT(m_file);
 
 #if OS(LINUX)
         // Linux perf command records this mmap operation in perf.data as a metadata to the JIT perf annotations.
         // We do not use this mmap-ed memory region actually.
-        m_marker = mmap(nullptr, pageSize(), PROT_READ | PROT_EXEC, MAP_PRIVATE, m_file.platformHandle(), 0);
-        RELEASE_ASSERT(m_marker != MAP_FAILED);
+        auto* marker = mmap(nullptr, pageSize(), PROT_READ | PROT_EXEC, MAP_PRIVATE, m_file.platformHandle(), 0);
+        RELEASE_ASSERT(marker != MAP_FAILED);
 #endif
     }
 
@@ -212,7 +195,7 @@ void PerfLog::flush(const AbstractLocker&)
 void PerfLog::log(const CString& name, MacroAssemblerCodeRef<LinkBufferPtrTag> code)
 {
     auto timestamp = ProfilerSupport::generateTimestamp();
-    auto tid = getCurrentThreadID();
+    auto tid = ProfilerSupport::getCurrentThreadID();
     ProfilerSupport::singleton().queue().dispatch([name = name, code, tid, timestamp] {
         PerfLog& logger = singleton();
         size_t size = code.size();

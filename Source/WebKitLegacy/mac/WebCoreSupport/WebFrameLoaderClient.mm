@@ -865,7 +865,7 @@ void WebFrameLoaderClient::dispatchDecidePolicyForResponse(const WebCore::Resour
         decidePolicyForMIMEType:response.mimeType().createNSString().get()
         request:request.protectedNSURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody).get()
         frame:m_webFrame.get()
-        decisionListener:setUpPolicyListener(WTFMove(function), WebCore::PolicyAction::Use, nil, nil).get()];
+        decisionListener:setUpPolicyListener(WTF::move(function), WebCore::PolicyAction::Use, nil, nil).get()];
 }
 
 
@@ -905,10 +905,10 @@ void WebFrameLoaderClient::dispatchDecidePolicyForNewWindowAction(const WebCore:
         decidePolicyForNewWindowAction:actionDictionary(action, formState)
         request:request.protectedNSURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody).get()
         newFrameName:frameName.createNSString().get()
-        decisionListener:setUpPolicyListener(WTFMove(function), WebCore::PolicyAction::Ignore, appLinkURL.get(), referrerURL.get()).get()];
+        decisionListener:setUpPolicyListener(WTF::move(function), WebCore::PolicyAction::Ignore, appLinkURL.get(), referrerURL.get()).get()];
 }
 
-void WebFrameLoaderClient::dispatchDecidePolicyForNavigationAction(const WebCore::NavigationAction& action, const WebCore::ResourceRequest& request, const WebCore::ResourceResponse&, WebCore::FormState* formState, const String&, std::optional<WebCore::NavigationIdentifier>, std::optional<WebCore::HitTestResult>&&, bool, WebCore::IsPerformingHTTPFallback, WebCore::SandboxFlags, WebCore::PolicyDecisionMode, WebCore::FramePolicyFunction&& function)
+void WebFrameLoaderClient::dispatchDecidePolicyForNavigationAction(const WebCore::NavigationAction& action, const WebCore::ResourceRequest& request, const WebCore::ResourceResponse&, WebCore::FormState* formState, const String&, std::optional<WebCore::NavigationIdentifier>, std::optional<WebCore::HitTestResult>&&, bool, WebCore::NavigationUpgradeToHTTPSBehavior, WebCore::SandboxFlags, WebCore::PolicyDecisionMode, WebCore::FramePolicyFunction&& function)
 {
     WebView *webView = getWebView(m_webFrame.get());
     BOOL tryAppLink = shouldTryAppLink(webView, action, core(m_webFrame.get()));
@@ -925,7 +925,7 @@ void WebFrameLoaderClient::dispatchDecidePolicyForNavigationAction(const WebCore
         decidePolicyForNavigationAction:actionDictionary(action, formState)
         request:request.protectedNSURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody).get()
         frame:m_webFrame.get()
-        decisionListener:setUpPolicyListener(WTFMove(function), WebCore::PolicyAction::Ignore, appLinkURL.get(), referrerURL.get()).get()];
+        decisionListener:setUpPolicyListener(WTF::move(function), WebCore::PolicyAction::Ignore, appLinkURL.get(), referrerURL.get()).get()];
 }
 
 void WebFrameLoaderClient::cancelPolicyCheck()
@@ -973,7 +973,7 @@ void WebFrameLoaderClient::dispatchWillSubmitForm(WebCore::FormState& formState,
     }
 
     NSDictionary *values = makeFormFieldValuesDictionary(formState);
-    CallFormDelegate(getWebView(m_webFrame.get()), @selector(frame:sourceFrame:willSubmitForm:withValues:submissionListener:), m_webFrame.get(), kit(formState.sourceDocument().frame()), kit(&formState.form()), values, setUpPolicyListener([completionHandler = WTFMove(completionHandler)] (WebCore::PolicyAction) mutable { completionHandler(); },
+    CallFormDelegate(getWebView(m_webFrame.get()), @selector(frame:sourceFrame:willSubmitForm:withValues:submissionListener:), m_webFrame.get(), kit(formState.sourceDocument().frame()), kit(&formState.form()), values, setUpPolicyListener([completionHandler = WTF::move(completionHandler)] (WebCore::PolicyAction) mutable { completionHandler(); },
         WebCore::PolicyAction::Ignore, nil, nil).get());
 }
 
@@ -1271,12 +1271,12 @@ void WebFrameLoaderClient::prepareForDataSourceReplacement()
 
 Ref<WebCore::DocumentLoader> WebFrameLoaderClient::createDocumentLoader(WebCore::ResourceRequest&& request, WebCore::SubstituteData&& substituteData)
 {
-    auto loader = WebDocumentLoaderMac::create(WTFMove(request), WTFMove(substituteData));
+    auto loader = WebDocumentLoaderMac::create(WTF::move(request), WTF::move(substituteData));
 
     auto dataSource = adoptNS([[WebDataSource alloc] _initWithDocumentLoader:loader.copyRef()]);
     loader->setDataSource(dataSource.get(), getWebView(m_webFrame.get()));
 
-    return WTFMove(loader);
+    return WTF::move(loader);
 }
 
 void WebFrameLoaderClient::setTitle(const WebCore::StringWithDirection& title, const URL& url)
@@ -1453,10 +1453,10 @@ RetainPtr<WebFramePolicyListener> WebFrameLoaderClient::setUpPolicyListener(WebC
     RetainPtr<WebFramePolicyListener> policyListener;
 #if HAVE(APP_LINKS)
     if (appLinkURL)
-        policyListener = adoptNS([[WebFramePolicyListener alloc] initWithFrame:core(m_webFrame.get()) policyFunction:WTFMove(function) defaultPolicy:defaultPolicy appLinkURL:appLinkURL referrerURL:referrerURL]);
+        policyListener = adoptNS([[WebFramePolicyListener alloc] initWithFrame:core(m_webFrame.get()) policyFunction:WTF::move(function) defaultPolicy:defaultPolicy appLinkURL:appLinkURL referrerURL:referrerURL]);
     else
 #endif
-        policyListener = adoptNS([[WebFramePolicyListener alloc] initWithFrame:core(m_webFrame.get()) policyFunction:WTFMove(function) defaultPolicy:defaultPolicy]);
+        policyListener = adoptNS([[WebFramePolicyListener alloc] initWithFrame:core(m_webFrame.get()) policyFunction:WTF::move(function) defaultPolicy:defaultPolicy]);
 
     m_policyListener = policyListener.get();
 
@@ -1753,7 +1753,7 @@ RefPtr<WebCore::Widget> WebFrameLoaderClient::createPlugin(WebCore::HTMLPlugInEl
         if (pluginPackage) {
             RetainPtr newMIMEType = [pluginPackage MIMETypeForExtension:extension];
             if ([newMIMEType length] != 0)
-                MIMEType = WTFMove(newMIMEType);
+                MIMEType = WTF::move(newMIMEType);
         }
     }
 
@@ -1947,7 +1947,7 @@ RefPtr<WebCore::LegacyPreviewLoaderClient> WebFrameLoaderClient::createPreviewLo
 #if ENABLE(CONTENT_FILTERING)
 void WebFrameLoaderClient::contentFilterDidBlockLoad(WebCore::ContentFilterUnblockHandler&& unblockHandler)
 {
-    core(m_webFrame.get())->loader().policyChecker().setContentFilterUnblockHandler(WTFMove(unblockHandler));
+    core(m_webFrame.get())->loader().policyChecker().setContentFilterUnblockHandler(WTF::move(unblockHandler));
 }
 #endif
 
@@ -2061,7 +2061,7 @@ void WebFrameLoaderClient::finishedLoadingIcon(WebCore::FragmentedSharedBuffer* 
         return nil;
 
     _frame = frame;
-    _policyFunction = WTFMove(policyFunction);
+    _policyFunction = WTF::move(policyFunction);
     _defaultPolicy = defaultPolicy;
 
     return self;
@@ -2070,7 +2070,7 @@ void WebFrameLoaderClient::finishedLoadingIcon(WebCore::FragmentedSharedBuffer* 
 #if HAVE(APP_LINKS)
 - (id)initWithFrame:(NakedPtr<WebCore::LocalFrame>)frame policyFunction:(WebCore::FramePolicyFunction&&)policyFunction defaultPolicy:(WebCore::PolicyAction)defaultPolicy appLinkURL:(NSURL *)appLinkURL referrerURL:(NSURL *)referrerURL
 {
-    self = [self initWithFrame:frame policyFunction:WTFMove(policyFunction) defaultPolicy:defaultPolicy];
+    self = [self initWithFrame:frame policyFunction:WTF::move(policyFunction) defaultPolicy:defaultPolicy];
     if (!self)
         return nil;
 
@@ -2106,7 +2106,7 @@ void WebFrameLoaderClient::finishedLoadingIcon(WebCore::FragmentedSharedBuffer* 
 
 - (void)receivedPolicyDecision:(WebCore::PolicyAction)action
 {
-    auto frame = WTFMove(_frame);
+    auto frame = WTF::move(_frame);
     if (!frame)
         return;
 

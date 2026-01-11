@@ -65,7 +65,7 @@ CoreIPCDDScannerResult::CoreIPCDDScannerResult(DDScannerResult *d)
             if ([item isKindOfClass:PAL::getDDScannerResultClassSingleton()])
                 result.append((DDScannerResult *)item);
         }
-        m_data.SR = WTFMove(result);
+        m_data.SR = WTF::move(result);
     }
 
     if (auto *V = dynamic_objc_cast<NSString>([dictionary objectForKey:@"V"]))
@@ -101,7 +101,7 @@ CoreIPCDDScannerResult::CoreIPCDDScannerResult(DDScannerResult *d)
 }
 
 CoreIPCDDScannerResult::CoreIPCDDScannerResult(CoreIPCDDScannerResultData&& data)
-    : m_data(WTFMove(data)) { }
+    : m_data(WTF::move(data)) { }
 
 RetainPtr<id> CoreIPCDDScannerResult::toID() const
 {

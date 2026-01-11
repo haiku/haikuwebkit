@@ -189,7 +189,7 @@ class DocumentLoader
 public:
     static Ref<DocumentLoader> create(ResourceRequest&& request, SubstituteData&& data)
     {
-        return adoptRef(*new DocumentLoader(WTFMove(request), WTFMove(data)));
+        return adoptRef(*new DocumentLoader(WTF::move(request), WTF::move(data)));
     }
 
     USING_CAN_MAKE_WEAKPTR(CachedRawResourceClient);
@@ -247,7 +247,7 @@ public:
     const ResourceResponse& response() const { return m_response; }
 
     // FIXME: This method seems to violate the encapsulation of this class.
-    void setResponse(ResourceResponse&& response) { m_response = WTFMove(response); }
+    void setResponse(ResourceResponse&& response) { m_response = WTF::move(response); }
 
     bool isContentRuleListRedirect() const { return m_isContentRuleListRedirect; }
     void setIsContentRuleListRedirect(bool isContentRuleListRedirect) { m_isContentRuleListRedirect = isContentRuleListRedirect; }
@@ -307,7 +307,7 @@ public:
     void setTriggeringNavigationAPIType(NavigationNavigationType type) { m_triggeringAction.setNavigationAPIType(type); };
 
     void setOverrideEncoding(const String& encoding) { m_overrideEncoding = encoding; }
-    void setLastCheckedRequest(ResourceRequest&& request) { m_lastCheckedRequest = WTFMove(request); }
+    void setLastCheckedRequest(ResourceRequest&& request) { m_lastCheckedRequest = WTF::move(request); }
     const ResourceRequest& lastCheckedRequest()  { return m_lastCheckedRequest; }
 
     void stopRecordingResponses();
@@ -346,14 +346,14 @@ public:
     WEBCORE_EXPORT void stopLoadingAfterXFrameOptionsOrContentSecurityPolicyDenied(ResourceLoaderIdentifier, const ResourceResponse&);
 
     const ContentExtensionEnablement& contentExtensionEnablement() const { return m_contentExtensionEnablement; }
-    void setContentExtensionEnablement(ContentExtensionEnablement&& enablement) { m_contentExtensionEnablement = WTFMove(enablement); }
+    void setContentExtensionEnablement(ContentExtensionEnablement&& enablement) { m_contentExtensionEnablement = WTF::move(enablement); }
 
     bool hasActiveContentRuleListActions() const { return !m_activeContentRuleListActionPatterns.isEmpty(); }
     bool allowsActiveContentRuleListActionsForURL(const String& contentRuleListIdentifier, const URL&) const;
     WEBCORE_EXPORT void setActiveContentRuleListActionPatterns(const HashMap<String, Vector<String>>&);
 
     const Vector<TargetedElementSelectors>& visibilityAdjustmentSelectors() const { return m_visibilityAdjustmentSelectors; }
-    void setVisibilityAdjustmentSelectors(Vector<TargetedElementSelectors>&& selectors) { m_visibilityAdjustmentSelectors = WTFMove(selectors); }
+    void setVisibilityAdjustmentSelectors(Vector<TargetedElementSelectors>&& selectors) { m_visibilityAdjustmentSelectors = WTF::move(selectors); }
 
 #if ENABLE(DEVICE_ORIENTATION)
     DeviceOrientationOrMotionPermissionState deviceOrientationAndMotionAccessState() const { return m_deviceOrientationAndMotionAccessState; }
@@ -363,7 +363,7 @@ public:
     AutoplayPolicy autoplayPolicy() const { return m_autoplayPolicy; }
     void setAutoplayPolicy(AutoplayPolicy policy) { m_autoplayPolicy = policy; }
 
-    void setCustomUserAgent(String&& customUserAgent) { m_customUserAgent = WTFMove(customUserAgent); }
+    void setCustomUserAgent(String&& customUserAgent) { m_customUserAgent = WTF::move(customUserAgent); }
     const String& customUserAgent() const { return m_customUserAgent; }
 
     void setAllowPrivacyProxy(bool allow) { m_allowPrivacyProxy = allow; }
@@ -372,10 +372,10 @@ public:
     void setAllowsJSHandleCreationInPageWorld(bool allow) { m_allowsJSHandleCreationInPageWorld = allow; }
     bool allowsJSHandleCreationInPageWorld() const { return m_allowsJSHandleCreationInPageWorld; }
 
-    void setCustomUserAgentAsSiteSpecificQuirks(String&& customUserAgent) { m_customUserAgentAsSiteSpecificQuirks = WTFMove(customUserAgent); }
+    void setCustomUserAgentAsSiteSpecificQuirks(String&& customUserAgent) { m_customUserAgentAsSiteSpecificQuirks = WTF::move(customUserAgent); }
     const String& customUserAgentAsSiteSpecificQuirks() const { return m_customUserAgentAsSiteSpecificQuirks; }
 
-    void setCustomNavigatorPlatform(String&& customNavigatorPlatform) { m_customNavigatorPlatform = WTFMove(customNavigatorPlatform); }
+    void setCustomNavigatorPlatform(String&& customNavigatorPlatform) { m_customNavigatorPlatform = WTF::move(customNavigatorPlatform); }
     const String& customNavigatorPlatform() const { return m_customNavigatorPlatform; }
 
     OptionSet<AutoplayQuirk> allowedAutoplayQuirks() const { return m_allowedAutoplayQuirks; }
@@ -465,7 +465,7 @@ public:
 
 #if ENABLE(CONTENT_FILTERING)
     void setBlockedPageURL(const URL& blockedPageURL) { m_blockedPageURL = blockedPageURL; }
-    void setSubstituteDataFromContentFilter(SubstituteData&& substituteDataFromContentFilter) { m_substituteDataFromContentFilter = WTFMove(substituteDataFromContentFilter); }
+    void setSubstituteDataFromContentFilter(SubstituteData&& substituteDataFromContentFilter) { m_substituteDataFromContentFilter = WTF::move(substituteDataFromContentFilter); }
     ContentFilter* contentFilter() const { return m_contentFilter.get(); }
 
     WEBCORE_EXPORT ResourceError handleContentFilterDidBlock(ContentFilterUnblockHandler&&, String&& unblockRequestDeniedScript);
@@ -509,6 +509,7 @@ public:
     void setLastNavigationWasAppInitiated(bool lastNavigationWasAppInitiated) { m_lastNavigationWasAppInitiated = lastNavigationWasAppInitiated; }
 
     ContentSecurityPolicy* contentSecurityPolicy() const { return m_contentSecurityPolicy.get(); }
+    CheckedPtr<ContentSecurityPolicy> checkedContentSecurityPolicy() const;
     const std::optional<CrossOriginOpenerPolicy>& crossOriginOpenerPolicy() const { return m_responseCOOP; }
     OptionSet<ClearSiteDataValue> responseClearSiteDataValues() const { return m_responseClearSiteDataValues; }
 
@@ -544,7 +545,7 @@ public:
     WEBCORE_EXPORT void setNewResultingClientId(ScriptExecutionContextIdentifier);
 
     const std::optional<NavigationRequester>& crossSiteRequester() const { return m_crossSiteRequester; }
-    void setCrossSiteRequester(NavigationRequester&& crossSiteRequester) { m_crossSiteRequester = WTFMove(crossSiteRequester); }
+    void setCrossSiteRequester(NavigationRequester&& crossSiteRequester) { m_crossSiteRequester = WTF::move(crossSiteRequester); }
 
 protected:
     WEBCORE_EXPORT DocumentLoader(ResourceRequest&&, SubstituteData&&);

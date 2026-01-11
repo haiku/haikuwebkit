@@ -107,7 +107,7 @@ private:
 
         m_fontLoadedProcessed = true;
         ASSERT_UNUSED(font, &font == m_font.get());
-        if (CheckedPtr client = m_fontLoadRequestClient.get())
+        if (RefPtr client = m_fontLoadRequestClient.get())
             client->fontLoaded(*this); // fontLoaded() might destroy this object. Don't deref its members after it.
     }
 

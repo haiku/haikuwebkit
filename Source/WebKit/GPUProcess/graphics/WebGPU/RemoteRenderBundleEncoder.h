@@ -60,7 +60,7 @@ class RemoteRenderBundleEncoder final : public IPC::StreamMessageReceiver {
 public:
     static Ref<RemoteRenderBundleEncoder> create(GPUConnectionToWebProcess& gpuConnectionToWebProcess, RemoteGPU& gpu, WebCore::WebGPU::RenderBundleEncoder& renderBundleEncoder, WebGPU::ObjectHeap& objectHeap, Ref<IPC::StreamServerConnection>&& streamConnection, WebGPUIdentifier identifier)
     {
-        return adoptRef(*new RemoteRenderBundleEncoder(gpuConnectionToWebProcess, gpu, renderBundleEncoder, objectHeap, WTFMove(streamConnection), identifier));
+        return adoptRef(*new RemoteRenderBundleEncoder(gpuConnectionToWebProcess, gpu, renderBundleEncoder, objectHeap, WTF::move(streamConnection), identifier));
     }
 
     ~RemoteRenderBundleEncoder();

@@ -43,13 +43,13 @@ namespace WebCore {
 
 CSSFontFaceSrcLocalValue::CSSFontFaceSrcLocalValue(AtomString&& fontFaceName)
     : CSSValue(ClassType::FontFaceSrcLocal)
-    , m_fontFaceName(WTFMove(fontFaceName))
+    , m_fontFaceName(WTF::move(fontFaceName))
 {
 }
 
 Ref<CSSFontFaceSrcLocalValue> CSSFontFaceSrcLocalValue::create(AtomString fontFaceName)
 {
-    return adoptRef(*new CSSFontFaceSrcLocalValue { WTFMove(fontFaceName) });
+    return adoptRef(*new CSSFontFaceSrcLocalValue { WTF::move(fontFaceName) });
 }
 
 CSSFontFaceSrcLocalValue::~CSSFontFaceSrcLocalValue() = default;
@@ -76,15 +76,15 @@ bool CSSFontFaceSrcLocalValue::equals(const CSSFontFaceSrcLocalValue& other) con
 
 CSSFontFaceSrcResourceValue::CSSFontFaceSrcResourceValue(CSS::URL&& location, String&& format, Vector<FontTechnology>&& technologies)
     : CSSValue(ClassType::FontFaceSrcResource)
-    , m_location(CSS::resolve(WTFMove(location)))
-    , m_format(WTFMove(format))
-    , m_technologies(WTFMove(technologies))
+    , m_location(CSS::resolve(WTF::move(location)))
+    , m_format(WTF::move(format))
+    , m_technologies(WTF::move(technologies))
 {
 }
 
 Ref<CSSFontFaceSrcResourceValue> CSSFontFaceSrcResourceValue::create(CSS::URL location, String format, Vector<FontTechnology>&& technologies)
 {
-    return adoptRef(*new CSSFontFaceSrcResourceValue { WTFMove(location), WTFMove(format), WTFMove(technologies) });
+    return adoptRef(*new CSSFontFaceSrcResourceValue { WTF::move(location), WTF::move(format), WTF::move(technologies) });
 }
 
 RefPtr<FontLoadRequest> CSSFontFaceSrcResourceValue::fontLoadRequest(ScriptExecutionContext& context, bool isInitiatingElementInUserAgentShadowTree)

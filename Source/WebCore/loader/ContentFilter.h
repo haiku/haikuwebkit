@@ -95,7 +95,7 @@ private:
 
     class ContentFilterCallbackAggregator : public ThreadSafeRefCounted<ContentFilterCallbackAggregator> {
     public:
-        static auto create(ContentFilter& contentFilter, const ResourceRequest& request, CompletionHandler<void(ResourceRequest&&)>&& callback) { return adoptRef(*new ContentFilterCallbackAggregator(contentFilter, request, WTFMove(callback))); }
+        static auto create(ContentFilter& contentFilter, const ResourceRequest& request, CompletionHandler<void(ResourceRequest&&)>&& callback) { return adoptRef(*new ContentFilterCallbackAggregator(contentFilter, request, WTF::move(callback))); }
 
         ~ContentFilterCallbackAggregator();
 

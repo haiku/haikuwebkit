@@ -136,7 +136,7 @@ private:
 
             ScriptFunctionCall function(m_globalObject, m_frontendApiObject.get(), "contextMenuItemSelected"_s, WebCore::functionCallHandlerFromAnyThread);
             function.appendArgument(itemNumber);
-            function.call();
+            std::ignore = function.call();
         }
     }
     
@@ -144,14 +144,14 @@ private:
     {
         if (m_frontendHost) {
             ScriptFunctionCall function(m_globalObject, m_frontendApiObject.get(), "contextMenuCleared"_s, WebCore::functionCallHandlerFromAnyThread);
-            function.call();
+            std::ignore = function.call();
 
             m_frontendHost->m_menuProvider = nullptr;
         }
         m_items.clear();
     }
 
-    InspectorFrontendHost* m_frontendHost;
+    WeakPtr<InspectorFrontendHost> m_frontendHost;
     JSC::JSGlobalObject* m_globalObject;
     JSC::Strong<JSC::JSObject> m_frontendApiObject;
     Vector<ContextMenuItem> m_items;
@@ -176,8 +176,8 @@ void InspectorFrontendHost::disconnectClient()
 {
     m_client = nullptr;
 #if ENABLE(CONTEXT_MENUS)
-    if (m_menuProvider)
-        m_menuProvider->disconnect();
+    if (RefPtr menuProvider = m_menuProvider.get())
+        menuProvider->disconnect();
 #endif
     m_frontendPage = nullptr;
 }
@@ -435,7 +435,7 @@ String InspectorFrontendHost::platformVersionName() const
 void InspectorFrontendHost::copyText(const String& text)
 {
     auto pageID = m_frontendPage ? m_frontendPage->mainFrame().pageID() : std::nullopt;
-    Pasteboard::createForCopyAndPaste(PagePasteboardContext::create(WTFMove(pageID)))->writePlainText(text, Pasteboard::CannotSmartReplace);
+    Pasteboard::createForCopyAndPaste(PagePasteboardContext::create(WTF::move(pageID)))->writePlainText(text, Pasteboard::CannotSmartReplace);
 }
 
 void InspectorFrontendHost::killText(const String& text, bool shouldPrependToKillRing, bool shouldStartNewSequence)
@@ -481,7 +481,7 @@ bool InspectorFrontendHost::canSave(SaveMode saveMode)
 void InspectorFrontendHost::save(Vector<SaveData>&& saveDatas, bool forceSaveAs)
 {
     if (m_client)
-        m_client->save(WTFMove(saveDatas), forceSaveAs);
+        m_client->save(WTF::move(saveDatas), forceSaveAs);
 }
 
 bool InspectorFrontendHost::canLoad()
@@ -498,7 +498,7 @@ void InspectorFrontendHost::load(const String& path, Ref<DeferredPromise>&& prom
         return;
     }
 
-    m_client->load(path, [promise = WTFMove(promise)](const String& content) {
+    m_client->load(path, [promise = WTF::move(promise)](const String& content) {
         if (!content)
             promise->reject(ExceptionCode::NotFoundError);
         else
@@ -520,7 +520,7 @@ void InspectorFrontendHost::pickColorFromScreen(Ref<DeferredPromise>&& promise)
         return;
     }
 
-    m_client->pickColorFromScreen([promise = WTFMove(promise)](const std::optional<WebCore::Color>& color) {
+    m_client->pickColorFromScreen([promise = WTF::move(promise)](const std::optional<WebCore::Color>& color) {
         if (!color) {
             promise->resolve();
             return;
@@ -558,7 +558,7 @@ static void populateContextMenu(Vector<InspectorFrontendHost::ContextMenuItem>&&
 
         if (item.type == "subMenu"_s && item.subItems) {
             ContextMenu subMenu;
-            populateContextMenu(WTFMove(*item.subItems), subMenu);
+            populateContextMenu(WTF::move(*item.subItems), subMenu);
 
             menu.appendItem({ ContextMenuItemType::Submenu, ContextMenuItemTagNoAction, item.label, &subMenu });
             continue;
@@ -593,10 +593,10 @@ void InspectorFrontendHost::showContextMenu(Event& event, Vector<ContextMenuItem
     auto* frontendAPIObject = asObject(value);
 
     ContextMenu menu;
-    populateContextMenu(WTFMove(items), menu);
+    populateContextMenu(WTF::move(items), menu);
 
-    auto menuProvider = FrontendMenuProvider::create(this, &globalObject, frontendAPIObject, menu.items());
-    m_menuProvider = menuProvider.ptr();
+    Ref menuProvider = FrontendMenuProvider::create(this, &globalObject, frontendAPIObject, menu.items());
+    m_menuProvider = menuProvider;
     m_frontendPage->contextMenuController().showContextMenu(event, menuProvider);
 #else
     UNUSED_PARAM(event);
@@ -765,8 +765,8 @@ void InspectorFrontendHost::logDiagnosticEvent(const String& eventName, const St
 
     DiagnosticLoggingClient::ValueDictionary dictionary;
     for (auto& [key, value] : *payloadObject) {
-        if (auto valuePayload = valuePayloadFromJSONValue(WTFMove(value)))
-            dictionary.set(key, WTFMove(valuePayload.value()));
+        if (auto valuePayload = valuePayloadFromJSONValue(WTF::move(value)))
+            dictionary.set(key, WTF::move(valuePayload.value()));
     }
 
     m_client->logDiagnosticEvent(makeString("WebInspector."_s, eventName), dictionary);
@@ -838,7 +838,7 @@ ExceptionOr<JSC::JSValue> InspectorFrontendHost::evaluateScriptInExtensionTab(HT
     if (!result)
         return Exception { ExceptionCode::InvalidStateError, result.error().message };
 
-    return WTFMove(result.value());
+    return WTF::move(result.value());
 }
 
 #endif // ENABLE(INSPECTOR_EXTENSIONS)

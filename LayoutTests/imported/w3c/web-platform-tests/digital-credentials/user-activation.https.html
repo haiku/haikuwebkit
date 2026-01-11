@@ -1,4 +1,3 @@
-<!-- webkit-test-runner [ dumpJSConsoleLogInStdErr=true ] -->
 <!DOCTYPE html>
 <title>Digital Credential API: get() consumes user activation.</title>
 <script src="/resources/testdriver.js"></script>
@@ -15,7 +14,7 @@
       navigator.userActivation.isActive,
       "User activation should not be active"
     );
-    const options = makeGetOptions("openid4vp");
+    const options = makeGetOptions();
     await promise_rejects_dom(
       t,
       "NotAllowedError",
@@ -26,8 +25,7 @@
   promise_test(async (t) => {
     await test_driver.bless();
     const abort = new AbortController();
-    const options = makeGetOptions("openid4vp");
-    options.signal = abort.signal;
+    const options = makeGetOptions({ signal: abort.signal });
     assert_true(
       navigator.userActivation.isActive,
       "User activation should be active after test_driver.bless()."
@@ -47,7 +45,7 @@
       navigator.userActivation.isActive,
       "User activation should not be active"
     );
-    const options = makeCreateOptions([]);
+    const options = makeCreateOptions({protocol: []});
     await promise_rejects_dom(
       t,
       "NotAllowedError",
@@ -61,7 +59,7 @@
       navigator.userActivation.isActive,
       "User activation should be active after test_driver.bless()."
     );
-    const options = makeCreateOptions([]);
+    const options = makeCreateOptions({protocol: []});
     await promise_rejects_js(t, TypeError, navigator.credentials.create(options));
     assert_false(
       navigator.userActivation.isActive,

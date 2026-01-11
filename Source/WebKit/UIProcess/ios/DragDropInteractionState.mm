@@ -270,7 +270,7 @@ void DragDropInteractionState::deliverDelayedDropPreview(UIView *contentView, CG
 
 UITargetedDragPreview *DragDropInteractionState::previewForLifting(UIDragItem *item, UIView *contentView, UIView *previewContainer, RefPtr<WebCore::TextIndicator>&& indicator) const
 {
-    return createDragPreviewInternal(item, contentView, previewContainer, AddPreviewViewToContainer::No, WTFMove(indicator)).autorelease();
+    return createDragPreviewInternal(item, contentView, previewContainer, AddPreviewViewToContainer::No, WTF::move(indicator)).autorelease();
 }
 
 UITargetedDragPreview *DragDropInteractionState::previewForCancelling(UIDragItem *item, UIView *contentView, UIView *previewContainer)

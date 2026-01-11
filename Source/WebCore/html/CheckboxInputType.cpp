@@ -51,7 +51,7 @@
 #include "MouseEvent.h"
 #include "NodeDocument.h"
 #include "RenderElement.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderTheme.h"
 #include "ScopedEventQueue.h"
 #include "ScriptDisallowedScope.h"

@@ -44,47 +44,46 @@ enum class ReasonCollectionMode : bool {
     All
 };
 
-enum class GridAvoidanceReason : uint64_t {
-    GridHasNonFixedWidth                        = 1LLU << 0,
-    GridHasNonFixedHeight                       = 1LLU << 1,
-    GridHasVerticalWritingMode                  = 1LLU << 2,
-    GridHasMarginTrim                           = 1LLU << 3,
-    // Unused                                   = 1LLU << 4,
-    GridNeedsBaseline                           = 1LLU << 5,
-    GridHasOutOfFlowChild                       = 1LLU << 6,
-    GridHasNonVisibleOverflow                   = 1LLU << 7,
-    GridHasUnsupportedRenderer                  = 1LLU << 8,
-    GridIsEmpty                                 = 1LLU << 9,
-    GridHasNonInitialMinWidth                   = 1LLU << 10,
-    GridHasNonInitialMaxWidth                   = 1LLU << 11,
-    GridHasNonInitialMinHeight                  = 1LLU << 12,
-    GridHasNonInitialMaxHeight                  = 1LLU << 13,
-    GridHasNonZeroMinWidth                      = 1LLU << 14,
-    GridHasGridTemplateAreas                    = 1LLU << 15,
-    GridHasColumnAutoFlow                       = 1LLU << 16,
-    GridHasNonFixedGaps                         = 1LLU << 17,
-    GridIsOutOfFlow                             = 1LLU << 18,
-    GridHasContainsSize                         = 1LLU << 19,
-    GridHasUnsupportedGridTemplateColumns       = 1LLU << 20,
-    GridHasUnsupportedGridTemplateRows          = 1LLU << 21,
-    GridItemHasNonFixedWidth                    = 1LLU << 22,
-    GridItemHasNonFixedHeight                   = 1LLU << 23,
-    GridItemHasNonInitialMaxWidth               = 1LLU << 24,
-    GridItemHasNonZeroMinHeight                 = 1LLU << 25,
-    GridItemHasNonInitialMaxHeight              = 1LLU << 26,
-    GridItemHasBorder                           = 1LLU << 27,
-    GridItemHasPadding                          = 1LLU << 28,
-    GridItemHasMargin                           = 1LLU << 29,
-    GridItemHasVerticalWritingMode              = 1LLU << 30,
-    GridItemHasAspectRatio                      = 1LLU << 31,
-    GridItemHasUnsupportedInlineAxisAlignment   = 1LLU << 32,
-    GridItemHasUnsupportedBlockAxisAlignment    = 1LLU << 33,
-    GridItemHasNonVisibleOverflow               = 1LLU << 34,
-    GridItemHasContainsSize                     = 1LLU << 35,
-    GridItemHasUnsupportedColumnPlacement       = 1LLU << 36,
-    GridItemHasUnsupportedRowPlacement          = 1LLU << 37,
-    NotAGrid                                    = 1LLU << 38,
-    GridFormattingContextIntegrationDisabled    = 1LLU << 39,
+enum class GridAvoidanceReason : uint8_t {
+    GridHasNonFixedWidth,
+    GridHasNonFixedHeight,
+    GridHasVerticalWritingMode,
+    GridHasMarginTrim,
+    GridNeedsBaseline,
+    GridHasOutOfFlowChild,
+    GridHasNonVisibleOverflow,
+    GridHasUnsupportedRenderer,
+    GridIsEmpty,
+    GridHasNonInitialMinWidth,
+    GridHasNonInitialMaxWidth,
+    GridHasNonInitialMinHeight,
+    GridHasNonInitialMaxHeight,
+    GridHasNonZeroMinWidth,
+    GridHasGridTemplateAreas,
+    GridHasColumnAutoFlow,
+    GridHasNonFixedGaps,
+    GridIsOutOfFlow,
+    GridHasContainsSize,
+    GridHasUnsupportedGridTemplateColumns,
+    GridHasUnsupportedGridTemplateRows,
+    GridItemHasNonFixedWidth,
+    GridItemHasNonFixedHeight,
+    GridItemHasNonInitialMaxWidth,
+    GridItemHasNonZeroMinHeight,
+    GridItemHasNonInitialMaxHeight,
+    GridItemHasBorder,
+    GridItemHasPadding,
+    GridItemHasMargin,
+    GridItemHasVerticalWritingMode,
+    GridItemHasAspectRatio,
+    GridItemHasUnsupportedInlineAxisAlignment,
+    GridItemHasUnsupportedBlockAxisAlignment,
+    GridItemHasNonVisibleOverflow,
+    GridItemHasContainsSize,
+    GridItemHasUnsupportedColumnPlacement,
+    GridItemHasUnsupportedRowPlacement,
+    NotAGrid,
+    GridFormattingContextIntegrationDisabled,
 };
 
 #ifndef NDEBUG
@@ -126,25 +125,25 @@ static std::optional<GridAvoidanceReason> hasValidRowEnd(const Style::GridPositi
 {
     return WTF::switchOn(rowEnd,
         [&](const CSS::Keyword::Auto&) -> std::optional<GridAvoidanceReason> {
-            return GridAvoidanceReason::GridItemHasUnsupportedColumnPlacement;
+            return GridAvoidanceReason::GridItemHasUnsupportedRowPlacement;
         },
         [&](const Style::GridPositionExplicit&) -> std::optional<GridAvoidanceReason> {
             if (!rowEnd.namedGridLine().isEmpty() || rowEnd.explicitPosition() < 0 || rowEnd.explicitPosition() > static_cast<int>(linesFromGridTemplateRowsCount))
-                return GridAvoidanceReason::GridItemHasUnsupportedColumnPlacement;
+                return GridAvoidanceReason::GridItemHasUnsupportedRowPlacement;
             return { };
         },
         [&](const Style::GridPositionSpan&) -> std::optional<GridAvoidanceReason> {
-            return GridAvoidanceReason::GridItemHasUnsupportedColumnPlacement;
+            return GridAvoidanceReason::GridItemHasUnsupportedRowPlacement;
         },
         [&](const CustomIdentifier&) -> std::optional<GridAvoidanceReason> {
-            return GridAvoidanceReason::GridItemHasUnsupportedColumnPlacement;
+            return GridAvoidanceReason::GridItemHasUnsupportedRowPlacement;
         }
     );
 }
 
-static OptionSet<GridAvoidanceReason> gridLayoutAvoidanceReason(const RenderGrid& renderGrid, ReasonCollectionMode reasonCollectionMode)
+static EnumSet<GridAvoidanceReason> gridLayoutAvoidanceReason(const RenderGrid& renderGrid, ReasonCollectionMode reasonCollectionMode)
 {
-    auto reasons = OptionSet<GridAvoidanceReason> { };
+    auto reasons = EnumSet<GridAvoidanceReason> { };
 
     if (!renderGrid.document().settings().gridFormattingContextIntegrationEnabled())
         ADD_REASON_AND_RETURN_IF_NEEDED(GridFormattingContextIntegrationDisabled, reasons, reasonCollectionMode);
@@ -555,7 +554,7 @@ static void printReason(GridAvoidanceReason reason, TextStream& stream)
     }
 }
 
-static void printReasons(OptionSet<GridAvoidanceReason> reasons, TextStream& stream)
+static void printReasons(EnumSet<GridAvoidanceReason> reasons, TextStream& stream)
 {
     stream << " ";
     for (auto reason : reasons) {

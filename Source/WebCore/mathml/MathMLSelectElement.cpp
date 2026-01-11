@@ -43,7 +43,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(MathMLSelectElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(MathMLSelectElement);
 
 using namespace MathMLNames;
 
@@ -59,7 +59,7 @@ Ref<MathMLSelectElement> MathMLSelectElement::create(const QualifiedName& tagNam
 
 RenderPtr<RenderElement> MathMLSelectElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
-    return createRenderer<RenderMathMLRow>(RenderObject::Type::MathMLRow, *this, WTFMove(style));
+    return createRenderer<RenderMathMLRow>(RenderObject::Type::MathMLRow, *this, WTF::move(style));
 }
 
 //  We recognize the following values for the encoding attribute of the <semantics> element:

@@ -293,8 +293,15 @@ void CSSFontSelector::opportunisticallyStartFontDataURLLoading(const FontCascade
     const auto& segmentedFontFace = m_cssFontFaceSet->fontFace(description.fontSelectionRequest(), familyName);
     if (!segmentedFontFace)
         return;
+
+    RefPtr context = m_context.get();
+    if (!context)
+        return;
+
+    auto trustedType = context->settingsValues().downloadableBinaryFontTrustedTypes;
+
     for (auto& face : segmentedFontFace->constituentFaces())
-        face->opportunisticallyStartFontDataURLLoading();
+        face->opportunisticallyStartFontDataURLLoading(trustedType);
 }
 
 void CSSFontSelector::fontLoaded(CSSFontFace&)
@@ -450,14 +457,14 @@ FontRanges CSSFontSelector::fontRangesForFamily(const FontDescription& fontDescr
         if (!preferredMathFamily.isEmpty() && familyName != preferredMathFamily) {
             auto ranges = fontRangesForFamily(fontDescription, AtomString(preferredMathFamily));
             if (!ranges.isNull())
-                return { WTFMove(ranges), IsGenericFontFamily::Yes };
+                return { WTF::move(ranges), IsGenericFontFamily::Yes };
         }
 
         // Otherwise, iterate through the font list to find a valid fallback.
         for (auto& family : mathFontList()) {
             auto ranges = fontRangesForFamily(fontDescription, family);
             if (!ranges.isNull())
-                return { WTFMove(ranges), IsGenericFontFamily::Yes };
+                return { WTF::move(ranges), IsGenericFontFamily::Yes };
         }
     }
 
@@ -476,7 +483,7 @@ FontRanges CSSFontSelector::fontRangesForFamily(const FontDescription& fontDescr
     auto font = FontCache::forCurrentThread()->fontForFamily(*fontDescriptionForLookup, familyForLookup, { { }, { }, fontPaletteValues, fontFeatureValues, 1.0 });
     if (document && document->settings().webAPIStatisticsEnabled())
         ResourceLoadObserver::singleton().logFontLoad(*document, familyForLookup.string(), !!font);
-    return { FontRanges { WTFMove(font) }, isGenericFontFamily };
+    return { FontRanges { WTF::move(font) }, isGenericFontFamily };
 }
 
 void CSSFontSelector::clearFonts()

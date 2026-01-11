@@ -63,8 +63,8 @@ private:
     void trackSameSiteNavigation(const API::Navigation&);
     void trackChangingSiteNavigation();
 
-    ActivationState m_activeState;
-    EnhancedSecurityReason m_activeReason;
+    ActivationState m_activeState { ActivationState::None };
+    EnhancedSecurityReason m_activeReason { EnhancedSecurityReason::None };
 
     WebCore::RegistrableDomain m_initialProtectedDomain;
 };

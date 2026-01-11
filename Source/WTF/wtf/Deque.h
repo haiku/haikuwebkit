@@ -469,7 +469,7 @@ bool Deque<T, inlineCapacity>::contains(const U& searchValue) const
 template<typename T, size_t inlineCapacity>
 inline auto Deque<T, inlineCapacity>::takeFirst() -> T
 {
-    T oldFirst = WTFMove(first());
+    T oldFirst = WTF::move(first());
     removeFirst();
     return oldFirst;
 }
@@ -477,7 +477,7 @@ inline auto Deque<T, inlineCapacity>::takeFirst() -> T
 template<typename T, size_t inlineCapacity>
 inline auto Deque<T, inlineCapacity>::takeLast() -> T
 {
-    T oldLast = WTFMove(last());
+    T oldLast = WTF::move(last());
     removeLast();
     return oldLast;
 }
@@ -581,7 +581,7 @@ inline size_t Deque<T, inlineCapacity>::removeAllMatching(const Func& func)
     for (size_t i = 0; i < oldSize; ++i) {
         auto value = takeFirst();
         if (!func(value))
-            append(WTFMove(value));
+            append(WTF::move(value));
     }
     return size() - oldSize;
 }
@@ -631,7 +631,7 @@ inline T Deque<T, inlineCapacity>::takeFirst(NOESCAPE const Func& func)
             return candidate;
         }
         count++;
-        append(WTFMove(candidate));
+        append(WTF::move(candidate));
     }
     return T();
 }
@@ -650,7 +650,7 @@ inline T Deque<T, inlineCapacity>::takeLast(NOESCAPE const Func& func)
             return candidate;
         }
         count++;
-        prepend(WTFMove(candidate));
+        prepend(WTF::move(candidate));
     }
     return T();
 }

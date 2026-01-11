@@ -248,6 +248,7 @@ Shared/SharedStringHashStore.cpp
 Shared/SharedStringHashTableReadOnly.cpp
 Shared/SharedStringHashTable.cpp
 Shared/TextExtractionToStringConversion.cpp
+Shared/TextExtractionURLCache.cpp
 Shared/UserData.cpp
 Shared/WebBackForwardListFrameItem.cpp
 Shared/WebBackForwardListItem.cpp
@@ -433,6 +434,7 @@ UIProcess/RemotePagePlaybackSessionManagerProxy.cpp
 UIProcess/RemotePageProxy.cpp
 UIProcess/RemotePageScreenOrientationManagerProxy.cpp
 UIProcess/RemotePageVideoPresentationManagerProxy.cpp
+UIProcess/RemotePageWebDeviceOrientationUpdateProviderProxy.cpp
 UIProcess/ResponsivenessTimer.cpp
 UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp
 UIProcess/SpeechRecognitionRemoteRealtimeMediaSourceManager.cpp
@@ -442,6 +444,7 @@ UIProcess/SystemPreviewController.cpp
 UIProcess/SpeechRecognitionPermissionManager.cpp
 UIProcess/TextChecker.cpp
 UIProcess/TextCheckerCompletion.cpp
+UIProcess/TextExtractionAssertionScope.cpp
 UIProcess/UIProcessLogInitialization.cpp
 UIProcess/UserMediaPermissionCheckProxy.cpp
 UIProcess/UserMediaPermissionRequestManagerProxy.cpp
@@ -491,6 +494,7 @@ UIProcess/API/APIContentRuleList.cpp
 UIProcess/API/APIContentRuleListAction.cpp
 UIProcess/API/APIContentRuleListStore.cpp
 UIProcess/API/APIContentWorld.cpp
+UIProcess/API/APIContentWorldConfiguration.cpp
 UIProcess/API/APIContextMenuElementInfo.cpp
 UIProcess/API/APIDataTask.cpp
 UIProcess/API/APIDebuggableInfo.cpp

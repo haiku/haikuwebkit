@@ -34,7 +34,7 @@ namespace WTF {
 static const unsigned defaultBufferSize = 4096;
 
 SocketConnection::SocketConnection(GRefPtr<GSocketConnection>&& connection, const MessageHandlers& messageHandlers, gpointer userData)
-    : m_connection(WTFMove(connection))
+    : m_connection(WTF::move(connection))
     , m_messageHandlers(messageHandlers)
     , m_userData(userData)
 {

@@ -63,7 +63,7 @@ public:
     FetchBody& operator=(FetchBody&&) = default;
 
     explicit FetchBody(String&& data)
-        : m_data(WTFMove(data))
+        : m_data(WTF::move(data))
     {
     }
 
@@ -77,7 +77,7 @@ public:
     using TakenData = Variant<std::nullptr_t, Ref<FormData>, Ref<SharedBuffer>>;
     TakenData take();
 
-    void setAsFormData(Ref<FormData>&& data) { m_data = WTFMove(data); }
+    void setAsFormData(Ref<FormData>&& data) { m_data = WTF::move(data); }
     FetchBodyConsumer& consumer();
     CheckedRef<FetchBodyConsumer> checkedConsumer() { return consumer(); }
 
@@ -103,7 +103,7 @@ public:
     void setReadableStream(Ref<ReadableStream>&& stream)
     {
         ASSERT(!m_readableStream);
-        m_readableStream = WTFMove(stream);
+        m_readableStream = WTF::move(stream);
     }
 
     void convertReadableStreamToArrayBuffer(FetchBodyOwner&, CompletionHandler<void(std::optional<Exception>&&)>&&);
@@ -113,12 +113,12 @@ public:
     bool isReadableStream() const { return std::holds_alternative<Ref<ReadableStream>>(m_data); }
 
 private:
-    explicit FetchBody(Ref<const Blob>&& data) : m_data(WTFMove(data)) { }
-    explicit FetchBody(Ref<const ArrayBuffer>&& data) : m_data(WTFMove(data)) { }
-    explicit FetchBody(Ref<const ArrayBufferView>&& data) : m_data(WTFMove(data)) { }
-    explicit FetchBody(Ref<FormData>&& data) : m_data(WTFMove(data)) { }
-    explicit FetchBody(Ref<const URLSearchParams>&& data) : m_data(WTFMove(data)) { }
-    explicit FetchBody(Ref<ReadableStream>&& stream) : m_data(stream), m_readableStream(WTFMove(stream)) { }
+    explicit FetchBody(Ref<const Blob>&& data) : m_data(WTF::move(data)) { }
+    explicit FetchBody(Ref<const ArrayBuffer>&& data) : m_data(WTF::move(data)) { }
+    explicit FetchBody(Ref<const ArrayBufferView>&& data) : m_data(WTF::move(data)) { }
+    explicit FetchBody(Ref<FormData>&& data) : m_data(WTF::move(data)) { }
+    explicit FetchBody(Ref<const URLSearchParams>&& data) : m_data(WTF::move(data)) { }
+    explicit FetchBody(Ref<ReadableStream>&& stream) : m_data(stream), m_readableStream(WTF::move(stream)) { }
     explicit FetchBody(UniqueRef<FetchBodyConsumer>&& consumer) : m_consumer(consumer.moveToUniquePtr()) { }
 
     void consume(FetchBodyOwner&, Ref<DeferredPromise>&&);

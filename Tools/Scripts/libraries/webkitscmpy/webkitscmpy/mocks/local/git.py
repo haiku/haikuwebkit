@@ -20,10 +20,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import fnmatch
 import hashlib
 import json
 import os
 import re
+import itertools
 import time
 from collections import OrderedDict
 from datetime import datetime, timezone
@@ -289,6 +291,14 @@ nothing to commit, working tree clean
                            '\n'.join(['  remotes/{}'.format(name) for name in self.remotes.keys() if default_branch not in name]) + '\n',
                 ),
             ), mocks.Subprocess.Route(
+                self.executable, 'for-each-ref', '--format', '%(refname)', '--contains', re.compile(r'.+'),
+                cwd=self.path,
+                generator=lambda *args, **kwargs: self.for_each_ref(args[5], *args[6:]),
+            ), mocks.Subprocess.Route(
+                self.executable, 'for-each-ref', '--format', '%(refname)',
+                cwd=self.path,
+                generator=lambda *args, **kwargs: self.for_each_ref(None, *args[4:]),
+            ), mocks.Subprocess.Route(
                 self.executable, 'tag',
                 cwd=self.path,
                 generator=lambda *args, **kwargs: mocks.ProcessCompletion(
@@ -446,7 +456,7 @@ nothing to commit, working tree clean
                 cwd=self.path,
                 generator=lambda *args, **kwargs: mocks.ProcessCompletion(
                     returncode=0,
-                    stdout='\n'.join(sorted(self.branches_on(args[3]))) + '\n',
+                    stdout='\n'.join(sorted(self.branches_on(self.find(args[3])))) + '\n'
                 ) if self.find(args[3]) else mocks.ProcessCompletion(returncode=128),
             ), mocks.Subprocess.Route(
                 self.executable, 'checkout', '-b', re.compile(r'.+'),
@@ -885,25 +895,18 @@ nothing to commit, working tree clean
         rev_list = self.rev_list(something)
         return len(rev_list)
 
-    def branches_on(self, hash):
+    def branches_on(self, commit):
         result = set()
         found_identifier = 0
-        if '/' in hash:
-            _, hash = hash.split('/', 1)
-        for remote in self.remotes.keys():
-            if remote.endswith('/{}'.format(hash)):
-                result.add('remotes/{}'.format(remote))
-        for branch, commits in self.commits.items():
-            for commit in commits:
-                if commit.hash.startswith(hash) or commit.branch == hash:
-                    if commit.identifier is not None:
-                        found_identifier = max(commit.identifier, found_identifier)
-                    result.add(commit.branch)
-
-        if self.default_branch in result:
-            for branch, commits in self.commits.items():
-                if commits[0].branch_point and commits[0].branch_point >= found_identifier:
-                    result.add(branch)
+        for branch in self.commits.keys():
+            commits = self.resolve_all_commits(branch)
+            if commit in commits:
+                result.add(branch)
+        for remote_branch in self.remotes.keys():
+            remote, branch = remote_branch.split('/', 1)
+            commits = self.resolve_all_commits(branch, remote)
+            if commit in commits:
+                result.add(f'remotes/{remote_branch}')
         return result
 
     def checkout(self, something, source=None, create=False, force=False):
@@ -1528,3 +1531,41 @@ nothing to commit, working tree clean
             if remote == 'origin':
                 self.remotes['{}/{}'.format(name, branch)] = self.remotes[existing][:]
         return mocks.ProcessCompletion(returncode=0)
+
+    def for_each_ref(self, contains_commit, *patterns):
+        if contains_commit:
+            commit = self.find(contains_commit)
+            if commit is None:
+                return mocks.ProcessCompletion(
+                    returncode=0,
+                    stdout='\n',
+                )
+
+            candidate_refs = sorted(
+                f'refs/{branch}' if branch.startswith('remotes/') else f'refs/heads/{branch}'
+                for branch in self.branches_on(commit)
+            )
+        else:
+            candidate_refs = [f'refs/heads/{branch}' for branch in sorted(self.commits)] + [
+                f'refs/remotes/{branch}' for branch in sorted(self.remotes)
+            ]
+
+        patterns_re = re.compile(
+            '|'.join(
+                itertools.chain.from_iterable(
+                    (
+                        fnmatch.translate(pattern),
+                        re.escape(pattern) + r'\Z',
+                        re.escape(pattern) + '/',
+                    )
+                    for pattern in patterns
+                )
+            )
+        )
+
+        refs = [ref for ref in candidate_refs if patterns_re.match(ref)]
+
+        return mocks.ProcessCompletion(
+            returncode=0,
+            stdout='\n'.join(refs) + '\n' if refs else '',
+        )

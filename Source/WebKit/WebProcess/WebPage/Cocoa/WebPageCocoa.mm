@@ -226,7 +226,7 @@ void WebPage::requestActiveNowPlayingSessionInfo(CompletionHandler<void(bool, We
     if (RefPtr manager = mediaSessionManagerIfExists()) {
         if (auto nowPlayingInfo = manager->nowPlayingInfo()) {
             bool registeredAsNowPlayingApplication = manager->registeredAsNowPlayingApplication();
-            completionHandler(registeredAsNowPlayingApplication, WTFMove(*nowPlayingInfo));
+            completionHandler(registeredAsNowPlayingApplication, WTF::move(*nowPlayingInfo));
             return;
         }
     }
@@ -464,7 +464,7 @@ void WebPage::dictationAlternativesAtSelection(CompletionHandler<void(Vector<Dic
             return std::get<DocumentMarker::DictationData>(marker->data()).context;
         return std::nullopt;
     });
-    completion(WTFMove(contexts));
+    completion(WTF::move(contexts));
 }
 
 void WebPage::clearDictationAlternatives(Vector<DictationContext>&& contexts)
@@ -508,7 +508,7 @@ void WebPage::accessibilityManageRemoteElementStatus(bool registerStatus, int pr
 #endif
 }
 
-void WebPage::bindRemoteAccessibilityFrames(int processIdentifier, WebCore::FrameIdentifier frameID, Vector<uint8_t> dataToken, CompletionHandler<void(Vector<uint8_t>, int)>&& completionHandler)
+void WebPage::bindRemoteAccessibilityFrames(int processIdentifier, WebCore::FrameIdentifier frameID, WebCore::AccessibilityRemoteToken dataToken, CompletionHandler<void(WebCore::AccessibilityRemoteToken, int)>&& completionHandler)
 {
     RefPtr webFrame = WebProcess::singleton().webFrame(frameID);
     if (!webFrame) {
@@ -527,11 +527,11 @@ void WebPage::bindRemoteAccessibilityFrames(int processIdentifier, WebCore::Fram
         return completionHandler({ }, 0);
     }
 
-    registerRemoteFrameAccessibilityTokens(processIdentifier, dataToken.span(), frameID);
+    registerRemoteFrameAccessibilityTokens(processIdentifier, dataToken, frameID);
 
     // Get our remote token data and send back to the RemoteFrame.
 #if PLATFORM(MAC)
-    completionHandler({ span(accessibilityRemoteTokenData().get()) }, getpid());
+    completionHandler({ makeVector(accessibilityRemoteTokenData().get()) }, getpid());
 #else
     completionHandler({ dataToken }, getpid());
 #endif
@@ -625,7 +625,7 @@ void WebPage::getProcessDisplayName(CompletionHandler<void(String&&)>&& completi
 {
 #if PLATFORM(MAC)
 #if ENABLE(SET_WEBCONTENT_PROCESS_INFORMATION_IN_NETWORK_PROCESS)
-    WebProcess::singleton().getProcessDisplayName(WTFMove(completionHandler));
+    WebProcess::singleton().getProcessDisplayName(WTF::move(completionHandler));
 #else
     completionHandler(adoptCF((CFStringRef)_LSCopyApplicationInformationItem(kLSDefaultSessionID, _LSGetCurrentApplicationASN(), _kLSDisplayNameKey)).get());
 #endif
@@ -1023,7 +1023,7 @@ void WebPage::setMediaEnvironment(const String& mediaEnvironment)
 #if ENABLE(WRITING_TOOLS)
 void WebPage::willBeginWritingToolsSession(const std::optional<WebCore::WritingTools::Session>& session, CompletionHandler<void(const Vector<WebCore::WritingTools::Context>&)>&& completionHandler)
 {
-    protectedCorePage()->willBeginWritingToolsSession(session, WTFMove(completionHandler));
+    protectedCorePage()->willBeginWritingToolsSession(session, WTF::move(completionHandler));
 }
 
 void WebPage::didBeginWritingToolsSession(const WebCore::WritingTools::Session& session, const Vector<WebCore::WritingTools::Context>& contexts)
@@ -1077,7 +1077,7 @@ void WebPage::proofreadingSessionUpdateStateForSuggestionWithID(WebCore::Writing
 void WebPage::addTextAnimationForAnimationID(const WTF::UUID& uuid, const WebCore::TextAnimationData& styleData, const RefPtr<WebCore::TextIndicator> textIndicator, CompletionHandler<void(WebCore::TextAnimationRunMode)>&& completionHandler)
 {
     if (completionHandler)
-        sendWithAsyncReply(Messages::WebPageProxy::AddTextAnimationForAnimationIDWithCompletionHandler(uuid, styleData, textIndicator), WTFMove(completionHandler));
+        sendWithAsyncReply(Messages::WebPageProxy::AddTextAnimationForAnimationIDWithCompletionHandler(uuid, styleData, textIndicator), WTF::move(completionHandler));
     else
         send(Messages::WebPageProxy::AddTextAnimationForAnimationID(uuid, styleData, textIndicator));
 }
@@ -1099,7 +1099,7 @@ void WebPage::addInitialTextAnimationForActiveWritingToolsSession()
 
 void WebPage::addSourceTextAnimationForActiveWritingToolsSession(const WTF::UUID& sourceAnimationUUID, const WTF::UUID& destinationAnimationUUID, bool finished, const CharacterRange& range, const String& string, CompletionHandler<void(WebCore::TextAnimationRunMode)>&& completionHandler)
 {
-    m_textAnimationController->addSourceTextAnimationForActiveWritingToolsSession(sourceAnimationUUID, destinationAnimationUUID, finished, range, string, WTFMove(completionHandler));
+    m_textAnimationController->addSourceTextAnimationForActiveWritingToolsSession(sourceAnimationUUID, destinationAnimationUUID, finished, range, string, WTF::move(completionHandler));
 }
 
 void WebPage::addDestinationTextAnimationForActiveWritingToolsSession(const WTF::UUID& sourceAnimationUUID, const WTF::UUID& destinationAnimationUUID, const std::optional<CharacterRange>& range, const String& string)
@@ -1119,18 +1119,18 @@ void WebPage::clearAnimationsForActiveWritingToolsSession()
 
 void WebPage::createTextIndicatorForTextAnimationID(const WTF::UUID& uuid, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&& completionHandler)
 {
-    m_textAnimationController->createTextIndicatorForTextAnimationID(uuid, WTFMove(completionHandler));
+    m_textAnimationController->createTextIndicatorForTextAnimationID(uuid, WTF::move(completionHandler));
 }
 
 void WebPage::updateUnderlyingTextVisibilityForTextAnimationID(const WTF::UUID& uuid, bool visible, CompletionHandler<void()>&& completionHandler)
 {
-    m_textAnimationController->updateUnderlyingTextVisibilityForTextAnimationID(uuid, visible, WTFMove(completionHandler));
+    m_textAnimationController->updateUnderlyingTextVisibilityForTextAnimationID(uuid, visible, WTF::move(completionHandler));
 }
 
 void WebPage::proofreadingSessionSuggestionTextRectsInRootViewCoordinates(const WebCore::CharacterRange& enclosingRangeRelativeToSessionRange, CompletionHandler<void(Vector<FloatRect>&&)>&& completionHandler) const
 {
     auto rects = protectedCorePage()->proofreadingSessionSuggestionTextRectsInRootViewCoordinates(enclosingRangeRelativeToSessionRange);
-    completionHandler(WTFMove(rects));
+    completionHandler(WTF::move(rects));
 }
 
 void WebPage::updateTextVisibilityForActiveWritingToolsSession(const WebCore::CharacterRange& rangeRelativeToSessionRange, bool visible, const WTF::UUID& identifier, CompletionHandler<void()>&& completionHandler)
@@ -1142,7 +1142,7 @@ void WebPage::updateTextVisibilityForActiveWritingToolsSession(const WebCore::Ch
 void WebPage::textPreviewDataForActiveWritingToolsSession(const WebCore::CharacterRange& rangeRelativeToSessionRange, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&& completionHandler)
 {
     RefPtr textIndicator = protectedCorePage()->textPreviewDataForActiveWritingToolsSession(rangeRelativeToSessionRange);
-    completionHandler(WTFMove(textIndicator));
+    completionHandler(WTF::move(textIndicator));
 }
 
 void WebPage::decorateTextReplacementsForActiveWritingToolsSession(const WebCore::CharacterRange& rangeRelativeToSessionRange, CompletionHandler<void(void)>&& completionHandler)
@@ -1245,17 +1245,17 @@ void WebPage::createTextIndicatorForElementWithID(const String& elementID, Compl
     else
         styledElement->removeInlineStyleProperty(CSSPropertyVisibility);
 
-    completionHandler(WTFMove(textIndicator));
+    completionHandler(WTF::move(textIndicator));
 }
 
 void WebPage::createBitmapsFromImageData(Ref<WebCore::SharedBuffer>&& buffer, const Vector<unsigned>& lengths, CompletionHandler<void(Vector<Ref<WebCore::ShareableBitmap>>&&)>&& completionHandler)
 {
-    WebCore::createBitmapsFromImageData(buffer->span(), lengths.span(), WTFMove(completionHandler));
+    WebCore::createBitmapsFromImageData(buffer->span(), lengths.span(), WTF::move(completionHandler));
 }
 
 void WebPage::decodeImageData(Ref<WebCore::SharedBuffer>&& buffer, std::optional<WebCore::FloatSize> preferredSize, CompletionHandler<void(RefPtr<WebCore::ShareableBitmap>&&)>&& completionHandler)
 {
-    decodeImageWithSize(buffer->span(), preferredSize, WTFMove(completionHandler));
+    decodeImageWithSize(buffer->span(), preferredSize, WTF::move(completionHandler));
 }
 
 #if HAVE(PDFKIT)
@@ -1442,10 +1442,10 @@ void WebPage::getWebArchivesForFrames(const Vector<WebCore::FrameIdentifier>& fr
             LegacyWebArchive::ShouldSaveScriptsFromMemoryCache::Yes,
             LegacyWebArchive::ShouldArchiveSubframes::No
         };
-        if (RefPtr archive = WebCore::LegacyWebArchive::create(*document, WTFMove(options)))
+        if (RefPtr archive = WebCore::LegacyWebArchive::create(*document, WTF::move(options)))
             result.add(localFrame->frameID(), archive.releaseNonNull());
     }
-    completionHandler(WTFMove(result));
+    completionHandler(WTF::move(result));
 }
 
 void WebPage::getWebArchiveData(CompletionHandler<void(const std::optional<IPC::SharedBufferReference>&)>&& completionHandler)
@@ -1560,7 +1560,7 @@ void WebPage::drawRectToImage(FrameIdentifier frameID, const PrintInfo& printInf
     if (image)
         handle = image->createHandle(SharedMemory::Protection::ReadOnly);
 
-    completionHandler(WTFMove(handle));
+    completionHandler(WTF::move(handle));
 }
 
 void WebPage::drawPagesToPDF(FrameIdentifier frameID, const PrintInfo& printInfo, uint32_t first, uint32_t count, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&& callback)
@@ -1568,7 +1568,7 @@ void WebPage::drawPagesToPDF(FrameIdentifier frameID, const PrintInfo& printInfo
     PrintContextAccessScope scope { *this };
     RefPtr<SharedBuffer> pdfPageData;
     drawPagesToPDFImpl(frameID, printInfo, first, count, pdfPageData);
-    callback(WTFMove(pdfPageData));
+    callback(WTF::move(pdfPageData));
 }
 
 void WebPage::drawPagesToPDFImpl(FrameIdentifier frameID, const PrintInfo& printInfo, uint32_t first, uint32_t count, RefPtr<SharedBuffer>& pdfPageData)
@@ -1596,7 +1596,7 @@ void WebPage::drawPagesToPDFImpl(FrameIdentifier frameID, const PrintInfo& print
 
             drawPrintContextPagesToGraphicsContext(context, mediaBox, first, count);
         }
-        pdfPageData = ImageBuffer::sinkIntoPDFDocument(WTFMove(buffer));
+        pdfPageData = ImageBuffer::sinkIntoPDFDocument(WTF::move(buffer));
     }
 #endif
 }
@@ -1644,7 +1644,7 @@ void WebPage::drawPrintingRectToSnapshot(RemoteSnapshotIdentifier snapshotIdenti
     m_remoteSnapshotState = {
         snapshotIdentifier,
         remoteRenderingBackend->createSnapshotRecorder(snapshotIdentifier),
-        MainRunLoopSuccessCallbackAggregator::create([completionHandler = WTFMove(completionHandler)] (bool success) mutable {
+        MainRunLoopSuccessCallbackAggregator::create([completionHandler = WTF::move(completionHandler)] (bool success) mutable {
             completionHandler(success);
         })
     };
@@ -1655,7 +1655,7 @@ void WebPage::drawPrintingRectToSnapshot(RemoteSnapshotIdentifier snapshotIdenti
 
     Ref { *m_printContext }->spoolRect(context, rect);
 
-    remoteRenderingBackend->sinkSnapshotRecorderIntoSnapshotFrame(WTFMove(m_remoteSnapshotState->recorder), frameID, Ref { m_remoteSnapshotState->callback }->chain());
+    remoteRenderingBackend->sinkSnapshotRecorderIntoSnapshotFrame(WTF::move(m_remoteSnapshotState->recorder), frameID, Ref { m_remoteSnapshotState->callback }->chain());
     m_remoteSnapshotState = std::nullopt;
 }
 
@@ -1693,7 +1693,7 @@ void WebPage::drawPrintingPagesToSnapshot(RemoteSnapshotIdentifier snapshotIdent
     m_remoteSnapshotState = {
         snapshotIdentifier,
         remoteRenderingBackend->createSnapshotRecorder(snapshotIdentifier),
-        MainRunLoopSuccessCallbackAggregator::create([completionHandler = WTFMove(completionHandler), snapshotSize = mediaBox.size()] (bool success) mutable {
+        MainRunLoopSuccessCallbackAggregator::create([completionHandler = WTF::move(completionHandler), snapshotSize = mediaBox.size()] (bool success) mutable {
             completionHandler(success ? std::optional<FloatSize>(snapshotSize) : std::nullopt);
         })
     };
@@ -1702,7 +1702,7 @@ void WebPage::drawPrintingPagesToSnapshot(RemoteSnapshotIdentifier snapshotIdent
 
     drawPrintContextPagesToGraphicsContext(context, mediaBox, first, count);
 
-    remoteRenderingBackend->sinkSnapshotRecorderIntoSnapshotFrame(WTFMove(m_remoteSnapshotState->recorder), frameID, Ref { m_remoteSnapshotState->callback }->chain());
+    remoteRenderingBackend->sinkSnapshotRecorderIntoSnapshotFrame(WTF::move(m_remoteSnapshotState->recorder), frameID, Ref { m_remoteSnapshotState->callback }->chain());
     m_remoteSnapshotState = std::nullopt;
 }
 
@@ -1878,7 +1878,7 @@ void WebPage::firstRectForCharacterRangeAsync(const EditingRange& editingRange, 
     if (!endBoundary)
         return completionHandler({ }, editingRange);
 
-    auto rangeForFirstLine = EditingRange::fromRange(*frame, makeSimpleRange(range->start, WTFMove(endBoundary)));
+    auto rangeForFirstLine = EditingRange::fromRange(*frame, makeSimpleRange(range->start, WTF::move(endBoundary)));
 
     rangeForFirstLine.location = std::min(std::max(rangeForFirstLine.location, editingRange.location), editingRange.location + editingRange.length);
     rangeForFirstLine.length = std::min(rangeForFirstLine.location + rangeForFirstLine.length, editingRange.location + editingRange.length) - rangeForFirstLine.location;
@@ -1979,18 +1979,8 @@ void WebPage::willCommitLayerTree(RemoteLayerTreeTransaction& layerTransaction, 
     Ref page = *corePage();
 
 #if ENABLE(THREADED_ANIMATIONS)
-    AcceleratedTimelinesUpdate combinedTimelinesUpdate;
-    page->forEachDocument([&](const auto& document) {
-        if (CheckedPtr timelinesController = document.timelinesController()) {
-            if (auto* acceleratedEffectStackUpdater = timelinesController->existingAcceleratedEffectStackUpdater()) {
-                auto timelinesUpdate = acceleratedEffectStackUpdater->takeTimelinesUpdate();
-                combinedTimelinesUpdate.created = combinedTimelinesUpdate.created.unionWith(timelinesUpdate.created);
-                combinedTimelinesUpdate.modified = combinedTimelinesUpdate.modified.unionWith(timelinesUpdate.modified);
-                combinedTimelinesUpdate.destroyed = combinedTimelinesUpdate.destroyed.unionWith(timelinesUpdate.destroyed);
-            }
-        }
-    });
-    layerTransaction.setTimelinesUpdate(WTFMove(combinedTimelinesUpdate));
+    if (auto* acceleratedTimelinesUpdater = page->acceleratedTimelinesUpdater())
+        layerTransaction.setTimelinesUpdate(acceleratedTimelinesUpdater->takeTimelinesUpdate());
 #endif
 
     layerTransaction.setContentsSize(frameView->contentsSize());

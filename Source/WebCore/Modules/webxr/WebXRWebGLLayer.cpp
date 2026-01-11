@@ -50,7 +50,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRWebGLLayer);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebXRWebGLLayer);
 
 // Arbitrary value for minimum framebuffer scaling.
 // Below this threshold the resulting framebuffer would be too small to see.
@@ -88,7 +88,7 @@ static ExceptionOr<std::unique_ptr<WebXROpaqueFramebuffer>> createOpaqueFramebuf
         .stencil = init.stencil
     };
 
-    auto framebuffer = WebXROpaqueFramebuffer::create(*layerHandle, context, WTFMove(attributes), size);
+    auto framebuffer = WebXROpaqueFramebuffer::create(*layerHandle, context, WTF::move(attributes), size);
     if (!framebuffer)
         return Exception { ExceptionCode::OperationError, "Unable to create a framebuffer."_s };
     
@@ -152,7 +152,7 @@ ExceptionOr<Ref<WebXRWebGLLayer>> WebXRWebGLLayer::create(WebXRSession& session,
             }
 
             // 10. Return layer.
-            return adoptRef(*new WebXRWebGLLayer(session, WTFMove(context), WTFMove(framebuffer), antialias, ignoreDepthValues, isCompositionEnabled));
+            return adoptRef(*new WebXRWebGLLayer(session, WTF::move(context), WTF::move(framebuffer), antialias, ignoreDepthValues, isCompositionEnabled));
         },
         [](std::monostate) {
             ASSERT_NOT_REACHED();
@@ -164,10 +164,10 @@ ExceptionOr<Ref<WebXRWebGLLayer>> WebXRWebGLLayer::create(WebXRSession& session,
 WebXRWebGLLayer::WebXRWebGLLayer(WebXRSession& session, WebXRRenderingContext&& context, std::unique_ptr<WebXROpaqueFramebuffer>&& framebuffer, bool antialias, bool ignoreDepthValues, bool isCompositionEnabled)
     : WebXRLayer(session.scriptExecutionContext())
     , m_session(session)
-    , m_context(WTFMove(context))
+    , m_context(WTF::move(context))
     , m_leftViewportData({ WebXRViewport::create({ }) })
     , m_rightViewportData({ WebXRViewport::create({ }) })
-    , m_framebuffer(WTFMove(framebuffer))
+    , m_framebuffer(WTF::move(framebuffer))
     , m_antialias(antialias)
     , m_ignoreDepthValues(ignoreDepthValues)
     , m_isCompositionEnabled(isCompositionEnabled)
@@ -324,7 +324,7 @@ PlatformXR::Device::Layer WebXRWebGLLayer::endFrame()
     return PlatformXR::Device::Layer {
         .handle = m_framebuffer->handle(),
         .visible = true,
-        .views = WTFMove(views),
+        .views = WTF::move(views),
 #if USE(OPENXR)
         .fenceFD = m_framebuffer->takeFenceFD()
 #endif
@@ -384,8 +384,8 @@ void WebXRWebGLLayer::addConsoleMessage(MessageLevel level, String&& message) co
     if (!scriptExecutionContext)
         return;
 
-    auto consoleMessage = makeUnique<Inspector::ConsoleMessage>(MessageSource::Rendering, MessageType::Log, level, WTFMove(message));
-    scriptExecutionContext->addConsoleMessage(WTFMove(consoleMessage));
+    auto consoleMessage = makeUnique<Inspector::ConsoleMessage>(MessageSource::Rendering, MessageType::Log, level, WTF::move(message));
+    scriptExecutionContext->addConsoleMessage(WTF::move(consoleMessage));
 }
 
 } // namespace WebCore

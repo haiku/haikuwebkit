@@ -63,7 +63,7 @@ class RemoteDDMesh final : public IPC::StreamMessageReceiver {
 public:
     static Ref<RemoteDDMesh> create(GPUConnectionToWebProcess& gpuConnectionToWebProcess, RemoteGPU& gpu, WebCore::DDModel::DDMesh& mesh, DDModel::ObjectHeap& objectHeap, Ref<IPC::StreamServerConnection>&& streamConnection, DDModelIdentifier identifier)
     {
-        return adoptRef(*new RemoteDDMesh(gpuConnectionToWebProcess, gpu, mesh, objectHeap, WTFMove(streamConnection), identifier));
+        return adoptRef(*new RemoteDDMesh(gpuConnectionToWebProcess, gpu, mesh, objectHeap, WTF::move(streamConnection), identifier));
     }
 
     virtual ~RemoteDDMesh();

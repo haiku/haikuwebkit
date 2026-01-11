@@ -31,7 +31,7 @@
 #include "InlineLineBoxVerticalAligner.h"
 #include "InlineLineBuilder.h"
 #include "LayoutBoxGeometry.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RubyFormattingContext.h"
 #include "StyleWebKitLineBoxContain.h"
 
@@ -100,7 +100,7 @@ TextUtil::FallbackFontList LineBoxBuilder::collectFallbackFonts(const InlineLeve
         // Simplified text measuring works with primary font only.
         return { };
     }
-    auto text = *run.textContent();
+    auto& text = run.textContent();
     auto fallbackFonts = TextUtil::fallbackFontsForText(StringView(inlineTextBox.content()).substring(text.start, text.length), style, text.needsHyphen ? TextUtil::IncludeHyphen::Yes : TextUtil::IncludeHyphen::No);
     if (fallbackFonts.isEmptyIgnoringNullReferences())
         return { };
@@ -448,7 +448,7 @@ void LineBoxBuilder::constructInlineLevelBoxes(LineBox& lineBox)
         if (run.isHardLineBreak()) {
             auto lineBreakBox = InlineLevelBox::createLineBreakBox(layoutBox, style, logicalLeft);
             setVerticalPropertiesForInlineLevelBox(lineBox, lineBreakBox);
-            lineBox.addInlineLevelBox(WTFMove(lineBreakBox));
+            lineBox.addInlineLevelBox(WTF::move(lineBreakBox));
 
             if (layoutState().inStandardsMode() || InlineQuirks::lineBreakBoxAffectsParentInlineBox(lineBox))
                 lineBox.parentInlineBox(run).setHasContent();
@@ -459,7 +459,7 @@ void LineBoxBuilder::constructInlineLevelBoxes(LineBox& lineBox)
             logicalLeft += std::max(0_lu, inlineLevelBoxGeometry.marginStart());
             auto atomicInlineBox = InlineLevelBox::createAtomicInlineBox(layoutBox, style, logicalLeft, inlineLevelBoxGeometry.borderBoxWidth());
             setVerticalPropertiesForInlineLevelBox(lineBox, atomicInlineBox);
-            lineBox.addInlineLevelBox(WTFMove(atomicInlineBox));
+            lineBox.addInlineLevelBox(WTF::move(atomicInlineBox));
             continue;
         }
         if (run.isInlineBoxStart() || run.isLineSpanningInlineBoxStart()) {
@@ -483,7 +483,7 @@ void LineBoxBuilder::constructInlineLevelBoxes(LineBox& lineBox)
                 inlineBox.setIsFirstBox();
                 m_lineHasNonLineSpanningRubyContent = m_lineHasNonLineSpanningRubyContent || layoutBox.isRubyBase();
             }
-            lineBox.addInlineLevelBox(WTFMove(inlineBox));
+            lineBox.addInlineLevelBox(WTF::move(inlineBox));
             continue;
         }
         if (run.isInlineBoxEnd()) {
@@ -514,7 +514,7 @@ void LineBoxBuilder::constructInlineLevelBoxes(LineBox& lineBox)
 
             auto atomicInlineBox = InlineLevelBox::createAtomicInlineBox(listMarkerBox, style, logicalLeft, formattingContext.geometryForBox(listMarkerBox).borderBoxWidth());
             setVerticalPropertiesForInlineLevelBox(lineBox, atomicInlineBox);
-            lineBox.addInlineLevelBox(WTFMove(atomicInlineBox));
+            lineBox.addInlineLevelBox(WTF::move(atomicInlineBox));
             continue;
         }
         if (run.isWordBreakOpportunity()) {
@@ -536,15 +536,18 @@ void LineBoxBuilder::constructBlockContent(LineBox& lineBox)
     }
 
     // Since we don't need to position and align block content inside the line, we don't need to create any boxes for this block content.
-    auto& blockGeometry = formattingContext().geometryForBox(runs.last().layoutBox());
+    auto& blockRun = runs.last();
+    ASSERT(blockRun.isBlock());
+    auto& blockGeometry = formattingContext().geometryForBox(blockRun.layoutBox());
     for (size_t index = 0;  index < runs.size() - 1; ++index) {
         auto& run = runs[index];
         if (run.isLineSpanningInlineBoxStart()) {
-            auto lineSpanningInlineBox = InlineLevelBox::createInlineBox(run.layoutBox(), run.layoutBox().style(), lineLayoutResult.contentGeometry.logicalLeft, lineLayoutResult.contentGeometry.logicalWidth, InlineLevelBox::LineSpanningInlineBox::Yes);
+            auto inlineBoxWidth = blockRun.logicalWidth() ? lineLayoutResult.lineGeometry.logicalWidth : 0.f;
+            auto lineSpanningInlineBox = InlineLevelBox::createInlineBox(run.layoutBox(), run.layoutBox().style(), lineLayoutResult.contentGeometry.logicalLeft, inlineBoxWidth, InlineLevelBox::LineSpanningInlineBox::Yes);
             setVerticalPropertiesForInlineLevelBox(lineBox, lineSpanningInlineBox);
             lineSpanningInlineBox.setLogicalTop(blockGeometry.marginBefore());
             lineSpanningInlineBox.setLogicalHeight(InlineLayoutUnit(blockGeometry.borderBoxHeight()));
-            lineBox.addInlineLevelBox(WTFMove(lineSpanningInlineBox));
+            lineBox.addInlineLevelBox(WTF::move(lineSpanningInlineBox));
             continue;
         }
         ASSERT_NOT_REACHED();
@@ -608,9 +611,9 @@ void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox
                 continue;
 
             auto& textBox = downcast<InlineTextBox>(run.layoutBox());
-            auto textContent = run.textContent();
+            auto& textContent = run.textContent();
             auto& style = isFirstFormattedLine() ? textBox.firstLineStyle() : textBox.style();
-            auto enclosingAscentDescentForRun = TextUtil::enclosingGlyphBoundsForText(StringView(textBox.content()).substring(textContent->start, textContent->length), style, textBox.shouldUseSimpleGlyphOverflowCodePath() ? TextUtil::ShouldUseSimpleGlyphOverflowCodePath::Yes : TextUtil::ShouldUseSimpleGlyphOverflowCodePath::No);
+            auto enclosingAscentDescentForRun = TextUtil::enclosingGlyphBoundsForText(StringView(textBox.content()).substring(textContent.start, textContent.length), style, textBox.shouldUseSimpleGlyphOverflowCodePath() ? TextUtil::ShouldUseSimpleGlyphOverflowCodePath::Yes : TextUtil::ShouldUseSimpleGlyphOverflowCodePath::No);
 
             auto& parentInlineBox = lineBox.parentInlineBox(run);
             auto enclosingAscentDescentForInlineBox = inlineBoxBoundsMap.get(&parentInlineBox);
@@ -634,9 +637,9 @@ void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox
                 continue;
 
             auto& textBox = downcast<InlineTextBox>(run.layoutBox());
-            auto textContent = run.textContent();
+            auto& textContent = run.textContent();
             auto& style = isFirstFormattedLine() ? textBox.firstLineStyle() : textBox.style();
-            auto ascentAndDescent = TextUtil::enclosingGlyphBoundsForText(StringView(textBox.content()).substring(textContent->start, textContent->length), style, textBox.shouldUseSimpleGlyphOverflowCodePath() ? TextUtil::ShouldUseSimpleGlyphOverflowCodePath::Yes : TextUtil::ShouldUseSimpleGlyphOverflowCodePath::No);
+            auto ascentAndDescent = TextUtil::enclosingGlyphBoundsForText(StringView(textBox.content()).substring(textContent.start, textContent.length), style, textBox.shouldUseSimpleGlyphOverflowCodePath() ? TextUtil::ShouldUseSimpleGlyphOverflowCodePath::Yes : TextUtil::ShouldUseSimpleGlyphOverflowCodePath::No);
 
             initialLetterDescent = ascentAndDescent.descent;
             if (lineBox.baselineType() != FontBaseline::Alphabetic)

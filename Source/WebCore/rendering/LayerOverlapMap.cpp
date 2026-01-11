@@ -326,7 +326,7 @@ void LayerOverlapMap::pushCompositingContainer(const RenderLayer& layer)
 void LayerOverlapMap::popCompositingContainer(const RenderLayer& layer)
 {
     ASSERT_UNUSED(layer, &m_overlapStack.last()->scopeLayer() == &layer);
-    m_overlapStack[m_overlapStack.size() - 2]->append(WTFMove(m_overlapStack.last()));
+    m_overlapStack[m_overlapStack.size() - 2]->append(WTF::move(m_overlapStack.last()));
     m_overlapStack.removeLast();
 }
 

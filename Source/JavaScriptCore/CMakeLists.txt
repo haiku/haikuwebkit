@@ -350,7 +350,6 @@ set(JavaScriptCore_BUILTINS_SOURCES
     ${JAVASCRIPTCORE_DIR}/builtins/FunctionPrototype.js
     ${JAVASCRIPTCORE_DIR}/builtins/GeneratorPrototype.js
     ${JAVASCRIPTCORE_DIR}/builtins/GlobalOperations.js
-    ${JAVASCRIPTCORE_DIR}/builtins/InternalPromiseConstructor.js
     ${JAVASCRIPTCORE_DIR}/builtins/IteratorHelpers.js
     ${JAVASCRIPTCORE_DIR}/builtins/JSIteratorConstructor.js
     ${JAVASCRIPTCORE_DIR}/builtins/JSIteratorHelperPrototype.js
@@ -362,7 +361,6 @@ set(JavaScriptCore_BUILTINS_SOURCES
     ${JAVASCRIPTCORE_DIR}/builtins/ObjectConstructor.js
     ${JAVASCRIPTCORE_DIR}/builtins/PromiseConstructor.js
     ${JAVASCRIPTCORE_DIR}/builtins/PromiseOperations.js
-    ${JAVASCRIPTCORE_DIR}/builtins/PromisePrototype.js
     ${JAVASCRIPTCORE_DIR}/builtins/ProxyHelpers.js
     ${JAVASCRIPTCORE_DIR}/builtins/ReflectObject.js
     ${JAVASCRIPTCORE_DIR}/builtins/RegExpPrototype.js
@@ -589,6 +587,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     API/glib/JSCWrapperMap.h
 
     assembler/ARM64Assembler.h
+    assembler/ARM64EAssembler.h
     assembler/ARM64Registers.h
     assembler/ARMv7Assembler.h
     assembler/ARMv7Registers.h
@@ -619,6 +618,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     assembler/RegisterInfo.h
     assembler/SecureARM64EHashPins.h
     assembler/SecureARM64EHashPinsInlines.h
+    assembler/TargetAssemblerDefinitions.h
     assembler/X86Assembler.h
     assembler/X86_64Registers.h
 
@@ -973,6 +973,9 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     llint/LLIntOpcode.h
     llint/LLIntPCRanges.h
     llint/LLIntThunks.h
+
+    lol/LOLJIT.h
+    lol/LOLRegisterAllocator.h
 
     parser/Lexer.h
     parser/ParserArena.h

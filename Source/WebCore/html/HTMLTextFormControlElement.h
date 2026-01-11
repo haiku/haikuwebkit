@@ -44,7 +44,7 @@ enum TextFieldEventBehavior { DispatchNoEvent, DispatchChangeEvent, DispatchInpu
 enum TextControlSetValueSelection { SetSelectionToEnd, Clamp, DoNotSet };
 
 class HTMLTextFormControlElement : public HTMLFormControlElement {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLTextFormControlElement);
+    WTF_MAKE_TZONE_ALLOCATED(HTMLTextFormControlElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HTMLTextFormControlElement);
 public:
     // Common flag for HTMLInputElement::tooLong() / tooShort() and HTMLTextAreaElement::tooLong() / tooShort().
@@ -112,7 +112,7 @@ public:
 
     String directionForFormData() const;
 
-    void setTextAsOfLastFormControlChangeEvent(String&& text) { m_textAsOfLastFormControlChangeEvent = WTFMove(text); }
+    void setTextAsOfLastFormControlChangeEvent(String&& text) { m_textAsOfLastFormControlChangeEvent = WTF::move(text); }
 
     WEBCORE_EXPORT virtual bool isInnerTextElementEditable() const;
 

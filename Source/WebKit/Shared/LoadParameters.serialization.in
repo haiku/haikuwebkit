@@ -22,6 +22,7 @@
 
 enum class WebCore::LockHistory : bool;
 enum class WebCore::LockBackForwardList : bool;
+enum class WebCore::NavigationUpgradeToHTTPSBehavior : bool;
 
 [RValue] struct WebKit::LoadParameters {
     WebCore::PublicSuffix publicSuffix;
@@ -56,7 +57,7 @@ enum class WebCore::LockBackForwardList : bool;
     std::optional<double> dataDetectionReferenceDate;
 #endif
     bool isRequestFromClientOrUserInput;
-    bool isPerformingHTTPFallback;
+    WebCore::NavigationUpgradeToHTTPSBehavior navigationUpgradeToHTTPSBehavior;
     bool isHandledByAboutSchemeHandler;
 
     std::optional<OptionSet<WebCore::AdvancedPrivacyProtections>> advancedPrivacyProtections;

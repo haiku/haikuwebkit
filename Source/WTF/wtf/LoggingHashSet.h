@@ -29,6 +29,7 @@
 #include <wtf/HashSet.h>
 #include <wtf/LoggingHashID.h>
 #include <wtf/LoggingHashTraits.h>
+#include <wtf/StringPrintStream.h>
 
 namespace WTF {
 
@@ -70,7 +71,7 @@ public:
     LoggingHashSet(LoggingHashSet&& other)
         : m_set(other.m_set)
     {
-        dataLog("auto* ", m_id, " = new HashSet<", typeArguments, ">(WTFMove(*", other.m_id, "));\n");
+        dataLog("auto* ", m_id, " = new HashSet<", typeArguments, ">(WTF::move(*", other.m_id, "));\n");
     }
     
     LoggingHashSet& operator=(const LoggingHashSet& other)
@@ -82,8 +83,8 @@ public:
     
     LoggingHashSet& operator=(LoggingHashSet&& other)
     {
-        dataLog("*", m_id, " = WTFMove(*", other.m_id, ");\n");
-        m_set = WTFMove(other.m_set);
+        dataLog("*", m_id, " = WTF::move(*", other.m_id, ");\n");
+        m_set = WTF::move(other.m_set);
         return *this;
     }
     
@@ -144,7 +145,7 @@ public:
         LoggingTraits::print(string, value);
         string.print(");\n");
         dataLog(string.toCString());
-        return m_set.add(WTFMove(value));
+        return m_set.add(WTF::move(value));
     }
     
     void addVoid(const ValueType& value)
@@ -164,7 +165,7 @@ public:
         LoggingTraits::print(string, value);
         string.print(");\n");
         dataLog(string.toCString());
-        m_set.addVoid(WTFMove(value));
+        m_set.addVoid(WTF::move(value));
     }
     
     template<typename IteratorType>

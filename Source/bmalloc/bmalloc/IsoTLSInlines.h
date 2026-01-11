@@ -25,6 +25,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+
+#include "BPlatform.h"
+
 #if !BUSE(TZONE)
 
 #include "Environment.h"
@@ -195,3 +199,5 @@ BNO_INLINE IsoTLS* IsoTLS::ensureHeapAndEntries(api::IsoHeapBase<Type>& handle)
 
 #endif
 #endif // !BUSE(TZONE)
+
+#endif // __cplusplus

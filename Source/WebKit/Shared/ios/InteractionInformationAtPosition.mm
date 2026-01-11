@@ -58,7 +58,7 @@ InteractionInformationAtPosition::InteractionInformationAtPosition(InteractionIn
     Vector<WebCore::ElementAnimationContext>&& animationsAtPoint,
 #endif
     std::optional<WebCore::ElementContext>&& elementContext, std::optional<WebCore::ElementContext>&& hostImageOrVideoElementContext)
-        : request(WTFMove(request))
+        : request(WTF::move(request))
         , canBeValid(canBeValid)
         , hitNodeOrWindowHasDoubleClickListener(hitNodeOrWindowHasDoubleClickListener)
         , selectability(selectability)
@@ -78,7 +78,7 @@ InteractionInformationAtPosition::InteractionInformationAtPosition(InteractionIn
         , isPausedVideo(isPausedVideo)
         , isElement(isElement)
         , isContentEditable(isContentEditable)
-        , containerScrollingNodeID(WTFMove(containerScrollingNodeID))
+        , containerScrollingNodeID(WTF::move(containerScrollingNodeID))
 #if ENABLE(DATA_DETECTION)
         , isDataDetectorLink(isDataDetectorLink)
 #endif
@@ -90,31 +90,31 @@ InteractionInformationAtPosition::InteractionInformationAtPosition(InteractionIn
 #endif
         , isInPlugin(isInPlugin)
         , needsPointerTouchCompatibilityQuirk(needsPointerTouchCompatibilityQuirk)
-        , adjustedPointForNodeRespondingToClickEvents(WTFMove(adjustedPointForNodeRespondingToClickEvents))
-        , url(WTFMove(url))
-        , imageURL(WTFMove(imageURL))
-        , imageMIMEType(WTFMove(imageMIMEType))
-        , title(WTFMove(title))
-        , idAttribute(WTFMove(idAttribute))
-        , bounds(WTFMove(bounds))
+        , adjustedPointForNodeRespondingToClickEvents(WTF::move(adjustedPointForNodeRespondingToClickEvents))
+        , url(WTF::move(url))
+        , imageURL(WTF::move(imageURL))
+        , imageMIMEType(WTF::move(imageMIMEType))
+        , title(WTF::move(title))
+        , idAttribute(WTF::move(idAttribute))
+        , bounds(WTF::move(bounds))
 #if PLATFORM(MACCATALYST)
-        , caretRect(WTFMove(caretRect))
+        , caretRect(WTF::move(caretRect))
 #endif
-        , image(WTFMove(image))
-        , textBefore(WTFMove(textBefore))
-        , textAfter(WTFMove(textAfter))
-        , cursorContext(WTFMove(cursorContext))
-        , textIndicator(WTFMove(textIndicator))
+        , image(WTF::move(image))
+        , textBefore(WTF::move(textBefore))
+        , textAfter(WTF::move(textAfter))
+        , cursorContext(WTF::move(cursorContext))
+        , textIndicator(WTF::move(textIndicator))
 #if ENABLE(DATA_DETECTION)
-        , dataDetectorIdentifier(WTFMove(dataDetectorIdentifier))
-        , dataDetectorResults(createNSArray(WTFMove(dataDetectorResults), [](RetainPtr<DDScannerResult>&& result) { return result.get(); }))
-        , dataDetectorBounds(WTFMove(dataDetectorBounds))
+        , dataDetectorIdentifier(WTF::move(dataDetectorIdentifier))
+        , dataDetectorResults(createNSArray(WTF::move(dataDetectorResults), [](RetainPtr<DDScannerResult>&& result) { return result.get(); }))
+        , dataDetectorBounds(WTF::move(dataDetectorBounds))
 #endif
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
-        , animationsAtPoint(WTFMove(animationsAtPoint))
+        , animationsAtPoint(WTF::move(animationsAtPoint))
 #endif
-        , elementContext(WTFMove(elementContext))
-        , hostImageOrVideoElementContext(WTFMove(hostImageOrVideoElementContext))
+        , elementContext(WTF::move(elementContext))
+        , hostImageOrVideoElementContext(WTF::move(hostImageOrVideoElementContext))
 {
 }
 

@@ -841,7 +841,7 @@ def encode_type(type):
             result.append(f'    if (auto* subclass = dynamicDowncast<{member.namespace}::{member.name}>(instance)) {{')
             result.append(f'        encoder << {type.subclass_enum_name()}::{member.name};')
             if type.rvalue:
-                result.append('        encoder << WTFMove(*subclass);')
+                result.append('        encoder << WTF::move(*subclass);')
             else:
                 result.append('        encoder << *subclass;')
             result.append('        return;')
@@ -858,9 +858,9 @@ def encode_type(type):
             if type.rvalue and '()' not in member.name:
                 if 'EncodeRequestBody' in member.attributes:
                     result.append(f'    RefPtr {member.name}Body = instance.{member.name}.httpBody();')
-                result.append(f'    encoder << WTFMove(instance.{member.name});')
+                result.append(f'    encoder << WTF::move(instance.{member.name});')
                 if 'EncodeRequestBody' in member.attributes:
-                    result.append(f'    encoder << IPC::FormDataReference {{ WTFMove({member.name}Body) }};')
+                    result.append(f'    encoder << IPC::FormDataReference {{ WTF::move({member.name}Body) }};')
             else:
                 result.append(f'    encoder << instance.{member.name};')
                 if 'EncodeRequestBody' in member.attributes:
@@ -945,7 +945,7 @@ def decode_type(type, serialized_types):
             result.append(f'        auto result = decoder.decode<Ref<{typename}>>();')
             result.append('        if (!decoder.isValid()) [[unlikely]]')
             result.append('            return std::nullopt;')
-            result.append('        return WTFMove(*result);')
+            result.append('        return WTF::move(*result);')
             result.append('    }')
         elif member.optional_tuple_bits():
             bits_name = sanitized_variable_name
@@ -958,7 +958,7 @@ def decode_type(type, serialized_types):
             if type.populate_from_empty_constructor:
                 result.append(f'    if (*{bits_name} & {member.optional_tuple_bit()}) {{')
                 result.append(f'        if (auto deserialized = decoder.decode<{member.type}>())')
-                result.append(f'            result.{sanitized_variable_name} = WTFMove(*deserialized);')
+                result.append(f'            result.{sanitized_variable_name} = WTF::move(*deserialized);')
                 result.append('        else')
                 result.append('            return std::nullopt;')
                 result.append('    }')
@@ -967,7 +967,7 @@ def decode_type(type, serialized_types):
                 result.append(f'    {member.type} {sanitized_variable_name} {{ }};')
                 result.append(f'    if (*{bits_name} & {member.optional_tuple_bit()}) {{')
                 result.append(f'        if (auto deserialized = decoder.decode<{member.type}>())')
-                result.append(f'            {sanitized_variable_name} = WTFMove(*deserialized);')
+                result.append(f'            {sanitized_variable_name} = WTF::move(*deserialized);')
                 result.append('        else')
                 result.append('            return std::nullopt;')
                 result.append('    }')
@@ -1042,12 +1042,12 @@ def construct_type(type, specialization, indentation):
         member = serialized_members[i]
         if member.condition is not None:
             result.append(f'#if {member.condition}')
-        result.append(f'{indent(indentation + 1)}WTFMove({"" if member.optional_tuple_bit() else "*"}{sanitize_string_for_variable_name(member.name)}){"" if i == len(serialized_members) - 1 else ","}')
+        result.append(f'{indent(indentation + 1)}WTF::move({"" if member.optional_tuple_bit() else "*"}{sanitize_string_for_variable_name(member.name)}){"" if i == len(serialized_members) - 1 else ","}')
         if member.condition is not None:
             result.append('#endif')
     for i in range(len(type.dictionary_members)):
         member = type.dictionary_members[i]
-        result.append(f'{indent(indentation + 1)}WTFMove(*{member.type}){"," if i < len(type.dictionary_members) - 1 else ""}')
+        result.append(f'{indent(indentation + 1)}WTF::move(*{member.type}){"," if i < len(type.dictionary_members) - 1 else ""}')
     if type.create_using or type.return_ref:
         result.append(indent(indentation) + ')')
     else:
@@ -1092,7 +1092,7 @@ def generate_one_impl(type, template_argument, serialized_types):
         result.append('{')
         if type.generic_wrapper is not None:
             if type.rvalue:
-                result.append(f'    auto instance = {type.generic_wrapper}(WTFMove({instanceArgName}));')
+                result.append(f'    auto instance = {type.generic_wrapper}(WTF::move({instanceArgName}));')
             else:
                 result.append(f'    auto instance = {type.generic_wrapper}({instanceArgName});')
         if not type.members_are_subclasses and type.cf_type is None:
@@ -1133,12 +1133,12 @@ def generate_one_impl(type, template_argument, serialized_types):
                 for member in type.serialized_members():
                     if member.condition is not None:
                         result.append(f'#if {member.condition}')
-                    result.append(f'    result.{member.name} = WTFMove(*{member.name});')
+                    result.append(f'    result.{member.name} = WTF::move(*{member.name});')
                     if member.condition is not None:
                         result.append('#endif')
-                result.append('    return { WTFMove(result) };')
+                result.append('    return { WTF::move(result) };')
             elif type.has_optional_tuple_bits() and type.populate_from_empty_constructor:
-                result.append('    return { WTFMove(result) };')
+                result.append('    return { WTF::move(result) };')
             else:
                 result.append('    return {')
                 if template_argument:
@@ -1504,13 +1504,15 @@ def generate_serialized_type_info(serialized_types, serialized_enums, headers, u
         if enum.condition is not None:
             result.append(f'#if {enum.condition}')
         result.append(f'        {{ "{enum.namespace_and_name()}"_s, sizeof({enum.namespace_and_name()}), {"true" if enum.is_option_set() else "false"}, {{')
+        # Generate valueMap with both values and names
         if enum.underlying_type == 'bool':
-            result.append('            0, 1')
+            result.append('            { 0, "false"_s },')
+            result.append('            { 1, "true"_s }')
         else:
             for valid_value in enum.valid_values:
                 if valid_value.condition is not None:
                     result.append(f'#if {valid_value.condition}')
-                result.append(f'            enumValueForIPCTestAPI({enum.namespace_and_name()}::{valid_value.name}),')
+                result.append(f'            {{ enumValueForIPCTestAPI({enum.namespace_and_name()}::{valid_value.name}), "{valid_value.name}"_s }},')
                 if valid_value.condition is not None:
                     result.append('#endif')
         result.append('        } },')
@@ -1900,7 +1902,7 @@ def generate_webkit_secure_coding_impl(serialized_types, headers):
         result.append(')')
         for i in range(len(type.dictionary_members)):
             member = type.dictionary_members[i]
-            result.append(f'    {":" if i == 0 else ","} m_{member.type}(WTFMove({member.type}))')
+            result.append(f'    {":" if i == 0 else ","} m_{member.type}(WTF::move({member.type}))')
         result.append('{')
         result.append('}')
         result.append('')

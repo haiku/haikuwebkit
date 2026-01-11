@@ -428,7 +428,7 @@ void BaseDateAndTimeInputType::updateInnerTextValue()
             // Need to put something to keep text baseline.
             displayValue = " "_s;
         }
-        firstChildElement->setInnerText(WTFMove(displayValue));
+        firstChildElement->setInnerText(WTF::move(displayValue));
         return;
     }
 

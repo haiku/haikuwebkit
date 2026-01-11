@@ -37,7 +37,7 @@ namespace WebCore {
 class WebXRSession;
 
 class WebXRHitTestSource : public RefCounted<WebXRHitTestSource> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebXRHitTestSource);
+    WTF_MAKE_TZONE_ALLOCATED(WebXRHitTestSource);
 public:
     static Ref<WebXRHitTestSource> create(WebXRSession&, PlatformXR::HitTestSource&&);
     ~WebXRHitTestSource();

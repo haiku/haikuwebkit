@@ -47,7 +47,7 @@ class HTMLVideoElementPictureInPicture
     , private LoggerHelper
 #endif
 {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLVideoElementPictureInPicture);
+    WTF_MAKE_TZONE_ALLOCATED(HTMLVideoElementPictureInPicture);
 public:
     HTMLVideoElementPictureInPicture(HTMLVideoElement&);
     static HTMLVideoElementPictureInPicture& from(HTMLVideoElement&);

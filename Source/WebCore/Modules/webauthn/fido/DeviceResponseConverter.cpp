@@ -216,13 +216,13 @@ RefPtr<AuthenticatorAttestationResponse> readCTAPMakeCredentialResponse(const Ve
         attestationObject = buildAttestationObject(Vector<uint8_t>(authDataBytes), String { emptyString() }, { }, attestation, ShouldZeroAAGUID::Yes);
     } else {
         CBOR::MapValue attestationObjectMap;
-        attestationObjectMap[CBOR("authData")] = WTFMove(authenticatorData);
-        attestationObjectMap[CBOR("fmt")] = WTFMove(format);
-        attestationObjectMap[CBOR("attStmt")] = WTFMove(attStmt);
-        attestationObject = cbor::CBORWriter::write(CBOR(WTFMove(attestationObjectMap)));
+        attestationObjectMap[CBOR("authData")] = WTF::move(authenticatorData);
+        attestationObjectMap[CBOR("fmt")] = WTF::move(format);
+        attestationObjectMap[CBOR("attStmt")] = WTF::move(attStmt);
+        attestationObject = cbor::CBORWriter::write(CBOR(WTF::move(attestationObjectMap)));
     }
 
-    return AuthenticatorAttestationResponse::create(credentialId, *attestationObject, WTFMove(extensions), attachment, WTFMove(transports));
+    return AuthenticatorAttestationResponse::create(credentialId, *attestationObject, WTF::move(extensions), attachment, WTF::move(transports));
 }
 
 RefPtr<AuthenticatorAssertionResponse> readCTAPGetAssertionResponse(const Vector<uint8_t>& inBuffer, WebCore::AuthenticatorAttachment attachment, const std::optional<pin::HmacSecretRequest>& hmacSecretRequest)
@@ -264,7 +264,7 @@ RefPtr<AuthenticatorAssertionResponse> readCTAPGetAssertionResponse(const Vector
         if (itr == user.end() || !itr->second.isByteString())
             return nullptr;
         auto& userHandle = itr->second.getByteString();
-        response = AuthenticatorAssertionResponse::create(credentialId, authData, signature, userHandle, WTFMove(extensions), attachment);
+        response = AuthenticatorAssertionResponse::create(credentialId, authData, signature, userHandle, WTF::move(extensions), attachment);
 
         itr = user.find(CBOR(kEntityNameMapKey));
         if (itr != user.end()) {
@@ -280,7 +280,7 @@ RefPtr<AuthenticatorAssertionResponse> readCTAPGetAssertionResponse(const Vector
             response->setDisplayName(itr->second.getString());
         }
     } else {
-        response = AuthenticatorAssertionResponse::create(credentialId, authData, signature, { }, WTFMove(extensions), attachment);
+        response = AuthenticatorAssertionResponse::create(credentialId, authData, signature, { }, WTF::move(extensions), attachment);
     }
 
     it = responseMap.find(CBOR(kCtapGetAssertionResponseNumberOfCredentialsKey));
@@ -321,7 +321,7 @@ std::optional<AuthenticatorGetInfoResponse> readCTAPGetInfoResponse(const Vector
     if (it == responseMap.end() || !it->second.isByteString() || it->second.getByteString().size() != aaguidLength)
         return std::nullopt;
 
-    AuthenticatorGetInfoResponse response(WTFMove(protocolVersions), Vector<uint8_t>(it->second.getByteString()));
+    AuthenticatorGetInfoResponse response(WTF::move(protocolVersions), Vector<uint8_t>(it->second.getByteString()));
 
     it = responseMap.find(CBOR(kCtapAuthenticatorGetInfoExtensionsKey));
     if (it != responseMap.end()) {
@@ -335,7 +335,7 @@ std::optional<AuthenticatorGetInfoResponse> readCTAPGetInfoResponse(const Vector
 
             extensions.append(extension.getString());
         }
-        response.setExtensions(WTFMove(extensions));
+        response.setExtensions(WTF::move(extensions));
     }
 
     AuthenticatorSupportedOptions options;
@@ -391,7 +391,7 @@ std::optional<AuthenticatorGetInfoResponse> readCTAPGetInfoResponse(const Vector
             else
                 options.setClientPinAvailability(AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedButPinNotSet);
         }
-        response.setOptions(WTFMove(options));
+        response.setOptions(WTF::move(options));
     }
 
     it = responseMap.find(CBOR(kCtapAuthenticatorGetInfoMaxMsgSizeKey));
@@ -419,7 +419,7 @@ std::optional<AuthenticatorGetInfoResponse> readCTAPGetInfoResponse(const Vector
                 supportedPinProtocols.insert(PINUVAuthProtocol::kPinProtocol2);
             // Ignore unknown protocols
         }
-        response.setPinProtocols(WTFMove(supportedPinProtocols));
+        response.setPinProtocols(WTF::move(supportedPinProtocols));
     }
 
     it = responseMap.find(CBOR(kCtapAuthenticatorGetInfoMaxCredentialCountInListKey));
@@ -450,7 +450,7 @@ std::optional<AuthenticatorGetInfoResponse> readCTAPGetInfoResponse(const Vector
             if (transport)
                 transports.append(*transport);
         }
-        response.setTransports(WTFMove(transports));
+        response.setTransports(WTF::move(transports));
     }
 
     it = responseMap.find(CBOR(kCtapAuthenticatorGetInfoMinPINLengthKey));
@@ -468,7 +468,7 @@ std::optional<AuthenticatorGetInfoResponse> readCTAPGetInfoResponse(const Vector
         response.setRemainingDiscoverableCredentials(it->second.getUnsigned());
     }
 
-    return WTFMove(response);
+    return WTF::move(response);
 }
 
 } // namespace fido

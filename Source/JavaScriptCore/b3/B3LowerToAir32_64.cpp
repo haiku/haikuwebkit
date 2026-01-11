@@ -222,7 +222,7 @@ public:
 
         Air::InsertionSet insertionSet(m_code);
         for (Inst& inst : m_prologue)
-            insertionSet.insertInst(0, WTFMove(inst));
+            insertionSet.insertInst(0, WTF::move(inst));
         insertionSet.execute(m_code[0]);
     }
 
@@ -1519,7 +1519,7 @@ private:
         auto printSpecial = static_cast<Air::PrintSpecial*>(m_code.addSpecial(makeUnique<Air::PrintSpecial>(printList)));
         Inst inst(Air::Patch, origin, Arg::special(printSpecial));
         Printer::appendAirArgs(inst, std::forward<Arguments>(arguments)...);
-        append(WTFMove(inst));
+        append(WTF::move(inst));
     }
 
     template<typename... Arguments>
@@ -1536,7 +1536,7 @@ private:
 
     void append(Inst&& inst)
     {
-        m_insts.last().append(WTFMove(inst));
+        m_insts.last().append(WTF::move(inst));
     }
     void append(const Inst& inst)
     {
@@ -1549,7 +1549,7 @@ private:
         // it in reverse.
         for (unsigned i = m_insts.size(); i--;) {
             for (Inst& inst : m_insts[i])
-                target->appendInst(WTFMove(inst));
+                target->appendInst(WTF::move(inst));
         }
         m_insts.shrink(0);
     }
@@ -4970,7 +4970,7 @@ private:
             for (unsigned i = 1; i < cCall->numChildren(); ++i)
                 inst.args.append(immOrTmp(cCall->child(i)));
 
-            m_insts.last().append(WTFMove(inst));
+            m_insts.last().append(WTF::move(inst));
             return;
         }
 
@@ -5030,7 +5030,7 @@ private:
             for (unsigned i = patchpointValue->numFPScratchRegisters; i--;)
                 inst.args.append(m_code.newTmp(FP));
 
-            m_insts.last().append(WTFMove(inst));
+            m_insts.last().append(WTF::move(inst));
             m_insts.last().appendVector(after);
             return;
         }
@@ -5068,7 +5068,7 @@ private:
 
                 fillStackmap(inst, checkValue, 2);
 
-                m_insts.last().append(WTFMove(inst));
+                m_insts.last().append(WTF::move(inst));
                 return;
             }
 
@@ -5156,7 +5156,7 @@ private:
 
             fillStackmap(inst, checkValue, 2);
 
-            m_insts.last().append(WTFMove(inst));
+            m_insts.last().append(WTF::move(inst));
             return;
         }
 
@@ -5172,7 +5172,7 @@ private:
 
             fillStackmap(inst, checkValue, 1);
 
-            m_insts.last().append(WTFMove(inst));
+            m_insts.last().append(WTF::move(inst));
             return;
         }
 

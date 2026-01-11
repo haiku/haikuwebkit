@@ -112,8 +112,8 @@ public:
 
     WebCore::MediaPlayerEnums::MediaEngineIdentifier remoteEngineIdentifier() const { return m_remoteEngineIdentifier; }
     std::optional<WebCore::MediaPlayerIdentifier> identifier() const final { return m_id; }
-    IPC::Connection& connection() const { return protectedManager()->gpuProcessConnection().connection(); }
-    Ref<IPC::Connection> protectedConnection() const { return protectedManager()->gpuProcessConnection().connection(); }
+    IPC::Connection& connection() const { return manager()->gpuProcessConnection().connection(); }
+    Ref<IPC::Connection> protectedConnection() const { return manager()->gpuProcessConnection().connection(); }
     RefPtr<WebCore::MediaPlayer> player() const { return m_player.get(); }
 
     WebCore::MediaPlayer::ReadyState readyState() const final { return m_readyState; }
@@ -237,7 +237,7 @@ private:
         void forceUseOfCachedTimeUntilNextSetTime();
 
     private:
-        Ref<const MediaPlayerPrivateRemote> protectedParent() const { return m_parent.get().releaseNonNull(); }
+        Ref<const MediaPlayerPrivateRemote> protectedParent() const { return m_parent.get(); }
 
         mutable Lock m_lock;
         std::atomic<bool> m_timeIsProgressing { false };
@@ -246,7 +246,7 @@ private:
         double m_rate WTF_GUARDED_BY_LOCK(m_lock) { 1.0 };
         mutable std::optional<MediaTime> m_lastReturnedTime WTF_GUARDED_BY_LOCK(m_lock);
         bool m_forceUseCachedTime WTF_GUARDED_BY_LOCK(m_lock) { false };
-        ThreadSafeWeakPtr<const MediaPlayerPrivateRemote> m_parent; // Cannot be null.
+        ThreadSafeWeakRef<const MediaPlayerPrivateRemote> m_parent;
     };
     TimeProgressEstimator m_currentTimeEstimator;
 
@@ -497,10 +497,10 @@ private:
 #if PLATFORM(COCOA)
     void pushVideoFrameMetadata(WebCore::VideoFrameMetadata&&, RemoteVideoFrameProxy::Properties&&);
 #endif
-    RemoteVideoFrameObjectHeapProxy& videoFrameObjectHeapProxy() const { return protectedManager()->protectedGPUProcessConnection()->videoFrameObjectHeapProxy(); }
+    RemoteVideoFrameObjectHeapProxy& videoFrameObjectHeapProxy() const { return manager()->protectedGPUProcessConnection()->videoFrameObjectHeapProxy(); }
     Ref<RemoteVideoFrameObjectHeapProxy> protectedVideoFrameObjectHeapProxy() const { return videoFrameObjectHeapProxy(); }
 
-    Ref<RemoteMediaPlayerManager> protectedManager() const;
+    Ref<RemoteMediaPlayerManager> manager() const;
 
 #if PLATFORM(IOS_FAMILY)
     void sceneIdentifierDidChange() final;
@@ -515,7 +515,7 @@ private:
     mutable PlatformLayerContainer m_videoLayer;
 #endif
 
-    ThreadSafeWeakPtr<RemoteMediaPlayerManager> m_manager; // Cannot be null.
+    ThreadSafeWeakRef<RemoteMediaPlayerManager> m_manager;
     WebCore::MediaPlayerEnums::MediaEngineIdentifier m_remoteEngineIdentifier;
     WebCore::MediaPlayerIdentifier m_id;
     RemoteMediaPlayerConfiguration m_configuration;

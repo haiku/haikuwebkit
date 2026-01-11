@@ -138,7 +138,7 @@ std::optional<CFHolderForTesting> CFHolderForTesting::decode(IPC::Decoder& decod
         return std::nullopt;
 
     return { {
-        WTFMove(*value)
+        WTF::move(*value)
     } };
 }
 
@@ -486,7 +486,7 @@ std::optional<ObjCHolderForTesting> ObjCHolderForTesting::decode(IPC::Decoder& d
         return std::nullopt;
 
     return { {
-        WTFMove(*value)
+        WTF::move(*value)
     } };
 }
 
@@ -919,7 +919,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 static void runTestNS(ObjCHolderForTesting&& holderArg)
 {
     __block bool done = false;
-    __block ObjCHolderForTesting holder = WTFMove(holderArg);
+    __block ObjCHolderForTesting holder = WTF::move(holderArg);
     auto sender = SerializationTestSender { };
     sender.sendWithAsyncReplyWithoutUsingIPCConnection(ObjCPingBackMessage(holder), ^(ObjCHolderForTesting&& result) {
         EXPECT_TRUE(holder == result);

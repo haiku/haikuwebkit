@@ -456,7 +456,7 @@ static bool tryApplyCachedSandbox(const SandboxInfo& info)
     auto contents = fileContents(info.filePath);
     if (!contents || contents->isEmpty())
         return false;
-    Vector<uint8_t> cachedSandboxContents = WTFMove(*contents);
+    Vector<uint8_t> cachedSandboxContents = WTF::move(*contents);
     if (sizeof(CachedSandboxHeader) > cachedSandboxContents.size())
         return false;
 
@@ -820,7 +820,7 @@ void AuxiliaryProcess::openDirectoryCacheInvalidated(SandboxExtension::Handle&& 
     // we need to rebuild the cache by getting the home directory while holding a temporary sandbox
     // extension to the associated Open Directory service.
 
-    auto sandboxExtension = SandboxExtension::create(WTFMove(handle));
+    auto sandboxExtension = SandboxExtension::create(WTF::move(handle));
     if (!sandboxExtension)
         return;
 

@@ -30,11 +30,11 @@ namespace WebCore {
 
 Ref<NativeImageSource> NativeImageSource::create(Ref<NativeImage>&& nativeImage)
 {
-    return adoptRef(*new NativeImageSource(WTFMove(nativeImage)));
+    return adoptRef(*new NativeImageSource(WTF::move(nativeImage)));
 }
 
 NativeImageSource::NativeImageSource(Ref<NativeImage>&& nativeImage)
-    : m_frame(WTFMove(nativeImage))
+    : m_frame(WTF::move(nativeImage))
 {
 }
 

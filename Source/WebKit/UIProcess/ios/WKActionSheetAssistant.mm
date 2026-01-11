@@ -419,7 +419,7 @@ static bool isJavaScriptURL(NSURL *url)
             return;
         auto defaultActions = [self defaultActionsForImageSheet:elementInfo.get()];
 
-        RetainPtr<NSArray> actions = [delegate actionSheetAssistant:self decideActionsForElement:elementInfo.get() defaultActions:WTFMove(defaultActions)];
+        RetainPtr<NSArray> actions = [delegate actionSheetAssistant:self decideActionsForElement:elementInfo.get() defaultActions:WTF::move(defaultActions)];
 
         if (![actions count])
             return;
@@ -435,7 +435,7 @@ static bool isJavaScriptURL(NSURL *url)
         if (!_interactionSheet)
             return;
 
-        _elementInfo = WTFMove(elementInfo);
+        _elementInfo = WTF::move(elementInfo);
 
         if (![_interactionSheet presentSheet:[self _presentationStyleForPositionInfo:_positionInformation.value() elementInfo:_elementInfo.get()]])
             [self cleanupSheet];
@@ -680,7 +680,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     auto defaultActions = [self defaultActionsForLinkSheet:elementInfo.get()];
 
-    RetainPtr<NSArray> actions = [_delegate actionSheetAssistant:self decideActionsForElement:elementInfo.get() defaultActions:WTFMove(defaultActions)];
+    RetainPtr<NSArray> actions = [_delegate actionSheetAssistant:self decideActionsForElement:elementInfo.get() defaultActions:WTF::move(defaultActions)];
 
     if (![actions count]) {
         _needsLinkIndicator = NO;
@@ -693,7 +693,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return;
     }
 
-    _elementInfo = WTFMove(elementInfo);
+    _elementInfo = WTF::move(elementInfo);
 
     if (![_interactionSheet presentSheet:[self _presentationStyleForPositionInfo:_positionInformation.value() elementInfo:_elementInfo.get()]])
         [self cleanupSheet];
@@ -859,7 +859,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         UIImage *image = !item.icon.isEmpty() ? [UIImage systemImageNamed:item.icon.createNSString().get()] : nil;
 
         if (!item.children.isEmpty())
-            return [UIMenu menuWithTitle:item.title.createNSString().get() image:image identifier:nil options:0 children:[self _uiMenuElementsForMediaControlContextMenuItems:WTFMove(item.children)]];
+            return [UIMenu menuWithTitle:item.title.createNSString().get() image:image identifier:nil options:0 children:[self _uiMenuElementsForMediaControlContextMenuItems:WTF::move(item.children)]];
 
         auto selectedItemID = item.id;
 
@@ -888,10 +888,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     String menuTitle;
     Vector<WebCore::MediaControlsContextMenuItem> itemsToPresent;
     if (items.size() == 1) {
-        menuTitle = WTFMove(items[0].title);
-        itemsToPresent = WTFMove(items[0].children);
+        menuTitle = WTF::move(items[0].title);
+        itemsToPresent = WTF::move(items[0].children);
     } else
-        itemsToPresent = WTFMove(items);
+        itemsToPresent = WTF::move(items);
 
     NSArray<UIMenuElement *> *additionalItems = nil;
     if ([_delegate respondsToSelector:@selector(additionalMediaControlsContextMenuItemsForActionSheetAssistant:)])
@@ -902,17 +902,17 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return;
     }
 
-    _captionStyleMenuController = adoptNS([WKCaptionStyleMenuController menuController]);
+    _captionStyleMenuController = [WKCaptionStyleMenuController menuController];
     [_captionStyleMenuController setDelegate:self];
 
-    NSArray<UIMenuElement *> *menuItems = [self _uiMenuElementsForMediaControlContextMenuItems:WTFMove(itemsToPresent)];
+    NSArray<UIMenuElement *> *menuItems = [self _uiMenuElementsForMediaControlContextMenuItems:WTF::move(itemsToPresent)];
     menuItems = [menuItems arrayByAddingObjectsFromArray:additionalItems];
 
     _mediaControlsContextMenu = [UIMenu menuWithTitle:menuTitle.createNSString().get() children:menuItems];
-    _mediaControlsContextMenuTargetFrame = WTFMove(targetFrame);
+    _mediaControlsContextMenuTargetFrame = WTF::move(targetFrame);
     _frameInfo = makeUnique<WebKit::FrameInfoData>(frameInfo);
     _mediaElementIdentifier = identifier;
-    _mediaControlsContextMenuCallback = WTFMove(completionHandler);
+    _mediaControlsContextMenuCallback = WTF::move(completionHandler);
 
     self._mediaControlsContextMenuPresenter.present(_mediaControlsContextMenuTargetFrame);
 }
@@ -970,13 +970,13 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #if ENABLE(VIDEO) && USE(UICONTEXTMENU)
 - (void)showCaptionDisplaySettingsMenu:(WebCore::HTMLMediaElementIdentifier)identifier withOptions:(const WebCore::ResolvedCaptionDisplaySettingsOptions&)options completionHandler:(CompletionHandler<void(Expected<void, WebCore::ExceptionData>)>&&)completionHandler
 {
-    _captionStyleMenuController = adoptNS([WKCaptionStyleMenuController menuController]);
+    _captionStyleMenuController = [WKCaptionStyleMenuController menuController];
     [_captionStyleMenuController setDelegate:self];
 
     _mediaControlsContextMenu = [_captionStyleMenuController captionStyleMenu];
     _mediaControlsContextMenuTargetFrame = options.anchorBounds.value_or(WebCore::FloatRect { });
     _mediaElementIdentifier = identifier;
-    _captionDisplaySettingsMenuCompletionHandler = WTFMove(completionHandler);
+    _captionDisplaySettingsMenuCompletionHandler = WTF::move(completionHandler);
 
     self._mediaControlsContextMenuPresenter.present(_mediaControlsContextMenuTargetFrame);
 }
@@ -1189,7 +1189,7 @@ static NSMutableArray<UIMenuElement *> *menuElementsFromDefaultActions(RetainPtr
                 return elementAnimationContext.element;
             });
 
-            [delegate _actionSheetAssistant:self performAction:sheetAction onElements:WTFMove(elementContexts)];
+            [delegate _actionSheetAssistant:self performAction:sheetAction onElements:WTF::move(elementContexts)];
         }
 #endif // ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
         break;

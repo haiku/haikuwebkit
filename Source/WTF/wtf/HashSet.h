@@ -87,6 +87,11 @@ public:
     unsigned memoryUse() const;
     bool isEmpty() const;
 
+    // Useful when the key type is WeakPtr
+    size_t computeSize() const requires (ValueTraits::hasIsWeakNullValueFunction);
+    bool isEmptyIgnoringNullReferences() const requires (ValueTraits::hasIsWeakNullValueFunction);
+    void removeWeakNullEntries() requires (ValueTraits::hasIsWeakNullValueFunction);
+
     void reserveInitialCapacity(unsigned keyCount) { m_impl.reserveInitialCapacity(keyCount); }
 
     iterator begin() const LIFETIME_BOUND;
@@ -206,11 +211,11 @@ public:
     template<SmartPtr V = ValueType> bool remove(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*);
     template<SmartPtr V = ValueType> TakeType take(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*);
 
-    // Overloads for non-nullable smart pointer values that take the raw reference type as the parameter.
-    template<NonNullableSmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&) const LIFETIME_BOUND;
-    template<NonNullableSmartPtr V = ValueType> bool contains(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&) const;
-    template<NonNullableSmartPtr V = ValueType> bool remove(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&);
-    template<NonNullableSmartPtr V = ValueType> TakeType take(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&);
+    // Overloads for smart pointer values that take the raw reference type as the parameter.
+    template<SmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& ref) const LIFETIME_BOUND { return find(&ref); }
+    template<SmartPtr V = ValueType> bool contains(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& ref) const { return contains(&ref); }
+    template<SmartPtr V = ValueType> bool remove(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& ref) { return remove(&ref); }
+    template<SmartPtr V = ValueType> TakeType take(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& ref) { return take(&ref); }
 
     static bool isValidValue(const ValueType&);
 
@@ -288,6 +293,24 @@ inline bool HashSet<T, U, V, W, shouldValidateKey>::isEmpty() const
 }
 
 template<typename T, typename U, typename V, typename W, ShouldValidateKey shouldValidateKey>
+inline size_t HashSet<T, U, V, W, shouldValidateKey>::computeSize() const requires (ValueTraits::hasIsWeakNullValueFunction)
+{
+    return m_impl.computeSize();
+}
+
+template<typename T, typename U, typename V, typename W, ShouldValidateKey shouldValidateKey>
+inline bool HashSet<T, U, V, W, shouldValidateKey>::isEmptyIgnoringNullReferences() const requires (ValueTraits::hasIsWeakNullValueFunction)
+{
+    return m_impl.isEmptyIgnoringNullReferences();
+}
+
+template<typename T, typename U, typename V, typename W, ShouldValidateKey shouldValidateKey>
+inline void HashSet<T, U, V, W, shouldValidateKey>::removeWeakNullEntries() requires (ValueTraits::hasIsWeakNullValueFunction)
+{
+    m_impl.removeWeakNullEntries();
+}
+
+template<typename T, typename U, typename V, typename W, ShouldValidateKey shouldValidateKey>
 inline auto HashSet<T, U, V, W, shouldValidateKey>::begin() const -> iterator
 {
     return m_impl.begin(); 
@@ -341,7 +364,7 @@ inline auto HashSet<T, U, V, W, shouldValidateKey>::add(const ValueType& value) 
 template<typename T, typename U, typename V, typename W, ShouldValidateKey shouldValidateKey>
 inline auto HashSet<T, U, V, W, shouldValidateKey>::add(ValueType&& value) -> AddResult
 {
-    return m_impl.template add<shouldValidateKey>(WTFMove(value));
+    return m_impl.template add<shouldValidateKey>(WTF::move(value));
 }
 
 template<typename T, typename U, typename V, typename W, ShouldValidateKey shouldValidateKey>
@@ -353,7 +376,7 @@ inline void HashSet<T, U, V, W, shouldValidateKey>::addVoid(const ValueType& val
 template<typename T, typename U, typename V, typename W, ShouldValidateKey shouldValidateKey>
 inline void HashSet<T, U, V, W, shouldValidateKey>::addVoid(ValueType&& value)
 {
-    m_impl.template add<shouldValidateKey>(WTFMove(value));
+    m_impl.template add<shouldValidateKey>(WTF::move(value));
 }
 
 template<typename Value, typename HashFunctions, typename Traits, typename TableTraits, ShouldValidateKey shouldValidateKey>
@@ -417,7 +440,7 @@ inline auto HashSet<T, U, V, W, shouldValidateKey>::take(iterator it) -> TakeTyp
     if (it == end())
         return ValueTraits::take(ValueTraits::emptyValue());
 
-    auto result = ValueTraits::take(WTFMove(const_cast<ValueType&>(*it)));
+    auto result = ValueTraits::take(WTF::move(const_cast<ValueType&>(*it)));
     remove(it);
     return result;
 }
@@ -533,34 +556,6 @@ template<SmartPtr V>
 inline auto HashSet<Value, HashFunctions, Traits, TableTraits, shouldValidateKey>::take(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>* value) -> TakeType
 {
     return take(find(value));
-}
-
-template<typename Value, typename HashFunctions, typename Traits, typename TableTraits, ShouldValidateKey shouldValidateKey>
-template<NonNullableSmartPtr V>
-inline auto HashSet<Value, HashFunctions, Traits, TableTraits, shouldValidateKey>::find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& value) const -> iterator
-{
-    return find(&value);
-}
-
-template<typename Value, typename HashFunctions, typename Traits, typename TableTraits, ShouldValidateKey shouldValidateKey>
-template<NonNullableSmartPtr V>
-inline auto HashSet<Value, HashFunctions, Traits, TableTraits, shouldValidateKey>::contains(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& value) const -> bool
-{
-    return contains(&value);
-}
-
-template<typename Value, typename HashFunctions, typename Traits, typename TableTraits, ShouldValidateKey shouldValidateKey>
-template<NonNullableSmartPtr V>
-inline auto HashSet<Value, HashFunctions, Traits, TableTraits, shouldValidateKey>::remove(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& value) -> bool
-{
-    return remove(&value);
-}
-
-template<typename Value, typename HashFunctions, typename Traits, typename TableTraits, ShouldValidateKey shouldValidateKey>
-template<NonNullableSmartPtr V>
-inline auto HashSet<Value, HashFunctions, Traits, TableTraits, shouldValidateKey>::take(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& value) -> TakeType
-{
-    return take(&value);
 }
 
 template<typename T, typename U, typename V, typename W, ShouldValidateKey shouldValidateKey>

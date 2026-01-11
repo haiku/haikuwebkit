@@ -363,7 +363,7 @@ void ScrollerPairMac::setScrollbarStyle(ScrollbarStyle style)
 
 void ScrollerPairMac::ensureOnMainThreadWithProtectedThis(Function<void(ScrollerPairMac&)>&& task)
 {
-    ensureOnMainThread([protectedThis = Ref { *this }, task = WTFMove(task)]() mutable {
+    ensureOnMainThread([protectedThis = Ref { *this }, task = WTF::move(task)]() mutable {
         task(protectedThis.get());
     });
 }

@@ -193,7 +193,7 @@ static constexpr Seconds indicatorMoveDuration { 0.3_s };
     };
 
     if (animated) {
-        [UIView animateWithDuration:indicatorMoveDuration.seconds() animations:animations completion:makeBlockPtr([&originMoved, completionHandler = WTFMove(completionHandler)](BOOL finished) mutable {
+        [UIView animateWithDuration:indicatorMoveDuration.seconds() animations:animations completion:makeBlockPtr([&originMoved, completionHandler = WTF::move(completionHandler)](BOOL finished) mutable {
             completionHandler(originMoved, static_cast<bool>(finished));
         }).get()];
     } else {

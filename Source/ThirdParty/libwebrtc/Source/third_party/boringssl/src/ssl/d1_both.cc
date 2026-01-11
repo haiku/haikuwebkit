@@ -339,6 +339,7 @@ bool dtls1_process_handshake_fragments(SSL *ssl, uint8_t *out_alert,
     Span<uint8_t> dest = frag->msg().subspan(frag_off, CBS_len(&body));
     assert(dest.size() == CBS_len(&body));
     OPENSSL_memcpy(dest.data(), CBS_data(&body), CBS_len(&body));
+    assert(dest.size() == CBS_len(&body));
     frag->reassembly.MarkRange(frag_off, frag_off + frag_len);
   }
 

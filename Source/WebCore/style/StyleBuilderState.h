@@ -42,7 +42,6 @@ namespace WebCore {
 
 class FontCascadeDescription;
 class FontSelectionValue;
-class RenderStyle;
 class StyleImage;
 class StyleResolver;
 
@@ -105,15 +104,22 @@ public:
 
     static UniqueRef<BuilderState> create(RenderStyle& renderStyle, BuilderContext&& builderContext)
     {
-        return makeUniqueRefWithoutRefCountedCheck<BuilderState>(renderStyle, WTFMove(builderContext));
+        return makeUniqueRefWithoutRefCountedCheck<BuilderState>(renderStyle, WTF::move(builderContext));
     }
 
-    RenderStyle& style() { return m_style; }
-    const RenderStyle& style() const { return m_style; }
-    CheckedRef<const RenderStyle> checkedStyle() const { return style(); }
+    ComputedStyle& style() { return m_style.computedStyle(); }
+    const ComputedStyle& style() const { return m_style.computedStyle(); }
+    CheckedRef<const ComputedStyle> checkedStyle() const { return style(); }
 
-    const RenderStyle& parentStyle() const { return *m_context.parentStyle; }
-    const RenderStyle* rootElementStyle() const { return m_context.rootElementStyle; }
+    RenderStyle& renderStyle() { return m_style; }
+    const RenderStyle& renderStyle() const { return m_style; }
+    CheckedRef<const RenderStyle> checkedRenderStyle() const { return renderStyle(); }
+
+    const ComputedStyle& parentStyle() const { return m_context.parentStyle->computedStyle(); }
+    const RenderStyle& parentRenderStyle() const { return *m_context.parentStyle; }
+
+    const ComputedStyle* rootElementStyle() const { return m_context.rootElementStyle ? &m_context.rootElementStyle->computedStyle() : nullptr; }
+    const RenderStyle* rootElementRenderStyle() const { return m_context.rootElementStyle; }
 
     const Document& document() const { return *m_context.document; }
     Ref<const Document> protectedDocument() const { return *m_context.document; }

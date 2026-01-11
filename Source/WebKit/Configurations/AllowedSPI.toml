@@ -21,6 +21,13 @@ selectors = [
 request = "rdar://165225257"
 selectors = [
     { name = "lookUpURL:isMainFrame:hasHighConfidenceOfSafety:cachedResult:completionHandler:", class = "SSBLookupContext" },
+    { name = "_getListsForNamespace:collectionId:completionHandler:", class = "SSBLookupContext" },
+]
+
+[[not-web-essential]]
+request = "rdar://166711133"
+selectors = [
+    { name = "entepriseAttestationIdentityPersistentReferenceForRelyingParty:", class = "ASCWebKitSPISupport" },
 ]
 
 # Added in rdar://112101742.
@@ -89,6 +96,7 @@ symbols = [
     "nw_parameters_create_webtransport_http",
     "nw_protocol_copy_webtransport_definition",
     "nw_webtransport_create_options",
+    "nw_webtransport_metadata_get_is_peer_initiated",
     "nw_webtransport_metadata_get_is_unidirectional",
     "nw_webtransport_metadata_get_session_error_code",
     "nw_webtransport_metadata_set_session_error_code",
@@ -99,6 +107,7 @@ symbols = [
     "nw_webtransport_metadata_set_remote_receive_error_handler",
     "nw_webtransport_metadata_set_remote_send_error_handler",
     "nw_webtransport_metadata_copy_connect_response",
+    "nw_webtransport_metadata_get_transport_mode",
     "nw_webtransport_options_add_connect_request_header",
     "nw_webtransport_options_set_allow_joining_before_ready",
     "nw_webtransport_options_set_is_datagram",
@@ -263,3 +272,11 @@ cleanup = "rdar://165842824"
 selectors = [
     { name = "requestProofreadingReviewOfString:range:language:options:completionHandler:", class = "UITextChecker" },
 ]
+
+[[staging]]
+request = "rdar://163791929"
+cleanup = "rdar://165836164"
+selectors = [
+ { name = "setIsDelegatedRequest:", class = "PKPaymentRequest" },
+]
+requires = ["HAVE_PASSKIT_DELEGATED_REQUEST"]

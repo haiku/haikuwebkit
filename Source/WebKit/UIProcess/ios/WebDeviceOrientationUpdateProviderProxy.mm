@@ -57,16 +57,6 @@ WebDeviceOrientationUpdateProviderProxy::~WebDeviceOrientationUpdateProviderProx
         page->protectedLegacyMainFrameProcess()->removeMessageReceiver(Messages::WebDeviceOrientationUpdateProviderProxy::messageReceiverName(), page->webPageIDInMainFrameProcess());
 }
 
-void WebDeviceOrientationUpdateProviderProxy::addAsMessageReceiverForProcess(WebProcessProxy& process, WebCore::PageIdentifier pageID)
-{
-    process.addMessageReceiver(Messages::WebDeviceOrientationUpdateProviderProxy::messageReceiverName(), pageID, *this);
-}
-
-void WebDeviceOrientationUpdateProviderProxy::removeAsMessageReceiverForProcess(WebProcessProxy& process, WebCore::PageIdentifier pageID)
-{
-    process.removeMessageReceiver(Messages::WebDeviceOrientationUpdateProviderProxy::messageReceiverName(), pageID);
-}
-
 void WebDeviceOrientationUpdateProviderProxy::startUpdatingDeviceOrientation()
 {
     [[WebCoreMotionManager sharedManager] addOrientationClient:this];

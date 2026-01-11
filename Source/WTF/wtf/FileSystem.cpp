@@ -54,12 +54,6 @@
 #include <wtf/StdFilesystem.h>
 #endif
 
-#if OS(WINDOWS)
-    constexpr char pathSeparator = '\\';
-#else
-    constexpr char pathSeparator = '/';
-#endif
-
 namespace WTF::FileSystemImpl {
 
 #if HAVE(STD_FILESYSTEM) || HAVE(STD_EXPERIMENTAL_FILESYSTEM)
@@ -349,9 +343,9 @@ MappedFileData createMappedFileData(const String& path, size_t bytesSize, FileHa
         return { };
 
     if (outputHandle)
-        *outputHandle = WTFMove(handle);
+        *outputHandle = WTF::move(handle);
 
-    return WTFMove(*mappedFile);
+    return WTF::move(*mappedFile);
 }
 
 void finalizeMappedFileData(MappedFileData& mappedFileData, size_t bytesSize)
@@ -718,13 +712,13 @@ String createTemporaryFile(StringView prefix, StringView suffix)
     return path;
 }
 
-FileHandle createDumpFile(StringView filename, StringView path)
+FileHandle createDumpFile(StringView filename, StringView extension, StringView path)
 {
     if (path.isEmpty()) {
-        auto [p, handle] = openTemporaryFile(nullString(), filename);
-        return WTFMove(handle);
+        auto [p, handle] = openTemporaryFile(filename, extension);
+        return WTF::move(handle);
     }
-    return openFile(makeString(path, pathSeparator, filename), FileOpenMode::Truncate);
+    return openFile(makeString(path, pathSeparator, filename, extension), FileOpenMode::Truncate);
 }
 
 #if !PLATFORM(PLAYSTATION)
@@ -745,7 +739,7 @@ Vector<String> listDirectory(const String& path)
     for (auto it = std::filesystem::begin(entries), end = std::filesystem::end(entries); !ec && it != end; it.increment(ec)) {
         auto fileName = fromStdFileSystemPath(it->path().filename());
         if (!fileName.isNull())
-            fileNames.append(WTFMove(fileName));
+            fileNames.append(WTF::move(fileName));
     }
     return fileNames;
 }

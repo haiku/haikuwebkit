@@ -52,7 +52,7 @@ class MediaDeviceRouteController {
     friend class NeverDestroyed<MediaDeviceRouteController>;
 
 public:
-    static MediaDeviceRouteController& singleton();
+    WEBCORE_EXPORT static MediaDeviceRouteController& singleton();
 
     RefPtr<MediaDeviceRouteControllerClient> client() const { return m_client.get(); }
     void setClient(MediaDeviceRouteControllerClient* client) { m_client = client; }
@@ -60,13 +60,11 @@ public:
     RefPtr<MediaDeviceRoute> mostRecentActiveRoute() const;
     RefPtr<MediaDeviceRoute> routeForIdentifier(const std::optional<WTF::UUID>&) const;
 
-    bool handleEvent(WebMediaDevicePlatformRouteEvent *);
+    WEBCORE_EXPORT bool activateRoute(WebMediaDevicePlatformRoute *);
+    WEBCORE_EXPORT bool deactivateRoute(WebMediaDevicePlatformRoute *);
 
 private:
     MediaDeviceRouteController();
-
-    bool activateRoute(WebMediaDevicePlatformRoute *);
-    bool deactivateRoute(WebMediaDevicePlatformRoute *);
 
     RetainPtr<WebMediaDeviceRouteController> m_controller;
     RetainPtr<WebMediaDevicePlatformRouteController> m_platformController;
@@ -77,3 +75,8 @@ private:
 } // namespace WebCore
 
 #endif // HAVE(AVROUTING_FRAMEWORK)
+
+namespace WebCore {
+WEBCORE_EXPORT void setMockMediaDeviceRouteControllerEnabled(bool);
+WEBCORE_EXPORT bool mockMediaDeviceRouteControllerEnabled();
+}

@@ -67,8 +67,8 @@ Ref<WebExtensionControllerProxy> WebExtensionControllerProxy::getOrCreate(const 
         }
 
         controller.m_testingMode = parameters.testingMode;
-        controller.m_extensionContexts = WTFMove(contexts);
-        controller.m_extensionContextBaseURLMap = WTFMove(baseURLMap);
+        controller.m_extensionContexts = WTF::move(contexts);
+        controller.m_extensionContextBaseURLMap = WTF::move(baseURLMap);
     };
 
     if (RefPtr controller = get(parameters.identifier)) {

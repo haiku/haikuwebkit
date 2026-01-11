@@ -92,7 +92,7 @@
 #include "RenderAttachment.h"
 #include "RenderFileUploadControl.h"
 #include "RenderImage.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderView.h"
 #include "ReplaceSelectionCommand.h"
 #include "ResourceRequest.h"
@@ -150,7 +150,7 @@ static PlatformMouseEvent createMouseEvent(const DragData& dragData)
 
 DragController::DragController(Page& page, std::unique_ptr<DragClient>&& client)
     : m_page(page)
-    , m_client(WTFMove(client))
+    , m_client(WTF::move(client))
 {
 }
 
@@ -178,7 +178,7 @@ static RefPtr<DocumentFragment> documentFragmentFromDragData(const DragData& dra
                     if (title.isEmpty())
                         title = url;
                 }
-                anchor->appendChild(document->createTextNode(WTFMove(title)));
+                anchor->appendChild(document->createTextNode(WTF::move(title)));
                 Ref fragment = document->createDocumentFragment();
                 fragment->appendChild(anchor);
                 return fragment;
@@ -300,12 +300,12 @@ bool DragController::performDragOperation(DragData&& dragData)
         return false;
 
     client().willPerformDragDestinationAction(DragDestinationAction::Load, dragData);
-    ResourceRequest resourceRequest { WTFMove(urlString) };
+    ResourceRequest resourceRequest { WTF::move(urlString) };
     resourceRequest.setIsAppInitiated(false);
-    FrameLoadRequest frameLoadRequest { *localMainFrame, WTFMove(resourceRequest) };
+    FrameLoadRequest frameLoadRequest { *localMainFrame, WTF::move(resourceRequest) };
     frameLoadRequest.setShouldOpenExternalURLsPolicy(shouldOpenExternalURLsPolicy);
     frameLoadRequest.setIsRequestFromClientOrUserInput();
-    localMainFrame->loader().load(WTFMove(frameLoadRequest));
+    localMainFrame->loader().load(WTF::move(frameLoadRequest));
     return true;
 }
 
@@ -317,7 +317,7 @@ void DragController::mouseMovedIntoDocument(RefPtr<Document>&& newDocument)
     // If we were over another document clear the selection
     if (m_documentUnderMouse)
         clearDragCaret();
-    m_documentUnderMouse = WTFMove(newDocument);
+    m_documentUnderMouse = WTF::move(newDocument);
 }
 
 Variant<std::optional<DragOperation>, RemoteUserInputEventData> DragController::dragEnteredOrUpdated(LocalFrame& frame, DragData&& dragData)
@@ -561,7 +561,7 @@ bool DragController::dispatchTextInputEventFor(LocalFrame* innerFrame, const Dra
     String text = m_page->dragCaretController().isContentRichlyEditable() ? emptyString() : dragData.asPlainText();
     auto target = innerFrame->editor().findEventTargetFrom(m_page->dragCaretController().caretPosition());
     // FIXME: What guarantees target is not null?
-    Ref event = TextEvent::createForDrop(innerFrame->protectedWindowProxy().ptr(), WTFMove(text));
+    Ref event = TextEvent::createForDrop(innerFrame->protectedWindowProxy().ptr(), WTF::move(text));
     target->dispatchEvent(event);
     return !event->defaultPrevented();
 }
@@ -669,7 +669,7 @@ bool DragController::concludeEditDrag(const DragData& dragData)
             return true;
 
         if (setSelectionToDragCaret(innerFrame.get(), dragCaret, point))
-            ReplaceSelectionCommand::create(protectedDocumentUnderMouse().releaseNonNull(), WTFMove(fragment), { ReplaceSelectionCommand::SelectReplacement, ReplaceSelectionCommand::MatchStyle, ReplaceSelectionCommand::PreventNesting }, EditAction::InsertFromDrop)->apply();
+            ReplaceSelectionCommand::create(protectedDocumentUnderMouse().releaseNonNull(), WTF::move(fragment), { ReplaceSelectionCommand::SelectReplacement, ReplaceSelectionCommand::MatchStyle, ReplaceSelectionCommand::PreventNesting }, EditAction::InsertFromDrop)->apply();
     }
 
     if (rootEditableElement) {
@@ -1082,7 +1082,7 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
                     PasteboardWriterData::PlainText plainText;
                     plainText.canSmartCopyOrDelete = false;
                     plainText.text = src.editor().selectedTextForDataTransfer();
-                    pasteboardWriterData.setPlainText(WTFMove(plainText));
+                    pasteboardWriterData.setPlainText(WTF::move(plainText));
                 }
             } else {
                 if (mustUseLegacyDragClient) {
@@ -1115,17 +1115,17 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
             return false;
 
         if (mustUseLegacyDragClient) {
-            doSystemDrag(WTFMove(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
+            doSystemDrag(WTF::move(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
             return true;
         }
 
         DragItem dragItem;
         dragItem.imageAnchorPoint = dragImageAnchorPointForSelectionDrag(src, mouseDraggedPoint);
-        dragItem.image = WTFMove(dragImage);
-        dragItem.data = WTFMove(pasteboardWriterData);
+        dragItem.image = WTF::move(dragImage);
+        dragItem.data = WTF::move(pasteboardWriterData);
         dragItem.containsSelection = true;
 
-        beginDrag(WTFMove(dragItem), src, dragOrigin, mouseDraggedPoint, dataTransfer, DragSourceAction::Selection);
+        beginDrag(WTF::move(dragItem), src, dragOrigin, mouseDraggedPoint, dataTransfer, DragSourceAction::Selection);
 
         return true;
     }
@@ -1157,10 +1157,10 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
         client().willPerformDragSourceAction(DragSourceAction::Image, dragOrigin, dataTransfer);
 
         if (!dragImage)
-            doImageDrag(element, dragOrigin, hitTestResult->imageRect(), src, m_dragOffset, state, WTFMove(attachmentInfo));
+            doImageDrag(element, dragOrigin, hitTestResult->imageRect(), src, m_dragOffset, state, WTF::move(attachmentInfo));
         else {
             // DHTML defined drag image
-            doSystemDrag(WTFMove(dragImage), dragLoc, dragOrigin, src, state, WTFMove(attachmentInfo), rootFrameID);
+            doSystemDrag(WTF::move(dragImage), dragLoc, dragOrigin, src, state, WTF::move(attachmentInfo), rootFrameID);
         }
 
         return true;
@@ -1211,17 +1211,17 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
         }
 
         if (mustUseLegacyDragClient) {
-            doSystemDrag(WTFMove(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
+            doSystemDrag(WTF::move(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
             return true;
         }
 
         DragItem dragItem;
         dragItem.imageAnchorPoint = dragImage ? anchorPointForLinkDragImage(dragImage.get()) : FloatPoint();
-        dragItem.image = WTFMove(dragImage);
-        dragItem.data = WTFMove(pasteboardWriterData);
+        dragItem.image = WTF::move(dragImage);
+        dragItem.data = WTF::move(pasteboardWriterData);
         dragItem.containsSelection = true;
 
-        beginDrag(WTFMove(dragItem), src, dragOrigin, mouseDraggedPoint, dataTransfer, DragSourceAction::Selection);
+        beginDrag(WTF::move(dragItem), src, dragOrigin, mouseDraggedPoint, dataTransfer, DragSourceAction::Selection);
 
         return true;
     }
@@ -1261,7 +1261,7 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
             dragLoc = dragLocForSelectionDrag(src);
             m_dragOffset = IntPoint(dragOrigin.x() - dragLoc.x(), dragOrigin.y() - dragLoc.y());
         }
-        doSystemDrag(WTFMove(dragImage), dragLoc, dragOrigin, src, state, WTFMove(promisedAttachment), rootFrameID);
+        doSystemDrag(WTF::move(dragImage), dragLoc, dragOrigin, src, state, WTF::move(promisedAttachment), rootFrameID);
         if (!element->isContentRichlyEditable())
             src.checkedSelection()->setSelection(previousSelection);
         src.protectedEditor()->setIgnoreSelectionChanges(false);
@@ -1282,7 +1282,7 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
         dragLoc = dragLocForDHTMLDrag(mouseDraggedPoint, dragOrigin, dragImageOffset, false);
 
         client().willPerformDragSourceAction(DragSourceAction::Color, dragOrigin, dataTransfer);
-        doSystemDrag(WTFMove(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
+        doSystemDrag(WTF::move(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
         return true;
     }
 
@@ -1300,7 +1300,7 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
         dragLoc = dragLocForDHTMLDrag(mouseDraggedPoint, dragOrigin, dragImageOffset, false);
 
         client().willPerformDragSourceAction(DragSourceAction::Model, dragOrigin, dataTransfer);
-        doSystemDrag(WTFMove(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
+        doSystemDrag(WTF::move(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
         return true;
     }
 #endif
@@ -1308,7 +1308,7 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
     if (state.type == DragSourceAction::DHTML && dragImage) {
         ASSERT(m_dragSourceAction.contains(DragSourceAction::DHTML));
         client().willPerformDragSourceAction(DragSourceAction::DHTML, dragOrigin, dataTransfer);
-        doSystemDrag(WTFMove(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
+        doSystemDrag(WTF::move(dragImage), dragLoc, dragOrigin, src, state, { }, rootFrameID);
         return true;
     }
 
@@ -1360,7 +1360,7 @@ void DragController::doImageDrag(Element& element, const IntPoint& dragOrigin, c
         return;
 
     dragImageOffset = mouseDownPoint + scaledOrigin;
-    doSystemDrag(WTFMove(dragImage), dragImageOffset, dragOrigin, frame, state, WTFMove(attachmentInfo), frame.frameID());
+    doSystemDrag(WTF::move(dragImage), dragImageOffset, dragOrigin, frame, state, WTF::move(attachmentInfo), frame.rootFrame().frameID());
 }
 
 void DragController::beginDrag(DragItem dragItem, LocalFrame& frame, const IntPoint& mouseDownPoint, const IntPoint& mouseDraggedPoint, DataTransfer& dataTransfer, DragSourceAction dragSourceAction)
@@ -1378,7 +1378,7 @@ void DragController::beginDrag(DragItem dragItem, LocalFrame& frame, const IntPo
     auto mouseDownPointInRootViewCoordinates = mainFrameView->rootViewToContents(frameView->contentsToRootView(mouseDownPoint));
     auto mouseDraggedPointInRootViewCoordinates = mainFrameView->rootViewToContents(frameView->contentsToRootView(mouseDraggedPoint));
 
-    client().beginDrag(WTFMove(dragItem), frame, mouseDownPointInRootViewCoordinates, mouseDraggedPointInRootViewCoordinates, dataTransfer, dragSourceAction);
+    client().beginDrag(WTF::move(dragItem), frame, mouseDownPointInRootViewCoordinates, mouseDraggedPointInRootViewCoordinates, dataTransfer, dragSourceAction);
 }
 
 static RefPtr<Element> containingLinkElement(Element& element)
@@ -1400,10 +1400,10 @@ void DragController::doSystemDrag(DragImage image, const IntPoint& dragLoc, cons
     RefPtr mainFrameView = mainFrame->virtualView();
 
     DragItem item;
-    item.image = WTFMove(image);
+    item.image = WTF::move(image);
     ASSERT(state.type.hasExactlyOneBitSet());
     item.sourceAction = state.type.toSingleValue();
-    item.promisedAttachmentInfo = WTFMove(promisedAttachmentInfo);
+    item.promisedAttachmentInfo = WTF::move(promisedAttachmentInfo);
     item.containsSelection = frame.selection().contains(eventPos);
     item.rootFrameID = rootFrameID;
 
@@ -1426,7 +1426,7 @@ void DragController::doSystemDrag(DragImage image, const IntPoint& dragLoc, cons
                 if (RefPtr page = frame.page())
                     dragPreviewSize.scale(1 / page->deviceScaleFactor());
             }
-            item.dragPreviewFrameInRootViewCoordinates = { dragLocationInRootViewCoordinates, WTFMove(dragPreviewSize) };
+            item.dragPreviewFrameInRootViewCoordinates = { dragLocationInRootViewCoordinates, WTF::move(dragPreviewSize) };
         } else {
             // We can position the preview using the bounds of the drag source element.
             item.dragPreviewFrameInRootViewCoordinates = element->boundsInRootViewSpace();
@@ -1444,7 +1444,7 @@ void DragController::doSystemDrag(DragImage image, const IntPoint& dragLoc, cons
 #endif
         nodeID = element->nodeIdentifier();
     }
-    client().startDrag(WTFMove(item), *state.dataTransfer, mainFrame.get(), nodeID);
+    client().startDrag(WTF::move(item), *state.dataTransfer, mainFrame.get(), nodeID);
     // DragClient::startDrag can cause our Page to dispear, deallocating |this|.
     if (!mainFrame->page())
         return;
@@ -1481,7 +1481,7 @@ bool DragController::tryToUpdateDroppedImagePlaceholders(const DragData& dragDat
 
     Vector<Ref<HTMLImageElement>> imageElements;
     for (Ref imageElement : descendantsOfType<HTMLImageElement>(*fragment))
-        imageElements.append(WTFMove(imageElement));
+        imageElements.append(WTF::move(imageElement));
 
     if (imageElements.size() != m_droppedImagePlaceholders.size()) {
         ASSERT_NOT_REACHED();
@@ -1529,12 +1529,12 @@ void DragController::insertDroppedImagePlaceholdersAtCaret(const Vector<IntSize>
         image->setInlineStyleProperty(CSSPropertyMaxWidth, 100, CSSUnitType::CSS_PERCENTAGE);
         image->setInlineStyleProperty(CSSPropertyBackgroundColor, serializationForCSS(Color { Color::black.colorWithAlphaByte(13) }));
         image->setIsDroppedImagePlaceholder();
-        fragment->appendChild(WTFMove(image));
+        fragment->appendChild(WTF::move(image));
     }
 
     frame->checkedSelection()->setSelection(dropCaret);
 
-    Ref command = ReplaceSelectionCommand::create(*document, WTFMove(fragment), { ReplaceSelectionCommand::PreventNesting, ReplaceSelectionCommand::SmartReplace }, EditAction::InsertFromDrop);
+    Ref command = ReplaceSelectionCommand::create(*document, WTF::move(fragment), { ReplaceSelectionCommand::PreventNesting, ReplaceSelectionCommand::SmartReplace }, EditAction::InsertFromDrop);
     command->apply();
 
     auto insertedContentRange = command->insertedContentRange();
@@ -1570,8 +1570,8 @@ void DragController::insertDroppedImagePlaceholdersAtCaret(const Vector<IntSize>
 
     document->updateLayout();
 
-    m_droppedImagePlaceholders = WTFMove(placeholders);
-    m_droppedImagePlaceholderRange = WTFMove(insertedContentRange);
+    m_droppedImagePlaceholders = WTF::move(placeholders);
+    m_droppedImagePlaceholderRange = WTF::move(insertedContentRange);
 
     frame->checkedSelection()->clear();
     caretController.setCaretPosition(makeDeprecatedLegacyPosition(m_droppedImagePlaceholderRange->start));
@@ -1579,7 +1579,7 @@ void DragController::insertDroppedImagePlaceholdersAtCaret(const Vector<IntSize>
 
 void DragController::finalizeDroppedImagePlaceholder(HTMLImageElement& placeholder, CompletionHandler<void()>&& completion)
 {
-    placeholder.protectedDocument()->checkedEventLoop()->queueTask(TaskSource::InternalAsyncTask, [completion = WTFMove(completion), placeholder = Ref { placeholder }] () mutable {
+    placeholder.protectedDocument()->checkedEventLoop()->queueTask(TaskSource::InternalAsyncTask, [completion = WTF::move(completion), placeholder = Ref { placeholder }] () mutable {
         if (placeholder->isDroppedImagePlaceholder()) {
             placeholder->removeAttribute(HTMLNames::heightAttr);
             placeholder->removeInlineStyleProperty(CSSPropertyBackgroundColor);

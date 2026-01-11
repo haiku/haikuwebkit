@@ -44,11 +44,11 @@ class CSSFilterRenderer final : public Filter {
     WTF_MAKE_TZONE_ALLOCATED(CSSFilterRenderer);
 public:
 
-    static RefPtr<CSSFilterRenderer> create(RenderElement&, const Style::Filter&, const FilterGeometry&, OptionSet<FilterRenderingMode>, const GraphicsContext& destinationContext);
-    static RefPtr<CSSFilterRenderer> create(RenderElement&, const FilterOperations&, const FilterGeometry&, OptionSet<FilterRenderingMode>, const GraphicsContext& destinationContext);
+    static RefPtr<CSSFilterRenderer> create(RenderElement&, const Style::Filter&, const FilterGeometry&, OptionSet<FilterRenderingMode>, bool showDebugOverlay, const GraphicsContext& destinationContext);
+    static RefPtr<CSSFilterRenderer> create(RenderElement&, const FilterOperations&, const FilterGeometry&, OptionSet<FilterRenderingMode>, bool showDebugOverlay, const GraphicsContext& destinationContext);
 
     WEBCORE_EXPORT static Ref<CSSFilterRenderer> create(Vector<Ref<FilterFunction>>&&);
-    WEBCORE_EXPORT static Ref<CSSFilterRenderer> create(Vector<Ref<FilterFunction>>&&, const FilterGeometry&, OptionSet<FilterRenderingMode> preferredFilterRenderingModes);
+    WEBCORE_EXPORT static Ref<CSSFilterRenderer> create(Vector<Ref<FilterFunction>>&&, const FilterGeometry&, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, bool showDebugOverlay);
 
     const Vector<Ref<FilterFunction>>& functions() const { return m_functions; }
     void setFilterRegion(const FloatRect&);
@@ -67,13 +67,15 @@ public:
     static IntOutsets calculateOutsets(RenderElement&, const FilterOperations&, const FloatRect& targetBoundingBox);
 
 private:
-    static RefPtr<CSSFilterRenderer> createGeneric(RenderElement&, const auto&, const FilterGeometry&, OptionSet<FilterRenderingMode>, const GraphicsContext& destinationContext);
+    static RefPtr<CSSFilterRenderer> createGeneric(RenderElement&, const auto&, const FilterGeometry&, OptionSet<FilterRenderingMode>, bool showDebugOverlay, const GraphicsContext& destinationContext);
 
     CSSFilterRenderer(const FilterGeometry&, bool hasFilterThatMovesPixels, bool hasFilterThatShouldBeRestrictedBySecurityOrigin);
     CSSFilterRenderer(Vector<Ref<FilterFunction>>&&, const FilterGeometry&);
 
     RefPtr<FilterFunction> buildFilterFunction(RenderElement&, const FilterOperation&, OptionSet<FilterRenderingMode>, const GraphicsContext& destinationContext);
     bool buildFilterFunctions(RenderElement&, const auto&, OptionSet<FilterRenderingMode>, const GraphicsContext& destinationContext);
+
+    void computeEnclosingFilterRegion();
 
     OptionSet<FilterRenderingMode> supportedFilterRenderingModes(OptionSet<FilterRenderingMode> preferredFilterRenderingModes) const final;
 

@@ -49,6 +49,9 @@
     // somewhere to put the window/page title.
     self.window.toolbarStyle = NSWindowToolbarStyleExpanded;
 
+    // Enable tabbing - group regular windows together
+    self.window.tabbingIdentifier = @"MiniBrowserMainWindow";
+
     NSString *sizeString = [[NSUserDefaults standardUserDefaults] stringForKey:@"WindowSize"];
     if (sizeString) {
         NSSize size = NSSizeFromString(sizeString);
@@ -58,6 +61,11 @@
 
     [share sendActionOn:NSEventMaskLeftMouseDown];
     [super windowDidLoad];
+}
+
+- (void)newWindowForTab:(id)sender
+{
+    [[NSApp browserAppDelegate] newTab:sender];
 }
 
 - (IBAction)openLocation:(id)sender

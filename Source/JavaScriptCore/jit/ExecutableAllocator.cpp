@@ -473,7 +473,7 @@ public:
 #endif
     {
         JITReservation reservation = initializeJITPageReservation();
-        m_reservation = WTFMove(reservation.pageReservation);
+        m_reservation = WTF::move(reservation.pageReservation);
         if (m_reservation) {
 #if ENABLE(JUMP_ISLANDS)
             // Consider this scenario:

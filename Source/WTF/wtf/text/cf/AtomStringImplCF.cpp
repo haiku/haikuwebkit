@@ -39,10 +39,10 @@ RefPtr<AtomStringImpl> AtomStringImpl::add(CFStringRef string)
     if (!string)
         return nullptr;
 
-    if (auto span = CFStringGetLatin1CStringSpan(string); !span.empty())
+    if (auto span = CFStringGetLatin1CStringSpan(string); span.data())
         return add(span);
 
-    if (auto span = CFStringGetCharactersSpan(string); !span.empty())
+    if (auto span = CFStringGetCharactersSpan(string); span.data())
         return add(span);
 
     Vector<char16_t, 1024> ucharBuffer(CFStringGetLength(string));

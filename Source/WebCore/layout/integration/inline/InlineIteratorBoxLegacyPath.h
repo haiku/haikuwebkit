@@ -173,6 +173,30 @@ public:
         m_inlineBox = parent ? parent->nextOnLine() : nullptr;
     }
 
+    void traversePreviousBoxOnLine()
+    {
+        if (auto* flowBox = dynamicDowncast<LegacyInlineFlowBox>(m_inlineBox); flowBox && flowBox->lastChild()) {
+            m_inlineBox = flowBox->lastChild();
+            return;
+        }
+
+        traversePreviousBoxOnLineSkippingChildren();
+    }
+
+    void traversePreviousBoxOnLineSkippingChildren()
+    {
+        if (m_inlineBox->previousOnLine()) {
+            m_inlineBox = m_inlineBox->previousOnLine();
+            return;
+        }
+
+        auto* parent = m_inlineBox->parent();
+        while (parent && !parent->previousOnLine())
+            parent = parent->parent();
+
+        m_inlineBox = parent ? parent->previousOnLine() : nullptr;
+    }
+
     const Vector<SVGTextFragment>& svgTextFragments() const
     {
         return svgInlineTextBox()->textFragments();

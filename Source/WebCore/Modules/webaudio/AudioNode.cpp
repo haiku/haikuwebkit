@@ -49,7 +49,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(AudioNode);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(AudioNode);
 
 String convertEnumerationToString(AudioNode::NodeType enumerationValue)
 {

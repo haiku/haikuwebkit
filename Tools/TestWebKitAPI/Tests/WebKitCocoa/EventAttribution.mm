@@ -249,7 +249,7 @@ static void triggerAttributionWithSubresourceRedirect(Connection& connection, co
     connection.receiveHTTPRequest([connection, location] (Vector<char>&& request1) {
         EXPECT_TRUE(contains(request1.span(), "GET /conversionRequestBeforeRedirect HTTP/1.1\r\n"_span));
         auto redirect = makeString("HTTP/1.1 302 Found\r\nLocation: "_s, location, "\r\nContent-Length: 0\r\n\r\n"_s);
-        connection.send(WTFMove(redirect), [connection, location] {
+        connection.send(WTF::move(redirect), [connection, location] {
             connection.receiveHTTPRequest([connection, location] (Vector<char>&& request2) {
                 auto expectedHttpGetString = makeString("GET "_s, location, " HTTP/1.1\r\n"_s).utf8();
                 EXPECT_TRUE(contains(request2.span(), expectedHttpGetString.span()));
@@ -322,7 +322,7 @@ static void signUnlinkableTokenAndSendSecretToken(TokenSigningParty signingParty
                     "Content-Type: application/json\r\n"
                     "Content-Length: "_s, 24 + keyData.length(), "\r\n\r\n"
                     "{\"token_public_key\": \""_s, keyData, "\"}"_s);
-                connection.send(WTFMove(response), [signingParty, connection, &rsaPrivateKey, &modulusNBytes, &rng, &keyData, &done, &secKey] {
+                connection.send(WTF::move(response), [signingParty, connection, &rsaPrivateKey, &modulusNBytes, &rng, &keyData, &done, &secKey] {
                     connection.receiveHTTPRequest([signingParty, connection, &rsaPrivateKey, &modulusNBytes, &rng, &keyData, &done, &secKey] (Vector<char>&& request2) {
                         EXPECT_TRUE(contains(request2.span(), "POST / HTTP/1.1\r\n"_span));
 
@@ -345,7 +345,7 @@ static void signUnlinkableTokenAndSendSecretToken(TokenSigningParty signingParty
                             "Content-Type: application/json\r\n"
                             "Content-Length: "_s, 24 + unlinkableToken.length(), "\r\n\r\n"
                             "{\"unlinkable_token\": \""_s, unlinkableToken, "\"}"_s);
-                        connection.send(WTFMove(response), [signingParty, connection, &keyData, &done, unlinkableToken, token, &secKey] {
+                        connection.send(WTF::move(response), [signingParty, connection, &keyData, &done, unlinkableToken, token, &secKey] {
                             connection.receiveHTTPRequest([signingParty, connection, &keyData, &done, unlinkableToken, token, &secKey] (Vector<char>&& request3) {
                                 EXPECT_TRUE(contains(request3.span(), "GET / HTTP/1.1\r\n"_span));
 
@@ -354,7 +354,7 @@ static void signUnlinkableTokenAndSendSecretToken(TokenSigningParty signingParty
                                     "Content-Type: application/json\r\n"
                                     "Content-Length: "_s, 24 + keyData.length(), "\r\n\r\n"
                                     "{\"token_public_key\": \""_s, keyData, "\"}"_s);
-                                connection.send(WTFMove(response), [signingParty, connection, &done, unlinkableToken, token, &secKey] {
+                                connection.send(WTF::move(response), [signingParty, connection, &done, unlinkableToken, token, &secKey] {
                                     connection.receiveHTTPRequest([signingParty, connection, &done, unlinkableToken, token, &secKey] (Vector<char>&& request4) {
                                         EXPECT_TRUE(contains(request4.span(), "POST / HTTP/1.1\r\n"_span));
                                         EXPECT_TRUE(contains(request4.span(), "{\"source_engagement_type\":\"click\",\"source_site\":\"127.0.0.1\",\"source_id\":42,\"attributed_on_site\":\"example.com\",\"trigger_data\":12,\"version\":3,"_span));

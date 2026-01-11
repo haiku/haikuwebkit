@@ -112,7 +112,7 @@ static Ref<API::Array> createWKArray(NSArray *array)
             strings.append(adoptRef(WebKit::toImpl(WKStringCreateWithCFString((__bridge CFStringRef)entry))));
     }
     
-    return API::Array::create(WTFMove(strings));
+    return API::Array::create(WTF::move(strings));
 }
 
 - (void)extendClassesForParameterCoder:(NSArray *)classes

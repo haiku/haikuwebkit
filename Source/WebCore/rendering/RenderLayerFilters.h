@@ -34,6 +34,7 @@
 #include "CachedSVGDocumentClient.h"
 #include "FilterRenderingMode.h"
 #include "RenderLayer.h"
+#include <wtf/InlineWeakPtr.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {
@@ -47,7 +48,7 @@ class GraphicsContextSwitcher;
 class RenderLayerFilters final : public RefCounted<RenderLayerFilters>, private CachedSVGDocumentClient {
     WTF_MAKE_TZONE_ALLOCATED(RenderLayerFilters);
 public:
-    static Ref<RenderLayerFilters> create(RenderLayer&);
+    static Ref<RenderLayerFilters> create(RenderLayer&, FloatSize scale);
     virtual ~RenderLayerFilters();
 
     void detachFromLayer() { m_layer = nullptr; }
@@ -69,8 +70,6 @@ public:
     void updateReferenceFilterClients(const Style::Filter&);
     void removeReferenceFilterClients();
 
-    void setFilterScale(const FloatSize& filterScale) { m_filterScale = filterScale; }
-
     static bool isIdentity(RenderElement&);
     static IntOutsets calculateOutsets(RenderElement&, const FloatRect& targetBoundingBox);
 
@@ -81,22 +80,21 @@ public:
     void applyFilterEffect(GraphicsContext& destinationContext);
 
 private:
-    explicit RenderLayerFilters(RenderLayer&);
+    explicit RenderLayerFilters(RenderLayer&, FloatSize scale);
 
     void notifyFinished(CachedResource&, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess) final;
     void resetDirtySourceRect() { m_dirtySourceRect = LayoutRect(); }
 
-    CheckedPtr<RenderLayer> m_layer;
+    InlineWeakPtr<RenderLayer> m_layer;
     Vector<RefPtr<Element>> m_internalSVGReferences;
     Vector<CachedResourceHandle<CachedSVGDocument>> m_externalSVGReferences;
 
-    LayoutRect m_targetBoundingBox;
     LayoutRect m_dirtySourceRect;
     LayoutRect m_repaintRect;
 
-    OptionSet<FilterRenderingMode> m_preferredFilterRenderingModes { FilterRenderingMode::Software };
     FloatSize m_filterScale { 1, 1 };
-    FloatRect m_filterRegion;
+
+    OptionSet<FilterRenderingMode> m_preferredFilterRenderingModes { FilterRenderingMode::Software };
 
     RefPtr<CSSFilterRenderer> m_filter;
     std::unique_ptr<GraphicsContextSwitcher> m_targetSwitcher;

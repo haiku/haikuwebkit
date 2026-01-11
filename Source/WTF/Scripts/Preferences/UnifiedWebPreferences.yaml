@@ -192,10 +192,13 @@ AccessibilityTextStitchingEnabled:
   webcoreBinding: DeprecatedGlobalSettings
   defaultValue:
     WebKitLegacy:
+      "ENABLE(ACCESSIBILITY_TEXT_STITCHING)": true
       default: false
     WebKit:
+      "ENABLE(ACCESSIBILITY_TEXT_STITCHING)": true
       default: false
     WebCore:
+      "ENABLE(ACCESSIBILITY_TEXT_STITCHING)": true
       default: false
 
 AccessibilityThreadTextApisEnabled:
@@ -282,7 +285,7 @@ AllowMultipleCommitLayerTreePending:
     WebKitLegacy:
       default: false
     WebKit:
-      default: defaultAllowMultipleCommitLayerTreePending()
+      default: false
     WebCore:
       default: false
 
@@ -972,17 +975,17 @@ BlockWebInspectorInWebContentSandbox:
 
 BlocksInInlineLayoutEnabled:
   type: bool
-  status: preview
+  status: stable
   category: css
   humanReadableName: "Blocks in inline layout (disable continuations)"
   humanReadableDescription: "Enable blocks in inline layout (disable continuations)"
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 # We would have to partition BroadcastChannel based on PageGroups if we wanted to enable this for WebKitLegacy.
 BroadcastChannelEnabled:
@@ -1298,17 +1301,17 @@ CSSLineFitEdgeEnabled:
 
 CSSMathDepthEnabled:
   type: bool
-  status: testable
+  status: stable
   category: css
   humanReadableName: "CSS math-depth"
   humanReadableDescription: "Enable support for math-depth from MathML Core."
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 CSSPaintingAPIEnabled:
   type: bool
@@ -2729,6 +2732,20 @@ EnableInheritURIQueryComponent:
     WebCore:
       default: false
 
+EnableOpaqueLoadingForMedia:
+  type: bool
+  status: internal
+  category: media
+  humanReadableName: "Opaque loading for media"
+  humanReadableDescription: "Enable opaque loading for media"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: true
+    WebCore:
+      default: false
+
 EncryptedMediaAPIEnabled:
   type: bool
   status: embedder
@@ -3138,6 +3155,20 @@ FlexFormattingContextIntegrationEnabled:
       default: true
     WebCore:
       default: true
+
+FontFaceSetConstructorEnabled:
+  type: bool
+  status: developer
+  category: dom
+  humanReadableName: "Legacy FontFaceSet Constructor API"
+  humanReadableDescription: "Legacy FontFaceSet Constructor API"
+  defaultValue:
+    WebKitLegacy:
+      default: WebKit::defaultFontFaceSetConstructorEnabled()
+    WebKit:
+      default: WebKit::defaultFontFaceSetConstructorEnabled()
+    WebCore:
+      default: false
 
 ForceAlwaysUserScalable:
   type: bool
@@ -4228,15 +4259,18 @@ InvisibleAutoplayNotPermitted:
 
 IsARIANotifyEnabled:
   type: bool
-  status: unstable
+  status: internal
   humanReadableName: "ariaNotify()"
   humanReadableDescription: "Enable ariaNotify support"
   defaultValue:
     WebKitLegacy:
+      "ENABLE(ARIA_NOTIFY)": true
       default: false
     WebKit:
+      "ENABLE(ARIA_NOTIFY)": true
       default: false
     WebCore:
+      "ENABLE(ARIA_NOTIFY)": true
       default: false
 
 IsAccessibilityIsolatedTreeEnabled:
@@ -4262,10 +4296,13 @@ IsAriaLiveRegionManagementEnabled:
   humanReadableDescription: "Turn on ARIA live-region management within WebKit"
   defaultValue:
     WebKitLegacy:
+      "ENABLE(WEBKIT_MANAGED_LIVE_REGIONS)": true
       default: false
     WebKit:
+      "ENABLE(WEBKIT_MANAGED_LIVE_REGIONS)": true
       default: false
     WebCore:
+      "ENABLE(WEBKIT_MANAGED_LIVE_REGIONS)": true
       default: false
 
 # FIXME: The 'Is' prefix is inconsistent with most other preferences and should be removed.
@@ -5926,6 +5963,20 @@ OptInPartitionedCookiesEnabled:
       default: true
     WebCore:
       default: true
+
+OriginAPIEnabled:
+  type: bool
+  status: testable
+  category: dom
+  humanReadableName: "Origin API"
+  humanReadableDescription: "Enable the Origin API"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
 
 OverlappingBackingStoreProvidersEnabled:
   type: bool
@@ -8519,7 +8570,7 @@ UseAppKitGestures:
     WebKitLegacy:
       default: false
     WebKit:
-      default: false
+      default: defaultUseAppKitGestures()
     WebCore:
       default: false
 
@@ -9472,7 +9523,7 @@ WebLocksAPIEnabled:
 
 WebMUseRemoteAudioVideoRenderer:
   type: bool
-  status: stable
+  status: testable
   category: media
   humanReadableName: "WebM player uses GPU renderer"
   humanReadableDescription: "WebM player uses GPU renderer"
@@ -9481,9 +9532,9 @@ WebMUseRemoteAudioVideoRenderer:
     WebKitLegacy:
       default: false
     WebKit:
-      default: true
+      default: false
     WebCore:
-      default: true
+      default: false
   sharedPreferenceForWebProcess: true
 
 WebPageSpatialBackdropEnabled:
@@ -10012,8 +10063,7 @@ WirelessPlaybackMediaPlayerEnabled:
   category: media
   humanReadableName: "Wireless Playback Media Player"
   humanReadableDescription: "Enable wireless playback via MediaPlayerPrivateWirelessPlayback"
-  webcoreBinding: DeprecatedGlobalSettings
-  condition: ENABLE(REMOTE_PLAYBACK_MEDIA_PLAYER)
+  condition: ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
   defaultValue:
     WebCore:
       default: false

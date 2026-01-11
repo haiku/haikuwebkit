@@ -61,7 +61,9 @@
 #import "_WKFrameHandleInternal.h"
 #import "_WKWebViewPrintFormatterInternal.h"
 #import <CoreGraphics/CoreGraphics.h>
+#import <WebCore/AXObjectCache.h>
 #import <WebCore/AXRemoteTokenIOS.h>
+#import <WebCore/AccessibilityObject.h>
 #import <WebCore/FloatConversion.h>
 #import <WebCore/FloatQuad.h>
 #import <WebCore/InspectorOverlay.h>
@@ -258,7 +260,7 @@ typedef NS_ENUM(NSInteger, _WKPrintRenderingCallbackType) {
 {
     ASSERT(_pageClient);
 
-    _page = processPool.createWebPage(*_pageClient, WTFMove(configuration));
+    _page = processPool.createWebPage(*_pageClient, WTF::move(configuration));
     auto& pageConfiguration = _page->configuration();
     _page->initializeWebPage(pageConfiguration.openedSite(), pageConfiguration.initialSandboxFlags(), pageConfiguration.initialReferrerPolicy());
 
@@ -486,7 +488,7 @@ typedef NS_ENUM(NSInteger, _WKPrintRenderingCallbackType) {
     lazyInitialize(_pageClient, makeUniqueWithoutRefCountedCheck<WebKit::PageClientImpl>(self, webView));
     _webView = webView;
 
-    return [self _commonInitializationWithProcessPool:processPool configuration:WTFMove(configuration)];
+    return [self _commonInitializationWithProcessPool:processPool configuration:WTF::move(configuration)];
 }
 
 - (void)dealloc
@@ -532,7 +534,7 @@ typedef NS_ENUM(NSInteger, _WKPrintRenderingCallbackType) {
 
 - (void)_removeTemporaryDirectoriesWhenDeallocated:(Vector<RetainPtr<NSURL>>&&)urls
 {
-    _temporaryURLsToDeleteWhenDeallocated.appendVector(WTFMove(urls));
+    _temporaryURLsToDeleteWhenDeallocated.appendVector(WTF::move(urls));
 }
 
 - (WebKit::WebPageProxy*)page
@@ -836,10 +838,10 @@ typedef NS_ENUM(NSInteger, _WKPrintRenderingCallbackType) {
     [self _accessibilityRegisterUIProcessTokens];
 }
 
-static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid, NSUUID *uuid)
+static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid, WTF::UUID uuid)
 {
     // The accessibility bundle needs to know the uuid, pid and mach_port that this object will refer to.
-    objc_setAssociatedObject(element, (void*)[@"ax-uuid" hash], uuid, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(element, (void*)[@"ax-uuid" hash], uuid.createNSUUID().get(), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     objc_setAssociatedObject(element, (void*)[@"ax-pid" hash], @(pid), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
@@ -864,17 +866,13 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
 
 - (void)_accessibilityRegisterUIProcessTokens
 {
-    auto uuid = [NSUUID UUID];
-    if (RetainPtr remoteElementToken = WebCore::Accessibility::newAccessibilityRemoteToken(uuid.UUIDString)) {
         // Store information about the WebProcess that can later be retrieved by the iOS Accessibility runtime.
-        if (_page->legacyMainFrameProcess().state() == WebKit::WebProcessProxy::State::Running) {
-            [self _updateRemoteAccessibilityRegistration:YES];
-            storeAccessibilityRemoteConnectionInformation(self, _page->legacyMainFrameProcess().processID(), uuid);
+    if (_page->legacyMainFrameProcess().state() == WebKit::WebProcessProxy::State::Running) {
+        [self _updateRemoteAccessibilityRegistration:YES];
+        auto elementToken = WebCore::AccessibilityRemoteToken(WTF::UUID::createVersion4(), getpid());
 
-            auto elementToken = makeVector(remoteElementToken.get());
-            _page->registerUIProcessAccessibilityTokens(elementToken, elementToken);
-        }
-
+        storeAccessibilityRemoteConnectionInformation(self, _page->legacyMainFrameProcess().processID(), elementToken.uuid);
+        _page->registerUIProcessAccessibilityTokens(elementToken, elementToken);
     }
 }
 
@@ -1278,7 +1276,7 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
                 return;
             }
 
-            auto bitmap = WebCore::ShareableBitmap::create(WTFMove(*imageHandle), WebCore::SharedMemory::Protection::ReadOnly);
+            auto bitmap = WebCore::ShareableBitmap::create(WTF::move(*imageHandle), WebCore::SharedMemory::Protection::ReadOnly);
             if (!bitmap) {
                 [printFormatter _setPrintPreviewImage:nullptr];
                 return;

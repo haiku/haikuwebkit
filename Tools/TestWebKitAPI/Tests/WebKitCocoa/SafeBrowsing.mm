@@ -97,7 +97,7 @@ static bool didCloseCalled;
     if (!result)
         return nil;
 
-    result->_provider = WTFMove(provider);
+    result->_provider = WTF::move(provider);
     result->_isPhishing = phishing;
     result->_isMalware = malware;
     result->_isUnwantedSoftware = unwantedSoftware;
@@ -160,7 +160,7 @@ static bool didCloseCalled;
     if (!result)
         return nil;
     
-    result->_results = WTFMove(results);
+    result->_results = WTF::move(results);
     
     return result.autorelease();
 }

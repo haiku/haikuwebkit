@@ -271,7 +271,7 @@ WPEDisplay* wpe_display_get_default(void)
                 GUniqueOutPtr<GError> error;
                 GRefPtr<WPEDisplay> display = adoptGRef(WPE_DISPLAY(g_object_new(g_io_extension_get_type(extension), nullptr)));
                 if (wpe_display_connect(display.get(), &error.outPtr())) {
-                    s_defaultDisplay = WTFMove(display);
+                    s_defaultDisplay = WTF::move(display);
                     return;
                 }
                 g_error("Failed to connect to display of type %s: %s", extensionName, error->message);
@@ -285,7 +285,7 @@ WPEDisplay* wpe_display_get_default(void)
             auto* extension = static_cast<GIOExtension*>(i->data);
             GRefPtr<WPEDisplay> display = adoptGRef(WPE_DISPLAY(g_object_new(g_io_extension_get_type(extension), nullptr)));
             if (wpe_display_connect(display.get(), nullptr)) {
-                s_defaultDisplay = WTFMove(display);
+                s_defaultDisplay = WTF::move(display);
                 return;
             }
         }

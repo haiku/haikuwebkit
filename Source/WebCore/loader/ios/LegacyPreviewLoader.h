@@ -53,7 +53,7 @@ public:
 
     WEBCORE_EXPORT static void setClientForTesting(RefPtr<LegacyPreviewLoaderClient>&&);
 
-    // PreviewConverterClient.
+    // PreviewConverterClient, PreviewConverterProvider.
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 

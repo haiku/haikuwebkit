@@ -864,9 +864,9 @@ TEST(SOAuthorizationRedirect, InterceptionSucceedWith302AfterRedirection)
     auto simpleURL = server.request("/simple.html"_s).URL;
     redirectHeaders.add("location"_s, simpleURL.absoluteString);
 
-    TestWebKitAPI::HTTPResponse redirectResponse(302, WTFMove(redirectHeaders));
+    TestWebKitAPI::HTTPResponse redirectResponse(302, WTF::move(redirectHeaders));
 
-    server.addResponse("/redirection.html"_s, WTFMove(redirectResponse));
+    server.addResponse("/redirection.html"_s, WTF::move(redirectResponse));
 
     navigationCompleted = false;
 
@@ -2661,6 +2661,32 @@ TEST(SOAuthorizationSubFrame, NoInterceptionsNonAppleFirstPartyMainFrame)
     // Make sure we don't intercept the iframe.
     EXPECT_FALSE(authorizationPerformed);
     EXPECT_FALSE(policyForAppSSOPerformed);
+}
+
+TEST(SOAuthorizationSubFrame, UserCancel)
+{
+    resetState();
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
+    SWIZZLE_AKAUTH();
+
+    RetainPtr baseURL = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
+    RetainPtr testURL = [NSBundle.test_resourcesBundle URLForResource:@"GetSessionCookie" withExtension:@"html"];
+    String testHtml = generateHTML(parentTemplate, testURL.get().absoluteString);
+
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    RetainPtr messageHandler = adoptNS([[TestSOAuthorizationScriptMessageHandler alloc] initWithExpectation:@[[NSNull null], @"SOAuthorizationDidStart"]]);
+    [[configuration userContentController] addScriptMessageHandler:messageHandler.get() name:@"testHandler"];
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500) configuration:configuration.get()]);
+    RetainPtr delegate = adoptNS([[TestSOAuthorizationDelegate alloc] init]);
+    configureSOAuthorizationWebView(webView.get(), delegate.get());
+
+    [webView loadHTMLString:testHtml.createNSString().get() baseURL:baseURL.get()];
+    Util::run(&allMessagesReceived);
+
+    [messageHandler extendExpectations:@[@"null", @"SOAuthorizationDidUserCancel", @""]];
+    [gDelegate authorization:gAuthorization didCompleteWithError:adoptNS([[NSError alloc] initWithDomain:@"AKAuthenticationError" code:-7003 userInfo:nil]).get()];
+    Util::run(&allMessagesReceived);
 }
 
 TEST(SOAuthorizationSubFrame, InterceptionError)

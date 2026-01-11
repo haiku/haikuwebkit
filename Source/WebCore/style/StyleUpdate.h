@@ -64,7 +64,7 @@ public:
     ~Update();
 
     const ListHashSet<RefPtr<ContainerNode>>& roots() const { return m_roots; }
-    ListHashSet<RefPtr<Element>> takeRebuildRoots() { return WTFMove(m_rebuildRoots); }
+    ListHashSet<RefPtr<Element>> takeRebuildRoots() { return WTF::move(m_rebuildRoots); }
 
     const ElementUpdate* elementUpdate(const Element&) const;
     ElementUpdate* elementUpdate(const Element&);

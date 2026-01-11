@@ -57,20 +57,20 @@ void StyleRuleKeyframe::Key::writeToString(StringBuilder& str) const
 
 StyleRuleKeyframe::StyleRuleKeyframe(Ref<StyleProperties>&& properties)
     : StyleRuleBase(StyleRuleType::Keyframe)
-    , m_properties(WTFMove(properties))
+    , m_properties(WTF::move(properties))
 {
 }
 
 StyleRuleKeyframe::StyleRuleKeyframe(Vector<Key>&& keys, Ref<StyleProperties>&& properties)
     : StyleRuleBase(StyleRuleType::Keyframe)
-    , m_properties(WTFMove(properties))
-    , m_keys(WTFMove(keys))
+    , m_properties(WTF::move(properties))
+    , m_keys(WTF::move(keys))
 {
 }
 
 Ref<StyleRuleKeyframe> StyleRuleKeyframe::create(Ref<StyleProperties>&& properties)
 {
-    return adoptRef(*new StyleRuleKeyframe(WTFMove(properties)));
+    return adoptRef(*new StyleRuleKeyframe(WTF::move(properties)));
 }
 
 Ref<StyleRuleKeyframe> StyleRuleKeyframe::create(Vector<std::pair<CSSValueID, double>>&& keys, Ref<StyleProperties>&& properties)
@@ -78,7 +78,7 @@ Ref<StyleRuleKeyframe> StyleRuleKeyframe::create(Vector<std::pair<CSSValueID, do
     auto keyStructs = keys.map([](auto& pair) -> Key {
         return { pair.first, pair.second };
     });
-    return adoptRef(*new StyleRuleKeyframe(WTFMove(keyStructs), WTFMove(properties)));
+    return adoptRef(*new StyleRuleKeyframe(WTF::move(keyStructs), WTF::move(properties)));
 }
 
 StyleRuleKeyframe::~StyleRuleKeyframe() = default;

@@ -328,6 +328,9 @@ sub setupEnvironment()
 }
 
 sub main {
+    if ($^O eq "linux") {
+        maybeUseContainerSDKRootDir();
+    }
     processCLI();
     setupEnvironment();
 

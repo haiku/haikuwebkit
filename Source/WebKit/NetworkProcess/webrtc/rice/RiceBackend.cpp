@@ -115,7 +115,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RiceBackend);
 void RiceBackend::initialize(NetworkConnectionToWebProcess& connectionToWebProcess, WebKit::WebPageProxyIdentifier&&, CompletionHandler<void(RefPtr<RiceBackend>&&)>&& completionHandler)
 {
     Ref backend = RiceBackend::create(connectionToWebProcess);
-    completionHandler(WTFMove(backend));
+    completionHandler(WTF::move(backend));
 }
 
 RiceBackend::RiceBackend(NetworkConnectionToWebProcess& connection)
@@ -161,8 +161,9 @@ GRefPtr<GSource> RiceBackend::getRecvSourceForStream(unsigned streamId)
 
 void RiceBackend::notifyIncomingData(unsigned streamId, WebCore::RTCIceProtocol protocol, String&& from, String&& to, WebCore::SharedMemory::Handle&& data)
 {
-    callOnMainRunLoopAndWait([&, streamId, protocol, data = WTFMove(data), from = WTFMove(from), to = WTFMove(to)] mutable {
-        messageSenderConnection()->send(Messages::RiceBackendProxy::NotifyIncomingData { streamId, protocol, from, to, WTFMove(data) }, messageSenderDestinationID());
+    callOnMainRunLoopAndWait([&, streamId, protocol, data = WTF::move(data), from = WTF::move(from), to = WTF::move(to)] mutable {
+        if (RefPtr connection = messageSenderConnection())
+            connection->send(Messages::RiceBackendProxy::NotifyIncomingData { streamId, protocol, from, to, WTF::move(data) }, messageSenderDestinationID());
     });
 }
 
@@ -183,11 +184,11 @@ void RiceBackend::resolveAddress(const String& address, CompletionHandler<void(E
     auto data = createResolveAddressData();
     data->resolver = adoptGRef(g_resolver_get_default());
     data->address = address;
-    data->callback = WTFMove(completionHandler);
+    data->callback = WTF::move(completionHandler);
     g_main_context_invoke_full(m_runLoop->mainContext(), G_PRIORITY_DEFAULT, reinterpret_cast<GSourceFunc>(+[](gpointer userData) -> gboolean {
         auto data = reinterpret_cast<ResolveAddressData*>(userData);
         auto innerData = createResolveAddressDataInner();
-        innerData->callback = WTFMove(data->callback);
+        innerData->callback = WTF::move(data->callback);
         g_resolver_lookup_by_name_async(data->resolver.get(), data->address.utf8().data(), nullptr,
             reinterpret_cast<GAsyncReadyCallback>(+[](GResolver* resolver, GAsyncResult* result, gpointer userData) {
                 auto data = reinterpret_cast<ResolveAddressDataInner*>(userData);
@@ -195,7 +196,7 @@ void RiceBackend::resolveAddress(const String& address, CompletionHandler<void(E
                 GList* addresses = g_resolver_lookup_by_name_finish(resolver, result, &error.outPtr());
                 if (!addresses) {
                     auto message = makeString("Unable to resolve address: "_s, String::fromUTF8(error->message));
-                    callOnMainRunLoopAndWait([data, message = WTFMove(message)] {
+                    callOnMainRunLoopAndWait([data, message = WTF::move(message)] {
                         data->callback(makeUnexpected(ExceptionData { ExceptionCode::NetworkError, message }));
                     });
                     destroyResolveAddressDataInner(data);
@@ -203,7 +204,7 @@ void RiceBackend::resolveAddress(const String& address, CompletionHandler<void(E
                 }
 
                 GUniquePtr<char> address(g_inet_address_to_string(G_INET_ADDRESS(addresses->data)));
-                callOnMainRunLoopAndWait([data, address = WTFMove(address)] {
+                callOnMainRunLoopAndWait([data, address = WTF::move(address)] {
                     data->callback(String::fromUTF8(address.get()));
                 });
 
@@ -238,7 +239,7 @@ void RiceBackend::sendData(unsigned streamId, WebCore::RTCIceProtocol protocol, 
         break;
     };
 
-    auto sharedMemory = SharedMemory::map(WTFMove(handle), SharedMemory::Protection::ReadOnly);
+    auto sharedMemory = SharedMemory::map(WTF::move(handle), SharedMemory::Protection::ReadOnly);
     if (!sharedMemory)
         return;
 
@@ -261,7 +262,9 @@ void RiceBackend::finalizeStream(unsigned streamId)
 
         return true;
     });
-    m_sockets.remove(streamId);
+    auto data = m_sockets.take(streamId);
+    if (data.source)
+        g_source_destroy(data.source.get());
 }
 
 void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<void(Vector<String>&&)>&& completionHandler)
@@ -292,7 +295,7 @@ void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<voi
             GUniquePtr<RiceAddress> localAddress(rice_udp_socket_local_addr(socket));
 
             result.append(riceAddressToString(localAddress.get()));
-            udpAddresses.append(WTFMove(localAddress));
+            udpAddresses.append(WTF::move(localAddress));
             rice_sockets_add_udp(sockets.get(), socket);
         }
 
@@ -304,7 +307,7 @@ void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<voi
             auto sockets = recvData->backend->getSocketsForStream(recvData->streamId);
             rice_sockets_add_tcp(sockets.get(), socket);
         }, recvData, reinterpret_cast<RiceIoDestroy>(destroyRecvSourceData)));
-        m_tcpListeners.append(WTFMove(tcpListener));
+        m_tcpListeners.append(WTF::move(tcpListener));
     }
 
     rice_addresses_free(interfaces, totalInterfaces);
@@ -343,7 +346,7 @@ void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<voi
                 auto handle = SharedMemoryHandle::createCopy(unsafeMakeSpan(data, recv.data.len), SharedMemoryProtection::ReadOnly);
                 if (!handle) [[unlikely]]
                     break;
-                sourceData->backend->notifyIncomingData(sourceData->streamId, protocol, WTFMove(from), WTFMove(to), WTFMove(*handle));
+                sourceData->backend->notifyIncomingData(sourceData->streamId, protocol, WTF::move(from), WTF::move(to), WTF::move(*handle));
                 break;
             }
             case RICE_IO_RECV_CLOSED:
@@ -357,10 +360,10 @@ void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<voi
     }), recvData, reinterpret_cast<GDestroyNotify>(destroyRecvSourceData));
 
     g_source_attach(source.get(), m_runLoop->mainContext());
-    m_sockets.add(streamId, SocketData { WTFMove(sockets), WTFMove(source) });
-    m_udpAddresses.add(streamId, WTFMove(udpAddresses));
+    m_sockets.add(streamId, SocketData { WTF::move(sockets), WTF::move(source) });
+    m_udpAddresses.add(streamId, WTF::move(udpAddresses));
     m_udpSocketAddressesCache.add(streamId, result);
-    completionHandler(WTFMove(result));
+    completionHandler(WTF::move(result));
 }
 
 const RiceAddress* RiceBackend::ensureRiceAddressFromCache(const String& address)

@@ -44,11 +44,10 @@ layer at (0,0) size 800x830
           text run at (0,0) width 275: "4. Test for inheritance through many levels"
       RenderBlock {OL} at (0,358) size 784x20
         RenderInline {B} at (40,0) size 744x20
-          RenderBlock (anonymous) at (40,0) size 744x20
-            RenderListItem {LI} at (0,0) size 744x20
-              RenderListMarker at (-21,0) size 16x19: "3"
-              RenderText {#text} at (0,0) size 155x19
-                text run at (0,0) width 155: "Should be 3 (and bold)"
+          RenderListItem {LI} at (40,0) size 744x20
+            RenderListMarker at (-21,0) size 16x19: "3"
+            RenderText {#text} at (0,0) size 155x19
+              text run at (0,0) width 155: "Should be 3 (and bold)"
         RenderText {#text} at (0,0) size 0x0
       RenderBlock (anonymous) at (0,404) size 784x20
         RenderText {#text} at (0,0) size 425x19
@@ -56,11 +55,10 @@ layer at (0,0) size 800x830
       RenderBlock {OL} at (0,440) size 784x60
         RenderBlock (anonymous) at (40,0) size 744x20
           RenderInline {B} at (0,0) size 744x20
-            RenderBlock (anonymous) at (0,0) size 744x20
-              RenderListItem {LI} at (0,0) size 744x20
-                RenderListMarker at (-21,0) size 16x19: "3"
-                RenderText {#text} at (0,0) size 155x19
-                  text run at (0,0) width 155: "Should be 3 (and bold)"
+            RenderListItem {LI} at (0,0) size 744x20
+              RenderListMarker at (-21,0) size 16x19: "3"
+              RenderText {#text} at (0,0) size 155x19
+                text run at (0,0) width 155: "Should be 3 (and bold)"
           RenderText {#text} at (0,0) size 0x0
         RenderListItem {LI} at (40,20) size 744x20
           RenderListMarker at (-21,0) size 16x19: "4"
@@ -80,29 +78,26 @@ layer at (0,0) size 800x830
             text run at (0,0) width 77: "Should be 1"
         RenderBlock (anonymous) at (40,20) size 744x20
           RenderInline {B} at (0,0) size 744x20
-            RenderBlock (anonymous) at (0,0) size 744x20
-              RenderListItem {LI} at (0,0) size 744x20
-                RenderListMarker at (-21,0) size 16x19: "2"
-                RenderText {#text} at (0,0) size 155x19
-                  text run at (0,0) width 155: "Should be 2 (and bold)"
+            RenderListItem {LI} at (0,0) size 744x20
+              RenderListMarker at (-21,0) size 16x19: "2"
+              RenderText {#text} at (0,0) size 155x19
+                text run at (0,0) width 155: "Should be 2 (and bold)"
           RenderText {#text} at (0,0) size 0x0
       RenderBlock (anonymous) at (0,628) size 784x20
         RenderText {#text} at (0,0) size 453x19
           text run at (0,0) width 453: "7. Test for properly chaining from the previous li when both are nested"
       RenderBlock {OL} at (0,664) size 784x40
         RenderInline {I} at (40,0) size 744x20
-          RenderBlock (anonymous) at (40,0) size 744x20
-            RenderListItem {LI} at (0,0) size 744x20
-              RenderListMarker at (-21,0) size 16x19: "2"
-              RenderText {#text} at (0,0) size 152x19
-                text run at (0,0) width 152: "Should be 2 (and italic)"
+          RenderListItem {LI} at (40,0) size 744x20
+            RenderListMarker at (-21,0) size 16x19: "2"
+            RenderText {#text} at (0,0) size 152x19
+              text run at (0,0) width 152: "Should be 2 (and italic)"
         RenderText {#text} at (0,0) size 0x0
         RenderInline {B} at (40,20) size 744x20
-          RenderBlock (anonymous) at (40,20) size 744x20
-            RenderListItem {LI} at (0,0) size 744x20
-              RenderListMarker at (-21,0) size 16x19: "3"
-              RenderText {#text} at (0,0) size 155x19
-                text run at (0,0) width 155: "Should be 3 (and bold)"
+          RenderListItem {LI} at (40,20) size 744x20
+            RenderListMarker at (-21,0) size 16x19: "3"
+            RenderText {#text} at (0,0) size 155x19
+              text run at (0,0) width 155: "Should be 3 (and bold)"
         RenderText {#text} at (0,0) size 0x0
       RenderBlock (anonymous) at (0,730) size 784x20
         RenderText {#text} at (0,0) size 361x19

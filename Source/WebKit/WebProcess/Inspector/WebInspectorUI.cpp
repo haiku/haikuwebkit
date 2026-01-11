@@ -94,11 +94,11 @@ void WebInspectorUI::updateConnection()
     if (!connectionIdentifiers)
         return;
 
-    backendConnection = IPC::Connection::createServerConnection(WTFMove(connectionIdentifiers->server));
+    backendConnection = IPC::Connection::createServerConnection(WTF::move(connectionIdentifiers->server));
     m_backendConnection = backendConnection.copyRef();
     backendConnection->open(*this);
 
-    sendToParentProcess(Messages::WebInspectorUIProxy::SetFrontendConnection(WTFMove(connectionIdentifiers->client)));
+    sendToParentProcess(Messages::WebInspectorUIProxy::SetFrontendConnection(WTF::move(connectionIdentifiers->client)));
 }
 
 void WebInspectorUI::windowObjectCleared()
@@ -295,17 +295,17 @@ void WebInspectorUI::revealFileExternally(const String& path)
 
 void WebInspectorUI::save(Vector<InspectorFrontendClient::SaveData>&& saveDatas, bool forceSaveAs)
 {
-    sendToParentProcess(Messages::WebInspectorUIProxy::Save(WTFMove(saveDatas), forceSaveAs));
+    sendToParentProcess(Messages::WebInspectorUIProxy::Save(WTF::move(saveDatas), forceSaveAs));
 }
 
 void WebInspectorUI::load(const WTF::String& path, CompletionHandler<void(const String&)>&& completionHandler)
 {
-    sendToParentProcessWithAsyncReply(Messages::WebInspectorUIProxy::Load(path), WTFMove(completionHandler));
+    sendToParentProcessWithAsyncReply(Messages::WebInspectorUIProxy::Load(path), WTF::move(completionHandler));
 }
 
 void WebInspectorUI::pickColorFromScreen(CompletionHandler<void(const std::optional<WebCore::Color>&)>&& completionHandler)
 {
-    sendToParentProcessWithAsyncReply(Messages::WebInspectorUIProxy::PickColorFromScreen(), WTFMove(completionHandler));
+    sendToParentProcessWithAsyncReply(Messages::WebInspectorUIProxy::PickColorFromScreen(), WTF::move(completionHandler));
 }
 
 void WebInspectorUI::inspectedURLChanged(const String& urlString)

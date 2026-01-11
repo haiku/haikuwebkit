@@ -1,0 +1,21 @@
+root
+    'Welcome to Test Page'
+    navigation,uid=…
+        list,uid=…
+            list-item,uid=…
+                link,uid=…,'Section 1'
+            list-item,uid=…
+                link,uid=…,'Section 2'
+    section,uid=…
+        button,uid=…,'Click Me'
+        'This button does nothing'
+        input,'text',uid=…,placeholder='Enter text here'
+        'Clickable Div'
+    section,uid=…
+        'Name Field\n\n        \nDescription'
+        input,'text',uid=…,placeholder='Your name'
+        'This region is labeled by another element.'
+        input,'text',uid=…,placeholder='Full name'
+        'User Profile\n\n        \n\n            Username:'
+        input,'text',uid=…,label='Username:'
+version=2

@@ -122,8 +122,8 @@ struct MaskLayer {
     // Support for the `mask-position` shorthand.
     static Position initialPosition() { return { initialPositionX(), initialPositionY() }; }
     Position position() const { return { m_positionX, m_positionY }; }
-    void setPosition(Position&& position) { setPositionX(WTFMove(position.x)); setPositionY(WTFMove(position.y)); }
-    void fillPosition(Position&& position) { fillPositionX(WTFMove(position.x)); fillPositionY(WTFMove(position.y)); }
+    void setPosition(Position&& position) { setPositionX(WTF::move(position.x)); setPositionY(WTF::move(position.y)); }
+    void fillPosition(Position&& position) { fillPositionX(WTF::move(position.x)); fillPositionY(WTF::move(position.y)); }
     void clearPosition() { clearPositionX(); clearPositionY(); }
     bool isPositionUnset() const { return isPositionXUnset() && isPositionYUnset(); }
     bool isPositionSet() const { return isPositionXSet() || isPositionYSet(); }

@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(EXTTextureCompressionRGTC);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(EXTTextureCompressionRGTC);
 
 EXTTextureCompressionRGTC::EXTTextureCompressionRGTC(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::EXTTextureCompressionRGTC)

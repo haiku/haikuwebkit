@@ -91,11 +91,14 @@
             SO_REUSEPORT
             SO_TIMESTAMP)))
 
+(deny network-outbound (literal "/private/var/run/mDNSResponder"))
+(deny network-outbound (remote tcp) (remote udp))
+
 (with-filter (mac-policy-name "vnguard")
     (allow system-mac-syscall (mac-syscall-number 1)))
 
 (with-filter (mac-policy-name "Sandbox")
-    (allow system-mac-syscall (mac-syscall-number 5)))
+    (allow system-mac-syscall (mac-syscall-number 5 65)))
 
 (allow file-link
     (subpath "/private/var/mobile/Containers/Data/Application"))
@@ -117,7 +120,6 @@
     (require-all
         (privilege-id PRIV_NET_PRIVILEGED_SOCKET_DELEGATE)
         (require-entitlement "com.apple.private.network.socket-delegate")))
-
 
 (deny file-map-executable)
 (deny file-write-mount file-write-unmount)
@@ -213,7 +215,7 @@
 (allow file-read* file-write* (extension "com.apple.app-sandbox.read-write"))
 (allow file-read* (extension "com.apple.app-sandbox.read"))
 
-(network-client (remote tcp) (remote udp))
+(network-client)
 
 ;; <rdar://problem/12620714>
 (deny file-write-create NO_REPORT

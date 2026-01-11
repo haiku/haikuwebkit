@@ -1,0 +1,5 @@
+
+PASS Comparison of opaque origins.
+PASS Comparison of tuple origins.
+PASS Comparisons are schemeful.
+

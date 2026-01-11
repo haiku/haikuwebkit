@@ -77,9 +77,9 @@ AttributedString::AttributedString(const AttributedString&) = default;
 AttributedString& AttributedString::operator=(const AttributedString&) = default;
 
 AttributedString::AttributedString(String&& string, Vector<std::pair<Range, HashMap<String, AttributeValue>>>&& attributes, std::optional<HashMap<String, AttributeValue>>&& documentAttributes)
-    : string(WTFMove(string))
-    , attributes(WTFMove(attributes))
-    , documentAttributes(WTFMove(documentAttributes)) { }
+    : string(WTF::move(string))
+    , attributes(WTF::move(attributes))
+    , documentAttributes(WTF::move(documentAttributes)) { }
 
 bool AttributedString::rangesAreSafe(const String& string, const Vector<std::pair<Range, HashMap<String, AttributeValue>>>& vector)
 {
@@ -282,7 +282,7 @@ static MultiRepresentationHEICAttachmentData toMultiRepresentationHEICAttachment
     for (NSEmojiImageStrike *strike in attachment.strikes) {
         MultiRepresentationHEICAttachmentSingleImage image;
         RefPtr nativeImage = NativeImage::create(strike.cgImage);
-        image.image = BitmapImage::create(WTFMove(nativeImage));
+        image.image = BitmapImage::create(WTF::move(nativeImage));
         image.size = FloatSize { strike.alignmentInset };
         attachmentData.images.append(image);
     }
@@ -453,7 +453,7 @@ static std::optional<AttributedString::AttributeValue> extractArray(NSArray *arr
             else
                 RELEASE_LOG_ERROR(Editing, "NSAttributedString extraction failed with array containing <%@>", NSStringFromClass([element class]));
         }
-        return { { { WTFMove(result) } } };
+        return { { { WTF::move(result) } } };
     }
     if ([array[0] isKindOfClass:NSNumber.class]) {
         Vector<double> result;
@@ -464,7 +464,7 @@ static std::optional<AttributedString::AttributeValue> extractArray(NSArray *arr
             else
                 RELEASE_LOG_ERROR(Editing, "NSAttributedString extraction failed with array containing <%@>", NSStringFromClass([element class]));
         }
-        return { { { WTFMove(result) } } };
+        return { { { WTF::move(result) } } };
     }
     RELEASE_LOG_ERROR(Editing, "NSAttributedString extraction failed with array of unknown values");
     ASSERT_NOT_REACHED();
@@ -686,12 +686,12 @@ inline static ParagraphStyle extractParagraphStyle(NSParagraphStyle *style, Tabl
         [style headerLevel],
         [style tailIndent],
         [style paragraphSpacing],
-        WTFMove(sentTextTableBlockIDs),
-        WTFMove(sentTextListIDs),
-        WTFMove(newTextTableBlocks),
-        WTFMove(newTextTables),
-        WTFMove(newTextLists),
-        WTFMove(newTextTabs)
+        WTF::move(sentTextTableBlockIDs),
+        WTF::move(sentTextListIDs),
+        WTF::move(newTextTableBlocks),
+        WTF::move(newTextTables),
+        WTF::move(newTextLists),
+        WTF::move(newTextTabs)
     };
 }
 
@@ -766,14 +766,14 @@ static HashMap<String, AttributedString::AttributeValue> extractDictionary(NSDic
             ASSERT_NOT_REACHED();
             return;
         }
-        result.set(keyString.get(), WTFMove(*extractedValue));
+        result.set(keyString.get(), WTF::move(*extractedValue));
     }];
     return result;
 }
 
 AttributedString AttributedString::fromNSAttributedString(RetainPtr<NSAttributedString>&& string)
 {
-    return fromNSAttributedStringAndDocumentAttributes(WTFMove(string), nullptr);
+    return fromNSAttributedStringAndDocumentAttributes(WTF::move(string), nullptr);
 }
 
 AttributedString AttributedString::fromNSAttributedStringAndDocumentAttributes(RetainPtr<NSAttributedString>&& string, RetainPtr<NSDictionary>&& dictionary)
@@ -788,7 +788,7 @@ AttributedString AttributedString::fromNSAttributedStringAndDocumentAttributes(R
     }];
     if (dictionary)
         result.documentAttributes = extractDictionary(dictionary.get(), tableIDs, tableBlockIDs, listIDs);
-    return { WTFMove(result) };
+    return { WTF::move(result) };
 }
 
 }

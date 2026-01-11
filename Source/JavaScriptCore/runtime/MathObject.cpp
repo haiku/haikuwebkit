@@ -28,7 +28,6 @@
 #include <wtf/Assertions.h>
 #include <wtf/MathExtras.h>
 #include <wtf/PreciseSum.h>
-#include <wtf/Vector.h>
 
 namespace JSC {
 

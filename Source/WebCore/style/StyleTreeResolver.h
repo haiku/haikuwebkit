@@ -110,7 +110,7 @@ private:
     void resetStyleForNonRenderedDescendants(Element&);
 
     struct Scope : RefCounted<Scope> {
-        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(TreeResolverScope, TreeResolverScope);
+        WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Scope, TreeResolverScope);
         Ref<Resolver> resolver;
         SelectorMatchingState selectorMatchingState;
         RefPtr<ShadowRoot> shadowRoot;
@@ -184,10 +184,13 @@ private:
     // This returns the style that was in effect (applied to the render tree) before we started the style resolution.
     // Layout interleaving may cause different styles to be applied during the style resolution.
     const RenderStyle* beforeResolutionStyle(const Element&, std::optional<PseudoElementIdentifier>);
-    void saveBeforeResolutionStyleForInterleaving(const Element&);
+    void saveBeforeResolutionStyleForInterleaving(const Element&, const RenderStyle*);
 
     bool hasUnresolvedAnchorPosition(const Styleable&) const;
     bool hasResolvedAnchorPosition(const Styleable&) const;
+    // Returns true if (1) the styleable specifies position fallbacks and
+    // (2) we're in the middle of trying position options.
+    bool isTryingPositionOption(const Styleable&) const;
 
     void collectChangedAnchorNames(const RenderStyle&, const RenderStyle* currentStyle);
 

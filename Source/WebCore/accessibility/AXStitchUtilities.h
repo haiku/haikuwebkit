@@ -36,6 +36,7 @@ struct StitchingContext {
     explicit StitchingContext(const AccessibilityNodeObject&);
 
     RefPtr<ContainerNode> lastStitchBreakingAncestor { nullptr };
+    SingleThreadWeakPtr<RenderObject> lastRenderer { nullptr };
     RefPtr<const AccessibilityNodeObject> containingBlockFlowObject { nullptr };
 };
 

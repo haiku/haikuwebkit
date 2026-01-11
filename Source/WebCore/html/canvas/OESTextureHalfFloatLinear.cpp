@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(OESTextureHalfFloatLinear);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(OESTextureHalfFloatLinear);
 
 OESTextureHalfFloatLinear::OESTextureHalfFloatLinear(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::OESTextureHalfFloatLinear)

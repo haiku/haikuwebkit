@@ -508,22 +508,22 @@ RetainPtr<NSAttributedString> attributedStringCreate(Node& node, StringView text
     return string;
 }
 
-Vector<uint8_t> AXRemoteFrame::generateRemoteToken() const
+AccessibilityRemoteToken AXRemoteFrame::generateRemoteToken() const
 {
     if (RefPtr parent = parentObject()) {
         // We use the parent's wrapper so that the remote frame acts as a pass through for the remote token bridge.
-        return makeVector([NSAccessibilityRemoteUIElement remoteTokenForLocalUIElement:parent->wrapper()]);
+        return { makeVector([NSAccessibilityRemoteUIElement remoteTokenForLocalUIElement:parent->wrapper()]) };
     }
 
     return { };
 }
 
-void AXRemoteFrame::initializePlatformElementWithRemoteToken(std::span<const uint8_t> token, int processIdentifier)
+void AXRemoteFrame::initializePlatformElementWithRemoteToken(AccessibilityRemoteToken token, int processIdentifier)
 {
     m_processIdentifier = processIdentifier;
     if ([wrapper() respondsToSelector:@selector(accessibilitySetPresenterProcessIdentifier:)])
         [(id)wrapper() accessibilitySetPresenterProcessIdentifier:processIdentifier];
-    m_remoteFramePlatformElement = adoptNS([[NSAccessibilityRemoteUIElement alloc] initWithRemoteToken:toNSData(BufferSource { token }).get()]);
+    m_remoteFramePlatformElement = adoptNS([[NSAccessibilityRemoteUIElement alloc] initWithRemoteToken:toNSData(BufferSource { token.bytes }).get()]);
 
     if (auto* cache = axObjectCache())
         cache->onRemoteFrameInitialized(*this);

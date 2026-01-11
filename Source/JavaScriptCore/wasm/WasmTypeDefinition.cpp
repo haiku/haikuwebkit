@@ -734,7 +734,7 @@ struct FunctionParameterTypes {
         signature->setArgumentsOrResultsIncludeV128(argumentsOrResultsIncludeV128);
         signature->setArgumentsOrResultsIncludeExnref(argumentsOrResultsIncludeExnref);
 
-        entry.key = WTFMove(signature);
+        entry.key = WTF::move(signature);
     }
 };
 
@@ -769,7 +769,7 @@ struct StructParameterTypes {
     {
         auto signature = StructType::tryCreate(params.fields.span());
         RELEASE_ASSERT(signature);
-        entry.key = WTFMove(signature);
+        entry.key = WTF::move(signature);
     }
 };
 
@@ -798,7 +798,7 @@ struct ArrayParameterTypes {
     {
         auto signature = ArrayType::tryCreate(params.elementType);
         RELEASE_ASSERT(signature);
-        entry.key = WTFMove(signature);
+        entry.key = WTF::move(signature);
     }
 };
 
@@ -831,7 +831,7 @@ struct RecursionGroupParameterTypes {
     {
         auto signature = RecursionGroup::tryCreate(params.types.span());
         RELEASE_ASSERT(signature);
-        entry.key = WTFMove(signature);
+        entry.key = WTF::move(signature);
     }
 };
 
@@ -860,7 +860,7 @@ struct ProjectionParameterTypes {
     {
         auto projection = Projection::tryCreate(params.recursionGroup, params.projectionIndex);
         RELEASE_ASSERT(projection);
-        entry.key = WTFMove(projection);
+        entry.key = WTF::move(projection);
     }
 };
 
@@ -901,7 +901,7 @@ struct SubtypeParameterTypes {
     {
         auto signature = Subtype::tryCreate(params.superTypes.span(), params.underlyingType, params.isFinal);
         RELEASE_ASSERT(signature);
-        entry.key = WTFMove(signature);
+        entry.key = WTF::move(signature);
     }
 };
 
@@ -1051,7 +1051,7 @@ void TypeInformation::registerCanonicalRTTForType(TypeIndex type)
             return;
         auto rtt = TypeInformation::createCanonicalRTTForType(locker, def);
         WTF::storeStoreFence(); // Make double-checked locking work.
-        def->m_rtt = WTFMove(rtt);
+        def->m_rtt = WTF::move(rtt);
     }
 }
 

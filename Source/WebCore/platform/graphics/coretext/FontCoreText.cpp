@@ -805,7 +805,7 @@ Path Font::platformPathForGlyph(Glyph glyph) const
         CGPathAddPath(newPath.get(), nullptr, result.get());
         auto translation = CGAffineTransformMakeTranslation(syntheticBoldOffset, 0);
         CGPathAddPath(newPath.get(), &translation, result.get());
-        return { PathCG::create(WTFMove(newPath)) };
+        return { PathCG::create(WTF::move(newPath)) };
     }
 
     return { PathCG::create(adoptCF(CGPathCreateMutableCopy(result.get()))) };
@@ -990,12 +990,12 @@ bool Font::hasAnyComplexColorFormatGlyphs(std::span<const GlyphBufferGlyph> glyp
 
 std::optional<Ref<Font>> Font::fromIPCData(IPCFontData&& data)
 {
-    return WTF::switchOn(data,
-        [] (const InstalledFont& installedFont) -> std::optional<Ref<Font>> {
+    return WTF::switchOn(WTF::move(data),
+        [] (InstalledFont&& installedFont) -> std::optional<Ref<Font>> {
             return installedFont.toFont();
         },
-        [] (const CustomFontCreationData& creationData) -> std::optional<Ref<Font>> {
-            Ref fontFaceData = SharedBuffer::create(WTFMove(creationData.fontFaceData));
+        [] (CustomFontCreationData&& creationData) -> std::optional<Ref<Font>> {
+            Ref fontFaceData = SharedBuffer::create(WTF::move(creationData.fontFaceData));
             RefPtr<FontCustomPlatformData> customPlatformData = FontCustomPlatformData::create(fontFaceData, creationData.itemInCollection);
             if (!customPlatformData)
                 return std::nullopt;
@@ -1009,7 +1009,7 @@ std::optional<Ref<Font>> Font::fromIPCData(IPCFontData&& data)
 
             RetainPtr font = adoptCF(CTFontCreateWithFontDescriptor(fontDescriptor.get(), creationData.metadata.pointSize, nullptr));
 
-            return Font::create(FontPlatformData(creationData.metadata.pointSize, FontOrientation(creationData.metadata.orientation), FontWidthVariant(creationData.metadata.widthVariant), TextRenderingMode(creationData.metadata.textRenderingMode), creationData.metadata.syntheticBold, creationData.metadata.syntheticOblique, WTFMove(font), WTFMove(customPlatformData)));
+            return Font::create(FontPlatformData(creationData.metadata.pointSize, FontOrientation(creationData.metadata.orientation), FontWidthVariant(creationData.metadata.widthVariant), TextRenderingMode(creationData.metadata.textRenderingMode), creationData.metadata.syntheticBold, creationData.metadata.syntheticOblique, WTF::move(font), WTF::move(customPlatformData)));
         }
     );
 }

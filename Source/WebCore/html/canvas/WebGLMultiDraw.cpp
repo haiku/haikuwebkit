@@ -34,7 +34,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebGLMultiDraw);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebGLMultiDraw);
 
 WebGLMultiDraw::WebGLMultiDraw(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::WebGLMultiDraw)

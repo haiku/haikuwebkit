@@ -43,7 +43,7 @@ public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 
-    void setRTCSender(GRefPtr<GstWebRTCRTPSender>&& rtcSender) { m_rtcSender = WTFMove(rtcSender); }
+    void setRTCSender(GRefPtr<GstWebRTCRTPSender>&& rtcSender) { m_rtcSender = WTF::move(rtcSender); }
     GstWebRTCRTPSender* rtcSender() { return m_rtcSender.get(); }
 
     RealtimeOutgoingAudioSourceGStreamer* audioSource()

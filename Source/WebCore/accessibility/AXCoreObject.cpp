@@ -34,7 +34,7 @@
 #include "HTMLAreaElement.h"
 #include "LocalFrameView.h"
 #include "RenderObjectStyle.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "Settings.h"
 #include "TextDecorationPainter.h"
 #include <wtf/Deque.h>
@@ -242,7 +242,7 @@ ListBoxInterpretation AXCoreObject::listBoxInterpretation() const
 
     Deque<Ref<AXCoreObject>, /* inlineCapacity */ 100> queue;
     for (Ref child : const_cast<AXCoreObject*>(this)->childrenIncludingIgnored())
-        queue.append(WTFMove(child));
+        queue.append(WTF::move(child));
 
     unsigned iterations = 0;
     bool foundListItem = false;
@@ -268,7 +268,7 @@ ListBoxInterpretation AXCoreObject::listBoxInterpretation() const
 
         if (current->isGroup() || current->isIgnored()) {
             for (Ref child : current->childrenIncludingIgnored())
-                queue.append(WTFMove(child));
+                queue.append(WTF::move(child));
         }
     }
     return foundListItem ? ListBoxInterpretation::ActuallyStaticList : ListBoxInterpretation::InvalidListBox;
@@ -330,11 +330,11 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::unignoredChildren(bool u
 
             unsigned nextSiblingIndex = descendant->indexInParent() + 1;
             if (RefPtr nextSibling = nextSiblingIndex < siblings->size() ? (*siblings)[nextSiblingIndex].ptr() : nullptr) {
-                descendant = WTFMove(nextSibling);
+                descendant = WTF::move(nextSibling);
                 break;
             }
             // The descendant didn't have a next sibling, so ascend to its parent.
-            descendant = WTFMove(parent);
+            descendant = WTF::move(parent);
             parent = nullptr;
         }
     }
@@ -378,13 +378,21 @@ static AXCoreObject::AccessibilityChildrenVector childrenAfterStitching(AXCoreOb
 static AXCoreObject::AccessibilityChildrenVector childrenAfterStitching(const AXCoreObject::AccessibilityChildrenVector& children)
 {
     auto childrenCopy = children;
-    return childrenAfterStitching(WTFMove(childrenCopy));
+    return childrenAfterStitching(WTF::move(childrenCopy));
 }
 #endif // !ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
 
 AXCoreObject::AccessibilityChildrenVector AXCoreObject::stitchedUnignoredChildren()
 {
     return childrenAfterStitching(unignoredChildren());
+}
+
+std::optional<AXStitchGroup> AXCoreObject::stitchGroupIfRepresentative() const
+{
+    std::optional stitchGroup = this->stitchGroup();
+    if (!stitchGroup || stitchGroup->representativeID() != objectID() || stitchGroup->isEmpty())
+        return { };
+    return stitchGroup;
 }
 
 AXCoreObject* AXCoreObject::blockFlowAncestor() const
@@ -636,9 +644,7 @@ AXCoreObject* AXCoreObject::nextUnignoredSibling(bool updateChildrenIfNeeded, AX
 
 AXCoreObject* AXCoreObject::nextSiblingIncludingIgnoredOrParent() const
 {
-    // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
-    // as we merely return it right away (rdar://165602290).
-    SUPPRESS_UNCOUNTED_LOCAL if (auto* nextSibling = nextSiblingIncludingIgnored(/* updateChildrenIfNeeded */ true))
+    if (auto* nextSibling = nextSiblingIncludingIgnored(/* updateChildrenIfNeeded */ true))
         return nextSibling;
     return parentObject();
 }
@@ -1635,7 +1641,7 @@ static bool isDescriptiveText(AccessibilityTextSource textSource)
     }
 }
 
-String AXCoreObject::descriptionAttributeValue() const
+String AXCoreObject::descriptionAttributeValue(Vector<AccessibilityText>* computedText) const
 {
     if (isStaticText()) {
         // Static text objects shouldn't return a description. Their content is communicated via AXValue.
@@ -1643,11 +1649,14 @@ String AXCoreObject::descriptionAttributeValue() const
     }
 
     Vector<AccessibilityText> textOrder;
-    accessibilityText(textOrder);
+    if (!computedText) {
+        accessibilityText(textOrder);
+        computedText = &textOrder;
+    }
 
     // Determine if any visible text is available, which influences our usage of title tag.
     bool visibleTextAvailable = false;
-    for (const auto& text : textOrder) {
+    for (const auto& text : *computedText) {
         if (isVisibleText(text.textSource) && !text.text.isEmpty()) {
             visibleTextAvailable = true;
             break;
@@ -1655,7 +1664,7 @@ String AXCoreObject::descriptionAttributeValue() const
     }
 
     StringBuilder returnText;
-    for (const auto& text : textOrder) {
+    for (const auto& text : *computedText) {
         if (text.textSource == AccessibilityTextSource::Alternative || text.textSource == AccessibilityTextSource::Heading) {
             returnText.append(text.text);
             break;
@@ -1714,7 +1723,7 @@ String AXCoreObject::helpTextAttributeValue() const
 }
 #endif // PLATFORM(COCOA)
 
-String AXCoreObject::title() const
+String AXCoreObject::title(Vector<AccessibilityText>* computedText) const
 {
     if (isWebArea()) {
         String title = webAreaTitle();
@@ -1734,20 +1743,23 @@ String AXCoreObject::title() const
         return stringValue();
 
     Vector<AccessibilityText> textOrder;
-    accessibilityText(textOrder);
+    if (!computedText) {
+        accessibilityText(textOrder);
+        computedText = &textOrder;
+    }
 
     if (elementName() == ElementName::HTML_area && isLink()) {
         String summaryText;
-        for (auto& text : textOrder) {
+        for (auto& text : *computedText) {
             if (text.textSource == AccessibilityTextSource::TitleTag)
                 return text.text;
             if (text.textSource == AccessibilityTextSource::Summary)
-                summaryText = WTFMove(text.text);
+                summaryText = WTF::move(text.text);
         }
         return summaryText;
     }
 
-    for (const auto& text : textOrder) {
+    for (const auto& text : *computedText) {
         // If we have alternative text, then we should not expose a title.
         if (text.textSource == AccessibilityTextSource::Alternative || text.textSource == AccessibilityTextSource::Heading)
             break;
@@ -1850,9 +1862,7 @@ void AXCoreObject::appendRadioButtonGroupMembers(AccessibilityChildrenVector& li
 AXCoreObject* AXCoreObject::parentObjectUnignored() const
 {
     if (role() == AccessibilityRole::Row) {
-        // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
-        // as we merely return it right away (rdar://165602290).
-        SUPPRESS_UNCOUNTED_LOCAL if (auto* table = exposedTableAncestor())
+        if (auto* table = exposedTableAncestor())
             return table;
     }
 
@@ -1950,7 +1960,7 @@ std::partial_ordering AXCoreObject::partialOrder(const AXCoreObject& other)
             }
             current = parent.ptr();
             ASSERT(!ourAncestors.contains(parent));
-            ourAncestors.appendOrMoveToLast(WTFMove(parent));
+            ourAncestors.appendOrMoveToLast(WTF::move(parent));
         }
 
         if (RefPtr maybeParent = otherCurrent ? otherCurrent->parentObject() : nullptr) {
@@ -1971,7 +1981,7 @@ std::partial_ordering AXCoreObject::partialOrder(const AXCoreObject& other)
             }
             otherCurrent = parent.ptr();
             ASSERT(!otherAncestors.contains(parent));
-            otherAncestors.appendOrMoveToLast(WTFMove(parent));
+            otherAncestors.appendOrMoveToLast(WTF::move(parent));
         }
     }
 

@@ -29,6 +29,8 @@ import sys
 from webkitpy.common.host import Host
 from webkitpy.webdriver_tests.webdriver_test_runner import WebDriverTestRunner
 from webkitpy.common.system.logutils import configure_logging
+from webkitpy.port.linux_container_sdk_utils import maybe_use_container_sdk_root_dir
+maybe_use_container_sdk_root_dir()
 
 _log = logging.getLogger(__name__)
 

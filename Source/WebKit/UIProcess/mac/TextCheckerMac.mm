@@ -395,7 +395,7 @@ Vector<TextCheckingResult> TextChecker::checkTextOfParagraph(SpellDocumentTag sp
             TextCheckingResult result;
             result.type = TextCheckingType::Spelling;
             result.range = resultRange;
-            results.append(WTFMove(result));
+            results.append(WTF::move(result));
         } else if (resultType == NSTextCheckingTypeGrammar && checkingTypes.contains(TextCheckingType::Grammar)) {
             TextCheckingResult result;
             RetainPtr details = [incomingResult grammarDetails];
@@ -414,7 +414,7 @@ Vector<TextCheckingResult> TextChecker::checkTextOfParagraph(SpellDocumentTag sp
                 detail.userDescription = [incomingDetail objectForKey:NSGrammarUserDescription];
                 RetainPtr<NSArray> guesses = [incomingDetail objectForKey:NSGrammarCorrections];
                 detail.guesses = makeVector<String>(guesses.get());
-                result.details.append(WTFMove(detail));
+                result.details.append(WTF::move(detail));
             }
             results.append(result);
         } else if (resultType == NSTextCheckingTypeLink && checkingTypes.contains(TextCheckingType::Link)) {
@@ -422,25 +422,25 @@ Vector<TextCheckingResult> TextChecker::checkTextOfParagraph(SpellDocumentTag sp
             result.type = TextCheckingType::Link;
             result.range = resultRange;
             result.replacement = [[incomingResult URL] absoluteString];
-            results.append(WTFMove(result));
+            results.append(WTF::move(result));
         } else if (resultType == NSTextCheckingTypeQuote && checkingTypes.contains(TextCheckingType::Quote)) {
             TextCheckingResult result;
             result.type = TextCheckingType::Quote;
             result.range = resultRange;
             result.replacement = [incomingResult replacementString];
-            results.append(WTFMove(result));
+            results.append(WTF::move(result));
         } else if (resultType == NSTextCheckingTypeDash && checkingTypes.contains(TextCheckingType::Dash)) {
             TextCheckingResult result;
             result.type = TextCheckingType::Dash;
             result.range = resultRange;
             result.replacement = [incomingResult replacementString];
-            results.append(WTFMove(result));
+            results.append(WTF::move(result));
         } else if (resultType == NSTextCheckingTypeReplacement && checkingTypes.contains(TextCheckingType::Replacement)) {
             TextCheckingResult result;
             result.type = TextCheckingType::Replacement;
             result.range = resultRange;
             result.replacement = [incomingResult replacementString];
-            results.append(WTFMove(result));
+            results.append(WTF::move(result));
         } else if (resultType == NSTextCheckingTypeCorrection && checkingTypes.contains(TextCheckingType::Correction)) {
             TextCheckingResult result;
             result.type = TextCheckingType::Correction;
@@ -462,10 +462,10 @@ Vector<TextCheckingResult> TextChecker::checkTextOfParagraph(SpellDocumentTag sp
                     detail.userDescription = [incomingDetail objectForKey:NSGrammarUserDescription];
                     RetainPtr<NSArray> guesses = [incomingDetail objectForKey:NSGrammarCorrections];
                     detail.guesses = makeVector<String>(guesses.get());
-                    result.details.append(WTFMove(detail));
+                    result.details.append(WTF::move(detail));
                 }
             }
-            results.append(WTFMove(result));
+            results.append(WTF::move(result));
         }
     }
 
@@ -572,7 +572,7 @@ static Vector<TextCheckingResult> convertExtendedCheckingResults(NSArray<NSTextC
                 detail.userDescription = [incomingDetail objectForKey:NSGrammarUserDescription];
                 RetainPtr<NSArray> guesses = [incomingDetail objectForKey:NSGrammarCorrections];
                 detail.guesses = makeVector<String>(guesses.get());
-                result.details.append(WTFMove(detail));
+                result.details.append(WTF::move(detail));
             }
             results.append(result);
         }
@@ -584,9 +584,9 @@ void TextChecker::requestExtendedCheckingOfString(Ref<TextCheckerCompletion>&& t
 {
     RetainPtr textString = textCheckerCompletion->textCheckingRequestData().text().createNSString();
     NSRange range = NSMakeRange(0, textCheckerCompletion->textCheckingRequestData().text().length());
-    [[NSSpellChecker sharedSpellChecker] requestGrammarCheckingOfString:textString.get() range:range language:nil options:@{ NSTextCheckingInsertionPointKey : @(insertionPoint), @"ProofreadingReview": @1 } completionHandler:makeBlockPtr([textCompletion = WTFMove(textCheckerCompletion)](NSInteger sequenceNumber, NSArray<NSTextCheckingResult *> *incomingResults) mutable {
+    [[NSSpellChecker sharedSpellChecker] requestGrammarCheckingOfString:textString.get() range:range language:nil options:@{ NSTextCheckingInsertionPointKey : @(insertionPoint), @"ProofreadingReview": @1 } completionHandler:makeBlockPtr([textCompletion = WTF::move(textCheckerCompletion)](NSInteger sequenceNumber, NSArray<NSTextCheckingResult *> *incomingResults) mutable {
         auto results = convertExtendedCheckingResults(incomingResults);
-        callOnMainRunLoop([textCompletion = WTFMove(textCompletion), results = crossThreadCopy(WTFMove(results))] {
+        callOnMainRunLoop([textCompletion = WTF::move(textCompletion), results = crossThreadCopy(WTF::move(results))] {
             textCompletion->didFinishCheckingText(results);
         });
     }).get()];

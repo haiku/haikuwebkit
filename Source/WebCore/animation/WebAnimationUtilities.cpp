@@ -40,7 +40,7 @@
 #include "KeyframeEffectStack.h"
 #include "NodeDocument.h"
 #include "RenderStyle.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "ScriptExecutionContext.h"
 #include "StyleAnimations.h"
 #include "StyleOriginatedAnimation.h"
@@ -65,7 +65,7 @@ static bool compareStyleOriginatedAnimationOwningElementPositionsInDocumentTreeO
     //     - any other pseudo-elements not mentioned specifically in this list, sorted in ascending order by the Unicode codepoints that make up each selector
     //     - ::after
     //     - element children
-    enum SortingIndex : uint8_t { NotPseudo, Marker, Before, FirstLetter, FirstLine, GrammarError, Highlight, WebKitScrollbar, Selection, SpellingError, TargetText, Checkmark, After, ViewTransition, ViewTransitionGroup, ViewTransitionImagePair, ViewTransitionOld, ViewTransitionNew, Other };
+    enum SortingIndex : uint8_t { NotPseudo, Marker, Before, FirstLetter, FirstLine, GrammarError, Highlight, WebKitScrollbar, Selection, SpellingError, TargetText, After, ViewTransition, ViewTransitionGroup, ViewTransitionImagePair, ViewTransitionOld, ViewTransitionNew, Other };
     auto sortingIndex = [](const std::optional<Style::PseudoElementIdentifier>& pseudoElementIdentifier) -> SortingIndex {
         if (!pseudoElementIdentifier)
             return NotPseudo;
@@ -93,8 +93,6 @@ static bool compareStyleOriginatedAnimationOwningElementPositionsInDocumentTreeO
             return TargetText;
         case PseudoElementType::After:
             return After;
-        case PseudoElementType::Checkmark:
-            return Checkmark;
         case PseudoElementType::ViewTransition:
             return ViewTransition;
         case PseudoElementType::ViewTransitionGroup:
@@ -330,7 +328,6 @@ String pseudoElementIdentifierAsString(const std::optional<Style::PseudoElementI
     static NeverDestroyed<const String> selection(MAKE_STATIC_STRING_IMPL("::selection"));
     static NeverDestroyed<const String> spellingError(MAKE_STATIC_STRING_IMPL("::spelling-error"));
     static NeverDestroyed<const String> targetText(MAKE_STATIC_STRING_IMPL("::target-text"));
-    static NeverDestroyed<const String> checkmark(MAKE_STATIC_STRING_IMPL("::checkmark"));
     static NeverDestroyed<const String> viewTransition(MAKE_STATIC_STRING_IMPL("::view-transition"));
     static NeverDestroyed<const String> webkitScrollbar(MAKE_STATIC_STRING_IMPL("::-webkit-scrollbar"));
     switch (pseudoElementIdentifier->type) {
@@ -354,8 +351,6 @@ String pseudoElementIdentifierAsString(const std::optional<Style::PseudoElementI
         return spellingError;
     case PseudoElementType::TargetText:
         return targetText;
-    case PseudoElementType::Checkmark:
-        return checkmark;
     case PseudoElementType::ViewTransition:
         return viewTransition;
     case PseudoElementType::ViewTransitionGroup:

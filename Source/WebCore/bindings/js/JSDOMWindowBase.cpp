@@ -116,7 +116,7 @@ const GlobalObjectMethodTable* JSDOMWindowBase::globalObjectMethodTable()
 
 JSDOMWindowBase::JSDOMWindowBase(VM& vm, Structure* structure, RefPtr<DOMWindow>&& window, JSWindowProxy* proxy)
     : JSDOMGlobalObject(vm, structure, proxy->world(), globalObjectMethodTable())
-    , m_wrapped(WTFMove(window))
+    , m_wrapped(WTF::move(window))
 {
     m_proxy.set(vm, this, proxy);
 }
@@ -254,7 +254,7 @@ public:
 
     UserGestureInitiatedMicrotaskDispatcher(EventLoopTaskGroup& group, Ref<UserGestureToken>&& userGestureToken)
         : WebCoreMicrotaskDispatcher(Type::WebCoreUserGestureIndicator, group)
-        , m_userGestureToken(WTFMove(userGestureToken))
+        , m_userGestureToken(WTF::move(userGestureToken))
     {
     }
 
@@ -272,7 +272,7 @@ public:
 
     static Ref<UserGestureInitiatedMicrotaskDispatcher> create(EventLoopTaskGroup& group, Ref<UserGestureToken>&& userGestureToken)
     {
-        return adoptRef(*new UserGestureInitiatedMicrotaskDispatcher(group, WTFMove(userGestureToken)));
+        return adoptRef(*new UserGestureInitiatedMicrotaskDispatcher(group, WTF::move(userGestureToken)));
     }
 
 private:
@@ -298,7 +298,7 @@ void JSDOMWindowBase::queueMicrotaskToEventLoop(JSGlobalObject& object, QueuedTa
     else
         task.setDispatcher(UserGestureInitiatedMicrotaskDispatcher::create(eventLoop, Ref { *userGestureToken }));
 
-    eventLoop.queueMicrotask(WTFMove(task));
+    eventLoop.queueMicrotask(WTF::move(task));
 }
 
 JSC::JSObject* JSDOMWindowBase::currentScriptExecutionOwner(JSGlobalObject* object)

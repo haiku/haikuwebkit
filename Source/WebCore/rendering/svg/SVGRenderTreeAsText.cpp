@@ -59,7 +59,7 @@
 #include "RenderSVGRoot.h"
 #include "RenderSVGShapeInlines.h"
 #include "RenderSVGText.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "SVGCircleElement.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGEllipseElement.h"
@@ -73,6 +73,7 @@
 #include "SVGStopElement.h"
 #include "Settings.h"
 #include "StyleCachedImage.h"
+#include "StyleComputedStyle+InitialInlines.h"
 #include <math.h>
 
 namespace WebCore {
@@ -234,7 +235,7 @@ void writeSVGPaintingFeatures(TextStream& ts, const RenderElement& renderer, Opt
 
     if (!renderer.localTransform().isIdentity())
         writeNameValuePair(ts, "transform"_s, renderer.localTransform());
-    writeIfNotDefault(ts, "image rendering"_s, style.imageRendering(), RenderStyle::initialImageRendering());
+    writeIfNotDefault(ts, "image rendering"_s, style.imageRendering(), Style::ComputedStyle::initialImageRendering());
     writeIfNotDefault(ts, "opacity"_s, style.opacity().value.value, 1.0f);
 
     if (auto* shape = dynamicDowncast<LegacyRenderSVGShape>(renderer)) {
@@ -337,8 +338,8 @@ static void writeRenderSVGTextBox(TextStream& ts, const RenderSVGText& text)
     // FIXME: Remove this hack, once the new text layout engine is completly landed. We want to preserve the old layout test results for now.
     ts << " contains 1 chunk(s)"_s;
 
-    if (text.parent() && (text.parent()->style().visitedDependentColor(CSSPropertyColor) != text.style().visitedDependentColor(CSSPropertyColor)))
-        writeNameValuePair(ts, "color"_s, serializationForRenderTreeAsText(text.style().visitedDependentColor(CSSPropertyColor)));
+    if (text.parent() && (text.parent()->style().visitedDependentColor() != text.style().visitedDependentColor()))
+        writeNameValuePair(ts, "color"_s, serializationForRenderTreeAsText(text.style().visitedDependentColor()));
 }
 
 static inline void writeSVGInlineTextBox(TextStream& ts, const InlineIterator::SVGTextBox& textBox)

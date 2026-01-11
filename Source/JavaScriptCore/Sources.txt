@@ -693,6 +693,9 @@ jit/ThunkGenerators.cpp
 jit/JITTZoneImpls.cpp
 jit/Width.cpp
 
+lol/LOLJIT.cpp
+lol/LOLJITOperations.cpp
+
 llint/InPlaceInterpreter.cpp
 llint/LLIntCLoop.cpp
 llint/LLIntData.cpp

@@ -143,7 +143,7 @@ void LayerTreeHost::setLayerTreeStateIsFrozen(bool isFrozen)
 
 void LayerTreeHost::scheduleRenderingUpdate()
 {
-    WTFEmitSignpost(this, ScheduleRenderingUpdate, "isWaitingForRenderer %i", m_isWaitingForRenderer);
+    WTFEmitSignpost(this, LayerTreeHostScheduleRenderingUpdate, "isWaitingForRenderer %s", m_isWaitingForRenderer ? "yes" : "no");
 
     if (m_layerTreeStateIsFrozen)
         return;
@@ -188,7 +188,7 @@ void LayerTreeHost::updateRendering()
 
     SetForScope<bool> reentrancyProtector(m_isUpdatingRendering, true);
 
-    TraceScope traceScope(UpdateRenderingStart, UpdateRenderingEnd);
+    TraceScope traceScope(LayerTreeHostRenderingUpdateStart, LayerTreeHostRenderingUpdateEnd);
 
     Ref page { m_webPage };
     page->updateRendering();
@@ -248,21 +248,15 @@ void LayerTreeHost::updateRendering()
 
 void LayerTreeHost::renderingUpdateRunLoopObserverFired()
 {
-    WTFBeginSignpost(this, RenderingUpdateRunLoopObserverFired, "isWaitingForRenderer %i", m_isWaitingForRenderer);
+    WTFEmitSignpost(this, RenderingUpdateRunLoopObserverFired, "isWaitingForRenderer %s", m_isWaitingForRenderer ? "yes" : "no");
 
-    if (m_isSuspended) {
-        WTFEndSignpost(this, RenderingUpdateRunLoopObserverFired);
+    if (m_isSuspended)
         return;
-    }
 
-    if (m_isWaitingForRenderer) {
-        WTFEndSignpost(this, RenderingUpdateRunLoopObserverFired);
+    if (m_isWaitingForRenderer)
         return;
-    }
 
     updateRendering();
-
-    WTFEndSignpost(this, RenderingUpdateRunLoopObserverFired);
 }
 
 void LayerTreeHost::updateRootLayer()
@@ -274,7 +268,7 @@ void LayerTreeHost::updateRootLayer()
             children.append(downcast<GraphicsLayerCoordinated>(m_overlayCompositingLayer)->coordinatedPlatformLayer());
     }
 
-    m_sceneState->setRootLayerChildren(WTFMove(children));
+    m_sceneState->setRootLayerChildren(WTF::move(children));
 }
 
 void LayerTreeHost::setRootCompositingLayer(GraphicsLayer* graphicsLayer)
@@ -325,7 +319,7 @@ void LayerTreeHost::updateRenderingWithForcedRepaint()
 void LayerTreeHost::updateRenderingWithForcedRepaintAsync(CompletionHandler<void()>&& callback)
 {
     ASSERT(!m_forceRepaintAsync.callback);
-    m_forceRepaintAsync.callback = WTFMove(callback);
+    m_forceRepaintAsync.callback = WTF::move(callback);
     updateRenderingWithForcedRepaint();
 }
 
@@ -452,7 +446,7 @@ Ref<CoordinatedImageBackingStore> LayerTreeHost::imageBackingStore(Ref<NativeIma
 {
     auto nativeImageID = nativeImage->uniqueID();
     auto addResult = m_imageBackingStores.ensure(nativeImageID, [&] {
-        return CoordinatedImageBackingStore::create(WTFMove(nativeImage));
+        return CoordinatedImageBackingStore::create(WTF::move(nativeImage));
     });
     return addResult.iterator->value;
 }
@@ -494,10 +488,8 @@ void LayerTreeHost::requestCompositionForRenderingUpdate()
                 updateRenderingWithForcedRepaint();
             else if (m_forceRepaintAsync.callback)
                 m_forceRepaintAsync.callback();
-        } else if (!m_isSuspended && !m_layerTreeStateIsFrozen && (scheduledWhileWaitingForRenderer || m_renderingUpdateRunLoopObserver->isScheduled())) {
-            invalidateRenderingUpdateRunLoopObserver();
-            updateRendering();
-        }
+        } else if (!m_isSuspended && !m_layerTreeStateIsFrozen && scheduledWhileWaitingForRenderer)
+            scheduleRenderingUpdateRunLoopObserver();
 
         WTFEndSignpost(this, DidComposite);
     });
@@ -589,7 +581,7 @@ void LayerTreeHost::commitTransientZoom(double scale, FloatPoint origin)
 }
 #endif
 
-#if PLATFORM(WPE) && USE(GBM) && ENABLE(WPE_PLATFORM)
+#if PLATFORM(WPE) && ENABLE(WPE_PLATFORM) && (USE(GBM) || OS(ANDROID))
 void LayerTreeHost::preferredBufferFormatsDidChange()
 {
     m_compositor->preferredBufferFormatsDidChange();
@@ -600,7 +592,7 @@ void LayerTreeHost::preferredBufferFormatsDidChange()
 void LayerTreeHost::notifyFrameDamageForTesting(Region&& damageRegion)
 {
     Locker locker { m_frameDamageHistoryForTestingLock };
-    m_frameDamageHistoryForTesting.append(WTFMove(damageRegion));
+    m_frameDamageHistoryForTesting.append(WTF::move(damageRegion));
 }
 
 void LayerTreeHost::resetDamageHistoryForTesting()
@@ -628,7 +620,7 @@ void LayerTreeHost::fillGLInformation(RenderProcessInfo&& info, CompletionHandle
     else
         info.cpuPaintingThreadsCount = SkiaPaintingEngine::numberOfCPUPaintingThreads();
 #endif
-    m_compositor->fillGLInformation(WTFMove(info), WTFMove(completionHandler));
+    m_compositor->fillGLInformation(WTF::move(info), WTF::move(completionHandler));
 }
 
 } // namespace WebKit

@@ -26,6 +26,7 @@
 #include "ElementChildIteratorInlines.h"
 #include "FilterResults.h"
 #include "GeometryUtilities.h"
+#include "Logging.h"
 #include "SVGFilterEffectGraph.h"
 #include "SVGFilterElement.h"
 #include "SVGFilterPrimitiveGraph.h"
@@ -49,19 +50,22 @@ RefPtr<SVGFilterRenderer> SVGFilterRenderer::create(SVGElement *contextElement, 
 
     ASSERT(!expression.isEmpty());
     ASSERT(!effects.isEmpty());
-    filter->setExpression(WTFMove(expression));
-    filter->setEffects(WTFMove(effects));
+    filter->setExpression(WTF::move(expression));
+    filter->setEffects(WTF::move(effects));
 
     filter->setFilterRenderingModes(preferredRenderingModes);
+
+    LOG_WITH_STREAM(Filters, stream << "SVGFilterRenderer::create - rendering modes " << filter->filterRenderingModes());
     return filter;
 }
 
-Ref<SVGFilterRenderer> SVGFilterRenderer::create(SVGUnitTypes::SVGUnitType primitiveUnits, SVGFilterExpression&& expression, FilterEffectVector&& effects, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, std::optional<RenderingResourceIdentifier> renderingResourceIdentifier)
+Ref<SVGFilterRenderer> SVGFilterRenderer::create(SVGUnitTypes::SVGUnitType primitiveUnits, SVGFilterExpression&& expression, FilterEffectVector&& effects, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, bool showDebugOverlay, std::optional<RenderingResourceIdentifier> renderingResourceIdentifier)
 {
-    Ref filter = adoptRef(*new SVGFilterRenderer(geometry, primitiveUnits, WTFMove(expression), WTFMove(effects), renderingResourceIdentifier));
+    Ref filter = adoptRef(*new SVGFilterRenderer(geometry, primitiveUnits, WTF::move(expression), WTF::move(effects), renderingResourceIdentifier));
     // Setting filter rendering modes cannot be moved to the constructor because it ends up
     // calling supportedFilterRenderingModes() which is a virtual function.
     filter->setFilterRenderingModes(preferredRenderingModes);
+    filter->setIsShowingDebugOverlay(showDebugOverlay);
     return filter;
 }
 
@@ -74,8 +78,8 @@ SVGFilterRenderer::SVGFilterRenderer(const FilterGeometry& geometry, SVGUnitType
 SVGFilterRenderer::SVGFilterRenderer(const FilterGeometry& geometry, SVGUnitTypes::SVGUnitType primitiveUnits, SVGFilterExpression&& expression, FilterEffectVector&& effects, std::optional<RenderingResourceIdentifier> renderingResourceIdentifier)
     : Filter(Filter::Type::SVGFilterRenderer, geometry, renderingResourceIdentifier)
     , m_primitiveUnits(primitiveUnits)
-    , m_expression(WTFMove(expression))
-    , m_effects(WTFMove(effects))
+    , m_expression(WTF::move(expression))
+    , m_effects(WTF::move(effects))
 {
 }
 
@@ -111,10 +115,10 @@ static std::optional<std::tuple<SVGFilterEffectGraph, FilterEffectGeometryMap>> 
             effect->setOperatingColorSpace(DestinationColorSpace::LinearSRGB());
 
         graph.addNamedNode(AtomString { effectElement->result() }, { *effect });
-        graph.setNodeInputs(*effect, WTFMove(*inputs));
+        graph.setNodeInputs(*effect, WTF::move(*inputs));
     }
 
-    return { { WTFMove(graph), WTFMove(effectGeometryMap) } };
+    return { { WTF::move(graph), WTF::move(effectGeometryMap) } };
 }
 
 std::optional<std::tuple<SVGFilterExpression, FilterEffectVector>> SVGFilterRenderer::buildExpression(SVGElement *contextElement, SVGFilterElement& filterElement, const SVGFilterRenderer& filter, const GraphicsContext& destinationContext)
@@ -149,7 +153,7 @@ std::optional<std::tuple<SVGFilterExpression, FilterEffectVector>> SVGFilterRend
 
     expression.reverse();
     expression.shrinkToFit();
-    return { { WTFMove(expression), WTFMove(effects) } };
+    return { { WTF::move(expression), WTF::move(effects) } };
 }
 
 static std::optional<SVGFilterPrimitiveGraph> buildFilterPrimitiveGraph(SVGFilterElement& filterElement)
@@ -164,7 +168,7 @@ static std::optional<SVGFilterPrimitiveGraph> buildFilterPrimitiveGraph(SVGFilte
         // We should not be strict about not finding the input primitives here because SourceGraphic and SourceAlpha do not have primitives.
         auto inputs = graph.getNamedNodes(effectElement->filterEffectInputsNames()).value_or(SVGFilterPrimitiveGraph::NodeVector());
         graph.addNamedNode(AtomString { effectElement->result() }, effectElement.copyRef());
-        graph.setNodeInputs(effectElement, WTFMove(inputs));
+        graph.setNodeInputs(effectElement, WTF::move(inputs));
     }
 
     return graph;
@@ -258,8 +262,14 @@ OptionSet<FilterRenderingMode> SVGFilterRenderer::supportedFilterRenderingModes(
 {
     OptionSet<FilterRenderingMode> modes = allFilterRenderingModes;
 
-    for (auto& effect : m_effects)
-        modes = modes & effect->supportedFilterRenderingModes(preferredFilterRenderingModes);
+    for (auto& effect : m_effects) {
+        auto effectModes = effect->supportedFilterRenderingModes(preferredFilterRenderingModes);
+#if !LOG_DISABLED
+        if (preferredFilterRenderingModes.contains(FilterRenderingMode::Accelerated) && !effectModes.contains(FilterRenderingMode::Accelerated))
+            LOG_WITH_STREAM(Filters, stream << "SVGFilterRenderer::supportedFilterRenderingModes: accelerated rendering not supported by " << effect.get());
+#endif
+        modes = modes & effectModes;
+    }
 
     ASSERT(modes);
     return modes;
@@ -313,6 +323,8 @@ RefPtr<FilterImage> SVGFilterRenderer::apply(FilterImage* sourceImage, FilterRes
     ASSERT(!m_expression.isEmpty());
     ASSERT(filterRenderingModes().contains(FilterRenderingMode::Software));
     ASSERT(isValidSVGFilterExpression(m_expression, m_effects));
+
+    LOG_WITH_STREAM(Filters, stream << "\nSVGFilterRenderer " << this << " apply - filterRegion " << filterRegion() << " scale " << filterScale());
 
     FilterImageVector stack;
 

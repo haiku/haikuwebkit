@@ -36,11 +36,11 @@
 #import <WebCore/SecurityOrigin.h>
 #import <pal/spi/cocoa/NSFileManagerSPI.h>
 #import <wtf/Deque.h>
-#import <wtf/OSObjectPtr.h>
 #import <wtf/SoftLinking.h>
 #import <wtf/WeakObjCPtr.h>
 #import <wtf/cf/NotificationCenterCF.h>
 #import <wtf/darwin/DispatchExtras.h>
+#import <wtf/darwin/DispatchOSObject.h>
 #import <wtf/spi/cf/CFBundleSPI.h>
 
 SOFT_LINK_FRAMEWORK(CoreLocation)
@@ -145,7 +145,7 @@ struct PermissionRequest {
 - (void)decidePolicyForGeolocationRequestFromOrigin:(const WebCore::SecurityOriginData&)securityOrigin requestingURL:(NSURL *)requestingURL view:(WKWebView *)view listener:(id<WKWebAllowDenyPolicyListener>)listener
 {
     auto permissionRequest = PermissionRequest::create(securityOrigin, requestingURL, view, listener);
-    _challenges.append(WTFMove(permissionRequest));
+    _challenges.append(WTF::move(permissionRequest));
     [self _executeNextChallenge];
 }
 

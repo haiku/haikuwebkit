@@ -48,7 +48,7 @@ void DatagramDefaultSource::receiveDatagram(std::span<const uint8_t> datagram, b
         auto arrayBuffer = ArrayBuffer::tryCreateUninitialized(datagram.size(), 1);
         if (arrayBuffer)
             memcpySpan(arrayBuffer->mutableSpan(), datagram);
-        if (!controller().enqueue(WTFMove(arrayBuffer)))
+        if (!controller().enqueue(WTF::move(arrayBuffer)))
             doCancel({ });
     }
     if (withFin) {

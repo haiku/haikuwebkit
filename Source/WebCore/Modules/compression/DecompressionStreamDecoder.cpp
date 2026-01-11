@@ -53,7 +53,7 @@ ExceptionOr<RefPtr<Uint8Array>> DecompressionStreamDecoder::decode(const BufferS
     if (!compressedData->byteLength())
         return nullptr;
     
-    return RefPtr { Uint8Array::create(WTFMove(compressedData)) };
+    return RefPtr { Uint8Array::create(WTF::move(compressedData)) };
 }
 
 ExceptionOr<RefPtr<Uint8Array>> DecompressionStreamDecoder::flush()
@@ -68,7 +68,7 @@ ExceptionOr<RefPtr<Uint8Array>> DecompressionStreamDecoder::flush()
     if (!compressedData->byteLength())
         return nullptr;
 
-    return RefPtr { Uint8Array::create(WTFMove(compressedData)) };
+    return RefPtr { Uint8Array::create(WTF::move(compressedData)) };
 }
 
 ExceptionOr<Ref<JSC::ArrayBuffer>> DecompressionStreamDecoder::decompress(std::span<const uint8_t> input)

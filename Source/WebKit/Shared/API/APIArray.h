@@ -81,11 +81,11 @@ public:
         });
     }
 
-    void append(RefPtr<Object>&& element) { m_elements.append(WTFMove(element)); }
+    void append(RefPtr<Object>&& element) { m_elements.append(WTF::move(element)); }
 
 private:
     explicit Array(Vector<RefPtr<Object>>&& elements)
-        : m_elements(WTFMove(elements))
+        : m_elements(WTF::move(elements))
     {
     }
 

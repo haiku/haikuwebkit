@@ -67,10 +67,10 @@
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(DetachedOffscreenCanvas);
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(OffscreenCanvas);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(OffscreenCanvas);
 
 DetachedOffscreenCanvas::DetachedOffscreenCanvas(const IntSize& size, bool originClean, RefPtr<PlaceholderRenderingContextSource>&& placeholderSource)
-    : m_placeholderSource(WTFMove(placeholderSource))
+    : m_placeholderSource(WTF::move(placeholderSource))
     , m_size(size)
     , m_originClean(originClean)
 {
@@ -80,7 +80,7 @@ DetachedOffscreenCanvas::~DetachedOffscreenCanvas() = default;
 
 RefPtr<PlaceholderRenderingContextSource> DetachedOffscreenCanvas::takePlaceholderSource()
 {
-    return WTFMove(m_placeholderSource);
+    return WTF::move(m_placeholderSource);
 }
 
 bool OffscreenCanvas::enabledForContext(ScriptExecutionContext& context)
@@ -121,8 +121,8 @@ Ref<OffscreenCanvas> OffscreenCanvas::create(ScriptExecutionContext& scriptExecu
 
 OffscreenCanvas::OffscreenCanvas(ScriptExecutionContext& scriptExecutionContext, IntSize size, RefPtr<PlaceholderRenderingContextSource>&& placeholderSource)
     : ActiveDOMObject(&scriptExecutionContext)
-    , CanvasBase(WTFMove(size), scriptExecutionContext)
-    , m_placeholderSource(WTFMove(placeholderSource))
+    , CanvasBase(WTF::move(size), scriptExecutionContext)
+    , m_placeholderSource(WTF::move(placeholderSource))
 {
 }
 
@@ -217,7 +217,7 @@ ExceptionOr<std::optional<OffscreenRenderingContext>> OffscreenCanvas::getContex
             m_context = OffscreenCanvasRenderingContext2D::create(*this, settings.releaseReturnValue());
         }
         if (RefPtr context = dynamicDowncast<OffscreenCanvasRenderingContext2D>(m_context.get()))
-            return { { WTFMove(context) } };
+            return { { WTF::move(context) } };
         return { { std::nullopt } };
     }
     if (contextType == RenderingContextType::Bitmaprenderer) {
@@ -232,7 +232,7 @@ ExceptionOr<std::optional<OffscreenRenderingContext>> OffscreenCanvas::getContex
             downcast<ImageBitmapRenderingContext>(m_context.get())->transferFromImageBitmap(nullptr);
         }
         if (RefPtr context = dynamicDowncast<ImageBitmapRenderingContext>(m_context.get()))
-            return { { WTFMove(context) } };
+            return { { WTF::move(context) } };
         return { { std::nullopt } };
     }
     if (contextType == RenderingContextType::Webgpu) {
@@ -252,7 +252,7 @@ ExceptionOr<std::optional<OffscreenRenderingContext>> OffscreenCanvas::getContex
             }
         }
         if (RefPtr context = dynamicDowncast<GPUCanvasContext>(m_context.get()))
-            return { { WTFMove(context) } };
+            return { { WTF::move(context) } };
 #endif
         return { { std::nullopt } };
     }
@@ -272,10 +272,10 @@ ExceptionOr<std::optional<OffscreenRenderingContext>> OffscreenCanvas::getContex
         }
         if (webGLVersion == WebGLVersion::WebGL1) {
             if (RefPtr context = dynamicDowncast<WebGLRenderingContext>(m_context.get()))
-                return { { WTFMove(context) } };
+                return { { WTF::move(context) } };
         } else {
             if (RefPtr context = dynamicDowncast<WebGL2RenderingContext>(m_context.get()))
-                return { { WTFMove(context) } };
+                return { { WTF::move(context) } };
         }
         return { { std::nullopt } };
     }
@@ -337,7 +337,7 @@ void OffscreenCanvas::convertToBlob(ImageEncodeOptions&& options, Ref<DeferredPr
         if (blobData.isEmpty())
             promise->reject(ExceptionCode::EncodingError);
         else
-            promise->resolveWithNewlyCreated<IDLInterface<Blob>>(Blob::create(context.get(), WTFMove(blobData), encodingMIMEType));
+            promise->resolveWithNewlyCreated<IDLInterface<Blob>>(Blob::create(context.get(), WTF::move(blobData), encodingMIMEType));
         return;
     }
 
@@ -353,8 +353,8 @@ void OffscreenCanvas::convertToBlob(ImageEncodeOptions&& options, Ref<DeferredPr
         return;
     }
 
-    Ref<Blob> blob = Blob::create(context.get(), WTFMove(blobData), encodingMIMEType);
-    promise->resolveWithNewlyCreated<IDLInterface<Blob>>(WTFMove(blob));
+    Ref<Blob> blob = Blob::create(context.get(), WTF::move(blobData), encodingMIMEType);
+    promise->resolveWithNewlyCreated<IDLInterface<Blob>>(WTF::move(blob));
 }
 
 void OffscreenCanvas::didDraw(const std::optional<FloatRect>& rect, ShouldApplyPostProcessingToDirtyRect shouldApplyPostProcessingToDirtyRect)
@@ -405,7 +405,7 @@ std::unique_ptr<DetachedOffscreenCanvas> OffscreenCanvas::detach()
 
     m_detached = true;
 
-    auto detached = makeUnique<DetachedOffscreenCanvas>(size(), originClean(), WTFMove(m_placeholderSource));
+    auto detached = makeUnique<DetachedOffscreenCanvas>(size(), originClean(), WTF::move(m_placeholderSource));
     setSize(IntSize(0, 0));
     return detached;
 }
@@ -445,14 +445,14 @@ void OffscreenCanvas::createImageBuffer() const
 void OffscreenCanvas::setImageBufferAndMarkDirty(RefPtr<ImageBuffer>&& buffer)
 {
     setHasCreatedImageBuffer(true);
-    setImageBuffer(WTFMove(buffer));
+    setImageBuffer(WTF::move(buffer));
 
     CanvasBase::didDraw(FloatRect(FloatPoint(), size()));
 }
 
 void OffscreenCanvas::queueTaskKeepingObjectAlive(TaskSource source, Function<void(CanvasBase&)>&& task)
 {
-    ActiveDOMObject::queueTaskKeepingObjectAlive(*this, source, [task = WTFMove(task)](auto& canvas) mutable {
+    ActiveDOMObject::queueTaskKeepingObjectAlive(*this, source, [task = WTF::move(task)](auto& canvas) mutable {
         task(canvas);
     });
 }

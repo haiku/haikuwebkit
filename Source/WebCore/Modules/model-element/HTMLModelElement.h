@@ -71,7 +71,7 @@ template<typename IDLType> class DOMPromiseProxyWithResolveCallback;
 template<typename> class ExceptionOr;
 
 class HTMLModelElement final : public HTMLElement, private CachedRawResourceClient, public ModelPlayerClient, public ActiveDOMObject, public VisibilityChangeClient {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLModelElement);
+    WTF_MAKE_TZONE_ALLOCATED(HTMLModelElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HTMLModelElement);
 public:
     USING_CAN_MAKE_WEAKPTR(HTMLElement);

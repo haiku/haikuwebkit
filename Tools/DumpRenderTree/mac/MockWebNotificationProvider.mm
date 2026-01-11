@@ -146,7 +146,7 @@
 
 - (void)reset
 {
-    auto notifications = WTFMove(_notifications);
+    auto notifications = WTF::move(_notifications);
     for (auto notification : notifications.values())
         [notification finalize];
 

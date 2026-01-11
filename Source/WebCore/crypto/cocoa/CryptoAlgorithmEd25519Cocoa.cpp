@@ -41,7 +41,7 @@ static ExceptionOr<Vector<uint8_t>> signEd25519CryptoKit(const Vector<uint8_t>&s
     auto rv = PAL::EdKey::sign(PAL::EdSigningAlgorithm::ed25519(), sk.span(), data.span());
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return Exception { ExceptionCode::OperationError };
-    return WTFMove(rv.result);
+    return WTF::move(rv.result);
 #else
     UNUSED_PARAM(sk);
     UNUSED_PARAM(data);

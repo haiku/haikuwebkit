@@ -81,7 +81,7 @@ RemoteMediaSessionManager::RemoteMediaSessionManager(WebPage& topPage, WebPage& 
         sharedSession->soundStageSize(),
         sharedSession->categoryOverride(),
     };
-    send(Messages::RemoteMediaSessionManagerProxy::RemoteAudioConfigurationChanged(WTFMove(configuration)));
+    send(Messages::RemoteMediaSessionManagerProxy::RemoteAudioConfigurationChanged(WTF::move(configuration)));
 #endif
 }
 
@@ -120,7 +120,7 @@ void RemoteMediaSessionManager::setCurrentSession(WebCore::PlatformMediaSessionI
 
 void RemoteMediaSessionManager::sessionWillBeginPlayback(WebCore::PlatformMediaSessionInterface& session, CompletionHandler<void(bool)>&& completionHandler)
 {
-    sendWithAsyncReply(Messages::RemoteMediaSessionManagerProxy::MediaSessionWillBeginPlayback(currentSessionState(session)), WTFMove(completionHandler));
+    sendWithAsyncReply(Messages::RemoteMediaSessionManagerProxy::MediaSessionWillBeginPlayback(currentSessionState(session)), WTF::move(completionHandler));
 }
 
 void RemoteMediaSessionManager::addRestriction(WebCore::PlatformMediaSessionMediaType type, WebCore::MediaSessionRestrictions restrictions)

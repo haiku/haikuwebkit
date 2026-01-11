@@ -85,7 +85,10 @@ private:
     void createRootLayersIfNeeded();
 
     WEBCORE_EXPORT GraphicsLayer* documentOverlayRootLayer() const;
+    RefPtr<GraphicsLayer> protectedDocumentOverlayRootLayer() const;
+
     WEBCORE_EXPORT GraphicsLayer* viewOverlayRootLayer() const;
+    RefPtr<GraphicsLayer> protectedViewOverlayRootLayer() const;
 
     void installedPageOverlaysChanged();
     void attachViewOverlayLayers();

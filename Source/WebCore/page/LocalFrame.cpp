@@ -93,7 +93,7 @@
 #include "ProcessWarming.h"
 #include "RemoteFrame.h"
 #include "RenderLayerCompositor.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderTableCell.h"
 #include "RenderText.h"
 #include "RenderTextControl.h"
@@ -182,8 +182,8 @@ static const LocalFrame& rootFrame(const LocalFrame& frame, Frame* parent)
 }
 
 LocalFrame::LocalFrame(Page& page, ClientCreator&& clientCreator, FrameIdentifier identifier, SandboxFlags sandboxFlags, ReferrerPolicy referrerPolicy, std::optional<ScrollbarMode> scrollingMode, HTMLFrameOwnerElement* ownerElement, Frame* parent, Frame* opener, Ref<FrameTreeSyncData>&& frameTreeSyncData, AddToFrameTree addToFrameTree)
-    : Frame(page, identifier, FrameType::Local, ownerElement, parent, opener, WTFMove(frameTreeSyncData), addToFrameTree)
-    , m_loader(makeUniqueRefWithoutRefCountedCheck<FrameLoader>(*this, WTFMove(clientCreator)))
+    : Frame(page, identifier, FrameType::Local, ownerElement, parent, opener, WTF::move(frameTreeSyncData), addToFrameTree)
+    , m_loader(makeUniqueRefWithoutRefCountedCheck<FrameLoader>(*this, WTF::move(clientCreator)))
     , m_script(makeUniqueRef<ScriptController>(*this))
 #if PLATFORM(IOS_FAMILY)
     , m_viewportArguments(makeUniqueRef<ViewportArguments>())
@@ -196,7 +196,7 @@ LocalFrame::LocalFrame(Page& page, ClientCreator&& clientCreator, FrameIdentifie
     , m_sandboxFlags(sandboxFlags)
     , m_parentFrameOrOpenerReferrerPolicy(referrerPolicy)
     , m_eventHandler(makeUniqueRef<EventHandler>(*this))
-    , m_inspectorController(makeUniqueRefWithoutRefCountedCheck<FrameInspectorController>(*this))
+    , m_inspectorController(makeUniqueRefWithoutRefCountedCheck<FrameInspectorController>(*this, page.protectedInspectorController()))
     , m_consoleClient(makeUniqueRef<FrameConsoleClient>(*this))
 {
     ProcessWarming::initializeNames();
@@ -225,17 +225,17 @@ void LocalFrame::init()
 
 Ref<LocalFrame> LocalFrame::createMainFrame(Page& page, ClientCreator&& clientCreator, FrameIdentifier identifier, SandboxFlags effectiveSandboxFlags, ReferrerPolicy effectiveReferrerPolicy, Frame* opener, Ref<FrameTreeSyncData>&& frameTreeSyncData)
 {
-    return adoptRef(*new LocalFrame(page, WTFMove(clientCreator), identifier, effectiveSandboxFlags, effectiveReferrerPolicy, ScrollbarMode::Auto, nullptr, nullptr, opener, WTFMove(frameTreeSyncData)));
+    return adoptRef(*new LocalFrame(page, WTF::move(clientCreator), identifier, effectiveSandboxFlags, effectiveReferrerPolicy, ScrollbarMode::Auto, nullptr, nullptr, opener, WTF::move(frameTreeSyncData)));
 }
 
 Ref<LocalFrame> LocalFrame::createSubframe(Page& page, ClientCreator&& clientCreator, FrameIdentifier identifier, SandboxFlags effectiveSandboxFlags, ReferrerPolicy effectiveReferrerPolicy, HTMLFrameOwnerElement& ownerElement, Ref<FrameTreeSyncData>&& frameTreeSyncData)
 {
-    return adoptRef(*new LocalFrame(page, WTFMove(clientCreator), identifier, effectiveSandboxFlags, effectiveReferrerPolicy, std::nullopt, &ownerElement, ownerElement.document().frame(), nullptr, WTFMove(frameTreeSyncData)));
+    return adoptRef(*new LocalFrame(page, WTF::move(clientCreator), identifier, effectiveSandboxFlags, effectiveReferrerPolicy, std::nullopt, &ownerElement, ownerElement.document().frame(), nullptr, WTF::move(frameTreeSyncData)));
 }
 
 Ref<LocalFrame> LocalFrame::createProvisionalSubframe(Page& page, ClientCreator&& clientCreator, FrameIdentifier identifier, SandboxFlags effectiveSandboxFlags, ReferrerPolicy effectiveReferrerPolicy, ScrollbarMode scrollingMode, Frame& parent, Ref<FrameTreeSyncData>&& frameTreeSyncData)
 {
-    return adoptRef(*new LocalFrame(page, WTFMove(clientCreator), identifier, effectiveSandboxFlags, effectiveReferrerPolicy, scrollingMode, nullptr, &parent, nullptr, WTFMove(frameTreeSyncData), AddToFrameTree::No));
+    return adoptRef(*new LocalFrame(page, WTF::move(clientCreator), identifier, effectiveSandboxFlags, effectiveReferrerPolicy, scrollingMode, nullptr, &parent, nullptr, WTF::move(frameTreeSyncData), AddToFrameTree::No));
 }
 
 LocalFrame::~LocalFrame()
@@ -306,7 +306,7 @@ void LocalFrame::setView(RefPtr<LocalFrameView>&& view)
 
     RELEASE_ASSERT(!m_doc || !m_doc->hasLivingRenderTree());
 
-    m_view = WTFMove(view);
+    m_view = WTF::move(view);
     
     // Only one form submission is allowed per view of a part.
     // Since this part may be getting reused as a result of being
@@ -383,12 +383,12 @@ bool LocalFrame::preventsParentFromBeingComplete() const
 
 void LocalFrame::changeLocation(FrameLoadRequest&& request)
 {
-    loader().changeLocation(WTFMove(request));
+    loader().changeLocation(WTF::move(request));
 }
 
 void LocalFrame::loadFrameRequest(FrameLoadRequest&& request, Event* event)
 {
-    loader().loadFrameRequest(WTFMove(request), event, { });
+    loader().loadFrameRequest(WTF::move(request), event, { });
 }
 
 void LocalFrame::didFinishLoadInAnotherProcess()
@@ -694,7 +694,6 @@ void LocalFrame::setPrinting(bool printing, FloatSize pageSize, FloatSize origin
     // See https://bugs.webkit.org/show_bug.cgi?id=43704
     ResourceCacheValidationSuppressor validationSuppressor(document->cachedResourceLoader());
 
-    document->setPrinting(printing);
     protectedView()->adjustMediaTypeForPrinting(printing);
 
     // FIXME: Consider invoking Page::updateRendering or an equivalent.
@@ -1230,7 +1229,7 @@ void LocalFrame::setOverrideScreenSize(FloatSize&& screenSize)
     if (m_overrideScreenSize && m_overrideScreenSize->size == screenSize)
         return;
 
-    m_overrideScreenSize = makeUnique<OverrideScreenSize>(OverrideScreenSize { WTFMove(screenSize) });
+    m_overrideScreenSize = makeUnique<OverrideScreenSize>(OverrideScreenSize { WTF::move(screenSize) });
     if (RefPtr document = this->document())
         document->updateViewportArguments();
 }
@@ -1404,7 +1403,7 @@ void LocalFrame::didAccessWindowProxyPropertyViaOpener(WindowProxyProperty prope
         return;
 
     m_accessedWindowProxyPropertiesViaOpener.add(property);
-    loader().client().didAccessWindowProxyPropertyViaOpener(WTFMove(openerMainFrameOrigin), property);
+    loader().client().didAccessWindowProxyPropertyViaOpener(WTF::move(openerMainFrameOrigin), property);
 }
 
 #endif
@@ -1589,7 +1588,7 @@ void LocalFrame::showResourceMonitoringError()
 
 #if ENABLE(DARK_MODE_CSS)
     if (CheckedPtr style = iframeElement->existingComputedStyle())
-        colorScheme = document->resolvedColorScheme(style.get());
+        colorScheme = document->resolvedColorScheme(&style->computedStyle());
 #endif
 
     iframeElement->setSrcdoc(generateResourceMonitorErrorHTML(colorScheme), SubstituteData::SessionHistoryVisibility::Hidden);
@@ -1661,7 +1660,7 @@ void LocalFrame::showMemoryMonitorError()
 
 #if ENABLE(DARK_MODE_CSS)
     if (CheckedPtr style = iframeElement->existingComputedStyle())
-        colorScheme = document->resolvedColorScheme(style.get());
+        colorScheme = document->resolvedColorScheme(&style->computedStyle());
 #endif
 
     iframeElement->setSrcdoc(generateFrameMemoryMonitorErrorHTML(colorScheme), SubstituteData::SessionHistoryVisibility::Hidden);

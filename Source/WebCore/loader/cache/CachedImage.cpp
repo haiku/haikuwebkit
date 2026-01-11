@@ -41,7 +41,7 @@
 #include "MemoryCache.h"
 #include "RenderElement.h"
 #include "RenderImage.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGImage.h"
 #include "SecurityOrigin.h"
@@ -66,7 +66,7 @@
 namespace WebCore {
 
 CachedImage::CachedImage(CachedResourceRequest&& request, PAL::SessionID sessionID, const CookieJar* cookieJar)
-    : CachedResource(WTFMove(request), Type::ImageResource, sessionID, cookieJar)
+    : CachedResource(WTF::move(request), Type::ImageResource, sessionID, cookieJar)
     , m_updateImageDataCount(0)
     , m_isManuallyCached(false)
     , m_shouldPaintBrokenImage(true)
@@ -639,7 +639,7 @@ void CachedImage::responseReceived(ResourceResponse&& newResponse)
 {
     if (!response().isNull())
         clear();
-    CachedResource::responseReceived(WTFMove(newResponse));
+    CachedResource::responseReceived(WTF::move(newResponse));
 }
 
 void CachedImage::destroyDecodedData()

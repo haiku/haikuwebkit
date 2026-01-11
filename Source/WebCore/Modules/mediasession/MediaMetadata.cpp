@@ -50,13 +50,13 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(ArtworkImageLoader);
 
 Ref<ArtworkImageLoader> ArtworkImageLoader::create(Document& document, const String& src, ArtworkImageLoaderCallback&& callback)
 {
-    return adoptRef(*new ArtworkImageLoader(document, src, WTFMove(callback)));
+    return adoptRef(*new ArtworkImageLoader(document, src, WTF::move(callback)));
 }
 
 ArtworkImageLoader::ArtworkImageLoader(Document& document, const String& src, ArtworkImageLoaderCallback&& callback)
     : m_document(document)
     , m_src(src)
-    , m_callback(WTFMove(callback))
+    , m_callback(WTF::move(callback))
 {
 }
 
@@ -75,7 +75,7 @@ void ArtworkImageLoader::requestImageResource()
 
     CachedResourceRequest request(ResourceRequest(document->completeURL(m_src)), options);
     request.setInitiatorType(AtomString { document->documentURI() });
-    m_cachedImage = document->protectedCachedResourceLoader()->requestImage(WTFMove(request)).value_or(nullptr);
+    m_cachedImage = document->protectedCachedResourceLoader()->requestImage(WTF::move(request)).value_or(nullptr);
 
     if (m_cachedImage)
         m_cachedImage->addClient(*this);
@@ -104,7 +104,7 @@ ExceptionOr<Ref<MediaMetadata>> MediaMetadata::create(ScriptExecutionContext& co
 #if ENABLE(MEDIA_SESSION_PLAYLIST)
         metadata->setTrackIdentifier(init->trackIdentifier);
 #endif
-        auto possibleException = metadata->setArtwork(context, WTFMove(init->artwork));
+        auto possibleException = metadata->setArtwork(context, WTF::move(init->artwork));
         if (possibleException.hasException())
             return Exception { possibleException.exception() };
     }
@@ -114,7 +114,7 @@ ExceptionOr<Ref<MediaMetadata>> MediaMetadata::create(ScriptExecutionContext& co
 Ref<MediaMetadata> MediaMetadata::create(MediaSession& session, Vector<URL>&& images)
 {
     auto metadata = adoptRef(*new MediaMetadata);
-    metadata->m_defaultImages = WTFMove(images);
+    metadata->m_defaultImages = WTF::move(images);
     metadata->setMediaSession(session);
     return metadata;
 }
@@ -174,7 +174,7 @@ ExceptionOr<void> MediaMetadata::setArtwork(ScriptExecutionContext& context, Vec
         resolvedArtwork.append(MediaImage { resolvedSrc.string(), image.sizes, image.type });
     }
 
-    m_metadata.artwork = WTFMove(resolvedArtwork);
+    m_metadata.artwork = WTF::move(resolvedArtwork);
     refreshArtworkImage();
 
     metadataUpdated();
@@ -255,7 +255,7 @@ void MediaMetadata::refreshArtworkImage()
 
     std::ranges::sort(artworks, std::ranges::greater { }, &Pair::score);
 
-    tryNextArtworkImage(0, WTFMove(artworks));
+    tryNextArtworkImage(0, WTF::move(artworks));
 }
 
 void MediaMetadata::tryNextArtworkImage(uint32_t index, Vector<Pair>&& artworks)
@@ -268,7 +268,7 @@ void MediaMetadata::tryNextArtworkImage(uint32_t index, Vector<Pair>&& artworks)
 
     String artworkImageSrc = artworks[index].src;
 
-    m_artworkLoader = ArtworkImageLoader::create(*document, artworkImageSrc, [this, index, artworkImageSrc, artworks = WTFMove(artworks)](Image* image) mutable {
+    m_artworkLoader = ArtworkImageLoader::create(*document, artworkImageSrc, [this, index, artworkImageSrc, artworks = WTF::move(artworks)](Image* image) mutable {
         if (image && image->data() && image->width() && image->height()) {
             IntSize size { int(image->width()), int(image->height()) };
             float imageScore = imageDimensionsScore(size.width(), size.height(), s_minimumSize, s_idealSize);
@@ -283,7 +283,7 @@ void MediaMetadata::tryNextArtworkImage(uint32_t index, Vector<Pair>&& artworks)
         }
 
         if (++index < artworks.size())
-            tryNextArtworkImage(index, WTFMove(artworks));
+            tryNextArtworkImage(index, WTF::move(artworks));
     });
     m_artworkLoader->requestImageResource();
 }

@@ -44,7 +44,7 @@ class FetchResponse;
 class ResourceResponse;
 
 class FetchEvent final : public ExtendableEvent {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(FetchEvent);
+    WTF_MAKE_TZONE_ALLOCATED(FetchEvent);
 public:
     struct Init : ExtendableEventInit {
         RefPtr<FetchRequest> request;
@@ -57,7 +57,7 @@ public:
 
     static Ref<FetchEvent> create(JSC::JSGlobalObject& globalObject, const AtomString& type, Init&& initializer, IsTrusted isTrusted = IsTrusted::No)
     {
-        return adoptRef(*new FetchEvent(globalObject, type, WTFMove(initializer), isTrusted));
+        return adoptRef(*new FetchEvent(globalObject, type, WTF::move(initializer), isTrusted));
     }
     ~FetchEvent();
 

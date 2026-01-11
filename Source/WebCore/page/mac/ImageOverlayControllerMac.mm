@@ -98,7 +98,7 @@ void ImageOverlayController::updateDataDetectorHighlights(const HTMLElement& ove
 
         // FIXME: We should teach DataDetectorHighlight to render quads instead of always falling back to axis-aligned bounding rects.
         auto highlight = adoptCF(PAL::softLink_DataDetectors_DDHighlightCreateWithRectsInVisibleRectWithStyleScaleAndDirection(nullptr, &elementBounds, 1, mainFrameView->visibleContentRect(), static_cast<DDHighlightStyle>(DDHighlightStyleBubbleStandard) | static_cast<DDHighlightStyle>(DDHighlightStyleStandardIconArrow), YES, NSWritingDirectionNatural, NO, YES, 0));
-        return ContainerAndHighlight { element, DataDetectorHighlight::createForImageOverlay(*this, WTFMove(highlight), *makeRangeSelectingNode(element.get())) };
+        return ContainerAndHighlight { element, DataDetectorHighlight::createForImageOverlay(*this, WTF::move(highlight), *makeRangeSelectingNode(element.get())) };
     });
 }
 
@@ -171,7 +171,7 @@ bool ImageOverlayController::handleDataDetectorAction(const HTMLElement& element
     if (!renderer)
         return false;
 
-    protectedPage()->chrome().client().handleClickForDataDetectionResult({ WTFMove(dataDetectionResult), frameView->contentsToWindow(renderer->absoluteBoundingBoxRect()) }, frameView->contentsToWindow(locationInContents));
+    protectedPage()->chrome().client().handleClickForDataDetectionResult({ WTF::move(dataDetectionResult), frameView->contentsToWindow(renderer->absoluteBoundingBoxRect()) }, frameView->contentsToWindow(locationInContents));
     return true;
 }
 

@@ -46,12 +46,12 @@ struct BorderRadius : RectCorners<BorderRadiusValue> {
     }
 
     BorderRadius(BorderRadiusValue topLeft, BorderRadiusValue topRight, BorderRadiusValue bottomLeft, BorderRadiusValue bottomRight)
-        : RectCorners<BorderRadiusValue> { WTFMove(topLeft), WTFMove(topRight), WTFMove(bottomLeft), WTFMove(bottomRight) }
+        : RectCorners<BorderRadiusValue> { WTF::move(topLeft), WTF::move(topRight), WTF::move(bottomLeft), WTF::move(bottomRight) }
     {
     }
 
     BorderRadius(RectCorners<BorderRadiusValue>&& corners)
-        : RectCorners<BorderRadiusValue> { WTFMove(corners) }
+        : RectCorners<BorderRadiusValue> { WTF::move(corners) }
     {
     }
 

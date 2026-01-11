@@ -58,7 +58,7 @@ class RTCRtpSender final : public RefCounted<RTCRtpSender>
     , private LoggerHelper
 #endif
     {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RTCRtpSender);
+    WTF_MAKE_TZONE_ALLOCATED(RTCRtpSender);
 public:
     static Ref<RTCRtpSender> create(RTCPeerConnection&, Ref<MediaStreamTrack>&&, Ref<RTCRtpSenderBackend>&&);
     static Ref<RTCRtpSender> create(RTCPeerConnection&, String&& trackKind, Ref<RTCRtpSenderBackend>&&);
@@ -69,7 +69,7 @@ public:
     MediaStreamTrack* track() { return m_track.get(); }
 
     RTCDtlsTransport* transport() { return m_transport.get(); }
-    void setTransport(RefPtr<RTCDtlsTransport>&& transport) { m_transport = WTFMove(transport); }
+    void setTransport(RefPtr<RTCDtlsTransport>&& transport) { m_transport = WTF::move(transport); }
 
     const String& trackId() const { return m_trackId; }
     const String& trackKind() const { return m_trackKind; }

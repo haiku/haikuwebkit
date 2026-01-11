@@ -5,9 +5,11 @@
 
 #include "CSSPrimitiveValueMappings.h"
 #include "CSSProperty.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+GettersInlines.h"
+#include "RenderStyle+SettersInlines.h"
 #include "StyleBuilderCustom.h"
 #include "StyleBuilderState.h"
+#include "StyleComputedStyle+InitialInlines.h"
 #include "StylePropertyShorthand.h"
 
 namespace WebCore {
@@ -17,31 +19,31 @@ class BuilderFunctions {
 public:
     static void applyInitialBackgroundCoordinatedValueListPropertyTestDiscrete(BuilderState& builderState)
     {
-        applyInitialCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete, &RenderStyle::ensureBackgroundLayers, BackgroundLayers>(builderState);
+        applyInitialCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete, &ComputedStyle::ensureBackgroundLayers, BackgroundLayers>(builderState);
     }
     static void applyInheritBackgroundCoordinatedValueListPropertyTestDiscrete(BuilderState& builderState)
     {
-        applyInheritCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete, &RenderStyle::ensureBackgroundLayers, &RenderStyle::backgroundLayers, BackgroundLayers>(builderState);
+        applyInheritCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete, &ComputedStyle::ensureBackgroundLayers, &ComputedStyle::backgroundLayers, BackgroundLayers>(builderState);
     }
     static void applyValueBackgroundCoordinatedValueListPropertyTestDiscrete(BuilderState& builderState, CSSValue& value)
     {
-        applyValueCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete, &RenderStyle::ensureBackgroundLayers, WebCore::Style::Number<>, BackgroundLayers>(builderState, value);
+        applyValueCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete, &ComputedStyle::ensureBackgroundLayers, WebCore::Style::Number<>, BackgroundLayers>(builderState, value);
     }
     static void applyInitialBackgroundCoordinatedValueListPropertyTestTwo(BuilderState& builderState)
     {
-        applyInitialCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo, &RenderStyle::ensureBackgroundLayers, BackgroundLayers>(builderState);
+        applyInitialCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo, &ComputedStyle::ensureBackgroundLayers, BackgroundLayers>(builderState);
     }
     static void applyInheritBackgroundCoordinatedValueListPropertyTestTwo(BuilderState& builderState)
     {
-        applyInheritCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo, &RenderStyle::ensureBackgroundLayers, &RenderStyle::backgroundLayers, BackgroundLayers>(builderState);
+        applyInheritCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo, &ComputedStyle::ensureBackgroundLayers, &ComputedStyle::backgroundLayers, BackgroundLayers>(builderState);
     }
     static void applyValueBackgroundCoordinatedValueListPropertyTestTwo(BuilderState& builderState, CSSValue& value)
     {
-        applyValueCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo, &RenderStyle::ensureBackgroundLayers, WebCore::Style::Number<>, BackgroundLayers>(builderState, value);
+        applyValueCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo, &ComputedStyle::ensureBackgroundLayers, WebCore::Style::Number<>, BackgroundLayers>(builderState, value);
     }
     static void applyInitialTestAnimationWrapper(BuilderState& builderState)
     {
-        builderState.style().setTestAnimationWrapper(RenderStyle::initialTestAnimationWrapper());
+        builderState.style().setTestAnimationWrapper(Style::ComputedStyle::initialTestAnimationWrapper());
     }
     static void applyInheritTestAnimationWrapper(BuilderState& builderState)
     {
@@ -49,11 +51,11 @@ public:
     }
     static void applyValueTestAnimationWrapper(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestAnimationWrapper(toStyleFromCSSValue<WebCore::Style::Number<>>(builderState, value));
+        builderState.style().setTestAnimationWrapper(toStyleFromCSSValue<Style::Number<>>(builderState, value));
     }
     static void applyInitialTestAnimationWrapperAccelerationAlways(BuilderState& builderState)
     {
-        builderState.style().setTestAnimationWrapperAccelerationAlways(RenderStyle::initialTestAnimationWrapperAccelerationAlways());
+        builderState.style().setTestAnimationWrapperAccelerationAlways(Style::ComputedStyle::initialTestAnimationWrapperAccelerationAlways());
     }
     static void applyInheritTestAnimationWrapperAccelerationAlways(BuilderState& builderState)
     {
@@ -61,11 +63,11 @@ public:
     }
     static void applyValueTestAnimationWrapperAccelerationAlways(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestAnimationWrapperAccelerationAlways(toStyleFromCSSValue<WebCore::Style::Number<>>(builderState, value));
+        builderState.style().setTestAnimationWrapperAccelerationAlways(toStyleFromCSSValue<Style::Number<>>(builderState, value));
     }
     static void applyInitialTestAnimationWrapperAccelerationThreadedOnly(BuilderState& builderState)
     {
-        builderState.style().setTestAnimationWrapperAccelerationThreadedOnly(RenderStyle::initialTestAnimationWrapperAccelerationThreadedOnly());
+        builderState.style().setTestAnimationWrapperAccelerationThreadedOnly(Style::ComputedStyle::initialTestAnimationWrapperAccelerationThreadedOnly());
     }
     static void applyInheritTestAnimationWrapperAccelerationThreadedOnly(BuilderState& builderState)
     {
@@ -73,11 +75,99 @@ public:
     }
     static void applyValueTestAnimationWrapperAccelerationThreadedOnly(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestAnimationWrapperAccelerationThreadedOnly(toStyleFromCSSValue<WebCore::Style::Number<>>(builderState, value));
+        builderState.style().setTestAnimationWrapperAccelerationThreadedOnly(toStyleFromCSSValue<Style::Number<>>(builderState, value));
+    }
+    static void applyInitialTestColor(BuilderState& builderState)
+    {
+        builderState.style().setTestColor(Style::ComputedStyle::initialTestColor());
+    }
+    static void applyInheritTestColor(BuilderState& builderState)
+    {
+        builderState.style().setTestColor(forwardInheritedValue(builderState.parentStyle().testColor()));
+    }
+    static void applyValueTestColor(BuilderState& builderState, CSSValue& value)
+    {
+        builderState.style().setTestColor(toStyleFromCSSValue<Style::Color>(builderState, value));
+    }
+    static void applyInitialTestColorAllowsTypesAbsolute(BuilderState& builderState)
+    {
+        builderState.style().setTestColorAllowsTypesAbsolute(Style::ComputedStyle::initialTestColorAllowsTypesAbsolute());
+    }
+    static void applyInheritTestColorAllowsTypesAbsolute(BuilderState& builderState)
+    {
+        builderState.style().setTestColorAllowsTypesAbsolute(forwardInheritedValue(builderState.parentStyle().testColorAllowsTypesAbsolute()));
+    }
+    static void applyValueTestColorAllowsTypesAbsolute(BuilderState& builderState, CSSValue& value)
+    {
+        builderState.style().setTestColorAllowsTypesAbsolute(toStyleFromCSSValue<Style::Color>(builderState, value));
+    }
+    static void applyInitialTestColorPropertyWithVisitedLinkSupport(BuilderState& builderState)
+    {
+        if (builderState.applyPropertyToRegularStyle())
+            builderState.style().setTestColorPropertyWithVisitedLinkSupport(Style::ComputedStyle::initialTestColorPropertyWithVisitedLinkSupport());
+        if (builderState.applyPropertyToVisitedLinkStyle())
+            builderState.style().setVisitedLinkTestColorPropertyWithVisitedLinkSupport(Style::ComputedStyle::initialTestColorPropertyWithVisitedLinkSupport());
+    }
+    static void applyInheritTestColorPropertyWithVisitedLinkSupport(BuilderState& builderState)
+    {
+        if (builderState.applyPropertyToRegularStyle())
+            builderState.style().setTestColorPropertyWithVisitedLinkSupport(forwardInheritedValue(builderState.parentStyle().testColorPropertyWithVisitedLinkSupport()));
+        if (builderState.applyPropertyToVisitedLinkStyle())
+            builderState.style().setVisitedLinkTestColorPropertyWithVisitedLinkSupport(forwardInheritedValue(builderState.parentStyle().testColorPropertyWithVisitedLinkSupport()));
+    }
+    static void applyValueTestColorPropertyWithVisitedLinkSupport(BuilderState& builderState, CSSValue& value)
+    {
+        if (builderState.applyPropertyToRegularStyle())
+            builderState.style().setTestColorPropertyWithVisitedLinkSupport(toStyleFromCSSValue<Style::Color>(builderState, value, ForVisitedLink::No));
+        if (builderState.applyPropertyToVisitedLinkStyle())
+            builderState.style().setVisitedLinkTestColorPropertyWithVisitedLinkSupport(toStyleFromCSSValue<Style::Color>(builderState, value, ForVisitedLink::Yes));
+    }
+    static void applyInitialTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(BuilderState& builderState)
+    {
+        builderState.style().setTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(Style::ComputedStyle::initialTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin());
+        builderState.style().setHasExplicitlySetTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(builderState.isAuthorOrigin());
+    }
+    static void applyInheritTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(BuilderState& builderState)
+    {
+        builderState.style().setTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(forwardInheritedValue(builderState.parentStyle().testRenderStyleHasExplicitlySetPolicyAllAuthorOrigin()));
+        builderState.style().setHasExplicitlySetTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(builderState.isAuthorOrigin());
+    }
+    static void applyValueTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(BuilderState& builderState, CSSValue& value)
+    {
+        builderState.style().setTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(toStyleFromCSSValue<Style::Number<>>(builderState, value));
+        builderState.style().setHasExplicitlySetTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(builderState.isAuthorOrigin());
+    }
+    static void applyInitialTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(BuilderState& builderState)
+    {
+        builderState.style().setTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(Style::ComputedStyle::initialTestRenderStyleHasExplicitlySetPolicyAllBorderRadius());
+        builderState.style().setHasExplicitlySetTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(false);
+    }
+    static void applyInheritTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(BuilderState& builderState)
+    {
+        builderState.style().setTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(forwardInheritedValue(builderState.parentStyle().testRenderStyleHasExplicitlySetPolicyAllBorderRadius()));
+        builderState.style().setHasExplicitlySetTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(builderState.parentStyle().hasExplicitlySetTestRenderStyleHasExplicitlySetPolicyAllBorderRadius());
+    }
+    static void applyValueTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(BuilderState& builderState, CSSValue& value)
+    {
+        builderState.style().setTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(toStyleFromCSSValue<Style::Number<>>(builderState, value));
+        builderState.style().setHasExplicitlySetTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(true);
+    }
+    static void applyInitialTestRenderStyleHasExplicitlySetPolicyValueOnly(BuilderState& builderState)
+    {
+        builderState.style().setTestRenderStyleHasExplicitlySetPolicyValueOnly(Style::ComputedStyle::initialTestRenderStyleHasExplicitlySetPolicyValueOnly());
+    }
+    static void applyInheritTestRenderStyleHasExplicitlySetPolicyValueOnly(BuilderState& builderState)
+    {
+        builderState.style().setTestRenderStyleHasExplicitlySetPolicyValueOnly(forwardInheritedValue(builderState.parentStyle().testRenderStyleHasExplicitlySetPolicyValueOnly()));
+    }
+    static void applyValueTestRenderStyleHasExplicitlySetPolicyValueOnly(BuilderState& builderState, CSSValue& value)
+    {
+        builderState.style().setTestRenderStyleHasExplicitlySetPolicyValueOnly(toStyleFromCSSValue<Style::Number<>>(builderState, value));
+        builderState.style().setHasExplicitlySetTestRenderStyleHasExplicitlySetPolicyValueOnly(true);
     }
     static void applyInitialTestRenderStyleStorageOneLevelEnum(BuilderState& builderState)
     {
-        builderState.style().setTestRenderStyleStorageOneLevelEnum(RenderStyle::initialTestRenderStyleStorageOneLevelEnum());
+        builderState.style().setTestRenderStyleStorageOneLevelEnum(Style::ComputedStyle::initialTestRenderStyleStorageOneLevelEnum());
     }
     static void applyInheritTestRenderStyleStorageOneLevelEnum(BuilderState& builderState)
     {
@@ -85,11 +175,11 @@ public:
     }
     static void applyValueTestRenderStyleStorageOneLevelEnum(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestRenderStyleStorageOneLevelEnum(toStyleFromCSSValue<WebCore::Style::TestEnumeration>(builderState, value));
+        builderState.style().setTestRenderStyleStorageOneLevelEnum(toStyleFromCSSValue<Style::TestEnumeration>(builderState, value));
     }
     static void applyInitialTestRenderStyleStorageOneLevelRaw(BuilderState& builderState)
     {
-        builderState.style().setTestRenderStyleStorageOneLevelRaw(RenderStyle::initialTestRenderStyleStorageOneLevelRaw());
+        builderState.style().setTestRenderStyleStorageOneLevelRaw(Style::ComputedStyle::initialTestRenderStyleStorageOneLevelRaw());
     }
     static void applyInheritTestRenderStyleStorageOneLevelRaw(BuilderState& builderState)
     {
@@ -97,11 +187,11 @@ public:
     }
     static void applyValueTestRenderStyleStorageOneLevelRaw(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestRenderStyleStorageOneLevelRaw(toStyleFromCSSValue<WebCore::Style::TestRaw>(builderState, value));
+        builderState.style().setTestRenderStyleStorageOneLevelRaw(toStyleFromCSSValue<Style::TestRaw>(builderState, value));
     }
     static void applyInitialTestRenderStyleStorageOneLevelReference(BuilderState& builderState)
     {
-        builderState.style().setTestRenderStyleStorageOneLevelReference(RenderStyle::initialTestRenderStyleStorageOneLevelReference());
+        builderState.style().setTestRenderStyleStorageOneLevelReference(Style::ComputedStyle::initialTestRenderStyleStorageOneLevelReference());
     }
     static void applyInheritTestRenderStyleStorageOneLevelReference(BuilderState& builderState)
     {
@@ -109,11 +199,11 @@ public:
     }
     static void applyValueTestRenderStyleStorageOneLevelReference(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestRenderStyleStorageOneLevelReference(toStyleFromCSSValue<WebCore::Style::Number<>>(builderState, value));
+        builderState.style().setTestRenderStyleStorageOneLevelReference(toStyleFromCSSValue<Style::Number<>>(builderState, value));
     }
     static void applyInitialTestRenderStyleStorageOneLevelValue(BuilderState& builderState)
     {
-        builderState.style().setTestRenderStyleStorageOneLevelValue(RenderStyle::initialTestRenderStyleStorageOneLevelValue());
+        builderState.style().setTestRenderStyleStorageOneLevelValue(Style::ComputedStyle::initialTestRenderStyleStorageOneLevelValue());
     }
     static void applyInheritTestRenderStyleStorageOneLevelValue(BuilderState& builderState)
     {
@@ -121,11 +211,11 @@ public:
     }
     static void applyValueTestRenderStyleStorageOneLevelValue(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestRenderStyleStorageOneLevelValue(toStyleFromCSSValue<WebCore::Style::Number<>>(builderState, value));
+        builderState.style().setTestRenderStyleStorageOneLevelValue(toStyleFromCSSValue<Style::Number<>>(builderState, value));
     }
     static void applyInitialTestRenderStyleStorageTwoLevelEnum(BuilderState& builderState)
     {
-        builderState.style().setTestRenderStyleStorageTwoLevelEnum(RenderStyle::initialTestRenderStyleStorageTwoLevelEnum());
+        builderState.style().setTestRenderStyleStorageTwoLevelEnum(Style::ComputedStyle::initialTestRenderStyleStorageTwoLevelEnum());
     }
     static void applyInheritTestRenderStyleStorageTwoLevelEnum(BuilderState& builderState)
     {
@@ -133,11 +223,11 @@ public:
     }
     static void applyValueTestRenderStyleStorageTwoLevelEnum(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestRenderStyleStorageTwoLevelEnum(toStyleFromCSSValue<WebCore::Style::TestEnumeration>(builderState, value));
+        builderState.style().setTestRenderStyleStorageTwoLevelEnum(toStyleFromCSSValue<Style::TestEnumeration>(builderState, value));
     }
     static void applyInitialTestRenderStyleStorageTwoLevelRaw(BuilderState& builderState)
     {
-        builderState.style().setTestRenderStyleStorageTwoLevelRaw(RenderStyle::initialTestRenderStyleStorageTwoLevelRaw());
+        builderState.style().setTestRenderStyleStorageTwoLevelRaw(Style::ComputedStyle::initialTestRenderStyleStorageTwoLevelRaw());
     }
     static void applyInheritTestRenderStyleStorageTwoLevelRaw(BuilderState& builderState)
     {
@@ -145,11 +235,11 @@ public:
     }
     static void applyValueTestRenderStyleStorageTwoLevelRaw(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestRenderStyleStorageTwoLevelRaw(toStyleFromCSSValue<WebCore::Style::TestRaw>(builderState, value));
+        builderState.style().setTestRenderStyleStorageTwoLevelRaw(toStyleFromCSSValue<Style::TestRaw>(builderState, value));
     }
     static void applyInitialTestRenderStyleStorageTwoLevelReference(BuilderState& builderState)
     {
-        builderState.style().setTestRenderStyleStorageTwoLevelReference(RenderStyle::initialTestRenderStyleStorageTwoLevelReference());
+        builderState.style().setTestRenderStyleStorageTwoLevelReference(Style::ComputedStyle::initialTestRenderStyleStorageTwoLevelReference());
     }
     static void applyInheritTestRenderStyleStorageTwoLevelReference(BuilderState& builderState)
     {
@@ -157,11 +247,11 @@ public:
     }
     static void applyValueTestRenderStyleStorageTwoLevelReference(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestRenderStyleStorageTwoLevelReference(toStyleFromCSSValue<WebCore::Style::Number<>>(builderState, value));
+        builderState.style().setTestRenderStyleStorageTwoLevelReference(toStyleFromCSSValue<Style::Number<>>(builderState, value));
     }
     static void applyInitialTestRenderStyleStorageTwoLevelValue(BuilderState& builderState)
     {
-        builderState.style().setTestRenderStyleStorageTwoLevelValue(RenderStyle::initialTestRenderStyleStorageTwoLevelValue());
+        builderState.style().setTestRenderStyleStorageTwoLevelValue(Style::ComputedStyle::initialTestRenderStyleStorageTwoLevelValue());
     }
     static void applyInheritTestRenderStyleStorageTwoLevelValue(BuilderState& builderState)
     {
@@ -169,11 +259,11 @@ public:
     }
     static void applyValueTestRenderStyleStorageTwoLevelValue(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestRenderStyleStorageTwoLevelValue(toStyleFromCSSValue<WebCore::Style::Number<>>(builderState, value));
+        builderState.style().setTestRenderStyleStorageTwoLevelValue(toStyleFromCSSValue<Style::Number<>>(builderState, value));
     }
     static void applyInitialTestSettingsOne(BuilderState& builderState)
     {
-        builderState.style().setTestSettingsOne(RenderStyle::initialTestSettingsOne());
+        builderState.style().setTestSettingsOne(Style::ComputedStyle::initialTestSettingsOne());
     }
     static void applyInheritTestSettingsOne(BuilderState& builderState)
     {
@@ -181,11 +271,11 @@ public:
     }
     static void applyValueTestSettingsOne(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestSettingsOne(toStyleFromCSSValue<WebCore::Style::Number<>>(builderState, value));
+        builderState.style().setTestSettingsOne(toStyleFromCSSValue<Style::Number<>>(builderState, value));
     }
     static void applyInitialTestLogicalPropertyGroupPhysicalVertical(BuilderState& builderState)
     {
-        builderState.style().setTestLogicalPropertyGroupPhysicalVertical(RenderStyle::initialTestLogicalPropertyGroupPhysicalVertical());
+        builderState.style().setTestLogicalPropertyGroupPhysicalVertical(Style::ComputedStyle::initialTestLogicalPropertyGroupPhysicalVertical());
     }
     static void applyInheritTestLogicalPropertyGroupPhysicalVertical(BuilderState& builderState)
     {
@@ -193,7 +283,7 @@ public:
     }
     static void applyValueTestLogicalPropertyGroupPhysicalVertical(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestLogicalPropertyGroupPhysicalVertical(toStyleFromCSSValue<WebCore::Style::Number<>>(builderState, value));
+        builderState.style().setTestLogicalPropertyGroupPhysicalVertical(toStyleFromCSSValue<Style::Number<>>(builderState, value));
     }
 };
 
@@ -305,12 +395,43 @@ void BuilderGenerated::applyProperty(CSSPropertyID id, BuilderState& builderStat
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeWithDefaultPreviousTwo:
         break;
     case CSSPropertyID::CSSPropertyTestColor:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialTestColor(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritTestColor(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueTestColor(builderState, value);
+            break;
+        }
         break;
     case CSSPropertyID::CSSPropertyTestColorAllowsTypesAbsolute:
-        break;
-    case CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialTestColorAllowsTypesAbsolute(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritTestColorAllowsTypesAbsolute(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueTestColorAllowsTypesAbsolute(builderState, value);
+            break;
+        }
         break;
     case CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialTestColorPropertyWithVisitedLinkSupport(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritTestColorPropertyWithVisitedLinkSupport(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueTestColorPropertyWithVisitedLinkSupport(builderState, value);
+            break;
+        }
         break;
     case CSSPropertyID::CSSPropertyTestCustomExtractor:
         break;
@@ -429,6 +550,45 @@ void BuilderGenerated::applyProperty(CSSPropertyID id, BuilderState& builderStat
     case CSSPropertyID::CSSPropertyTestNumericValueRange:
         break;
     case CSSPropertyID::CSSPropertyTestProperty:
+        break;
+    case CSSPropertyID::CSSPropertyTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin(builderState, value);
+            break;
+        }
+        break;
+    case CSSPropertyID::CSSPropertyTestRenderStyleHasExplicitlySetPolicyAllBorderRadius:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueTestRenderStyleHasExplicitlySetPolicyAllBorderRadius(builderState, value);
+            break;
+        }
+        break;
+    case CSSPropertyID::CSSPropertyTestRenderStyleHasExplicitlySetPolicyValueOnly:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialTestRenderStyleHasExplicitlySetPolicyValueOnly(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritTestRenderStyleHasExplicitlySetPolicyValueOnly(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueTestRenderStyleHasExplicitlySetPolicyValueOnly(builderState, value);
+            break;
+        }
         break;
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelEnum:
         switch (valueType) {

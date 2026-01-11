@@ -31,15 +31,15 @@
 #include "FontCascade.h"
 #include "KeyboardEvent.h"
 #include "RenderBlock.h"
-#include "RenderStyleInlines.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+GettersInlines.h"
+#include "RenderStyle+SettersInlines.h"
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/StringBuilder.h>
 #include <wtf/text/TextBreakIterator.h>
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(DateTimeSymbolicFieldElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(DateTimeSymbolicFieldElement);
 
 DateTimeSymbolicFieldElement::DateTimeSymbolicFieldElement(Document& document, DateTimeFieldElementFieldOwner& fieldOwner, const Vector<String>& symbols, int placeholderIndex)
     : DateTimeFieldElement(document, fieldOwner)

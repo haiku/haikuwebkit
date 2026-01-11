@@ -154,7 +154,7 @@ static Ref<WebCore::Range> protectedImpl(WKDOMRange *range)
 - (WKBundleRangeHandleRef)_copyBundleRangeHandleRef
 {
     auto rangeHandle = WebKit::InjectedBundleRangeHandle::getOrCreate(protectedImpl(self).ptr());
-    return toAPILeakingRef(WTFMove(rangeHandle));
+    return toAPILeakingRef(WTF::move(rangeHandle));
 }
 
 @end

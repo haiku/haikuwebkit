@@ -35,7 +35,7 @@ inline AddEventListenerOptions::AddEventListenerOptions(bool capture, std::optio
     : EventListenerOptions(capture)
     , passive(passive)
     , once(once)
-    , signal(WTFMove(signal))
+    , signal(WTF::move(signal))
     , webkitTrustedOnly(webkitTrustedOnly)
 {
 }

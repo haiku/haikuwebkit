@@ -103,9 +103,7 @@ static RetainPtr<NSWindow> protectedWindow(Widget* widget)
 static NSScreen *screen(Widget* widget)
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
-    // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
-    // as we merely return it right away (rdar://165602290).
-    SUPPRESS_UNRETAINED_LOCAL if (NSScreen *screenFromWindow = [protectedWindow(widget) screen])
+    if (NSScreen *screenFromWindow = [protectedWindow(widget) screen])
         return screenFromWindow;
 
     return screen(displayID(widget));
@@ -204,7 +202,7 @@ ScreenProperties collectScreenProperties()
         screenData.currentEDRHeadroom = [screen maximumExtendedDynamicRangeColorComponentValue];
 #endif
 
-        screenProperties.screenDataMap.set(displayID, WTFMove(screenData));
+        screenProperties.screenDataMap.set(displayID, WTF::move(screenData));
         if (!screenProperties.primaryDisplayID)
             screenProperties.primaryDisplayID = displayID;
     }

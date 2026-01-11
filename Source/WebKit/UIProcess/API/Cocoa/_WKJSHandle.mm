@@ -61,7 +61,7 @@
     webFrame->getFrameInfo([completionHandler = makeBlockPtr(completionHandler)] (auto&& data) mutable {
         if (!data)
             return completionHandler(nil);
-        completionHandler(wrapper(API::FrameInfo::create(WTFMove(*data))).get());
+        completionHandler(wrapper(API::FrameInfo::create(WTF::move(*data))).get());
     });
 }
 

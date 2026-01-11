@@ -32,7 +32,7 @@ public:
     static JSTestLegacyOverrideBuiltIns* create(JSC::Structure* structure, JSDOMGlobalObject* globalObject, Ref<TestLegacyOverrideBuiltIns>&& impl)
     {
         SUPPRESS_UNCOUNTED_LOCAL auto& vm = globalObject->vm();
-        JSTestLegacyOverrideBuiltIns* ptr = new (NotNull, JSC::allocateCell<JSTestLegacyOverrideBuiltIns>(vm)) JSTestLegacyOverrideBuiltIns(structure, *globalObject, WTFMove(impl));
+        JSTestLegacyOverrideBuiltIns* ptr = new (NotNull, JSC::allocateCell<JSTestLegacyOverrideBuiltIns>(vm)) JSTestLegacyOverrideBuiltIns(structure, *globalObject, WTF::move(impl));
         ptr->finishCreation(vm);
         return ptr;
     }

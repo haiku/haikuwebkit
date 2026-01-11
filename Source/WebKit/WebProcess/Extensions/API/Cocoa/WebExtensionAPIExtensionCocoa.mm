@@ -177,7 +177,7 @@ void WebExtensionAPIExtension::isAllowedIncognitoAccess(Ref<WebExtensionCallback
 {
     // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/extension/isAllowedIncognitoAccess
 
-    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::ExtensionIsAllowedIncognitoAccess(), [protectedThis = Ref { *this }, callback = WTFMove(callback)](bool result) {
+    WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::ExtensionIsAllowedIncognitoAccess(), [protectedThis = Ref { *this }, callback = WTF::move(callback)](bool result) {
         callback->call(JSValueMakeBoolean(callback->globalContext(), result));
     }, extensionContext().identifier());
 }

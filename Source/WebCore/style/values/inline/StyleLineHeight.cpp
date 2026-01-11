@@ -29,7 +29,7 @@
 #include "AnimationUtilities.h"
 
 #include "CSSPropertyParserConsumer+Font.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "StyleBuilderChecking.h"
 #include "StyleLengthWrapper+Blending.h"
 #include "StyleLengthWrapper+CSSValueConversion.h"
@@ -64,25 +64,15 @@ auto CSSValueConversion<LineHeight>::operator()(BuilderState& state, const CSSPr
     // since EvaluationTimeZoom will set the appropriate value.
     auto zoomFactor = [&] {
         if (!state.style().evaluationTimeZoomEnabled())
-            return Style::ZoomFactor { 1.0f, state.style().deviceScaleFactor() };
-        return Style::ZoomFactor { conversionData.zoom(), state.style().deviceScaleFactor() };
+            return Style::ZoomFactor { 1.0f };
+        return Style::ZoomFactor { conversionData.zoom() };
     };
 
     if (primitiveValue.isLength() || primitiveValue.isCalculatedPercentageWithLength()) {
         double fixedValue = 0;
-        if (primitiveValue.isLength()) {
-            auto lengthUnit = CSS::toLengthUnit(primitiveValue.primitiveType());
+        if (primitiveValue.isLength())
             fixedValue = primitiveValue.resolveAsLength(conversionData);
-
-            // Apply text zoom to font-relative units when evaluationTimeZoomEnabled.
-            // This matches the behavior of percentage-based line-height (see primitiveValue.isPercentage() case below).
-            // When evaluationTimeZoomEnabled is true, computedSizeForRangeZoomOption returns
-            // the unzoomed font size, so we need to multiply by text zoom for font-relative units.
-            if (lengthUnit && CSS::isFontOrRootFontRelativeLength(*lengthUnit)) {
-                auto textZoom = evaluationTimeZoomEnabled(state) ? conversionData.zoom() : 1.0f;
-                fixedValue *= textZoom;
-            }
-        } else
+        else
             fixedValue = primitiveValue.protectedCssCalcValue()->createCalculationValue(conversionData, CSSCalcSymbolTable { })->evaluate(state.style().fontDescription().computedSizeForRangeZoomOption(conversionData.rangeZoomOption()), zoomFactor());
 
         if (multiplier != 1.0f)

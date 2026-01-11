@@ -26,8 +26,8 @@
 #include "StyleOffsetPosition.h"
 
 #include "CSSPositionValue.h"
-#include "RenderStyleInlines.h"
 #include "StyleBuilderChecking.h"
+#include "StyleComputedStyle+InitialInlines.h"
 #include "StyleLengthWrapper+Blending.h"
 #include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
@@ -66,7 +66,7 @@ auto CSSValueConversion<OffsetPosition>::operator()(BuilderState& state, const C
 
     RefPtr positionValue = requiredDowncast<CSSPositionValue>(state, value);
     if (!positionValue)
-        return RenderStyle::initialOffsetPosition();
+        return Style::ComputedStyle::initialOffsetPosition();
     return OffsetPosition { toStyle(positionValue->position(), state) };
 }
 

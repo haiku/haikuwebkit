@@ -37,7 +37,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(GainNode);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(GainNode);
 
 ExceptionOr<Ref<GainNode>> GainNode::create(BaseAudioContext& context, const GainOptions& options)
 {

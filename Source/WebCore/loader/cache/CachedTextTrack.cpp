@@ -38,7 +38,7 @@
 namespace WebCore {
 
 CachedTextTrack::CachedTextTrack(CachedResourceRequest&& request, PAL::SessionID sessionID, const CookieJar* cookieJar)
-    : CachedResource(WTFMove(request), Type::TextTrackResource, sessionID, cookieJar)
+    : CachedResource(WTF::move(request), Type::TextTrackResource, sessionID, cookieJar)
 {
 }
 

@@ -107,7 +107,7 @@ void ViewSnapshotStore::recordSnapshot(WebPageProxy& webPageProxy, WebBackForwar
     snapshot->setViewScrollPosition(WebCore::roundedIntPoint(webPageProxy.viewScrollPosition()));
     snapshot->setOrigin(WebCore::SecurityOriginData::fromURL(URL(item.url())));
 
-    item.setSnapshot(WTFMove(snapshot));
+    item.setSnapshot(WTF::move(snapshot));
 }
 
 void ViewSnapshotStore::discardSnapshotImages()

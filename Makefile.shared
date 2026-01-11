@@ -53,12 +53,6 @@ ifeq (iosmac,$(SDK_VARIANT))
 	BUILD_WEBKIT_BASE += --maccatalyst
 endif
 
-ifeq (, $(findstring WK_USE_CCACHE, $(ARGS)))
-	ifneq (, $(shell which ccache))
-		XCODE_OPTIONS += WK_USE_CCACHE=YES
-	endif
-endif
-
 ifneq (,$(EXPORT_COMPILE_COMMANDS))
 		EXTRA_CFLAGS += -gen-cdb-fragment-path $$(BUILT_PRODUCTS_DIR)/compile_commands
 		XCODE_OPTIONS += GCC_PRECOMPILE_PREFIX_HEADER=NO

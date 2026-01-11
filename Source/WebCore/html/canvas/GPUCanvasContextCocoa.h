@@ -47,7 +47,7 @@ class Document;
 class GPUDisplayBufferDisplayDelegate;
 
 class GPUCanvasContextCocoa final : public GPUCanvasContext {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(GPUCanvasContextCocoa);
+    WTF_MAKE_TZONE_ALLOCATED(GPUCanvasContextCocoa);
 public:
 #if ENABLE(OFFSCREEN_CANVAS)
     using CanvasType = Variant<RefPtr<HTMLCanvasElement>, RefPtr<OffscreenCanvas>>;

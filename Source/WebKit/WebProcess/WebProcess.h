@@ -145,7 +145,6 @@ class RemoteImageDecoderAVFManager;
 class RemoteLegacyCDMFactory;
 class RemoteMediaEngineConfigurationFactory;
 class RemoteMediaPlayerManager;
-class RemoteSharedResourceCacheProxy;
 class StorageAreaMap;
 class UserData;
 class WebAutomationSessionProxy;
@@ -308,7 +307,7 @@ public:
 
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const { return m_sharedPreferencesForWebProcess; }
     const SharedPreferencesForWebProcess& sharedPreferencesForWebProcessValue() const { return m_sharedPreferencesForWebProcess; }
-    void updateSharedPreferencesForWebProcess(SharedPreferencesForWebProcess sharedPreferencesForWebProcess) { m_sharedPreferencesForWebProcess = WTFMove(sharedPreferencesForWebProcess); }
+    void updateSharedPreferencesForWebProcess(SharedPreferencesForWebProcess sharedPreferencesForWebProcess) { m_sharedPreferencesForWebProcess = WTF::move(sharedPreferencesForWebProcess); }
 
 #if USE(LIBRICE)
     RefPtr<RiceBackendProxy> gstreamerIceBackend(RiceBackendIdentifier);
@@ -341,7 +340,6 @@ public:
     Ref<RemoteCDMFactory> protectedCDMFactory();
 #endif
     RemoteMediaEngineConfigurationFactory& mediaEngineConfigurationFactory();
-    RemoteSharedResourceCacheProxy& gpuProcessSharedResourceCache();
 #endif // ENABLE(GPU_PROCESS)
 
 #if ENABLE(MODEL_PROCESS)
@@ -845,7 +843,6 @@ private:
 #if ENABLE(MEDIA_STREAM) && PLATFORM(COCOA)
     std::unique_ptr<AudioMediaStreamTrackRendererInternalUnitManager> m_audioMediaStreamTrackRendererInternalUnitManager;
 #endif
-    RefPtr<RemoteSharedResourceCacheProxy> m_sharedResourceCache;
 #endif
 
 #if ENABLE(MODEL_PROCESS)

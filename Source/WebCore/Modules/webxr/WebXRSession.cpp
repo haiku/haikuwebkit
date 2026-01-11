@@ -59,11 +59,11 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRSession);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebXRSession);
 
 Ref<WebXRSession> WebXRSession::create(Document& document, WebXRSystem& system, XRSessionMode mode, PlatformXR::Device& device, FeatureList&& requestedFeatures)
 {
-    auto session = adoptRef(*new WebXRSession(document, system, mode, device, WTFMove(requestedFeatures)));
+    auto session = adoptRef(*new WebXRSession(document, system, mode, device, WTF::move(requestedFeatures)));
     session->suspendIfNeeded();
     return session;
 }
@@ -74,7 +74,7 @@ WebXRSession::WebXRSession(Document& document, WebXRSystem& system, XRSessionMod
     , m_xrSystem(system)
     , m_mode(mode)
     , m_device(device)
-    , m_requestedFeatures(WTFMove(requestedFeatures))
+    , m_requestedFeatures(WTF::move(requestedFeatures))
     , m_activeRenderState(WebXRRenderState::create(mode))
     , m_viewerReferenceSpace(WebXRViewerSpace::create(document, *this))
     , m_timeOrigin(MonotonicTime::now())
@@ -132,7 +132,7 @@ const Vector<String> WebXRSession::enabledFeatures() const
     for (const auto& feature : m_requestedFeatures) {
         String sessionFeature = PlatformXR::sessionFeatureDescriptor(feature);
         if (sessionFeature != ""_s)
-            enabledFeatureArray.append(WTFMove(sessionFeature));
+            enabledFeatureArray.append(WTF::move(sessionFeature));
     }
 
     return enabledFeatureArray;
@@ -265,13 +265,13 @@ void WebXRSession::requestReferenceSpace(XRReferenceSpaceType type, RequestRefer
 
     // 1. Let promise be a new Promise.
     // 2. Run the following steps in parallel:
-    scriptExecutionContext()->postTask([this, weakThis = WeakPtr { *this }, promise = WTFMove(promise), type](auto&) mutable {
+    scriptExecutionContext()->postTask([this, weakThis = WeakPtr { *this }, promise = WTF::move(promise), type](auto&) mutable {
         if (!weakThis)
             return;
         // 2.1. If the result of running reference space is supported for type and session is false, queue a task to reject promise
         // with a NotSupportedError and abort these steps.
         if (!referenceSpaceIsSupported(type)) {
-            queueTaskKeepingObjectAlive(*this, TaskSource::WebXR, [promise = WTFMove(promise)](auto&) mutable {
+            queueTaskKeepingObjectAlive(*this, TaskSource::WebXR, [promise = WTF::move(promise)](auto&) mutable {
                 promise.reject(Exception { ExceptionCode::NotSupportedError });
             });
             return;
@@ -281,7 +281,7 @@ void WebXRSession::requestReferenceSpace(XRReferenceSpaceType type, RequestRefer
             device->initializeReferenceSpace(type);
 
         // 2.3. Queue a task to run the following steps:
-        queueTaskKeepingObjectAlive(*this, TaskSource::WebXR, [type, promise = WTFMove(promise)](auto& session) mutable {
+        queueTaskKeepingObjectAlive(*this, TaskSource::WebXR, [type, promise = WTF::move(promise)](auto& session) mutable {
             if (!session.scriptExecutionContext()) {
                 promise.reject(Exception { ExceptionCode::InvalidStateError });
                 return;
@@ -315,7 +315,7 @@ unsigned WebXRSession::requestAnimationFrame(Ref<XRFrameRequestCallback>&& callb
     // 3. Append callback to session's list of animation frame callbacks, associated with session's
     // animation frame callback identifier's current value.
     callback->setCallbackId(newId);
-    m_callbacks.append(WTFMove(callback));
+    m_callbacks.append(WTF::move(callback));
 
     // Script can add multiple requestAnimationFrame callbacks but we should only request a device frame once.
     // When requestAnimationFrame is called during processing RAF callbacks the next requestFrame is scheduled
@@ -445,7 +445,7 @@ void WebXRSession::didCompleteShutdown()
     // From https://immersive-web.github.io/webxr/#shut-down-the-session
     // 7. Queue a task that fires an XRSessionEvent named end on session.
     auto event = XRSessionEvent::create(eventNames().endEvent, { RefPtr { this } });
-    queueTaskToDispatchEvent(*this, TaskSource::WebXR, WTFMove(event));
+    queueTaskToDispatchEvent(*this, TaskSource::WebXR, WTF::move(event));
 }
 
 ScriptExecutionContext* WebXRSession::scriptExecutionContext() const
@@ -464,7 +464,7 @@ ExceptionOr<void> WebXRSession::end(EndPromise&& promise)
         return Exception { ExceptionCode::InvalidStateError, "Cannot end a session more than once"_s };
 
     ASSERT(!m_endPromise);
-    m_endPromise = makeUnique<EndPromise>(WTFMove(promise));
+    m_endPromise = makeUnique<EndPromise>(WTF::move(promise));
 
     // 1. Let promise be a new Promise.
     // 2. Shut down the target XRSession object.
@@ -486,7 +486,7 @@ void WebXRSession::sessionDidInitializeInputSources(Vector<PlatformXR::FrameData
     // https://immersive-web.github.io/webxr/#dom-xrsystem-requestsession
     // 5.4.11 Queue a task to perform the following steps: NOTE: These steps ensure that initial inputsourceschange
     // events occur after the initial session is resolved.
-    queueTaskKeepingObjectAlive(*this, TaskSource::WebXR, [inputSources = WTFMove(inputSources)](auto& session) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::WebXR, [inputSources = WTF::move(inputSources)](auto& session) mutable {
         //  1. Set session's promise resolved flag to true.
         session.m_inputInitialized = true;
         //  2. Let sources be any existing input sources attached to session.
@@ -521,7 +521,7 @@ void WebXRSession::updateSessionVisibilityState(PlatformXR::VisibilityState visi
     // A user agent MUST dispatch a visibilitychange event on an XRSession each time the
     // visibility state of the XRSession has changed. The event MUST be of type XRSessionEvent.
     auto event = XRSessionEvent::create(eventNames().visibilitychangeEvent, { RefPtr { this } });
-    queueTaskToDispatchEvent(*this, TaskSource::WebXR, WTFMove(event));
+    queueTaskToDispatchEvent(*this, TaskSource::WebXR, WTF::move(event));
 }
 
 void WebXRSession::applyPendingRenderState()
@@ -530,7 +530,7 @@ void WebXRSession::applyPendingRenderState()
     // 1. Let activeState be session’s active render state.
     // 2. Let newState be session’s pending render state.
     // 3. Set session’s pending render state to null.
-    auto newState = WTFMove(m_pendingRenderState);
+    auto newState = WTF::move(m_pendingRenderState);
     ASSERT(newState);
     ASSERT(!m_pendingRenderState);
 
@@ -626,9 +626,9 @@ void WebXRSession::requestFrameIfNeeded()
     if (!device)
         return;
     m_isDeviceFrameRequestPending = true;
-    device->requestFrame(WTFMove(m_requestData), [this, protectedThis = Ref { *this }](auto&& frameData) {
+    device->requestFrame(WTF::move(m_requestData), [this, protectedThis = Ref { *this }](auto&& frameData) {
         m_isDeviceFrameRequestPending = false;
-        onFrame(WTFMove(frameData));
+        onFrame(WTF::move(frameData));
     });
     m_requestData.reset();
 }
@@ -648,11 +648,11 @@ void WebXRSession::onFrame(PlatformXR::FrameData&& frameData)
         return;
 
     // Queue a task to perform the following steps.
-    queueTaskKeepingObjectAlive(*this, TaskSource::WebXR, [frameData = WTFMove(frameData)](auto& session) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::WebXR, [frameData = WTF::move(frameData)](auto& session) mutable {
         if (session.m_ended || session.m_visibilityState == XRVisibilityState::Hidden)
             return;
 
-        session.m_frameData = WTFMove(frameData);
+        session.m_frameData = WTF::move(frameData);
         //  1.Let now be the current high resolution time.
         auto now = (MonotonicTime::now() - session.m_timeOrigin).milliseconds();
 
@@ -726,7 +726,7 @@ void WebXRSession::onFrame(PlatformXR::FrameData&& frameData)
                 frameLayers.append(session.m_activeRenderState->baseLayer()->endFrame());
 
             if (auto device = session.m_device.get())
-                device->submitFrame(WTFMove(frameLayers));
+                device->submitFrame(WTF::move(frameLayers));
         }
 
         session.requestFrameIfNeeded();
@@ -784,7 +784,7 @@ void WebXRSession::requestHitTestSource(const XRHitTestOptionsInit& init, Reques
         promise.reject(Exception { ExceptionCode::InvalidStateError });
         return;
     }
-    auto maybeNativeOrigin = init.space->nativeOrigin();
+    auto maybeNativeOrigin = init.space->nativeOriginInformation();
     if (!maybeNativeOrigin) {
         promise.reject(Exception { ExceptionCode::InvalidStateError, "Unable to retrieve the native origin from XRSpace"_s });
         return;
@@ -795,8 +795,8 @@ void WebXRSession::requestHitTestSource(const XRHitTestOptionsInit& init, Reques
     PlatformXR::Ray ray { { 0, 0, 0 }, { 0, 0, -1 } };
     if (init.offsetRay)
         ray = PlatformXR::Ray { toFloatPoint3D(init.offsetRay->origin()), toFloatPoint3D(init.offsetRay->direction()) };
-    PlatformXR::HitTestOptions options = { *WTFMove(maybeNativeOrigin), entityTypesFromOptions(init), WTFMove(ray) };
-    device->requestHitTestSource(options, [protectedThis = Ref { *this }, promise = WTFMove(promise)](ExceptionOr<PlatformXR::HitTestSource> exceptionOrSource) mutable {
+    PlatformXR::HitTestOptions options = { *WTF::move(maybeNativeOrigin), entityTypesFromOptions(init), WTF::move(ray) };
+    device->requestHitTestSource(options, [protectedThis = Ref { *this }, promise = WTF::move(promise)](ExceptionOr<PlatformXR::HitTestSource> exceptionOrSource) mutable {
         if (exceptionOrSource.hasException())
             promise.reject(exceptionOrSource.releaseException());
         else
@@ -826,8 +826,8 @@ void WebXRSession::requestHitTestSourceForTransientInput(const XRTransientInputH
     PlatformXR::Ray ray { { 0, 0, 0 }, { 0, 0, -1 } };
     if (init.offsetRay)
         ray = PlatformXR::Ray { toFloatPoint3D(init.offsetRay->origin()), toFloatPoint3D(init.offsetRay->direction()) };
-    PlatformXR::TransientInputHitTestOptions options = { init.profile, entityTypesFromOptions(init), WTFMove(ray) };
-    device->requestTransientInputHitTestSource(options, [protectedThis = Ref { *this }, promise = WTFMove(promise)](ExceptionOr<PlatformXR::TransientInputHitTestSource> exceptionOrSource) mutable {
+    PlatformXR::TransientInputHitTestOptions options = { init.profile, entityTypesFromOptions(init), WTF::move(ray) };
+    device->requestTransientInputHitTestSource(options, [protectedThis = Ref { *this }, promise = WTF::move(promise)](ExceptionOr<PlatformXR::TransientInputHitTestSource> exceptionOrSource) mutable {
         if (exceptionOrSource.hasException())
             promise.reject(exceptionOrSource.releaseException());
         else
@@ -841,7 +841,7 @@ void WebXRSession::initializeTrackingAndRendering(std::optional<XRCanvasConfigur
     RefPtr document = downcast<Document>(scriptExecutionContext());
     auto device = this->device();
     if (document && device)
-        device->initializeTrackingAndRendering(document->securityOrigin().data(), m_mode, m_requestedFeatures, WTFMove(init));
+        device->initializeTrackingAndRendering(document->securityOrigin().data(), m_mode, m_requestedFeatures, WTF::move(init));
 }
 
 void WebXRSession::visibilityStateChanged()

@@ -135,9 +135,9 @@ TEST_F(FragmentedSharedBufferTest, tryCreateArrayBufferLargeSegments)
     Vector<uint8_t> vector1(0x4000, 'b');
     Vector<uint8_t> vector2(0x4000, 'c');
 
-    SharedBufferBuilder builder(std::in_place, WTFMove(vector0));
-    builder.append(WTFMove(vector1));
-    builder.append(WTFMove(vector2));
+    SharedBufferBuilder builder(std::in_place, WTF::move(vector0));
+    builder.append(WTF::move(vector1));
+    builder.append(WTF::move(vector2));
     RefPtr<ArrayBuffer> arrayBuffer = builder.buffer()->tryCreateArrayBuffer();
     ASSERT_EQ(0x4000U + 0x4000U + 0x4000U, arrayBuffer->byteLength());
     int position = 0;
@@ -265,9 +265,9 @@ TEST_F(FragmentedSharedBufferTest, getSomeData)
     Vector<uint8_t> s3 = { 'i', 'j', 'k', 'l' };
 
     SharedBufferBuilder builder;
-    builder.append(WTFMove(s1));
-    builder.append(WTFMove(s2));
-    builder.append(WTFMove(s3));
+    builder.append(WTF::move(s1));
+    builder.append(WTF::move(s2));
+    builder.append(WTF::move(s3));
     auto buffer = builder.takeBuffer();
     
     auto abcd = buffer->getSomeData(0);
@@ -300,9 +300,9 @@ TEST_F(FragmentedSharedBufferTest, getContiguousData)
     Vector<uint8_t> s3 = { 'i', 'j', 'k', 'l' };
 
     SharedBufferBuilder builder;
-    builder.append(WTFMove(s1));
-    builder.append(WTFMove(s2));
-    builder.append(WTFMove(s3));
+    builder.append(WTF::move(s1));
+    builder.append(WTF::move(s2));
+    builder.append(WTF::move(s3));
     auto buffer = builder.takeBuffer();
 
     auto abcd = buffer->getContiguousData(0, 4);
@@ -333,13 +333,13 @@ TEST_F(FragmentedSharedBufferTest, isEqualTo)
     auto makeBuffer = [] (Vector<Vector<uint8_t>>&& contents) {
         SharedBufferBuilder builder;
         for (auto& content : contents)
-            builder.append(WTFMove(content));
+            builder.append(WTF::move(content));
         return builder.takeBuffer();
     };
     auto buffer1 = makeBuffer({ { 'a', 'b', 'c', 'd' } });
     EXPECT_EQ(buffer1.get(), buffer1.get());
 
-    SharedBufferBuilder builder(WTFMove(buffer1));
+    SharedBufferBuilder builder(WTF::move(buffer1));
     builder.append(Vector<uint8_t>({ 'a', 'b', 'c', 'd' }));
     EXPECT_EQ(*builder.buffer(), makeBuffer({ { 'a', 'b', 'c', 'd', 'a', 'b', 'c', 'd' } }).get());
 
@@ -353,7 +353,7 @@ TEST_F(FragmentedSharedBufferTest, toHexString)
 {
     Vector<uint8_t> t1 = {0x11, 0x5, 0x12};
     SharedBufferBuilder builder;
-    builder.append(WTFMove(t1));
+    builder.append(WTF::move(t1));
     auto buffer = builder.takeBuffer();
     String result = buffer->toHexString();
     EXPECT_EQ(result, "110512"_s);

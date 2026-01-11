@@ -2786,7 +2786,7 @@ def check_wtf_checked_size(clean_lines, line_number, file_state, error):
 
 
 def check_wtf_move(clean_lines, line_number, file_state, error):
-    """Looks for use of 'std::move()' which should be replaced with 'WTFMove()'.
+    """Looks for use of 'std::move()' and `WTFMove` which should be replaced with 'WTF::move()'.
 
     Args:
       clean_lines: A CleansedLines instance containing the file.
@@ -2803,11 +2803,11 @@ def check_wtf_move(clean_lines, line_number, file_state, error):
     line = clean_lines.elided[line_number]  # Get rid of comments and strings.
 
     using_std_move = search(r'\bstd::move\s*\(', line)
-    if not using_std_move:
-        return
-
-    error(line_number, 'runtime/wtf_move', 4, "Use 'WTFMove()' instead of 'std::move()'.")
-
+    if using_std_move:
+        error(line_number, 'runtime/wtf_move', 4, "Use 'WTF::move()' instead of 'std::move()'.")
+    using_wtfmove = search(r'\bWTFMove\s*\(', line)
+    if using_wtfmove:
+        error(line_number, 'runtime/wtf_move', 4, "Use 'WTF::move()' instead of 'WTFMove()'.")
 
 def check_unsafe_get(clean_lines, line_number, file_state, error):
     """Looks for use of 'unsafeGet()' or 'unsafePtr()' which should be avoided.

@@ -305,7 +305,7 @@ String base64DecodeToString(StringView input, OptionSet<Base64DecodeOption> opti
     auto toString = [&] (auto optionalBuffer) {
         if (!optionalBuffer)
             return nullString();
-        return String::adopt(WTFMove(*optionalBuffer));
+        return String::adopt(WTF::move(*optionalBuffer));
     };
 
     if (input.is8Bit())

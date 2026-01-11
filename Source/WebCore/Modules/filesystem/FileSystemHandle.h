@@ -37,7 +37,7 @@ namespace WebCore {
 template<typename> class DOMPromiseDeferred;
 
 class FileSystemHandle : public ActiveDOMObject, public RefCounted<FileSystemHandle> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(FileSystemHandle);
+    WTF_MAKE_TZONE_ALLOCATED(FileSystemHandle);
 public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }

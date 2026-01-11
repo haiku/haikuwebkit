@@ -231,11 +231,10 @@ layer at (13,1731) size 367x662
           text run at (0,144) width 351: "condimentum vestibulum. Suspendisse hendrerit quam"
           text run at (0,162) width 333: "nec felis. Sed varius turpis vitae pede. Lorem ipsum"
           text run at (0,180) width 275: "dolor sit amet, consectetuer adipiscing elit."
-        RenderBlock (anonymous) at (0,198) size 367x36
-          RenderBlock {SPAN} at (0,0) size 367x36
-            RenderText {#text} at (0,0) size 364x36
-              text run at (0,0) width 364: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
-              text run at (0,18) width 158: "Nulla varius enim ac mi."
+        RenderBlock {SPAN} at (0,198) size 367x36
+          RenderText {#text} at (0,0) size 364x36
+            text run at (0,0) width 364: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
+            text run at (0,18) width 158: "Nulla varius enim ac mi."
         RenderText {#text} at (0,234) size 43x18
           text run at (0,234) width 43: "Lorem"
       RenderText {#text} at (0,234) size 367x198
@@ -308,10 +307,9 @@ layer at (13,2165) size 367x712 backgroundClip at (0,0) size 785x2610 clip at (0
       RenderInline {SPAN} at (0,0) size 367x216
         RenderText {#text} at (0,0) size 364x18
           text run at (0,0) width 364: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
-        RenderBlock (anonymous) at (0,18) size 367x18
-          RenderBlock {SPAN} at (0,0) size 367x18
-            RenderText {#text} at (0,0) size 158x18
-              text run at (0,0) width 158: "Nulla varius enim ac mi."
+        RenderBlock {SPAN} at (0,18) size 367x18
+          RenderText {#text} at (0,0) size 158x18
+            text run at (0,0) width 158: "Nulla varius enim ac mi."
         RenderText {#text} at (0,36) size 365x180
           text run at (0,36) width 303: "Curabitur sollicitudin felis quis lectus. Quisque"
           text run at (0,54) width 364: "adipiscing rhoncus sem. Proin nulla purus, vulputate vel,"

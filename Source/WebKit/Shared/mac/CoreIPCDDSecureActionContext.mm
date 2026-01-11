@@ -96,7 +96,7 @@ CoreIPCDDSecureActionContext::CoreIPCDDSecureActionContext(DDSecureActionContext
             if ([item isKindOfClass:PAL::getDDScannerResultClassSingleton()])
                 result.append((DDScannerResult *)item);
         };
-        m_data.allResults = WTFMove(result);
+        m_data.allResults = WTF::move(result);
     }
 
     if (auto *groupAllResults = dynamic_objc_cast<NSArray>([dictionary.get() objectForKey:@"groupAllResults"])) {
@@ -106,7 +106,7 @@ CoreIPCDDSecureActionContext::CoreIPCDDSecureActionContext(DDSecureActionContext
             if ([item isKindOfClass:PAL::getDDScannerResultClassSingleton()])
                 result.append((DDScannerResult *)item);
         };
-        m_data.groupAllResults = WTFMove(result);
+        m_data.groupAllResults = WTF::move(result);
     }
 
     if (auto *groupCategory = dynamic_objc_cast<NSNumber>([dictionary.get() objectForKey:@"groupCategory"]))
@@ -136,7 +136,7 @@ CoreIPCDDSecureActionContext::CoreIPCDDSecureActionContext(DDSecureActionContext
 }
 
 CoreIPCDDSecureActionContext::CoreIPCDDSecureActionContext(CoreIPCDDSecureActionContextData&& data)
-: m_data(WTFMove(data)) { }
+: m_data(WTF::move(data)) { }
 
 RetainPtr<id> CoreIPCDDSecureActionContext::toID() const
 {

@@ -87,7 +87,7 @@ void LegacyCDM::clearFactories()
 
 void LegacyCDM::registerCDMFactory(CreateCDM&& constructor, CDMSupportsKeySystem&& supportsKeySystem, CDMSupportsKeySystemAndMimeType&& supportsKeySystemAndMimeType)
 {
-    installedCDMFactories().append({ WTFMove(constructor), WTFMove(supportsKeySystem), WTFMove(supportsKeySystemAndMimeType) });
+    installedCDMFactories().append({ WTF::move(constructor), WTF::move(supportsKeySystem), WTF::move(supportsKeySystemAndMimeType) });
 }
 
 static LegacyCDMFactory* CDMFactoryForKeySystem(const String& keySystem)

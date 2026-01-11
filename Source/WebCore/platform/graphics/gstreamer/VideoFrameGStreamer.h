@@ -49,8 +49,8 @@ public:
     struct CreateOptions {
         CreateOptions() = default;
         CreateOptions(IntSize&& presentationSize, std::optional<Info>&& info = { })
-            : presentationSize(WTFMove(presentationSize))
-            , info(WTFMove(info))
+            : presentationSize(WTF::move(presentationSize))
+            , info(WTF::move(info))
         { }
         IntSize presentationSize;
         std::optional<Info> info;
@@ -66,7 +66,6 @@ public:
     static Ref<VideoFrameGStreamer> createWrappedSample(const GRefPtr<GstSample>&, const MediaTime& presentationTime = MediaTime::invalidTime(), Rotation videoRotation = Rotation::None);
 
     static RefPtr<VideoFrameGStreamer> createFromPixelBuffer(Ref<PixelBuffer>&&, const IntSize& destinationSize, double frameRate, const CreateOptions&, PlatformVideoColorSpace&& = { });
-    ~VideoFrameGStreamer();
 
     void setFrameRate(double);
     void setMaxFrameRate(double);
@@ -86,7 +85,6 @@ public:
 
     IntSize presentationSize() const final { return m_presentationSize; }
     uint32_t pixelFormat() const final { return GST_VIDEO_INFO_FORMAT(&m_info.info); }
-    RefPtr<NativeImage> copyNativeImage() const final;
 
     enum class MemoryType : uint8_t {
         Unsupported,

@@ -44,7 +44,7 @@ class ShadowRoot;
 class FragmentedSharedBuffer;
 
 class HTMLAttachmentElement final : public HTMLElement {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLAttachmentElement);
+    WTF_MAKE_TZONE_ALLOCATED(HTMLAttachmentElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HTMLAttachmentElement);
 public:
     static Ref<HTMLAttachmentElement> create(const QualifiedName&, Document&);
@@ -96,6 +96,16 @@ public:
     bool isWideLayout() const { return m_implementation == Implementation::WideLayout; }
     HTMLElement* wideLayoutShadowContainer() const { return m_containerElement.get(); }
     HTMLElement* wideLayoutImageElement() const;
+    WEBCORE_EXPORT static String shadowUserAgentStyleSheetText();
+
+    enum class HighlightState : uint8_t {
+        None, // The object is not selected.
+        Start, // The object either contains the start of a selection run or is the start of a run
+        Inside, // The object is fully encompassed by a selection run
+        End, // The object either contains the end of a selection run or is the end of a run
+        Both // The object contains an entire run or is the sole selected object in that run
+    };
+    void addSelectionClasses(HighlightState);
 
 private:
     friend class AttachmentSaveEventListener;

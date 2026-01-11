@@ -646,4 +646,12 @@ void TestController::setHasMouseDeviceForTesting(bool hasMouseDevice)
 }
 #endif
 
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+void TestController::exitImmersive()
+{
+    TestRunnerWKWebView *webView = mainWebView()->platformView();
+    [webView _exitImmersive];
+}
+#endif
+
 } // namespace WTR

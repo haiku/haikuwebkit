@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012 Google Inc. All rights reserved.
- * Copyright (C) 2013-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -923,7 +923,6 @@ enum ContentsFormat {
     undefined setCanvasNoiseInjectionSalt(HTMLCanvasElement element, unsigned long long salt);
     boolean doesCanvasHavePendingCanvasNoiseInjection(HTMLCanvasElement element);
 
-    long timerNestingLevel();
     // Query if a timer is currently throttled, to debug timer throttling.
     boolean isTimerThrottled(long timerHandle);
     boolean isTimerAligned(long timerHandle);
@@ -1029,6 +1028,7 @@ enum ContentsFormat {
     [Conditional=VIDEO] undefined setCaptionsStyleSheetOverride(DOMString override);
     [Conditional=VIDEO] undefined setPrimaryAudioTrackLanguageOverride(DOMString language);
     [Conditional=VIDEO] undefined setCaptionDisplayMode(DOMString mode);
+    [Conditional=VIDEO] readonly attribute DOMString captionDisplayMode;
     [Conditional=VIDEO] TextTrackCueGeneric createGenericCue(double startTime, double endTime, DOMString text);
     [Conditional=VIDEO] DOMString textTrackBCP47Language(TextTrack track);
 
@@ -1039,6 +1039,7 @@ enum ContentsFormat {
     [Conditional=VIDEO] undefined showCaptionDisplaySettingsPreviewForMediaElement(HTMLMediaElement element);
     [Conditional=VIDEO] undefined hideCaptionDisplaySettingsPreviewForMediaElement(HTMLMediaElement element);
     [Conditional=VIDEO] undefined setMockCaptionDisplaySettingsClientCallback(MockCaptionDisplaySettingsClientCallback? callback);
+    [Conditional=VIDEO] MediaControlsHost controlsHostForMediaElement(HTMLMediaElement element);
 
     boolean isSelectPopupVisible(HTMLSelectElement element);
 
@@ -1084,7 +1085,6 @@ enum ContentsFormat {
 
     [Conditional=WEB_AUDIO] undefined useMockAudioDestinationCocoa();
 
-    [Conditional=WEB_RTC] undefined emulateRTCPeerConnectionPlatformEvent(RTCPeerConnection connection, DOMString action);
     [Conditional=WEB_RTC] undefined useMockRTCPeerConnectionFactory(DOMString testCase);
     [Conditional=WEB_RTC] undefined setICECandidateFiltering(boolean enabled);
     [Conditional=WEB_RTC] undefined setEnumeratingAllNetworkInterfacesEnabled(boolean enabled);
@@ -1139,6 +1139,8 @@ enum ContentsFormat {
 
     [CallWith=CurrentGlobalObject] any cloneArrayBuffer(any buffer, any srcByteOffset, any byteLength);
     boolean isReadableStreamDisturbed(ReadableStream stream);
+    undefined observeReadableStreamLifetime(ReadableStream stream);
+    unsigned long observedLiveReadableStreamCount();
 
     DOMString resourceLoadStatisticsForURL(DOMURL url);
     undefined setTrackingPreventionEnabled(boolean enable);
@@ -1304,6 +1306,7 @@ enum ContentsFormat {
     [Conditional=VIDEO] readonly attribute NowPlayingMetadata? nowPlayingMetadata;
     [Conditional=VIDEO] readonly attribute NowPlayingState nowPlayingState;
     [Conditional=VIDEO] boolean elementIsActiveNowPlayingSession(HTMLMediaElement element);
+    undefined setNowPlayingUpdateInterval(double interval);
 
     [Conditional=VIDEO] HTMLMediaElement bestMediaElementForRemoteControls(PlaybackControlsPurpose purpose);
     [Conditional=VIDEO] MediaSessionState mediaSessionState(HTMLMediaElement element);
@@ -1416,6 +1419,7 @@ enum ContentsFormat {
     undefined setContentSizeCategory(ContentSizeCategory category);
 
     [Conditional=ATTACHMENT_ELEMENT, Conditional=SERVICE_CONTROLS] boolean hasImageControls(HTMLImageElement element);
+    [Conditional=ATTACHMENT_ELEMENT] DOMString attachmentElementShadowUserAgentStyleSheet();
 
     [Conditional=MEDIA_SESSION] double currentMediaSessionPosition(MediaSession session);
     [Conditional=MEDIA_SESSION] undefined sendMediaSessionAction(MediaSession session, MediaSessionActionDetails actionDetails);
@@ -1493,9 +1497,13 @@ enum ContentsFormat {
     [Conditional=MODEL_ELEMENT] DOMString modelElementState(HTMLModelElement element);
     [Conditional=MODEL_ELEMENT] boolean isModelElementIntersectingViewport(HTMLModelElement element);
 
+    undefined copyImageAtLocation(long x, long y);
+
     unsigned long fileConnectionHandleCount(FileSystemHandle handle);
 
     // Navigation API rate limiter testing
     undefined setNavigationRateLimiterParameters(DOMWindow window, unsigned long maxNavigations, double windowDurationSeconds);
     undefined resetNavigationRateLimiter(DOMWindow window);
+
+    [Conditional=WIRELESS_PLAYBACK_MEDIA_PLAYER, EnabledBySetting=WirelessPlaybackMediaPlayerEnabled] readonly attribute MockMediaDeviceRouteController mockMediaDeviceRouteController;
 };

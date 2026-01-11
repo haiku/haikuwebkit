@@ -56,7 +56,6 @@ private:
     void flush(const AbstractLocker&) WTF_REQUIRES_LOCK(m_lock);
 
     WTF::FileSystemImpl::FileHandle m_file { };
-    void* m_marker { nullptr };
     uint64_t m_codeIndex { 0 };
     Lock m_lock;
 };

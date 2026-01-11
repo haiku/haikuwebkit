@@ -296,8 +296,8 @@ struct StringViewWithUnderlyingString {
     StringViewWithUnderlyingString() = default;
 
     StringViewWithUnderlyingString(StringView passedView, String passedUnderlyingString)
-        : underlyingString(WTFMove(passedUnderlyingString))
-        , view(WTFMove(passedView))
+        : underlyingString(WTF::move(passedUnderlyingString))
+        , view(WTF::move(passedView))
     { }
 
     String underlyingString;
@@ -1378,31 +1378,31 @@ inline bool String::containsIgnoringASCIICase(StringView string, unsigned start)
     return findIgnoringASCIICase(string, start) != notFound;
 }
 
-inline String WARN_UNUSED_RETURN makeStringByReplacingAll(const String& string, StringView target, StringView replacement)
+WARN_UNUSED_RETURN inline String makeStringByReplacingAll(const String& string, StringView target, StringView replacement)
 {
     if (auto* impl = string.impl())
         return String { impl->replace(target, replacement) };
     return string;
 }
 
-inline String WARN_UNUSED_RETURN makeStringByReplacing(const String& string, unsigned start, unsigned length, StringView replacement)
+WARN_UNUSED_RETURN inline String makeStringByReplacing(const String& string, unsigned start, unsigned length, StringView replacement)
 {
     if (auto* impl = string.impl())
         return String { impl->replace(start, length, replacement) };
     return string;
 }
 
-inline String WARN_UNUSED_RETURN makeStringByReplacingAll(const String& string, char16_t target, StringView replacement)
+WARN_UNUSED_RETURN inline String makeStringByReplacingAll(const String& string, char16_t target, StringView replacement)
 {
     if (auto* impl = string.impl())
         return String { impl->replace(target, replacement) };
     return string;
 }
 
-WTF_EXPORT_PRIVATE String WARN_UNUSED_RETURN makeStringByReplacingAll(StringView, char16_t target, char16_t replacement);
-WTF_EXPORT_PRIVATE String WARN_UNUSED_RETURN makeStringBySimplifyingNewLinesSlowCase(const String&, unsigned firstCarriageReturnOffset);
+WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String makeStringByReplacingAll(StringView, char16_t target, char16_t replacement);
+WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String makeStringBySimplifyingNewLinesSlowCase(const String&, unsigned firstCarriageReturnOffset);
 
-inline String WARN_UNUSED_RETURN makeStringBySimplifyingNewLines(const String& string)
+WARN_UNUSED_RETURN inline String makeStringBySimplifyingNewLines(const String& string)
 {
     auto firstCarriageReturn = string.find('\r');
     if (firstCarriageReturn == notFound)

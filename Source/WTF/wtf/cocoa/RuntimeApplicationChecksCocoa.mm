@@ -359,6 +359,22 @@ void clearApplicationBundleIdentifierTestingOverride()
 #endif
 }
 
+#if USE(SOURCE_APPLICATION_AUDIT_DATA)
+
+static std::optional<audit_token_t> applicationAuditTokenStorage;
+
+void setApplicationAuditToken(audit_token_t token)
+{
+    applicationAuditTokenStorage = token;
+}
+
+std::optional<audit_token_t> applicationAuditToken()
+{
+    return applicationAuditTokenStorage;
+}
+
+#endif
+
 static bool applicationBundleIsEqualTo(const String& bundleIdentifierString)
 {
     return applicationBundleIdentifier() == bundleIdentifierString;

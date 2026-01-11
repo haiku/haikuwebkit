@@ -90,7 +90,7 @@ public:
 
     WebPageProxy* originatingPage() const;
 
-    void setRedirectChain(Vector<URL>&& redirectChain) { m_redirectChain = WTFMove(redirectChain); }
+    void setRedirectChain(Vector<URL>&& redirectChain) { m_redirectChain = WTF::move(redirectChain); }
     const Vector<URL>& redirectChain() const { return m_redirectChain; }
 
     void setWasUserInitiated(bool value) { m_wasUserInitiated = value; }
@@ -113,7 +113,7 @@ public:
     Ref<API::DownloadClient> protectedClient() const;
 
     void setClient(Ref<API::DownloadClient>&&);
-    void setDidStartCallback(CompletionHandler<void(DownloadProxy*)>&& callback) { m_didStartCallback = WTFMove(callback); }
+    void setDidStartCallback(CompletionHandler<void(DownloadProxy*)>&& callback) { m_didStartCallback = WTF::move(callback); }
     void setSuggestedFilename(const String& suggestedFilename) { m_suggestedFilename = suggestedFilename; }
 
     // Message handlers.

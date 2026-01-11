@@ -37,20 +37,20 @@ void Content::clear()
 
 void Content::set(Content&& newContent)
 {
-    lines = WTFMove(newContent.lines);
-    boxes = WTFMove(newContent.boxes);
+    lines = WTF::move(newContent.lines);
+    boxes = WTF::move(newContent.boxes);
 }
 
 void Content::append(Content&& newContent)
 {
-    lines.appendVector(WTFMove(newContent.lines));
-    boxes.appendVector(WTFMove(newContent.boxes));
+    lines.appendVector(WTF::move(newContent.lines));
+    boxes.appendVector(WTF::move(newContent.boxes));
 }
 
 void Content::insert(Content&& newContent, size_t lineIndex, size_t boxIndex)
 {
-    lines.insertVector(lineIndex, WTFMove(newContent.lines));
-    boxes.insertVector(boxIndex, WTFMove(newContent.boxes));
+    lines.insertVector(lineIndex, WTF::move(newContent.lines));
+    boxes.insertVector(boxIndex, WTF::move(newContent.boxes));
 }
 
 void Content::remove(size_t firstLineIndex, size_t numberOfLines, size_t firstBoxIndex, size_t numberOfBoxes)

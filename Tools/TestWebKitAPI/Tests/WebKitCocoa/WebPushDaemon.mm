@@ -303,7 +303,7 @@ template<> struct TestArgumentCoder<URL> {
         auto string = decoder.template decode<String>();
         if (!string)
             return std::nullopt;
-        return { URL(WTFMove(*string)) };
+        return { URL(WTF::move(*string)) };
     }
 };
 
@@ -462,7 +462,7 @@ void WebPushXPCConnectionMessageSender::sendWithoutUsingIPCConnection(M&& messag
     TestEncoder encoder;
     encoder.encodeHeader<M>();
     message.encode(encoder);
-    auto dictionary = messageDictionaryFromEncoder(WTFMove(encoder));
+    auto dictionary = messageDictionaryFromEncoder(WTF::move(encoder));
     xpc_connection_send_message(m_connection.get(), dictionary.get());
 }
 
@@ -472,12 +472,12 @@ void WebPushXPCConnectionMessageSender::sendWithAsyncReplyWithoutUsingIPCConnect
     TestEncoder encoder;
     encoder.encodeHeader<M>();
     message.encode(encoder);
-    auto dictionary = messageDictionaryFromEncoder(WTFMove(encoder));
-    xpc_connection_send_message_with_reply(m_connection.get(), dictionary.get(), mainDispatchQueueSingleton(), makeBlockPtr([this, completionHandler = WTFMove(completionHandler)] (xpc_object_t reply) mutable {
+    auto dictionary = messageDictionaryFromEncoder(WTF::move(encoder));
+    xpc_connection_send_message_with_reply(m_connection.get(), dictionary.get(), mainDispatchQueueSingleton(), makeBlockPtr([this, completionHandler = WTF::move(completionHandler)] (xpc_object_t reply) mutable {
         if (xpc_get_type(reply) == XPC_TYPE_ERROR) {
             // We only expect an error if we were purposefully testing the wrong protocol version.
             RELEASE_ASSERT(m_shouldIncrementProtocolVersionForTesting);
-            return IPC::cancelReplyWithoutUsingConnection<M>(WTFMove(completionHandler));
+            return IPC::cancelReplyWithoutUsingConnection<M>(WTF::move(completionHandler));
         }
 
         if (xpc_get_type(reply) != XPC_TYPE_DICTIONARY)
@@ -488,7 +488,7 @@ void WebPushXPCConnectionMessageSender::sendWithAsyncReplyWithoutUsingIPCConnect
         auto data = xpcDictionaryGetData(reply, WebKit::WebPushD::protocolEncodedMessageKey);
         TestDecoder decoder(data);
         decoder.ignoreHeader<M>();
-        IPC::callReplyWithoutUsingConnection<M>(decoder, WTFMove(completionHandler));
+        IPC::callReplyWithoutUsingConnection<M>(decoder, WTF::move(completionHandler));
     }).get());
 }
 
@@ -507,7 +507,7 @@ static WebKit::WebPushD::WebPushDaemonConnectionConfiguration defaultWebPushDaem
     memcpySpan(auditToken.mutableSpan(), asByteSpan(token));
 
     IGNORE_CLANG_WARNINGS_BEGIN("missing-designated-field-initializers")
-    return { .hostAppAuditTokenData = WTFMove(auditToken) };
+    return { .hostAppAuditTokenData = WTF::move(auditToken) };
     IGNORE_CLANG_WARNINGS_END
 }
 
@@ -1381,19 +1381,19 @@ public:
         m_notificationProvider = makeUnique<TestWebKitAPI::TestNotificationProvider>(Vector<WKNotificationManagerRef> { [processPool _notificationManagerForTesting], WKNotificationManagerGetSharedServiceWorkerNotificationManager() });
 
         auto webView = makeUniqueRef<WebPushDTestWebView>(emptyString(), std::nullopt, processPool.get(), *m_notificationProvider, m_html, m_installDataStoreDelegate, m_builtInNotificationsEnabled);
-        m_webViews.append(WTFMove(webView));
+        m_webViews.append(WTF::move(webView));
 
         auto webViewWithIdentifier1 = makeUniqueRef<WebPushDTestWebView>(emptyString(), WTF::UUID::parse("0bf5053b-164c-4b7d-8179-832e6bf158df"_s), processPool.get(), *m_notificationProvider, m_html, m_installDataStoreDelegate, m_builtInNotificationsEnabled);
-        m_webViews.append(WTFMove(webViewWithIdentifier1));
+        m_webViews.append(WTF::move(webViewWithIdentifier1));
 
         auto webViewWithIdentifier2 = makeUniqueRef<WebPushDTestWebView>(emptyString(), WTF::UUID::parse("940e7729-738e-439f-a366-1a8719e23b2d"_s), processPool.get(), *m_notificationProvider, m_html, m_installDataStoreDelegate, m_builtInNotificationsEnabled);
-        m_webViews.append(WTFMove(webViewWithIdentifier2));
+        m_webViews.append(WTF::move(webViewWithIdentifier2));
 
         auto webViewWithPartition = makeUniqueRef<WebPushDTestWebView>("testPartition"_s, std::nullopt, processPool.get(), *m_notificationProvider, m_html, m_installDataStoreDelegate, m_builtInNotificationsEnabled);
-        m_webViews.append(WTFMove(webViewWithPartition));
+        m_webViews.append(WTF::move(webViewWithPartition));
 
         auto webViewWithPartitionAndIdentifier = makeUniqueRef<WebPushDTestWebView>("testPartition"_s, WTF::UUID::parse("940e7729-738e-439f-a366-1a8719e23b2d"_s), processPool.get(), *m_notificationProvider, m_html, m_installDataStoreDelegate, m_builtInNotificationsEnabled);
-        m_webViews.append(WTFMove(webViewWithPartitionAndIdentifier));
+        m_webViews.append(WTF::move(webViewWithPartitionAndIdentifier));
     }
 
     ~WebPushDTest()
@@ -1417,7 +1417,7 @@ public:
         });
         TestWebKitAPI::Util::run(&done);
 
-        return std::make_pair(WTFMove(enabledTopics), WTFMove(ignoredTopics));
+        return std::make_pair(WTF::move(enabledTopics), WTF::move(ignoredTopics));
     }
 
     size_t subscribedTopicsCount() { return getPushTopics().first.size(); }
@@ -1869,7 +1869,7 @@ TEST_F(WebPushDBuiltInTest, ShowAndGetNotifications)
     auto configuration = defaultWebPushDaemonConfiguration();
     configuration.pushPartitionString = dataStore.get()._webPushPartition;
     configuration.dataStoreIdentifier = WTF::UUID::fromNSUUID(dataStore.get()._identifier);
-    auto utilityConnection = createAndConfigureConnectionToService("org.webkit.webpushtestdaemon.service", WTFMove(configuration));
+    auto utilityConnection = createAndConfigureConnectionToService("org.webkit.webpushtestdaemon.service", WTF::move(configuration));
     auto sender = WebPushXPCConnectionMessageSender { utilityConnection.get() };
 
     WebKit::WebPushD::PushMessageForTesting message;

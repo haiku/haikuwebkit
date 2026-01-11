@@ -34,7 +34,6 @@
 #include <atomic>
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/HashSet.h>
-#include <wtf/TypeCasts.h>
 #include <wtf/WeakHashSet.h>
 
 namespace WebCore {
@@ -195,8 +194,3 @@ inline const CSSParserContext& CanvasBase::cssParserContext() const
 }
 
 } // namespace WebCore
-
-#define SPECIALIZE_TYPE_TRAITS_CANVAS(ToValueTypeName, predicate) \
-SPECIALIZE_TYPE_TRAITS_BEGIN(ToValueTypeName) \
-static bool isType(const WebCore::CanvasBase& canvas) { return canvas.predicate; } \
-SPECIALIZE_TYPE_TRAITS_END()

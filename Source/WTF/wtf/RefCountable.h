@@ -47,7 +47,7 @@ public:
     }
 
     RefCountable(T&& value)
-        : m_value(WTFMove(value))
+        : m_value(WTF::move(value))
     {
     }
 

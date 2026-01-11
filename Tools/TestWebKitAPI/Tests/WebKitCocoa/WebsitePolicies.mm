@@ -682,7 +682,7 @@ struct ParsedRange {
     if (!self)
         return nil;
     
-    videoData = WTFMove(data);
+    videoData = WTF::move(data);
     
     return self;
 }
@@ -722,7 +722,7 @@ TEST(WebpagePreferences, WebsitePoliciesDuringRedirect)
 {
     auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
     auto videoData = adoptNS([[NSData alloc] initWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"mp4"]]);
-    [configuration setURLSchemeHandler:adoptNS([[TestSchemeHandler alloc] initWithVideoData:WTFMove(videoData)]).get() forURLScheme:@"test"];
+    [configuration setURLSchemeHandler:adoptNS([[TestSchemeHandler alloc] initWithVideoData:WTF::move(videoData)]).get() forURLScheme:@"test"];
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
     
     auto delegate = adoptNS([[AutoplayPoliciesDelegate alloc] init]);
@@ -1109,7 +1109,7 @@ static unsigned loadCount;
 
 - (void)setTaskHandler:(Function<void(id <WKURLSchemeTask>)>&&)handler
 {
-    _taskHandler = WTFMove(handler);
+    _taskHandler = WTF::move(handler);
 }
 
 - (void)webView:(WKWebView *)webView startURLSchemeTask:(id <WKURLSchemeTask>)task

@@ -76,7 +76,7 @@ webrtc::VideoFrame convertGStreamerSampleToLibWebRTCVideoFrame(GRefPtr<GstSample
     webrtc::VideoFrame::Builder builder;
     auto buffer = gst_sample_get_buffer(sample.get());
     auto pts = GST_BUFFER_PTS(buffer);
-    return builder.set_video_frame_buffer(GStreamerVideoFrameLibWebRTC::create(WTFMove(sample)))
+    return builder.set_video_frame_buffer(GStreamerVideoFrameLibWebRTC::create(WTF::move(sample)))
         .set_timestamp_rtp(rtpTimestamp)
         .set_timestamp_us(pts * GST_USECOND)
         .build();
@@ -89,7 +89,7 @@ webrtc::scoped_refptr<webrtc::VideoFrameBuffer> GStreamerVideoFrameLibWebRTC::cr
     if (!gst_video_info_from_caps(&info, gst_sample_get_caps(sample.get())))
         ASSERT_NOT_REACHED();
 
-    return webrtc::scoped_refptr<webrtc::VideoFrameBuffer>(new GStreamerVideoFrameLibWebRTC(WTFMove(sample), info));
+    return webrtc::scoped_refptr<webrtc::VideoFrameBuffer>(new GStreamerVideoFrameLibWebRTC(WTF::move(sample), info));
 }
 
 webrtc::scoped_refptr<webrtc::I420BufferInterface> GStreamerVideoFrameLibWebRTC::ToI420()

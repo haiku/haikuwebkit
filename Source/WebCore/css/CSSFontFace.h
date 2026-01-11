@@ -30,6 +30,7 @@
 #include "RenderStyleConstants.h"
 #include "Settings.h"
 #include "TextFlags.h"
+#include "TrustedFonts.h"
 #include <memory>
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/Forward.h>
@@ -118,9 +119,9 @@ public:
 
     bool computeFailureState() const;
 
-    void opportunisticallyStartFontDataURLLoading();
+    void opportunisticallyStartFontDataURLLoading(DownloadableBinaryFontTrustedTypes);
 
-    void adoptSource(std::unique_ptr<CSSFontFaceSource>&&);
+    void adoptSource(std::unique_ptr<CSSFontFaceSource>);
     void sourcesPopulated() { m_sourcesPopulated = true; }
     size_t sourceCount() const { return m_sources.size(); }
 
@@ -137,7 +138,7 @@ public:
     // We don't guarantee that the FontFace wrapper will be the same every time you ask for it.
     Ref<FontFace> wrapper(ScriptExecutionContext*);
     void setWrapper(FontFace&);
-    FontFace* existingWrapper();
+    FontFace* existingWrapper() const;
 
     struct FontLoadTiming {
         Seconds blockPeriod;
@@ -193,6 +194,7 @@ private:
     bool m_shouldIgnoreFontLoadCompletions : 1 { false };
     FontLoadTimingOverride m_fontLoadTimingOverride { FontLoadTimingOverride::None };
     AllowUserInstalledFonts m_allowUserInstalledFonts { AllowUserInstalledFonts::Yes };
+    DownloadableBinaryFontTrustedTypes m_trustedType { DownloadableBinaryFontTrustedTypes::Any };
 
     Timer m_timeoutTimer;
 };

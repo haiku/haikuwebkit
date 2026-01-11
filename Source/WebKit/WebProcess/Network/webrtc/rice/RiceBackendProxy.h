@@ -46,7 +46,7 @@ using RiceBackendIdentifier = ObjectIdentifier<RiceBackendIdentifierType>;
 
 class RiceBackendProxy : public IPC::MessageSender, public IPC::MessageReceiver, public WebCore::RiceBackend, public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<RiceBackendProxy, WTF::DestructionThread::MainRunLoop> {
 public:
-    static Ref<RiceBackendProxy> create(WebPageProxyIdentifier, WebCore::RiceBackendClient&);
+    static RefPtr<RiceBackendProxy> create(WebPageProxyIdentifier, WebCore::RiceBackendClient&);
     ~RiceBackendProxy();
 
     void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }

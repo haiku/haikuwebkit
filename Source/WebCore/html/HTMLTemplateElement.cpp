@@ -49,7 +49,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLTemplateElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLTemplateElement);
 
 using namespace HTMLNames;
 
@@ -91,7 +91,7 @@ DocumentFragment& HTMLTemplateElement::content() const
 
 void HTMLTemplateElement::adoptDeserializedContent(Ref<TemplateContentDocumentFragment>&& content)
 {
-    lazyInitialize(m_content, WTFMove(content));
+    lazyInitialize(m_content, WTF::move(content));
 }
 
 const AtomString& HTMLTemplateElement::shadowRootMode() const
@@ -151,11 +151,11 @@ SerializedNode HTMLTemplateElement::serializeNode(CloningOperation type) const
 
     return { SerializedNode::HTMLTemplateElement {
         SerializedNode::Element {
-            { WTFMove(children) },
+            { WTF::move(children) },
             { tagQName() },
             serializeAttributes<SerializedNode::Element::Attribute>(),
             serializeShadowRoot<SerializedNode::ShadowRoot>()
-        }, WTFMove(contentChildren)
+        }, WTF::move(contentChildren)
     } };
 }
 

@@ -54,7 +54,7 @@ public:
     }
 
     explicit AXStitchGroup(Vector<AXID>&& members, AXID representativeID)
-        : m_members(WTFMove(members))
+        : m_members(WTF::move(members))
         , m_representativeID(representativeID)
     {
         ASSERT(isValid());

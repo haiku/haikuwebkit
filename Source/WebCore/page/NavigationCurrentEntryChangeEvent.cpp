@@ -30,7 +30,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(NavigationCurrentEntryChangeEvent);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(NavigationCurrentEntryChangeEvent);
 
 NavigationCurrentEntryChangeEvent::NavigationCurrentEntryChangeEvent(const AtomString& type, const NavigationCurrentEntryChangeEvent::Init& init)
     : Event(EventInterfaceType::NavigationCurrentEntryChangeEvent, type, CanBubble::No, IsCancelable::No)

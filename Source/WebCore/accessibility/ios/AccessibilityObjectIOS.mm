@@ -178,40 +178,22 @@ void AccessibilityObject::setLastPresentedTextPrediction(Node& previousCompositi
 #endif // HAVE (INLINE_PREDICTIONS)
 }
 
-#if !PLATFORM(MACCATALYST)
-
-static RetainPtr<NSDictionary> unarchivedTokenForData(RetainPtr<NSData> tokenData)
+AccessibilityRemoteToken AXRemoteFrame::generateRemoteToken() const
 {
-    NSError *error = nil;
-    return [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithObjects:[NSDictionary class], [NSNumber class], [NSString class], nil] fromData:tokenData.get() error:&error];
+    return { WTF::UUID::createVersion4(), getpid() };
 }
 
-#endif
-
-Vector<uint8_t> AXRemoteFrame::generateRemoteToken() const
-{
-    if (RetainPtr data = Accessibility::newAccessibilityRemoteToken([[NSUUID UUID] UUIDString]))
-        return makeVector(data.get());
-    return { };
-}
-
-void AXRemoteFrame::initializePlatformElementWithRemoteToken(std::span<const uint8_t> token, int processIdentifier)
+void AXRemoteFrame::initializePlatformElementWithRemoteToken(AccessibilityRemoteToken token, int processIdentifier)
 {
 #if !PLATFORM(MACCATALYST)
     m_processIdentifier = processIdentifier;
 
-    RetainPtr nsToken = WTF::toNSData(token);
-    RetainPtr tokenDictionary = nsToken ? unarchivedTokenForData(nsToken) : nil;
-    if (!tokenDictionary)
-        return;
-
-    NSString *uuid = [tokenDictionary objectForKey:@"ax-uuid"];
-    RetainPtr remoteElement = adoptNS([allocAXRemoteElementInstance() initWithUUID:uuid andRemotePid:processIdentifier andContextId:0]);
+    RetainPtr remoteElement = adoptNS([allocAXRemoteElementInstance() initWithUUID:[token.uuid.createNSUUID() UUIDString] andRemotePid:processIdentifier andContextId:0]);
     remoteElement.get().onClientSide = YES;
     RefPtr parent = parentObjectUnignored();
     remoteElement.get().accessibilityContainer = parent ?  parent->wrapper() : nil;
 
-    m_remoteFramePlatformElement = WTFMove(remoteElement);
+    m_remoteFramePlatformElement = WTF::move(remoteElement);
 
     if (CheckedPtr cache = axObjectCache())
         cache->onRemoteFrameInitialized(*this);
@@ -279,7 +261,7 @@ static void attributeStringSetStyle(NSMutableAttributedString *attrString, Rende
         return axObject.isCode();
     };
 
-    if (Accessibility::findAncestor<AccessibilityObject>(*object, true, WTFMove(matchFunc)))
+    if (Accessibility::findAncestor<AccessibilityObject>(*object, true, WTF::move(matchFunc)))
         [attrString addAttribute:UIAccessibilityTextAttributeContext value:UIAccessibilityTextualContextSourceCode range:range];
 }
 

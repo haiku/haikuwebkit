@@ -118,7 +118,7 @@ void LibraryPathDiagnosticsLogger::logObject(std::span<const String> path, Ref<J
 {
     auto payload = JSON::Object::create();
     auto iter = path.rbegin();
-    payload->setObject(*iter, WTFMove(object));
+    payload->setObject(*iter, WTF::move(object));
     for (iter++; iter != path.rend(); iter++) {
         auto nextPayload = JSON::Object::create();
         nextPayload->setObject(*iter, payload);
@@ -155,7 +155,7 @@ void LibraryPathDiagnosticsLogger::logDYLDSharedCacheInfo(void)
     sharedCacheInfo->setString("Path"_s, FileSystem::realPath(String::fromUTF8(dyld_shared_cache_file_path())));
     sharedCacheInfo->setString("UUID"_s, uuidToString(uuid));
 
-    logObject(std::initializer_list<String> { "SharedCache"_s }, WTFMove(sharedCacheInfo));
+    logObject(std::initializer_list<String> { "SharedCache"_s }, WTF::move(sharedCacheInfo));
 }
 
 #if HAVE(SHARED_REGION_SPI)
@@ -199,7 +199,7 @@ void LibraryPathDiagnosticsLogger::logDynamicLibraryInfo(const String& installNa
     libraryObject->setBoolean("InSharedCache"_s, isAddressInSharedRegion(header));
 #endif
 
-    logObject(std::initializer_list<String> { "Libraries"_s, installName }, WTFMove(libraryObject));
+    logObject(std::initializer_list<String> { "Libraries"_s, installName }, WTF::move(libraryObject));
 }
 
 void LibraryPathDiagnosticsLogger::logDynamicLibraryInfo(void)
@@ -230,7 +230,7 @@ void LibraryPathDiagnosticsLogger::logBundleInfo(const String& bundleIdentifier)
     else
         bundleInfo->setValue("Version"_s, JSON::Value::null());
 
-    logObject(std::initializer_list<String> { "Bundles"_s, bundleIdentifier }, WTFMove(bundleInfo));
+    logObject(std::initializer_list<String> { "Bundles"_s, bundleIdentifier }, WTF::move(bundleInfo));
 }
 
 void LibraryPathDiagnosticsLogger::logBundleInfo(void)
@@ -258,7 +258,7 @@ void LibraryPathDiagnosticsLogger::logCryptexCanaryInfo(canary_cryptex_t which, 
     cryptex->setString("Version"_s, String::fromUTF8(metadata->cm_get_version()));
     cryptex->setString("Variant"_s, String::fromUTF8(metadata->cm_get_variant()));
 
-    logObject(std::initializer_list<String> { "Canary"_s, description }, WTFMove(cryptex));
+    logObject(std::initializer_list<String> { "Canary"_s, description }, WTF::move(cryptex));
 }
 
 void LibraryPathDiagnosticsLogger::logCryptexCanaryInfo(void)

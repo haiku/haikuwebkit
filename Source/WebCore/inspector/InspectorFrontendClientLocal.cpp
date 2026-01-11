@@ -171,7 +171,7 @@ void InspectorFrontendClientLocal::Settings::deleteProperty(const String&)
 InspectorFrontendClientLocal::InspectorFrontendClientLocal(PageInspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings> settings, DispatchBackendTarget dispatchTarget)
     : m_inspectedPageController(inspectedPageController)
     , m_frontendPage(frontendPage)
-    , m_settings(WTFMove(settings))
+    , m_settings(WTF::move(settings))
     , m_dockSide(DockSide::Undocked)
     , m_dispatchTask(InspectorBackendDispatchTask::create(inspectedPageController, dispatchTarget))
     , m_frontendAPIDispatcher(InspectorFrontendAPIDispatcher::create(*frontendPage))
@@ -316,7 +316,7 @@ void InspectorFrontendClientLocal::openURLExternally(const String& url)
 
     FrameLoadRequest frameLoadRequest { *mainFrameDocument, mainFrameDocument->securityOrigin(), { }, blankTargetFrameName(), InitiatedByMainFrame::Unknown };
 
-    auto [frame, created] = WebCore::createWindow(mainFrame, WTFMove(frameLoadRequest), { });
+    auto [frame, created] = WebCore::createWindow(mainFrame, WTF::move(frameLoadRequest), { });
     if (!frame)
         return;
     RefPtr localFrame = dynamicDowncast<LocalFrame>(frame.get());
@@ -330,8 +330,8 @@ void InspectorFrontendClientLocal::openURLExternally(const String& url)
 
     // FIXME: Why do we compute the absolute URL with respect to |frame| instead of |mainFrame|?
     ResourceRequest resourceRequest { localFrame->protectedDocument()->completeURL(url) };
-    FrameLoadRequest frameLoadRequest2 { *mainFrameDocument, mainFrameDocument->securityOrigin(), WTFMove(resourceRequest), selfTargetFrameName(), InitiatedByMainFrame::Unknown };
-    localFrame->loader().changeLocation(WTFMove(frameLoadRequest2));
+    FrameLoadRequest frameLoadRequest2 { *mainFrameDocument, mainFrameDocument->securityOrigin(), WTF::move(resourceRequest), selfTargetFrameName(), InitiatedByMainFrame::Unknown };
+    localFrame->loader().changeLocation(WTF::move(frameLoadRequest2));
 }
 
 void InspectorFrontendClientLocal::moveWindowBy(float x, float y)
@@ -435,7 +435,7 @@ void InspectorFrontendClientLocal::showResources()
 
 void InspectorFrontendClientLocal::showMainResourceForFrame(LocalFrame* frame)
 {
-    String frameId = protectedInspectedPageController()->ensurePageAgent().frameId(frame);
+    String frameId = CheckedRef { protectedInspectedPageController()->ensurePageAgent() }->frameId(frame);
     m_frontendAPIDispatcher->dispatchCommandWithResultAsync("showMainResourceForFrame"_s, { JSON::Value::create(frameId) });
 }
 

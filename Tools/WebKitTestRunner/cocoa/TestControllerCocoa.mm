@@ -565,7 +565,7 @@ unsigned TestController::imageCountInGeneralPasteboard() const
 void TestController::removeAllSessionCredentials(CompletionHandler<void(WKTypeRef)>&& completionHandler)
 {
     auto types = adoptNS([[NSSet alloc] initWithObjects:_WKWebsiteDataTypeCredentials, nil]);
-    [(__bridge WKWebsiteDataStore *)m_websiteDataStore.get() removeDataOfTypes:types.get() modifiedSince:[NSDate distantPast] completionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler)] () mutable {
+    [(__bridge WKWebsiteDataStore *)m_websiteDataStore.get() removeDataOfTypes:types.get() modifiedSince:[NSDate distantPast] completionHandler:makeBlockPtr([completionHandler = WTF::move(completionHandler)] () mutable {
         completionHandler(nullptr);
     }).get()];
 }
@@ -869,7 +869,7 @@ WKRetainPtr<WKStringRef> TestController::backgroundFetchState(WKStringRef identi
 
 void TestController::updatePresentation(CompletionHandler<void(WKTypeRef)>&& completionHandler)
 {
-    [m_mainWebView->platformView() _doAfterNextPresentationUpdate:makeBlockPtr([completionHandler = WTFMove(completionHandler)] mutable {
+    [m_mainWebView->platformView() _doAfterNextPresentationUpdate:makeBlockPtr([completionHandler = WTF::move(completionHandler)] mutable {
         completionHandler(nullptr);
     }).get()];
 }

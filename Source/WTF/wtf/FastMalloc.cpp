@@ -422,7 +422,7 @@ void MallocCallTracker::recordMalloc(void* address, size_t allocationSize)
     auto siteData = std::make_unique<MallocSiteData>(stackSize, allocationSize);
 
     Locker locker { m_lock };
-    auto addResult = m_addressMallocSiteData.add(address, WTFMove(siteData));
+    auto addResult = m_addressMallocSiteData.add(address, WTF::move(siteData));
     UNUSED_PARAM(addResult);
 }
 
@@ -440,9 +440,9 @@ void MallocCallTracker::recordRealloc(void* oldAddress, void* newAddress, size_t
 
     it->value->size = newSize;
     if (oldAddress != newAddress) {
-        auto value = WTFMove(it->value);
+        auto value = WTF::move(it->value);
         m_addressMallocSiteData.remove(it);
-        auto addResult = m_addressMallocSiteData.add(newAddress, WTFMove(value));
+        auto addResult = m_addressMallocSiteData.add(newAddress, WTF::move(value));
         ASSERT_UNUSED(addResult, addResult.isNewEntry);
     }
 }

@@ -39,6 +39,7 @@
 #include <wtf/Expected.h>
 #include <wtf/Forward.h>
 #include <wtf/Platform.h>
+#include <wtf/TZoneMalloc.h>
 #include <wtf/WallTime.h>
 #include <wtf/WeakRef.h>
 #include <wtf/text/WTFString.h>
@@ -114,7 +115,7 @@ struct StringWithDirection;
 using BackForwardItemIdentifier = ProcessQualified<ObjectIdentifier<BackForwardItemIdentifierType>>;
 
 class WEBCORE_EXPORT LocalFrameLoaderClient : public FrameLoaderClient {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(LocalFrameLoaderClient, Loader);
+    WTF_MAKE_TZONE_ALLOCATED(LocalFrameLoaderClient);
 public:
     ~LocalFrameLoaderClient();
 

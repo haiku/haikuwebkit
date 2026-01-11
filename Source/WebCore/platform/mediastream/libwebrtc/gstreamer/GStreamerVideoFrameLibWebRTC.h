@@ -48,7 +48,7 @@ public:
 
 private:
     GStreamerVideoFrameLibWebRTC(GRefPtr<GstSample>&& sample, GstVideoInfo info)
-        : m_sample(WTFMove(sample))
+        : m_sample(WTF::move(sample))
         , m_info(info)
     {
     }

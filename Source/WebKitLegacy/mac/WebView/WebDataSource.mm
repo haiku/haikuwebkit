@@ -82,7 +82,7 @@ class WebDataSourcePrivate
 {
 public:
     WebDataSourcePrivate(Ref<WebDocumentLoaderMac>&& loader)
-        : loader(WTFMove(loader))
+        : loader(WTF::move(loader))
         , representationFinishedLoading(NO)
         , includedInWebKitStatistics(NO)
 #if PLATFORM(IOS_FAMILY)
@@ -398,7 +398,7 @@ void addTypesFromClass(NSMutableDictionary *allTypes, Class objCClass, NSArray *
     if (!self)
         return nil;
 
-    _private = static_cast<void*>(new WebDataSourcePrivate(WTFMove(loader)));
+    _private = static_cast<void*>(new WebDataSourcePrivate(WTF::move(loader)));
         
     LOG(Loading, "creating datasource for %@", toPrivate(_private)->loader->request().url().createNSURL().get());
 
@@ -541,7 +541,7 @@ void addTypesFromClass(NSMutableDictionary *allTypes, Class objCClass, NSArray *
 - (NSArray *)subresources
 {
     return createNSArray(toPrivate(_private)->loader->subresources(), [] (auto&& resource) {
-        return adoptNS([[WebResource alloc] _initWithCoreResource:WTFMove(resource)]);
+        return adoptNS([[WebResource alloc] _initWithCoreResource:WTF::move(resource)]);
     }).autorelease();
 }
 

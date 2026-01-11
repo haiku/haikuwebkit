@@ -132,7 +132,7 @@ RetainPtr<DDHighlightRef> PDFDataDetectorOverlayController::createPlatformDataDe
 
     auto rectForSelectionInMainFrameContentsSpace = plugin->rectForSelectionInMainFrameContentsSpace(dataDetectorItem.selection().get());
 
-    return ::WebKit::createPlatformDataDetectorHighlight(Vector<FloatRect>::from(WTFMove(rectForSelectionInMainFrameContentsSpace)), mainFrameView->visibleContentRect());
+    return ::WebKit::createPlatformDataDetectorHighlight(Vector<FloatRect>::from(WTF::move(rectForSelectionInMainFrameContentsSpace)), mainFrameView->visibleContentRect());
 }
 
 bool PDFDataDetectorOverlayController::handleMouseEvent(const WebMouseEvent& event, PDFDocumentLayout::PageIndex pageIndex)
@@ -234,14 +234,14 @@ void PDFDataDetectorOverlayController::updateDataDetectorHighlightsIfNeeded(PDFD
 
                     Ref coreHighlight = DataDetectorHighlight::createForPDFSelection(*this, createPlatformDataDetectorHighlight(dataDetectorItem.get()));
 
-                    return { std::make_pair(WTFMove(dataDetectorItem), WTFMove(coreHighlight)) };
+                    return { std::make_pair(WTF::move(dataDetectorItem), WTF::move(coreHighlight)) };
                 });
             }
 #endif
             return { };
         }();
 
-        m_pdfDataDetectorItemsWithHighlightsMap.set(pageIndex, WTFMove(dataDetectorItemsWithHighlights));
+        m_pdfDataDetectorItemsWithHighlightsMap.set(pageIndex, WTF::move(dataDetectorItemsWithHighlights));
         shouldUpdatePlatformHighlightData = false;
     }
 

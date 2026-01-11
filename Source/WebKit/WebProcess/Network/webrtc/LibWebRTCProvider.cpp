@@ -81,7 +81,7 @@ webrtc::scoped_refptr<webrtc::PeerConnectionInterface> LibWebRTCProvider::create
     networkManager->setEnumeratingAllNetworkInterfacesEnabled(isEnumeratingAllNetworkInterfacesEnabled());
     networkManager->setEnumeratingVisibleNetworkInterfacesEnabled(isEnumeratingVisibleNetworkInterfacesEnabled());
 
-    return WebCore::LibWebRTCProvider::createPeerConnection(observer, *networkManager, *socketFactory, WTFMove(configuration), makeUnique<LibWebRTCDnsResolverFactory>());
+    return WebCore::LibWebRTCProvider::createPeerConnection(observer, *networkManager, *socketFactory, WTF::move(configuration), makeUnique<LibWebRTCDnsResolverFactory>());
 }
 
 void LibWebRTCProvider::disableNonLocalhostConnections()
@@ -130,9 +130,9 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RTCSocketFactory);
 
 RTCSocketFactory::RTCSocketFactory(WebPageProxyIdentifier pageIdentifier, String&& userAgent, ScriptExecutionContextIdentifier identifier, bool isFirstParty, RegistrableDomain&& domain)
     : m_pageIdentifier(pageIdentifier)
-    , m_userAgent(WTFMove(userAgent))
+    , m_userAgent(WTF::move(userAgent))
     , m_contextIdentifier(identifier)
-    , m_domain(WTFMove(domain))
+    , m_domain(WTF::move(domain))
 {
     m_flags.isFirstParty = isFirstParty;
 }
@@ -178,7 +178,7 @@ void LibWebRTCProvider::startedNetworkThread()
 std::unique_ptr<LibWebRTCProvider::SuspendableSocketFactory> LibWebRTCProvider::createSocketFactory(String&& userAgent, ScriptExecutionContextIdentifier identifier, bool isFirstParty, RegistrableDomain&& domain)
 {
     Ref webPage { m_webPage.get() };
-    auto factory = makeUnique<RTCSocketFactory>(webPage->webPageProxyIdentifier(), WTFMove(userAgent), identifier, isFirstParty, WTFMove(domain));
+    auto factory = makeUnique<RTCSocketFactory>(webPage->webPageProxyIdentifier(), WTF::move(userAgent), identifier, isFirstParty, WTF::move(domain));
 
     RefPtr page = webPage->corePage();
     if (!page || !page->settings().webRTCSocketsProxyingEnabled())

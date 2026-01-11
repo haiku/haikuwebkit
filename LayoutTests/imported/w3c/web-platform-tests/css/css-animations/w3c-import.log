@@ -39,6 +39,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-animations/animate-font-size-with-margin-override-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-animations/animate-font-size-with-margin-override-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-animations/animate-font-size-with-margin-override.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-animations/animate-with-background-color-hsla-to-legacy-rgb-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-animations/animate-with-background-color-hsla-to-legacy-rgb-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-animations/animate-with-background-color-hsla-to-legacy-rgb.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-animations/animate-with-background-color-oklch-001-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-animations/animate-with-background-color-oklch-001-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-animations/animate-with-background-color-oklch-001.html

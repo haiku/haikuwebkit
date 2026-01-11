@@ -77,7 +77,7 @@ public:
     SmallSet& operator=(SmallSet&& other)
     {
         this->~SmallSet();
-        new (this) SmallSet(WTFMove(other));
+        new (this) SmallSet(WTF::move(other));
         return *this;
     }
 

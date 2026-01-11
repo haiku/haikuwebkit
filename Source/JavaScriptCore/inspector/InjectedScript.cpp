@@ -66,7 +66,7 @@ void InjectedScript::execute(Protocol::ErrorString& errorString, const String& f
     function.appendArgument(options.returnByValue);
     function.appendArgument(options.generatePreview);
     function.appendArgument(options.saveResult);
-    function.appendArgument(arrayFromVector(WTFMove(options.args)));
+    function.appendArgument(arrayFromVector(WTF::move(options.args)));
     makeEvalCall(errorString, function, result, wasThrown, savedResultIndex);
 }
 
@@ -89,7 +89,7 @@ void InjectedScript::awaitPromise(const String& promiseObjectId, bool returnByVa
     function.appendArgument(returnByValue);
     function.appendArgument(generatePreview);
     function.appendArgument(saveResult);
-    makeAsyncCall(function, WTFMove(callback));
+    makeAsyncCall(function, WTF::move(callback));
 }
 
 void InjectedScript::callFunctionOn(const String& objectId, const String& expression, const String& arguments, bool returnByValue, bool generatePreview, bool awaitPromise, AsyncCallCallback&& callback)
@@ -101,7 +101,7 @@ void InjectedScript::callFunctionOn(const String& objectId, const String& expres
     function.appendArgument(returnByValue);
     function.appendArgument(generatePreview);
     function.appendArgument(awaitPromise);
-    makeAsyncCall(function, WTFMove(callback));
+    makeAsyncCall(function, WTF::move(callback));
 }
 
 void InjectedScript::evaluateOnCallFrame(Protocol::ErrorString& errorString, JSC::JSValue callFrames, const String& callFrameId, const String& expression, const String& objectGroup, bool includeCommandLineAPI, bool returnByValue, bool generatePreview, bool saveResult, RefPtr<Protocol::Runtime::RemoteObject>& result, std::optional<bool>& wasThrown, std::optional<int>& savedResultIndex)
@@ -221,7 +221,7 @@ void InjectedScript::getInternalProperties(Protocol::ErrorString& errorString, c
 
     auto array = Protocol::BindingTraits<JSON::ArrayOf<Protocol::Runtime::InternalPropertyDescriptor>>::runtimeCast(result.releaseNonNull());
     if (array->length())
-        properties = WTFMove(array);
+        properties = WTF::move(array);
 }
 
 void InjectedScript::getCollectionEntries(Protocol::ErrorString& errorString, const String& objectId, const String& objectGroup, int fetchStart, int fetchCount, RefPtr<JSON::ArrayOf<Protocol::Runtime::CollectionEntry>>& entries)

@@ -34,7 +34,7 @@ static std::optional<Vector<uint8_t>> deriveBitsCryptoKit(const Vector<uint8_t>&
     auto rv = PAL::EdKey::deriveBits(PAL::EdKeyAgreementAlgorithm::x25519(), baseKey.span(), publicKey.span());
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return std::nullopt;
-    return WTFMove(rv.result);
+    return WTF::move(rv.result);
 #else
     UNUSED_PARAM(baseKey);
     UNUSED_PARAM(publicKey);

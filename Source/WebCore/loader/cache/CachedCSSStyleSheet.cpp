@@ -44,7 +44,7 @@
 namespace WebCore {
 
 CachedCSSStyleSheet::CachedCSSStyleSheet(CachedResourceRequest&& request, PAL::SessionID sessionID, const CookieJar* cookieJar)
-    : CachedResource(WTFMove(request), Type::CSSStyleSheet, sessionID, cookieJar)
+    : CachedResource(WTF::move(request), Type::CSSStyleSheet, sessionID, cookieJar)
     , m_decoder(TextResourceDecoder::create(cssContentTypeAtom(), request.charset()))
 {
 }
@@ -115,7 +115,7 @@ void CachedCSSStyleSheet::finishLoading(const FragmentedSharedBuffer* data, cons
         setEncodedSize(data->size());
         // Decode the data to find out the encoding and keep the sheet text around during checkNotify()
         m_decodedSheetText = protectedDecoder()->decodeAndFlush(contiguousData->span());
-        m_data = WTFMove(contiguousData);
+        m_data = WTF::move(contiguousData);
     } else {
         m_data = nullptr;
         setEncodedSize(0);

@@ -275,7 +275,7 @@ static bool consumeInternalAutoBaseFunction(CSSParserTokenRange& range, CSSPrope
         const auto& baseProperty = baseProperties[index];
 
         Ref value = CSSFunctionValue::create(CSSValueInternalAutoBase, autoProperty.protectedValue(), baseProperty.protectedValue());
-        result.addProperty(CSSProperty(autoProperty.metadata(), WTFMove(value)));
+        result.addProperty(CSSProperty(autoProperty.metadata(), WTF::move(value)));
     }
 
     return true;
@@ -642,16 +642,16 @@ std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> consume
             auto syntaxValue = resolveSyntaxValue(listValue);
             if (!syntaxValue)
                 return { };
-            syntaxValueList.values.append(WTFMove(*syntaxValue));
+            syntaxValueList.values.append(WTF::move(*syntaxValue));
         }
-        return { { Style::CustomProperty::createForValueList(name, WTFMove(syntaxValueList)) } };
+        return { { Style::CustomProperty::createForValueList(name, WTF::move(syntaxValueList)) } };
     };
 
     auto syntaxValue = resolveSyntaxValue(*value);
     if (!syntaxValue)
         return { };
 
-    return { { Style::CustomProperty::createForValue(name, WTFMove(*syntaxValue)) } };
+    return { { Style::CustomProperty::createForValue(name, WTF::move(*syntaxValue)) } };
 }
 
 // MARK: - Root consumers
@@ -674,7 +674,7 @@ bool consumeStyleProperty(CSSParserTokenRange& range, const CSSParserContext& co
     if (WebCore::isShorthand(property)) {
         auto rangeCopy = range;
         if (RefPtr keywordValue = consumeCSSWideKeywordValue(rangeCopy)) {
-            result.addPropertyForAllLonghandsOfCurrentShorthand(state, WTFMove(keywordValue));
+            result.addPropertyForAllLonghandsOfCurrentShorthand(state, WTF::move(keywordValue));
             range = rangeCopy;
             return true;
         }
@@ -691,7 +691,7 @@ bool consumeStyleProperty(CSSParserTokenRange& range, const CSSParserContext& co
     } else {
         auto rangeCopy = range;
         if (RefPtr keywordValue = consumeCSSWideKeywordValue(rangeCopy)) {
-            result.addProperty(state, property, CSSPropertyInvalid, WTFMove(keywordValue), important);
+            result.addProperty(state, property, CSSPropertyInvalid, WTF::move(keywordValue), important);
             range = rangeCopy;
             return true;
         }
@@ -700,7 +700,7 @@ bool consumeStyleProperty(CSSParserTokenRange& range, const CSSParserContext& co
 
         RefPtr parsedValue = CSSPropertyParsing::parseStylePropertyLonghand(range, property, state);
         if (parsedValue && range.atEnd()) {
-            result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), important);
+            result.addProperty(state, property, CSSPropertyInvalid, WTF::move(parsedValue), important);
             return true;
         }
 
@@ -726,7 +726,7 @@ bool consumeFontFaceDescriptor(CSSParserTokenRange& range, const CSSParserContex
     if (!parsedValue || !range.atEnd())
         return false;
 
-    result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), IsImportant::No);
+    result.addProperty(state, property, CSSPropertyInvalid, WTF::move(parsedValue), IsImportant::No);
     return true;
 }
 
@@ -743,7 +743,7 @@ bool consumeFontPaletteValuesDescriptor(CSSParserTokenRange& range, const CSSPar
     if (!parsedValue || !range.atEnd())
         return false;
 
-    result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), IsImportant::No);
+    result.addProperty(state, property, CSSPropertyInvalid, WTF::move(parsedValue), IsImportant::No);
     return true;
 }
 
@@ -760,7 +760,7 @@ bool consumeCounterStyleDescriptor(CSSParserTokenRange& range, const CSSParserCo
     if (!parsedValue || !range.atEnd())
         return false;
 
-    result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), IsImportant::No);
+    result.addProperty(state, property, CSSPropertyInvalid, WTF::move(parsedValue), IsImportant::No);
     return true;
 }
 
@@ -802,7 +802,7 @@ bool consumePageDescriptor(CSSParserTokenRange& range, const CSSParserContext& c
         if (!range.atEnd())
             return false;
 
-        result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), IsImportant::No);
+        result.addProperty(state, property, CSSPropertyInvalid, WTF::move(parsedValue), IsImportant::No);
         return true;
     }
 
@@ -822,7 +822,7 @@ bool consumePropertyDescriptor(CSSParserTokenRange& range, const CSSParserContex
     if (!parsedValue || !range.atEnd())
         return false;
 
-    result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), IsImportant::No);
+    result.addProperty(state, property, CSSPropertyInvalid, WTF::move(parsedValue), IsImportant::No);
     return true;
 }
 
@@ -841,7 +841,7 @@ bool consumeViewTransitionDescriptor(CSSParserTokenRange& range, const CSSParser
     if (!parsedValue || !range.atEnd())
         return false;
 
-    result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), IsImportant::No);
+    result.addProperty(state, property, CSSPropertyInvalid, WTF::move(parsedValue), IsImportant::No);
     return true;
 }
 
@@ -887,7 +887,7 @@ bool consumeFunctionDescriptor(CSSParserTokenRange& range, const CSSParserContex
     if (!parsedValue || !range.atEnd())
         return false;
 
-    result.addProperty(state, property, CSSPropertyInvalid, WTFMove(parsedValue), IsImportant::No);
+    result.addProperty(state, property, CSSPropertyInvalid, WTF::move(parsedValue), IsImportant::No);
     return true;
 }
 

@@ -58,10 +58,10 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderSearchField);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderSearchField);
 
 RenderSearchField::RenderSearchField(HTMLInputElement& element, RenderStyle&& style)
-    : RenderTextControlSingleLine(Type::SearchField, element, WTFMove(style))
+    : RenderTextControlSingleLine(Type::SearchField, element, WTF::move(style))
     , m_searchPopupIsVisible(false)
     , m_searchPopup(nullptr)
 {
@@ -209,7 +209,7 @@ void RenderSearchField::updateCancelButtonVisibility() const
 
     auto cancelButtonStyle = RenderStyle::clone(curStyle);
     cancelButtonStyle.setVisibility(buttonVisibility);
-    cancelButtonRenderer->setStyle(WTFMove(cancelButtonStyle));
+    cancelButtonRenderer->setStyle(WTF::move(cancelButtonStyle));
 }
 
 Visibility RenderSearchField::visibilityForCancelButton() const
@@ -288,8 +288,8 @@ PopupMenuStyle RenderSearchField::itemStyle(unsigned) const
 PopupMenuStyle RenderSearchField::menuStyle() const
 {
     return PopupMenuStyle(
-        style().visitedDependentColorWithColorFilter(CSSPropertyColor),
-        style().visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor),
+        style().visitedDependentColorApplyingColorFilter(),
+        style().visitedDependentBackgroundColorApplyingColorFilter(),
         style().fontCascade(),
         nullString(),
         style().usedVisibility() == Visibility::Visible,

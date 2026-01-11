@@ -2055,6 +2055,8 @@ class PrintConfiguration(steps.ShellSequence, ShellMixin):
             command_list.extend(self.command_list_apple)
         elif platform in ('gtk', 'wpe', 'jsc-only'):
             command_list.extend(self.command_list_linux)
+            if platform in ('gtk', 'wpe'):
+                command_list.append(['if test -f /etc/build-info; then cat /etc/build-info; else cat /etc/os-release; fi'])
 
         for command in command_list:
             self.commands.append(util.ShellArg(command=command, logname='stdio'))

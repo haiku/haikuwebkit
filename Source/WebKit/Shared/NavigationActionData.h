@@ -65,7 +65,7 @@ struct NavigationActionData {
     bool hasOpenedFrames { false };
     bool openedByDOMWithOpener { false };
     bool hasOpener { false };
-    bool isPerformingHTTPFallback { false };
+    WebCore::NavigationUpgradeToHTTPSBehavior navigationUpgradeToHTTPSBehavior { WebCore::NavigationUpgradeToHTTPSBehavior::BasedOnPolicy };
     bool isInitialFrameSrcLoad { false };
     bool isContentRuleListRedirect { false };
     String openedMainFrameName;

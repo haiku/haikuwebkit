@@ -342,6 +342,17 @@ TEST(SmartLists, InsertingSpaceAfterInvalidNumberDoesNotGenerateOrderedList)
     runTest(@"+42. Hello", expectedPlusPrefixedHTML.createNSString().get(), @"//body/text()", @"+42. Hello".length);
 }
 
+TEST(SmartLists, InsertingSpaceAfterLargeNumberDoesNotGenerateOrderedList)
+{
+    static constexpr auto expectedHTML = R"""(
+    <body>1000000000000000. hi</body>
+    )"""_s;
+
+    NSString *input = @"1000000000000000. hi";
+
+    runTest(input, expectedHTML.createNSString().get(), @"//body/text()", input.length);
+}
+
 // FIXME: rdar://163664100 ([ iOS26 iPhone ] 2X TestWebKitAPI.SmartLists (API-Tests) are constant failures (301651))
 #if PLATFORM(IOS)
 TEST(SmartLists, DISABLED_InsertingListMergesWithPreviousListIfPossible)

@@ -1001,13 +1001,6 @@ void Interpreter::notifyDebuggerOfExceptionToBeThrown(VM& vm, JSGlobalObject* gl
     exception->setDidNotifyInspectorOfThrow();
 }
 
-NEVER_INLINE JSValue Interpreter::checkVMEntryPermission()
-{
-    if (Options::crashOnDisallowedVMEntry() || g_jscConfig.vmEntryDisallowed)
-        CRASH_WITH_EXTRA_SECURITY_IMPLICATION_AND_INFO(VMEntryDisallowed, "VM entry disallowed"_s);
-    return jsUndefined();
-}
-
 JSValue Interpreter::executeProgram(const SourceCode& source, JSGlobalObject*, JSObject* thisObj)
 {
     VM& vm = this->vm();
@@ -1039,7 +1032,7 @@ JSValue Interpreter::executeProgram(const SourceCode& source, JSGlobalObject*, J
         return throwStackOverflowError(globalObject, throwScope);
 
     if (vm.disallowVMEntryCount) [[unlikely]]
-        return checkVMEntryPermission();
+        return VM::checkVMEntryPermission();
 
     // First check if the "program" is actually just a JSON object. If so,
     // we'll handle the JSON object here. Else, we'll handle real JS code
@@ -1283,7 +1276,7 @@ ALWAYS_INLINE JSValue Interpreter::executeCallImpl(VM& vm, JSObject* function, c
         return throwStackOverflowError(globalObject, scope);
 
     if (vm.disallowVMEntryCount) [[unlikely]]
-        return checkVMEntryPermission();
+        return VM::checkVMEntryPermission();
 
     RefPtr<JSC::JITCode> jitCode;
     ProtoCallFrame protoCallFrame;
@@ -1377,7 +1370,7 @@ JSObject* Interpreter::executeConstruct(JSObject* constructor, const CallData& c
     }
 
     if (vm.disallowVMEntryCount) [[unlikely]] {
-        checkVMEntryPermission();
+        VM::checkVMEntryPermission();
         return globalObject->globalThis();
     }
 
@@ -1606,7 +1599,7 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
         }
     }
     callee->setScope(vm, scope);
-    EncodedJSValue result = vmEntryToJavaScriptWith0Arguments(entry, &vm, codeBlock, callee, thisValue);
+    EncodedJSValue result = vmEntryToJavaScriptWith0Arguments(entry, &vm, codeBlock, callee, thisValue, nullptr);
     callee->setScope(vm, nullptr);
 #else
     RefPtr<JSC::JITCode> jitCode;
@@ -1664,7 +1657,7 @@ JSValue Interpreter::executeModuleProgram(JSModuleRecord* record, ModuleProgramE
         return throwStackOverflowError(globalObject, throwScope);
 
     if (vm.disallowVMEntryCount) [[unlikely]]
-        return checkVMEntryPermission();
+        return VM::checkVMEntryPermission();
 
     if (scope->structure()->isUncacheableDictionary())
         scope->flattenDictionaryObject(vm);

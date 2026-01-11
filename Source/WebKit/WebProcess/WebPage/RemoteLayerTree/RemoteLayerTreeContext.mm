@@ -118,7 +118,7 @@ void RemoteLayerTreeContext::layerDidEnterContext(PlatformCALayerRemote& layer, 
     RemoteLayerTreeTransaction::LayerCreationProperties creationProperties;
     layer.populateCreationProperties(creationProperties, *this, type);
 
-    m_createdLayers.add(layerID, WTFMove(creationProperties));
+    m_createdLayers.add(layerID, WTF::move(creationProperties));
     m_livePlatformLayers.add(layerID, &layer);
 }
 
@@ -143,7 +143,7 @@ void RemoteLayerTreeContext::layerDidEnterContext(PlatformCALayerRemote& layer, 
     protectedWebPage()->protectedVideoPresentationManager()->setupRemoteLayerHosting(videoElement);
     m_videoLayers.add(layerID, videoElement.identifier());
 
-    m_createdLayers.add(layerID, WTFMove(creationProperties));
+    m_createdLayers.add(layerID, WTF::move(creationProperties));
     m_livePlatformLayers.add(layerID, &layer);
 }
 #endif
@@ -219,7 +219,7 @@ void RemoteLayerTreeContext::buildTransaction(RemoteLayerTreeTransaction& transa
     m_currentTransaction = nullptr;
 
     transaction.setCreatedLayers(moveToVector(std::exchange(m_createdLayers, { }).values()));
-    transaction.setDestroyedLayerIDs(WTFMove(m_destroyedLayers));
+    transaction.setDestroyedLayerIDs(WTF::move(m_destroyedLayers));
 }
 
 void RemoteLayerTreeContext::layerPropertyChangedWhileBuildingTransaction(PlatformCALayerRemote& layer)

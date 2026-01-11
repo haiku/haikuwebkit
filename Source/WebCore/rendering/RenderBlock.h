@@ -53,7 +53,7 @@ enum TextRunFlag {
 typedef unsigned TextRunFlags;
 
 class RenderBlock : public RenderBox {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderBlock);
+    WTF_MAKE_TZONE_ALLOCATED(RenderBlock);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderBlock);
 public:
     // FIXME: This is temporary to allow us to move code from RenderBlock into RenderBlockFlow that accesses member variables that we haven't moved out of
@@ -93,6 +93,7 @@ public:
     static bool hasPercentHeightContainerMap();
     static void clearPercentHeightDescendantsFrom(RenderBox&);
 
+    virtual bool willStretchItem(const RenderBox& item, LogicalBoxAxis containingAxis, StretchingMode = StretchingMode::Normal) const;
     bool isContainingBlockAncestorFor(RenderObject&) const;
 
     void setHasMarginBeforeQuirk(bool b) { setRenderBlockHasMarginBeforeQuirk(b); }
@@ -105,8 +106,6 @@ public:
 
     bool hasMarginBeforeQuirk(const RenderBox& child) const;
     bool hasMarginAfterQuirk(const RenderBox& child) const;
-
-    virtual bool shouldChildInlineMarginContributeToContainerIntrinsicSize(Style::MarginTrimSide, const RenderElement&) const { return true; }
 
     void markOutOfFlowBoxesForLayout();
     void markForPaginationRelayoutIfNeeded() override;
@@ -219,8 +218,6 @@ public:
     LayoutUnit logicalLeftSelectionOffset(RenderBlock& rootBlock, LayoutUnit position, const LogicalSelectionOffsetCaches&);
     LayoutUnit logicalRightSelectionOffset(RenderBlock& rootBlock, LayoutUnit position, const LogicalSelectionOffsetCaches&);
 
-    void updateHitTestResult(HitTestResult&, const LayoutPoint&) const override;
-
     bool canHaveChildren() const override { return true; }
     virtual bool canDropAnonymousBlockChild() const { return true; }
 
@@ -298,8 +295,8 @@ protected:
 
     void updateScrollInfoAfterLayout();
 
-    void styleWillChange(StyleDifference, const RenderStyle& newStyle) override;
-    void styleDidChange(StyleDifference, const RenderStyle* oldStyle) override;
+    void styleWillChange(Style::Difference, const RenderStyle& newStyle) override;
+    void styleDidChange(Style::Difference, const RenderStyle* oldStyle) override;
 
     bool simplifiedLayout();
     virtual void simplifiedNormalFlowLayout();
@@ -310,7 +307,7 @@ protected:
 
     virtual bool isPointInOverflowControl(HitTestResult&, const LayoutPoint& locationInContainer, const LayoutPoint& accumulatedOffset);
 
-    virtual void computeOverflow(LayoutUnit oldClientAfterEdge, OptionSet<ComputeOverflowOptions> = { });
+    virtual void computeOverflow(LayoutRect contentArea, OptionSet<ComputeOverflowOptions> = { });
     void addOverflowFromOutOfFlowBoxes();
     void addVisualOverflowFromTheme();
 

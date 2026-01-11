@@ -56,6 +56,7 @@ layer at (0,0) size 800x600
         RenderText {#text} at (256,498) size 4x17
           text run at (256,498) width 4: " "
         RenderText {#text} at (0,0) size 0x0
+        RenderText {#text} at (0,0) size 0x0
 layer at (8,63) size 116x106
   RenderBlock {DIV} at (0,10) size 116x106 [color=#ADD8E6] [border: (3px solid #000000)]
     RenderMultiColumnSet at (8,8) size 100x5

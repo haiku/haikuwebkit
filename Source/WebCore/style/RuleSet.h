@@ -36,6 +36,7 @@ namespace WebCore {
 
 class CSSSelector;
 class StyleSheetContents;
+class StyleRuleFunction;
 class StyleRulePositionTry;
 class StyleRuleViewTransition;
 
@@ -67,7 +68,7 @@ struct DynamicMediaQueryEvaluationChanges {
         if (type == Type::ResetStyle)
             invalidationRuleSets.clear();
         else
-            invalidationRuleSets.appendVector(WTFMove(other.invalidationRuleSets));
+            invalidationRuleSets.appendVector(WTF::move(other.invalidationRuleSets));
     };
 };
 
@@ -147,7 +148,7 @@ private:
     using ContainerQueryIdentifier = unsigned;
     using ScopeRuleIdentifier = unsigned;
 
-    void addRule(RuleData&&, CascadeLayerIdentifier, ContainerQueryIdentifier, ScopeRuleIdentifier);
+    void addRule(RuleData&&, CascadeLayerIdentifier, ContainerQueryIdentifier, ScopeRuleIdentifier, RuleFeatureSet::CollectionContext*);
 
     struct ResolverMutatingRule {
         Ref<StyleRuleBase> rule;

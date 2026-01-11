@@ -43,6 +43,7 @@
 #include "OriginAccessPatterns.h"
 #include "SecurityOrigin.h"
 #include <wtf/NeverDestroyed.h>
+#include <wtf/SortedArrayMap.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
@@ -90,7 +91,18 @@ void MediaResourceLoader::sendH2Ping(const URL& url, CompletionHandler<void(Expe
     if (!m_document || !m_document->frame())
         return completionHandler(makeUnexpected(internalError(url)));
 
-    m_document->protectedFrame()->loader().client().sendH2Ping(url, WTFMove(completionHandler));
+    m_document->protectedFrame()->loader().client().sendH2Ping(url, WTF::move(completionHandler));
+}
+
+static LoadedFromOpaqueSource computeLoadedFromOpaqueSource(const Document& document, const HashSet<URL>& nonOpaqueLoadURLs, const URL& url, const std::optional<LoadedFromOpaqueSource> loadedFromOpaqueSource)
+{
+    if (!document.settings().enableOpaqueLoadingForMedia() || url.isEmpty())
+        return LoadedFromOpaqueSource::No;
+
+    if (loadedFromOpaqueSource.value_or(LoadedFromOpaqueSource::No) == LoadedFromOpaqueSource::No)
+        return LoadedFromOpaqueSource::No;
+
+    return nonOpaqueLoadURLs.contains(url) ? LoadedFromOpaqueSource::No : LoadedFromOpaqueSource::Yes;
 }
 
 RefPtr<PlatformMediaResource> MediaResourceLoader::requestResource(ResourceRequest&& request, LoadOptions options)
@@ -100,6 +112,9 @@ RefPtr<PlatformMediaResource> MediaResourceLoader::requestResource(ResourceReque
     RefPtr document = this->document();
     if (!document)
         return nullptr;
+
+    if (!m_loadedFromOpaqueSource && !request.url().isEmpty())
+        m_nonOpaqueLoadURLs.add(request.url());
 
     DataBufferingPolicy bufferingPolicy = options & LoadOption::BufferData ? DataBufferingPolicy::BufferData : DataBufferingPolicy::DoNotBufferData;
     auto cachingPolicy = options & LoadOption::DisallowCaching ? CachingPolicy::DisallowCaching : CachingPolicy::AllowCaching;
@@ -134,15 +149,16 @@ RefPtr<PlatformMediaResource> MediaResourceLoader::requestResource(ResourceReque
         cachingPolicy };
     loaderOptions.sameOriginDataURLFlag = SameOriginDataURLFlag::Set;
     loaderOptions.destination = m_destination;
-    auto cachedRequest = createPotentialAccessControlRequest(WTFMove(request), WTFMove(loaderOptions), *document, m_crossOriginMode);
+    loaderOptions.loadedFromOpaqueSource = computeLoadedFromOpaqueSource(*m_document, m_nonOpaqueLoadURLs, request.url(), m_loadedFromOpaqueSource);
+    auto cachedRequest = createPotentialAccessControlRequest(WTF::move(request), WTF::move(loaderOptions), *document, m_crossOriginMode);
     if (RefPtr element = m_element.get())
         cachedRequest.setInitiator(*element);
 
-    auto resource = m_document->protectedCachedResourceLoader()->requestMedia(WTFMove(cachedRequest)).value_or(nullptr);
+    auto resource = m_document->protectedCachedResourceLoader()->requestMedia(WTF::move(cachedRequest)).value_or(nullptr);
     if (!resource)
         return nullptr;
 
-    Ref mediaResource = MediaResource::create(*this, WTFMove(resource));
+    Ref mediaResource = MediaResource::create(*this, WTF::move(resource));
     m_resources.add(mediaResource.get());
 
     return mediaResource;
@@ -193,9 +209,30 @@ Vector<ResourceResponse> MediaResourceLoader::responsesForTesting() const
     return m_responsesForTesting;
 }
 
+static bool isManifestMIMEType(const URL& url, const String& mimeType)
+{
+    static constexpr SortedArraySet staticManifestMIMETypesSet { std::to_array<ComparableLettersLiteral>({
+        "application/json"_s,
+        "application/vnd.apple.mpegurl"_s,
+        "application/vnd.apple.steering-list"_s,
+        "application/x-mpegurl"_s,
+        "audio/mpegurl"_s,
+        "audio/x-mpegurl"_s
+    }) };
+
+    if (mimeType.isEmpty() || equalLettersIgnoringASCIICase(mimeType, "application/octet-stream"_s))
+        return staticManifestMIMETypesSet.contains(ContentType::fromURL(url).containerType());
+
+    return staticManifestMIMETypesSet.contains(mimeType);
+}
+
 bool MediaResourceLoader::verifyMediaResponse(const URL& requestURL, const ResourceResponse& response, const SecurityOrigin* contextOrigin)
 {
     assertIsMainThread();
+
+    bool isNotAlreadyLoadingFromOpaqueSource = m_loadedFromOpaqueSource.value_or(LoadedFromOpaqueSource::No) == LoadedFromOpaqueSource::No;
+    if (isNotAlreadyLoadingFromOpaqueSource && response.tainting() == ResourceResponse::Tainting::Opaque && isManifestMIMEType(response.url(), response.mimeType()))
+        m_loadedFromOpaqueSource = LoadedFromOpaqueSource::Yes;
 
     // FIXME: We should probably implement https://html.spec.whatwg.org/multipage/media.html#verify-a-media-response
     if (!requestURL.protocolIsInHTTPFamily() || response.httpStatusCode() != 206 || !response.contentRange().isValid() || !contextOrigin)
@@ -205,7 +242,7 @@ bool MediaResourceLoader::verifyMediaResponse(const URL& requestURL, const Resou
         // Synthetic responses, whose origin is the service worker origin, have basic tainting but their url is the request URL, which may have a different origin
         bool hasContextOrigin = response.source() == ResourceResponse::Source::ServiceWorker && response.tainting() == ResourceResponse::Tainting::Basic;
         Ref origin = hasContextOrigin ? *contextOrigin : SecurityOrigin::create(response.url());
-        return { WTFMove(origin), response.tainting() == ResourceResponse::Tainting::Opaque, response.source() == ResourceResponse::Source::ServiceWorker };
+        return { WTF::move(origin), response.tainting() == ResourceResponse::Tainting::Opaque, response.source() == ResourceResponse::Source::ServiceWorker };
     });
 
     if (ensureResult.isNewEntry)
@@ -226,14 +263,21 @@ bool MediaResourceLoader::verifyMediaResponse(const URL& requestURL, const Resou
     return validationInformation.origin->canRequest(response.url(), OriginAccessPatternsForWebProcess::singleton());
 }
 
+void MediaResourceLoader::redirectReceived(const URL& url)
+{
+    ASSERT(!url.isEmpty());
+    if (!m_loadedFromOpaqueSource)
+        m_nonOpaqueLoadURLs.add(url);
+}
+
 Ref<MediaResource> MediaResource::create(MediaResourceLoader& loader, CachedResourceHandle<CachedRawResource>&& resource)
 {
-    return adoptRef(*new MediaResource(loader, WTFMove(resource)));
+    return adoptRef(*new MediaResource(loader, WTF::move(resource)));
 }
 
 MediaResource::MediaResource(MediaResourceLoader& loader, CachedResourceHandle<CachedRawResource>&& resource)
     : m_loader(loader)
-    , m_resource(WTFMove(resource))
+    , m_resource(WTF::move(resource))
 {
     assertIsMainThread();
 
@@ -270,7 +314,7 @@ void MediaResource::responseReceived(const CachedResource& resource, const Resou
     assertIsMainThread();
 
     ASSERT_UNUSED(resource, &resource == m_resource);
-    CompletionHandlerCallingScope completionHandlerCaller(WTFMove(completionHandler));
+    CompletionHandlerCallingScope completionHandlerCaller(WTF::move(completionHandler));
 
     if (!m_loader->document())
         return;
@@ -326,11 +370,13 @@ void MediaResource::redirectReceived(CachedResource& resource, ResourceRequest&&
 
     ASSERT_UNUSED(resource, &resource == m_resource);
 
+    m_loader->redirectReceived(request.url());
+
     Ref protectedThis { *this };
     if (RefPtr client = this->client())
-        client->redirectReceived(*this, WTFMove(request), response, WTFMove(completionHandler));
+        client->redirectReceived(*this, WTF::move(request), response, WTF::move(completionHandler));
     else
-        completionHandler(WTFMove(request));
+        completionHandler(WTF::move(request));
 }
 
 void MediaResource::dataSent(CachedResource& resource, unsigned long long bytesSent, unsigned long long totalBytesToBeSent)

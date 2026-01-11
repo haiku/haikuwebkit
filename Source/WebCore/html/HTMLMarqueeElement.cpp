@@ -34,12 +34,12 @@
 #include "RenderLayer.h"
 #include "RenderLayerScrollableArea.h"
 #include "RenderMarquee.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLMarqueeElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLMarqueeElement);
 
 using namespace HTMLNames;
 

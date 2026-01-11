@@ -44,19 +44,11 @@ bool shouldRun(const TestConfig* config, const char* testName)
     if (!filter && isARM64()) {
         for (auto& failingTest : {
             "testNegFloatWithUselessDoubleConversion",
-            "testPinRegisters",
         }) {
             if (WTF::findIgnoringASCIICaseWithoutLength(testName, failingTest) != WTF::notFound) {
                 dataLogLn("*** Warning: Skipping known-bad test: ", testName);
                 return false;
             }
-        }
-    }
-    // FIXME: rdar://145150735. But note this test is already skipped on ARM64, see above.
-    if (!filter && Options::airUseGreedyRegAlloc()) {
-        if (WTF::findIgnoringASCIICaseWithoutLength(testName, "testPinRegisters") != WTF::notFound) {
-            dataLogLn("*** Warning: Skipping known-bad test: ", testName);
-            return false;
         }
     }
 

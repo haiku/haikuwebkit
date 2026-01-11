@@ -103,7 +103,7 @@ private:
     ContentsFormat m_contentsFormat { ContentsFormat::RGBA8 };
 };
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(GPUCanvasContextCocoa);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(GPUCanvasContextCocoa);
 
 std::unique_ptr<GPUCanvasContext> GPUCanvasContext::create(CanvasBase& canvas, GPU& gpu, Document* document)
 {
@@ -167,8 +167,8 @@ GPUCanvasContextCocoa::CanvasType GPUCanvasContextCocoa::htmlOrOffscreenCanvas()
 GPUCanvasContextCocoa::GPUCanvasContextCocoa(CanvasBase& canvas, Ref<GPUCompositorIntegration>&& compositorIntegration, Ref<GPUPresentationContext>&& presentationContext, Document* document)
     : GPUCanvasContext(canvas)
     , m_layerContentsDisplayDelegate(GPUDisplayBufferDisplayDelegate::create())
-    , m_compositorIntegration(WTFMove(compositorIntegration))
-    , m_presentationContext(WTFMove(presentationContext))
+    , m_compositorIntegration(WTF::move(compositorIntegration))
+    , m_presentationContext(WTF::move(presentationContext))
     , m_width(getCanvasWidth(htmlOrOffscreenCanvas()))
     , m_height(getCanvasHeight(htmlOrOffscreenCanvas()))
 #if HAVE(SUPPORT_HDR_DISPLAY)
@@ -291,7 +291,7 @@ void GPUCanvasContextCocoa::reshape()
     m_width = newWidth;
     m_height = newHeight;
 
-    auto configuration = WTFMove(m_configuration);
+    auto configuration = WTF::move(m_configuration);
     m_configuration.reset();
     unconfigure();
     if (configuration) {
@@ -304,7 +304,7 @@ void GPUCanvasContextCocoa::reshape()
             configuration->toneMapping,
             configuration->compositingAlphaMode,
         };
-        configure(WTFMove(canvasConfiguration), true);
+        configure(WTF::move(canvasConfiguration), true);
     }
 }
 
@@ -456,7 +456,7 @@ ExceptionOr<void> GPUCanvasContextCocoa::configure(GPUCanvasConfiguration&& conf
         configuration.colorSpace,
         configuration.toneMapping,
         configuration.alphaMode,
-        WTFMove(renderBuffers),
+        WTF::move(renderBuffers),
         0,
     };
     return { };
@@ -464,7 +464,7 @@ ExceptionOr<void> GPUCanvasContextCocoa::configure(GPUCanvasConfiguration&& conf
 
 ExceptionOr<void> GPUCanvasContextCocoa::configure(GPUCanvasConfiguration&& configuration)
 {
-    return configure(WTFMove(configuration), false);
+    return configure(WTF::move(configuration), false);
 }
 
 void GPUCanvasContextCocoa::unconfigure()

@@ -54,7 +54,7 @@ inline VideoConfiguration VideoConfiguration::isolatedCopy() const &
 
 inline VideoConfiguration VideoConfiguration::isolatedCopy() &&
 {
-    return { WTFMove(contentType).isolatedCopy(), width, height, bitrate, framerate, alphaChannel, colorGamut, hdrMetadataType, transferFunction };
+    return { WTF::move(contentType).isolatedCopy(), width, height, bitrate, framerate, alphaChannel, colorGamut, hdrMetadataType, transferFunction };
 }
 
 } // namespace WebCore

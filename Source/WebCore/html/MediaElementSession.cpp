@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,10 +60,10 @@
 #include "SourceBuffer.h"
 #include "TextTrack.h"
 #include "TextTrackList.h"
-#include "VideoProjectionMetadata.h"
 #include "VideoTrack.h"
 #include "VideoTrackConfiguration.h"
 #include "VideoTrackList.h"
+#include <wtf/CryptographicallyRandomNumber.h>
 #include <wtf/RuntimeApplicationChecks.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/StringBuilder.h>
@@ -269,7 +269,7 @@ void MediaElementSession::clientWillBeginAutoplaying()
 
 void MediaElementSession::clientWillBeginPlayback(CompletionHandler<void(bool)>&& completionHandler)
 {
-    PlatformMediaSession::clientWillBeginPlayback([weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)](bool willBegin) mutable {
+    PlatformMediaSession::clientWillBeginPlayback([weakThis = WeakPtr { *this }, completionHandler = WTF::move(completionHandler)](bool willBegin) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis || !willBegin) {
             completionHandler(false);
@@ -952,7 +952,7 @@ void MediaElementSession::setHasPlaybackTargetAvailabilityListeners(bool hasList
 
 void MediaElementSession::setPlaybackTarget(Ref<MediaPlaybackTarget>&& device)
 {
-    m_playbackTarget = WTFMove(device);
+    m_playbackTarget = WTF::move(device);
     client().setWirelessPlaybackTarget(*m_playbackTarget.copyRef());
 }
 
@@ -1493,11 +1493,11 @@ std::optional<NowPlayingInfo> MediaElementSession::computeNowPlayingInfo() const
     bool isPlaying = state() == PlatformMediaSession::State::Playing;
 
     bool supportsSeeking = element->supportsSeeking();
-    double rate = 1.0;
-    double duration = supportsSeeking ? element->duration() : MediaPlayer::invalidTime();
+    double rate = element->playbackRate();
+    double duration = supportsSeeking ? element->duration() : std::numeric_limits<double>::quiet_NaN();
     double currentTime = element->currentTime();
     if (!std::isfinite(currentTime) || !supportsSeeking)
-        currentTime = MediaPlayer::invalidTime();
+        currentTime = std::numeric_limits<double>::quiet_NaN();
     auto sourceApplicationIdentifier = element->sourceApplicationIdentifier();
 #if PLATFORM(COCOA)
     // FIXME: Eventually, this should be moved into HTMLMediaElement, so all clients
@@ -1515,6 +1515,7 @@ std::optional<NowPlayingInfo> MediaElementSession::computeNowPlayingInfo() const
             sourceApplicationIdentifier,
             { }
         },
+        cryptographicallyRandomNumber<uint64_t>(),
         duration,
         currentTime,
         rate,
@@ -1608,7 +1609,7 @@ void MediaElementSession::updateMediaUsageIfChanged()
     if (m_mediaUsageInfo && *m_mediaUsageInfo == usage)
         return;
 
-    m_mediaUsageInfo = WTFMove(usage);
+    m_mediaUsageInfo = WTF::move(usage);
 
 #if ENABLE(MEDIA_USAGE)
     addMediaUsageManagerSessionIfNecessary();
@@ -1688,6 +1689,10 @@ void MediaElementSession::clientCharacteristicsChanged(bool positionChanged)
             session->setPositionState(MediaPositionState { positionState->duration, positionState->playbackRate, element->currentTime() });
     }
 #endif
+    if (positionChanged) {
+        if (RefPtr manager = sessionManager())
+            manager->updateNowPlayingInfo();
+    }
     PlatformMediaSession::clientCharacteristicsChanged(positionChanged);
 }
 
@@ -1708,10 +1713,11 @@ String MediaElementSession::descriptionForTrack(const VideoTrack& track)
         builder.append(' ', track.configuration().codec());
     if (track.configuration().isProtected())
         builder.append(" protected"_s);
-    if (track.configuration().spatialVideoMetadata())
-        builder.append(" spatial"_s);
-    if (auto metadata = track.configuration().videoProjectionMetadata())
+    if (auto metadata = track.configuration().immersiveVideoMetadata()) {
+        if (metadata->isSpatial())
+            builder.append(" spatial"_s);
         builder.append(' ', convertEnumerationToString(metadata->kind));
+    }
 
     return builder.toString();
 }

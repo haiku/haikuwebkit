@@ -157,13 +157,13 @@ bool WebEditorClient::shouldApplyStyle(const StyleProperties& style, const std::
 void WebEditorClient::registerAttachmentIdentifier(const String& identifier, const String& contentType, const String& preferredFileName, Ref<FragmentedSharedBuffer>&& data)
 {
     if (RefPtr page = m_page.get())
-        page->send(Messages::WebPageProxy::RegisterAttachmentIdentifierFromData(identifier, contentType, preferredFileName, IPC::SharedBufferReference(WTFMove(data))));
+        page->send(Messages::WebPageProxy::RegisterAttachmentIdentifierFromData(identifier, contentType, preferredFileName, IPC::SharedBufferReference(WTF::move(data))));
 }
 
 void WebEditorClient::registerAttachments(Vector<WebCore::SerializedAttachmentData>&& data)
 {
     if (RefPtr page = m_page.get())
-        page->send(Messages::WebPageProxy::RegisterAttachmentsFromSerializedData(WTFMove(data)));
+        page->send(Messages::WebPageProxy::RegisterAttachmentsFromSerializedData(WTF::move(data)));
 }
 
 void WebEditorClient::registerAttachmentIdentifier(const String& identifier, const String& contentType, const String& filePath)
@@ -338,7 +338,7 @@ void WebEditorClient::registerUndoStep(UndoStep& step)
     auto webStep = WebUndoStep::create(step);
     auto stepID = webStep->stepID();
 
-    page->addWebUndoStep(stepID, WTFMove(webStep));
+    page->addWebUndoStep(stepID, WTF::move(webStep));
     page->send(Messages::WebPageProxy::RegisterEditCommandForUndo(stepID, step.label()), IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 

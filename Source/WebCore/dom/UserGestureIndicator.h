@@ -66,7 +66,7 @@ public:
 
     void addDestructionObserver(Function<void(UserGestureToken&)>&& observer)
     {
-        m_destructionObservers.append(WTFMove(observer));
+        m_destructionObservers.append(WTF::move(observer));
     }
 
     DOMPasteAccessPolicy domPasteAccessPolicy() const { return m_domPasteAccessPolicy; }

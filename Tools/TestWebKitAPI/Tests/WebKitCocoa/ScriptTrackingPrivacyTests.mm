@@ -111,8 +111,8 @@ namespace TestWebKitAPI {
 
 static IMP makeFingerprintingScriptsRequestHandler(NSArray<NSString *> *hostNames, Vector<WPScriptAccessCategories>&& allowedCategories)
 {
-    return imp_implementationWithBlock([hostNames = RetainPtr { hostNames }, allowedCategories = WTFMove(allowedCategories)](WPResources *, WPResourceRequestOptions *, void(^completion)(NSArray<WPFingerprintingScript *> *, NSError *)) mutable {
-        RunLoop::mainSingleton().dispatch([hostNames = WTFMove(hostNames), allowedCategories = WTFMove(allowedCategories), completion = makeBlockPtr(completion)] mutable {
+    return imp_implementationWithBlock([hostNames = RetainPtr { hostNames }, allowedCategories = WTF::move(allowedCategories)](WPResources *, WPResourceRequestOptions *, void(^completion)(NSArray<WPFingerprintingScript *> *, NSError *)) mutable {
+        RunLoop::mainSingleton().dispatch([hostNames = WTF::move(hostNames), allowedCategories = WTF::move(allowedCategories), completion = makeBlockPtr(completion)] mutable {
             RetainPtr scripts = [NSMutableArray arrayWithCapacity:[hostNames count]];
             size_t index = 0;
             for (NSString *host in hostNames.get()) {
@@ -138,7 +138,7 @@ public:
         m_swizzler = makeUnique<InstanceMethodSwizzler>(
             PAL::getWPResourcesClassSingleton(),
             @selector(requestFingerprintingScripts:completionHandler:),
-            makeFingerprintingScriptsRequestHandler(hosts, WTFMove(allowedCategories))
+            makeFingerprintingScriptsRequestHandler(hosts, WTF::move(allowedCategories))
         );
     }
 

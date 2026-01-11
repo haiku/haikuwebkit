@@ -31,7 +31,7 @@
 namespace WebKit {
 
 class WebMediaStrategy final : public WebCore::MediaStrategy {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebMediaStrategy);
+    WTF_MAKE_TZONE_ALLOCATED(WebMediaStrategy);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebMediaStrategy);
 public:
     virtual ~WebMediaStrategy();
@@ -53,6 +53,9 @@ private:
     bool hasThreadSafeMediaSourceSupport() const final;
 #if ENABLE(MEDIA_SOURCE)
     void enableMockMediaSource() final;
+#endif
+#if PLATFORM(COCOA) && ENABLE(VIDEO)
+    void nativeImageFromVideoFrame(const WebCore::VideoFrame&, CompletionHandler<void(std::optional<RefPtr<WebCore::NativeImage>>&&)>&&) final;
 #endif
 
 #if ENABLE(GPU_PROCESS)

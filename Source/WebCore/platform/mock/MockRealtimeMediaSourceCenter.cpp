@@ -128,7 +128,7 @@ public:
         if (mock->flags.contains(MockMediaDevice::Flag::Invalid))
             return CaptureSourceOrError({ "Invalid mock camera device"_s, MediaAccessDenialReason::PermissionDenied });
 
-        return MockRealtimeVideoSource::create(String { device.persistentId() }, AtomString { device.label() }, WTFMove(hashSalts), constraints, pageIdentifier);
+        return MockRealtimeVideoSource::create(String { device.persistentId() }, AtomString { device.label() }, WTF::move(hashSalts), constraints, pageIdentifier);
     }
 
 private:
@@ -199,7 +199,7 @@ void MockDisplayCapturer::whenReady(CompletionHandler<void(CaptureSourceError&&)
 {
     ASSERT(!m_isRunning);
 
-    m_whenReadyCallback = WTFMove(callback);
+    m_whenReadyCallback = WTF::move(callback);
     m_readyTimer.startOneShot(50_ms);
 }
 
@@ -276,11 +276,11 @@ public:
                 auto capturer = makeUniqueRefWithoutRefCountedCheck<MockDisplayCapturer>(observer, device, pageIdentifier);
                 m_capturer = capturer.get();
                 return capturer;
-            }, device, WTFMove(hashSalts), constraints, pageIdentifier);
+            }, device, WTF::move(hashSalts), constraints, pageIdentifier);
 #elif USE(GSTREAMER)
-            return MockDisplayCaptureSourceGStreamer::create(device, WTFMove(hashSalts), constraints, pageIdentifier);
+            return MockDisplayCaptureSourceGStreamer::create(device, WTF::move(hashSalts), constraints, pageIdentifier);
 #else
-            return MockRealtimeVideoSource::create(String { device.persistentId() }, AtomString { device.label() }, WTFMove(hashSalts), constraints, pageIdentifier);
+            return MockRealtimeVideoSource::create(String { device.persistentId() }, AtomString { device.label() }, WTF::move(hashSalts), constraints, pageIdentifier);
 #endif
             break;
         }
@@ -332,7 +332,7 @@ public:
         if (mock->flags.contains(MockMediaDevice::Flag::Invalid))
             return CaptureSourceOrError({ "Invalid mock microphone device"_s, MediaAccessDenialReason::PermissionDenied });
 
-        return MockRealtimeAudioSource::create(String { device.persistentId() }, AtomString { device.label() }, WTFMove(hashSalts), constraints, pageIdentifier);
+        return MockRealtimeAudioSource::create(String { device.persistentId() }, AtomString { device.label() }, WTF::move(hashSalts), constraints, pageIdentifier);
     }
 private:
     MockRealtimeAudioSourceFactory() = default;
@@ -494,7 +494,7 @@ void MockRealtimeMediaSourceCenter::setDevices(Vector<MockMediaDevice>&& newMock
         }))
             RealtimeMediaSourceCenter::singleton().captureDeviceWillBeRemoved(persistentId);
     }
-    mockDevices = WTFMove(newMockDevices);
+    mockDevices = WTF::move(newMockDevices);
 
     auto& map = deviceMap();
     map.clear();

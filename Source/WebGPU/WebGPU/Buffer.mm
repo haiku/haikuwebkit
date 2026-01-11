@@ -36,6 +36,9 @@
 
 #if ENABLE(WEBGPU_SWIFT)
 #import "CxxBridging.h"
+#import <WebGPU/CxxBridgingPublic.h>
+#import <WebGPU/WGPUTextureImpl.h>
+#import <WebGPU/WebGPU.h>
 #import "WebGPUSwift-Generated.h"
 
 DEFINE_SWIFTCXX_THUNK(WebGPU::Buffer, copyFrom, void, const std::span<const uint8_t>, const size_t);
@@ -373,7 +376,7 @@ void Buffer::mapAsync(WGPUMapModeFlags mode, size_t offset, size_t size, Complet
 
     m_mapMode = mode;
 
-    device->protectedQueue()->onSubmittedWorkDone([protectedThis = Ref { *this }, offset, rangeSize, callback = WTFMove(callback)](WGPUQueueWorkDoneStatus status) mutable {
+    device->protectedQueue()->onSubmittedWorkDone([protectedThis = Ref { *this }, offset, rangeSize, callback = WTF::move(callback)](WGPUQueueWorkDoneStatus status) mutable {
         if (protectedThis->m_state == State::MappingPending) {
             protectedThis->setState(State::Mapped);
 
@@ -631,7 +634,7 @@ void Buffer::skippedDrawIndirectIndexedValidation(CommandEncoder& commandEncoder
         protectedThis->m_skippedValidationCommandEncoders.remove(commandEncoder.uniqueId());
         if (protectedThis->m_mustTakeSlowIndexValidationPath) {
             protectedThis->takeSlowIndirectIndexValidationPath(commandBuffer, *apiIndexBuffer.get(), indexType, indexBufferOffsetInBytes, indirectOffset, minVertexCount, primitiveType);
-            commandBuffer.addPostCommitHandler([protectedThis = WTFMove(protectedThis)](id<MTLCommandBuffer>) {
+            commandBuffer.addPostCommitHandler([protectedThis = WTF::move(protectedThis)](id<MTLCommandBuffer>) {
                 protectedThis->m_mustTakeSlowIndexValidationPath = false;
             });
         }
@@ -650,7 +653,7 @@ void Buffer::skippedDrawIndirectValidation(CommandEncoder& commandEncoder, uint6
         protectedThis->m_skippedValidationCommandEncoders.remove(commandEncoder.uniqueId());
         if (protectedThis->m_mustTakeSlowIndexValidationPath) {
             protectedThis->takeSlowIndirectValidationPath(commandBuffer, indirectOffset, minVertexCount, minInstanceCount);
-            commandBuffer.addPostCommitHandler([protectedThis = WTFMove(protectedThis)](id<MTLCommandBuffer>) {
+            commandBuffer.addPostCommitHandler([protectedThis = WTF::move(protectedThis)](id<MTLCommandBuffer>) {
                 protectedThis->m_mustTakeSlowIndexValidationPath = false;
             });
         }
@@ -828,7 +831,7 @@ void wgpuBufferMapAsync(WGPUBuffer buffer, WGPUMapModeFlags mode, size_t offset,
 
 void wgpuBufferMapAsyncWithBlock(WGPUBuffer buffer, WGPUMapModeFlags mode, size_t offset, size_t size, WGPUBufferMapBlockCallback callback)
 {
-    WebGPU::protectedFromAPI(buffer)->mapAsync(mode, offset, size, [callback = WebGPU::fromAPI(WTFMove(callback))](WGPUBufferMapAsyncStatus status) {
+    WebGPU::protectedFromAPI(buffer)->mapAsync(mode, offset, size, [callback = WebGPU::fromAPI(WTF::move(callback))](WGPUBufferMapAsyncStatus status) {
         callback(status);
     });
 }

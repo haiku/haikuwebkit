@@ -185,7 +185,7 @@ AudioBus& AudioNodeInput::bus()
 
     // Handle single connection specially to allow for in-place processing.
     if (numberOfRenderingConnections() == 1 && node()->channelCountMode() == ChannelCountMode::Max)
-        return renderingOutput(0)->bus();
+        SUPPRESS_UNCHECKED_ARG return renderingOutput(0)->bus();
 
     // Multiple connections case or complex ChannelCountMode (or no connections).
     return m_internalSummingBus;

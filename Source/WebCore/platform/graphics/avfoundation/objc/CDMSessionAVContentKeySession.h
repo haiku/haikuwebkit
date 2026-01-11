@@ -54,7 +54,7 @@ class CDMSessionAVContentKeySession final : public LegacyCDMSession, public Thre
 public:
     static Ref<CDMSessionAVContentKeySession> create(Vector<int>&& protocolVersions, int cdmVersion, LegacyCDMPrivateAVFObjC& parent, LegacyCDMSessionClient& client)
     {
-        return adoptRef(*new CDMSessionAVContentKeySession(WTFMove(protocolVersions), cdmVersion, parent, client));
+        return adoptRef(*new CDMSessionAVContentKeySession(WTF::move(protocolVersions), cdmVersion, parent, client));
     }
 
     ~CDMSessionAVContentKeySession();

@@ -35,6 +35,9 @@
 #include "WebWheelEvent.h"
 #include <WebCore/GraphicsLayer.h>
 #include <WebCore/GraphicsLayerAnimation.h>
+#include <WebCore/GraphicsLayerFloatAnimationValue.h>
+#include <WebCore/GraphicsLayerKeyframeValueList.h>
+#include <WebCore/GraphicsLayerTransformAnimationValue.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/PlatformWheelEvent.h>
 #include <WebCore/TiledBacking.h>
@@ -490,22 +493,22 @@ void PDFDiscretePresentationController::startTransitionAnimation(PageTransitionS
         operations.reserveInitialCapacity(1);
         operations.append(TranslateTransformOperation::create(offset.width(), offset.height(), 0, TransformOperationType::Translate));
 
-        return makeUnique<TransformAnimationValue>(keyTime, TransformOperations { WTFMove(operations) }, nullptr);
+        return makeUnique<GraphicsLayerTransformAnimationValue>(keyTime, TransformOperations { WTF::move(operations) }, nullptr);
     };
 
     auto createPositionKeyframesForAnimation = [&](TransitionDirection direction, FloatSize initialOffset, FloatSize finalOffset) {
-        auto keyframes = KeyframeValueList { AnimatedProperty::Translate };
+        auto keyframes = GraphicsLayerKeyframeValueList { AnimatedProperty::Translate };
         auto initialValue = transformAnimationValueForTranslation(0, initialOffset);
         auto finalValue = transformAnimationValueForTranslation(1, finalOffset);
-        keyframes.insert(WTFMove(initialValue));
-        keyframes.insert(WTFMove(finalValue));
+        keyframes.insert(WTF::move(initialValue));
+        keyframes.insert(WTF::move(finalValue));
         return keyframes;
     };
 
     auto createOpacityKeyframesForAnimation = [](TransitionDirection direction, std::array<float, 2> startEndOpacities) {
-        auto keyframes = KeyframeValueList { AnimatedProperty::Opacity };
-        keyframes.insert(makeUnique<FloatAnimationValue>(0, startEndOpacities[startIndex]));
-        keyframes.insert(makeUnique<FloatAnimationValue>(1, startEndOpacities[endIndex]));
+        auto keyframes = GraphicsLayerKeyframeValueList { AnimatedProperty::Opacity };
+        keyframes.insert(makeUnique<GraphicsLayerFloatAnimationValue>(0, startEndOpacities[startIndex]));
+        keyframes.insert(makeUnique<GraphicsLayerFloatAnimationValue>(1, startEndOpacities[endIndex]));
         return keyframes;
     };
 
@@ -535,14 +538,14 @@ void PDFDiscretePresentationController::startTransitionAnimation(PageTransitionS
         auto moveFrames = createPositionKeyframesForAnimation(direction, startOffset, endOffset);
         Ref moveAnimation = GraphicsLayerAnimation::create();
         moveAnimation->setDuration(transitionDuration.seconds());
-        moveAnimation->setTimingFunction(WTFMove(moveTimingFunction));
+        moveAnimation->setTimingFunction(WTF::move(moveTimingFunction));
         Ref animatingRowContainerLayer = *animatingRow.containerLayer;
         animatingRowContainerLayer->addAnimation(moveFrames, moveAnimation.ptr(), "move"_s, 0);
 
         auto fadeKeyframes = createOpacityKeyframesForAnimation(direction, layerEndOpacities[topLayerIndex]);
         Ref fadeAnimation = GraphicsLayerAnimation::create();
         fadeAnimation->setDuration(transitionDuration.seconds());
-        fadeAnimation->setTimingFunction(WTFMove(fadeTimingFunction));
+        fadeAnimation->setTimingFunction(WTF::move(fadeTimingFunction));
         animatingRowContainerLayer->addAnimation(fadeKeyframes, fadeAnimation.ptr(), "fade"_s, 0);
 
         auto stationaryLayerFadeKeyframes = createOpacityKeyframesForAnimation(direction, layerEndOpacities[bottomLayerIndex]);
@@ -1043,7 +1046,7 @@ void PDFDiscretePresentationController::setupLayers(GraphicsLayer& scrolledConte
         Ref rowsContainerLayer = *createGraphicsLayer("Rows container"_s, GraphicsLayer::Type::Normal);
         m_rowsContainerLayer = rowsContainerLayer.copyRef();
         rowsContainerLayer->setAnchorPoint({ });
-        scrolledContentsLayer.addChild(WTFMove(rowsContainerLayer));
+        scrolledContentsLayer.addChild(WTF::move(rowsContainerLayer));
     }
 
     bool displayModeChanged = !m_displayModeAtLastLayerSetup || m_displayModeAtLastLayerSetup != m_plugin->documentLayout().displayMode();

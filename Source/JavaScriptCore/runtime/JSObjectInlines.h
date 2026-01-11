@@ -789,6 +789,22 @@ inline CallData getConstructData(JSValue value)
     return result;
 }
 
+ALWAYS_INLINE CallData getConstructDataInline(JSCell* cell)
+{
+    if (cell->type() == JSFunctionType)
+        return JSFunction::getConstructDataInline(cell);
+    CallData result = cell->methodTable()->getConstructData(cell);
+    ASSERT(result.type == CallData::Type::None || cell->isValidCallee());
+    return result;
+}
+
+ALWAYS_INLINE CallData getConstructDataInline(JSValue value)
+{
+    if (!value.isCell())
+        return { };
+    return getConstructDataInline(value.asCell());
+}
+
 inline bool JSObject::deleteProperty(JSGlobalObject* globalObject, PropertyName propertyName)
 {
     DeletePropertySlot slot;

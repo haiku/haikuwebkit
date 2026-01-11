@@ -26,10 +26,13 @@
 #include "config.h"
 #include "EventSenderProxy.h"
 
-#include "EventSenderProxyClientLibWPE.h"
 #include "TestController.h"
 #include <WebCore/NotImplemented.h>
 #include <wtf/MonotonicTime.h>
+
+#if USE(LIBWPE)
+#include "EventSenderProxyClientLibWPE.h"
+#endif
 
 #if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
 #include "EventSenderProxyClientWPE.h"
@@ -47,12 +50,13 @@ EventSenderProxy::EventSenderProxy(TestController* testController)
     , m_clickTime(0)
     , m_clickButton(kWKEventMouseButtonNoButton)
 {
-#if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
-    if (testController->useWPELegacyAPI())
-        m_client = makeUnique<EventSenderProxyClientLibWPE>(*testController);
-    else
+#if ENABLE(WPE_PLATFORM)
+    if (!testController->useWPELegacyAPI()) {
         m_client = makeUnique<EventSenderProxyClientWPE>(*testController);
-#else
+        return;
+    }
+#endif
+#if USE(LIBWPE)
     m_client = makeUnique<EventSenderProxyClientLibWPE>(*testController);
 #endif
 }

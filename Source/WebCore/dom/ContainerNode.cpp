@@ -73,7 +73,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(ContainerNode);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(ContainerNode);
 
 struct SameSizeAsContainerNode : public Node {
     void* firstChild;
@@ -99,7 +99,7 @@ ALWAYS_INLINE auto ContainerNode::removeAllChildrenWithScriptAssertionMaybeAsync
         return removeAllChildrenWithScriptAssertion(source, children, deferChildrenChanged);
     auto removeAllChildrenResult = removeAllChildrenWithScriptAssertion(source, children, deferChildrenChanged);
     if (removeAllChildrenResult.canBeDelayed == CanDelayNodeDeletion::Yes)
-        document().asyncNodeDeletionQueue().addIfSubtreeSizeIsUnderLimit(WTFMove(children), removeAllChildrenResult.subTreeSize);
+        document().asyncNodeDeletionQueue().addIfSubtreeSizeIsUnderLimit(WTF::move(children), removeAllChildrenResult.subTreeSize);
     return removeAllChildrenResult;
 #else
         return removeAllChildrenWithScriptAssertion(source, children, deferChildrenChanged);
@@ -452,7 +452,7 @@ static bool containsIncludingHostElements(const Node& possibleAncestor, const No
             else if (auto* fragment = dynamicDowncast<TemplateContentDocumentFragment>(*currentNode))
                 parent = fragment->host();
         }
-        currentNode = WTFMove(parent);
+        currentNode = WTF::move(parent);
     } while (currentNode);
 
     return false;
@@ -834,7 +834,7 @@ void ContainerNode::replaceAll(Node* node)
 // https://dom.spec.whatwg.org/#string-replace-all
 void ContainerNode::stringReplaceAll(String&& string)
 {
-    replaceAll(string.isEmpty() ? nullptr : document().createTextNode(WTFMove(string)).ptr());
+    replaceAll(string.isEmpty() ? nullptr : document().createTextNode(WTF::move(string)).ptr());
 }
 
 inline void ContainerNode::rebuildSVGExtensionsElementsIfNecessary()
@@ -1244,7 +1244,7 @@ unsigned ContainerNode::childElementCount() const
 
 ExceptionOr<void> ContainerNode::append(FixedVector<NodeOrString>&& vector)
 {
-    auto result = convertNodesOrStringsIntoNodeVector(WTFMove(vector));
+    auto result = convertNodesOrStringsIntoNodeVector(WTF::move(vector));
     if (result.hasException())
         return result.releaseException();
 
@@ -1254,7 +1254,7 @@ ExceptionOr<void> ContainerNode::append(FixedVector<NodeOrString>&& vector)
 
     Ref protectedThis { *this };
     ChildListMutationScope mutation(*this);
-    if (auto appendResult = insertChildrenBeforeWithoutPreInsertionValidityCheck(WTFMove(newChildren)); appendResult.hasException())
+    if (auto appendResult = insertChildrenBeforeWithoutPreInsertionValidityCheck(WTF::move(newChildren)); appendResult.hasException())
         return appendResult;
 
     rebuildSVGExtensionsElementsIfNecessary();
@@ -1265,7 +1265,7 @@ ExceptionOr<void> ContainerNode::append(FixedVector<NodeOrString>&& vector)
 
 ExceptionOr<void> ContainerNode::prepend(FixedVector<NodeOrString>&& vector)
 {
-    auto result = convertNodesOrStringsIntoNodeVector(WTFMove(vector));
+    auto result = convertNodesOrStringsIntoNodeVector(WTF::move(vector));
     if (result.hasException())
         return result.releaseException();
 
@@ -1276,7 +1276,7 @@ ExceptionOr<void> ContainerNode::prepend(FixedVector<NodeOrString>&& vector)
 
     Ref protectedThis { *this };
     ChildListMutationScope mutation(*this);
-    if (auto appendResult = insertChildrenBeforeWithoutPreInsertionValidityCheck(WTFMove(newChildren), nextChild.get()); appendResult.hasException())
+    if (auto appendResult = insertChildrenBeforeWithoutPreInsertionValidityCheck(WTF::move(newChildren), nextChild.get()); appendResult.hasException())
         return appendResult;
 
     rebuildSVGExtensionsElementsIfNecessary();
@@ -1288,7 +1288,7 @@ ExceptionOr<void> ContainerNode::prepend(FixedVector<NodeOrString>&& vector)
 // https://dom.spec.whatwg.org/#dom-parentnode-replacechildren
 ExceptionOr<void> ContainerNode::replaceChildren(FixedVector<NodeOrString>&& vector)
 {
-    auto result = convertNodesOrStringsIntoNodeVector(WTFMove(vector));
+    auto result = convertNodesOrStringsIntoNodeVector(WTF::move(vector));
     if (result.hasException())
         return result.releaseException();
     auto newChildren = result.releaseReturnValue();
@@ -1301,7 +1301,7 @@ ExceptionOr<void> ContainerNode::replaceChildren(FixedVector<NodeOrString>&& vec
     NodeVector removedChildren;
     removeAllChildrenWithScriptAssertionMaybeAsync(ChildChange::Source::API, removedChildren, DeferChildrenChanged::No);
 
-    if (auto appendResult = insertChildrenBeforeWithoutPreInsertionValidityCheck(WTFMove(newChildren)); appendResult.hasException())
+    if (auto appendResult = insertChildrenBeforeWithoutPreInsertionValidityCheck(WTF::move(newChildren)); appendResult.hasException())
         return appendResult;
 
     rebuildSVGExtensionsElementsIfNecessary();

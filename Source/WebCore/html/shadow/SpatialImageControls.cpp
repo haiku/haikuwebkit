@@ -170,7 +170,7 @@ void ensureSpatialControls(HTMLImageElement& imageElement)
         static MainThreadNeverDestroyed<const String> shadowStyle(StringImpl::createWithoutCopying(spatialImageControlsUserAgentStyleSheet));
         Ref style = HTMLStyleElement::create(HTMLNames::styleTag, document.get(), false);
         style->setTextContent(String { shadowStyle });
-        controlLayer->appendChild(WTFMove(style));
+        controlLayer->appendChild(WTF::move(style));
 
         Ref button = HTMLButtonElement::create(HTMLNames::buttonTag, document.get(), nullptr);
         button->setIdAttribute(spatialImageControlsButtonIdentifier());

@@ -15,10 +15,9 @@ layer at (0,0) size 800x600
                 RenderBlock (anonymous) at (0,0) size 264x18
                   RenderInline {FONT} at (0,0) size 264x18
                     RenderText {#text} at (0,0) size 0x0
-                    RenderBlock (anonymous) at (0,0) size 264x18
-                      RenderBlock {DT} at (0,0) size 264x18
-                        RenderText {#text} at (0,0) size 25x18
-                          text run at (0,0) width 25: "Baz"
+                    RenderBlock {DT} at (0,0) size 264x18
+                      RenderText {#text} at (0,0) size 25x18
+                        text run at (0,0) width 25: "Baz"
                   RenderText {#text} at (0,0) size 0x0
                 RenderBlock {DD} at (40,18) size 224x18
                   RenderText {#text} at (0,0) size 224x18

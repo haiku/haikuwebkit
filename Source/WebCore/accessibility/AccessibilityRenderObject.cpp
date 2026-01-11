@@ -530,9 +530,7 @@ RenderObject* AccessibilityRenderObject::renderParentObject() const
 
 AccessibilityObject* AccessibilityRenderObject::parentObject() const
 {
-    // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
-    // as we merely return it right away (rdar://165602290).
-    SUPPRESS_UNCOUNTED_LOCAL if (auto* ownerParent = ownerParentObject()) [[unlikely]]
+    if (auto* ownerParent = ownerParentObject()) [[unlikely]]
         return ownerParent;
 
 #if USE(ATSPI)
@@ -674,17 +672,22 @@ String AccessibilityRenderObject::textUnderElement(TextUnderElementMode mode) co
     // just fanning out to nodes within our subtree to search for un-hidden nodes.
     // AccessibilityNodeObject::textUnderElement takes care of this, so call it directly.
     if (!m_renderer || mode.isHidden())
-        return AccessibilityNodeObject::textUnderElement(WTFMove(mode));
+        return AccessibilityNodeObject::textUnderElement(WTF::move(mode));
 
     if (auto* fileUpload = dynamicDowncast<RenderFileUploadControl>(*m_renderer))
         return fileUpload->buttonValue();
+
+    if (mode.includeListMarkers == IncludeListMarkerText::Yes) {
+        if (CheckedPtr listMarker = dynamicDowncast<RenderListMarker>(*m_renderer))
+            return listMarker->textWithSuffix();
+    }
 
     // Reflect when a content author has explicitly marked a line break.
     if (m_renderer->isBR())
         return "\n"_s;
 
     if (shouldGetTextFromNode(mode))
-        return AccessibilityNodeObject::textUnderElement(WTFMove(mode));
+        return AccessibilityNodeObject::textUnderElement(WTF::move(mode));
 
     // We use a text iterator for text objects AND for those cases where we are
     // explicitly asking for the full text under a given element.
@@ -742,7 +745,7 @@ String AccessibilityRenderObject::textUnderElement(TextUnderElementMode mode) co
             return renderText->text();
     }
 
-    return AccessibilityNodeObject::textUnderElement(WTFMove(mode));
+    return AccessibilityNodeObject::textUnderElement(WTF::move(mode));
 }
 
 bool AccessibilityRenderObject::shouldGetTextFromNode(const TextUnderElementMode& mode) const
@@ -895,8 +898,8 @@ LayoutRect AccessibilityRenderObject::boundingBoxRect() const
         isSVGRoot = true;
 
     if (auto* renderText = dynamicDowncast<RenderText>(*renderer)) {
-        std::optional stitchGroup  = this->stitchGroup();
-        if (!stitchGroup || stitchGroup->representativeID() != objectID() || stitchGroup->isEmpty())
+        std::optional stitchGroup = stitchGroupIfRepresentative();
+        if (!stitchGroup)
             quads = renderText->absoluteQuadsClippedToEllipsis();
         else {
             // |this| is a stitching of multiple objects, so we need to combine all of their bounding boxes.
@@ -907,14 +910,12 @@ LayoutRect AccessibilityRenderObject::boundingBoxRect() const
                 if (std::optional range = makeSimpleRange(positionBeforeNode(node.get()), positionAfterNode(endNode.get()))) {
                     quads = RenderObject::absoluteTextQuads(*range);
 
-                    if (CheckedPtr cache = axObjectCache()) {
-                        for (AXID axID : stitchGroup->members()) {
-                            if (axID == stitchGroup->representativeID())
-                                break;
-                            if (RefPtr object = cache->objectForID(axID)) {
-                                if (CheckedPtr renderListMarker = dynamicDowncast<RenderListMarker>(object->renderer()))
-                                    renderListMarker->absoluteFocusRingQuads(quads);
-                            }
+                    for (AXID axID : stitchGroup->members()) {
+                        if (axID == objectID())
+                            break;
+                        if (RefPtr object = cache->objectForID(axID)) {
+                            if (CheckedPtr renderListMarker = dynamicDowncast<RenderListMarker>(object->renderer()))
+                                renderListMarker->absoluteFocusRingQuads(quads);
                         }
                     }
                 }
@@ -987,7 +988,7 @@ Path AccessibilityRenderObject::elementPath() const
         if (!needsPath)
             return { };
 
-        auto outlineOffset = Style::evaluate<float>(style.outlineOffset(), Style::ZoomNeeded { });
+        auto outlineOffset = Style::evaluate<float>(style.usedOutlineOffset(), Style::ZoomNeeded { });
         float deviceScaleFactor = renderText->document().deviceScaleFactor();
         Vector<FloatRect> pixelSnappedRects;
         for (auto rect : rects) {
@@ -1774,11 +1775,11 @@ AXTextRuns AccessibilityRenderObject::textRuns()
 
         unsigned startIndex = fullString.length();
         unsigned endIndex = startIndex + lineString.length();
-        runs.append({ currentLineIndex, startIndex, endIndex, WTFMove(textRunDomOffsets), std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
+        runs.append({ currentLineIndex, startIndex, endIndex, WTF::move(textRunDomOffsets), std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
 
         fullString.append(lineString.toString());
     }
-    return { renderText->containingBlock(), WTFMove(runs), fullString.toString().isolatedCopy(), containsOnlyASCII };
+    return { renderText->containingBlock(), WTF::move(runs), fullString.toString().isolatedCopy(), containsOnlyASCII };
 }
 
 AXTextRunLineID AccessibilityRenderObject::listMarkerLineID() const
@@ -2367,6 +2368,11 @@ AccessibilityObject* AccessibilityRenderObject::accessibilityHitTest(const IntPo
 
         result = result->parentObjectUnignored();
     }
+
+    if (std::optional stitchedIntoID = result ? result->stitchedIntoID() : std::nullopt) {
+        if (RefPtr stitchRepresentative = cache->objectForID(*stitchedIntoID))
+            return stitchRepresentative.unsafeGet();
+    }
     return result.unsafeGet();
 }
 
@@ -2670,7 +2676,7 @@ void AccessibilityRenderObject::addTextFieldChildren()
     Ref axSpinButton = uncheckedDowncast<AccessibilitySpinButton>(*axObjectCache()->create(AccessibilityRole::SpinButton));
     axSpinButton->setSpinButtonElement(spinButtonElement.get());
     axSpinButton->setParent(this);
-    addChild(WTFMove(axSpinButton));
+    addChild(WTF::move(axSpinButton));
 }
 
 bool AccessibilityRenderObject::isSVGImage() const
@@ -3000,7 +3006,7 @@ void AccessibilityRenderObject::addChildren()
         // AXChildIterator to walk the render tree / DOM (we may walk between the
         // two — reference AccessibilityObject::iterator documentation for more information).
         for (Ref object : AXChildIterator(*this))
-            addChildIfNeeded(WTFMove(object));
+            addChildIfNeeded(WTF::move(object));
     }
 
     if (RefPtr afterPseudo = element ? element->afterPseudoElement() : nullptr) {
@@ -3129,7 +3135,7 @@ bool AccessibilityRenderObject::hasSameFontColor(AXCoreObject& object)
     if (!m_renderer || !renderer)
         return false;
 
-    return m_renderer->style().visitedDependentColor(CSSPropertyColor) == renderer->style().visitedDependentColor(CSSPropertyColor);
+    return m_renderer->style().visitedDependentColor() == renderer->style().visitedDependentColor();
 }
 
 bool AccessibilityRenderObject::hasSameStyle(AXCoreObject& object)

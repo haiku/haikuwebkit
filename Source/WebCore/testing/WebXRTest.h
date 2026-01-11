@@ -61,7 +61,7 @@ public:
 #endif
     };
 
-    static Ref<WebXRTest> create(WeakPtr<WebXRSystem, WeakPtrImplWithEventTargetData>&& system) { return adoptRef(*new WebXRTest(WTFMove(system))); }
+    static Ref<WebXRTest> create(WeakPtr<WebXRSystem, WeakPtrImplWithEventTargetData>&& system) { return adoptRef(*new WebXRTest(WTF::move(system))); }
     ~WebXRTest();
 
     using WebFakeXRDevicePromise = DOMPromiseDeferred<IDLInterface<WebFakeXRDevice>>;

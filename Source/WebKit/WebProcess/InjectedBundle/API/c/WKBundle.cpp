@@ -73,7 +73,7 @@ void WKBundlePostSynchronousMessage(WKBundleRef bundleRef, WKStringRef messageNa
     RefPtr<API::Object> returnData;
     WebKit::toProtectedImpl(bundleRef)->postSynchronousMessage(WebKit::toWTFString(messageNameRef), WebKit::toProtectedImpl(messageBodyRef).get(), returnData);
     if (returnRetainedDataRef)
-        *returnRetainedDataRef = WebKit::toAPILeakingRef(WTFMove(returnData));
+        *returnRetainedDataRef = WebKit::toAPILeakingRef(WTF::move(returnData));
 }
 
 void WKBundleGarbageCollectJavaScriptObjects(WKBundleRef bundleRef)

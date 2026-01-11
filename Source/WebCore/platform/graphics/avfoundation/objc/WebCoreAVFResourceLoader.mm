@@ -77,7 +77,7 @@ private:
 
     void fulfillRequestWithResource(CachedResource&);
 
-    WebCoreAVFResourceLoader& m_parent;
+    ThreadSafeWeakPtr<WebCoreAVFResourceLoader> m_parent;
     CachedResourceHandle<CachedRawResource> m_resource;
 };
 
@@ -100,17 +100,17 @@ RefPtr<CachedResourceMediaLoader> CachedResourceMediaLoader::create(WebCoreAVFRe
         CachingPolicy::DisallowCaching
     );
     loaderOptions.destination = FetchOptions::Destination::Video;
-    CachedResourceRequest request(WTFMove(resourceRequest), loaderOptions);
+    CachedResourceRequest request(WTF::move(resourceRequest), loaderOptions);
 
-    auto resource = loader.requestMedia(WTFMove(request)).value_or(nullptr);
+    auto resource = loader.requestMedia(WTF::move(request)).value_or(nullptr);
     if (!resource)
         return nullptr;
-    return adoptRef(*new CachedResourceMediaLoader { parent, WTFMove(resource) });
+    return adoptRef(*new CachedResourceMediaLoader { parent, WTF::move(resource) });
 }
 
 CachedResourceMediaLoader::CachedResourceMediaLoader(WebCoreAVFResourceLoader& parent, CachedResourceHandle<CachedRawResource>&& resource)
     : m_parent(parent)
-    , m_resource(WTFMove(resource))
+    , m_resource(WTF::move(resource))
 {
     m_resource->addClient(*this);
 }
@@ -127,25 +127,25 @@ void CachedResourceMediaLoader::stop()
 void CachedResourceMediaLoader::responseReceived(const CachedResource& resource, const ResourceResponse& response, CompletionHandler<void()>&& completionHandler)
 {
     ASSERT_UNUSED(resource, &resource == m_resource);
-    CompletionHandlerCallingScope completionHandlerCaller(WTFMove(completionHandler));
+    CompletionHandlerCallingScope completionHandlerCaller(WTF::move(completionHandler));
 
-    m_parent.responseReceived(response.mimeType(), response.httpStatusCode(), response.contentRange(), response.expectedContentLength());
+    m_parent.get()->responseReceived(response.mimeType(), response.httpStatusCode(), response.contentRange(), response.expectedContentLength());
 }
 
 void CachedResourceMediaLoader::notifyFinished(CachedResource& resource, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess)
 {
     if (resource.loadFailedOrCanceled()) {
-        m_parent.loadFailed(resource.resourceError());
+        m_parent.get()->loadFailed(resource.resourceError());
         return;
     }
-    m_parent.loadFinished();
+    m_parent.get()->loadFinished();
 }
 
 void CachedResourceMediaLoader::dataReceived(CachedResource& resource, const SharedBuffer&)
 {
     ASSERT(&resource == m_resource);
     if (RefPtr data = resource.resourceBuffer())
-        m_parent.newDataStoredInSharedBuffer(*data);
+        m_parent.get()->newDataStoredInSharedBuffer(*data);
 }
 
 class PlatformResourceMediaLoader final : public PlatformMediaResourceClient {
@@ -164,7 +164,7 @@ private:
 
     // PlatformMediaResourceClient
     void responseReceived(PlatformMediaResource&, const ResourceResponse&, CompletionHandler<void(ShouldContinuePolicyCheck)>&&) final;
-    void redirectReceived(PlatformMediaResource&, ResourceRequest&& request, const ResourceResponse&, CompletionHandler<void(ResourceRequest&&)>&& completionHandler) final { completionHandler(WTFMove(request)); }
+    void redirectReceived(PlatformMediaResource&, ResourceRequest&& request, const ResourceResponse&, CompletionHandler<void(ResourceRequest&&)>&& completionHandler) final { completionHandler(WTF::move(request)); }
     bool shouldCacheResponse(PlatformMediaResource&, const ResourceResponse&) final { return false; }
     void dataSent(PlatformMediaResource&, unsigned long long, unsigned long long) final { }
     void dataReceived(PlatformMediaResource&, const SharedBuffer&) final;
@@ -172,7 +172,7 @@ private:
     void loadFailed(PlatformMediaResource&, const ResourceError& error) final { loadFailed(error); }
     void loadFinished(PlatformMediaResource&, const NetworkLoadMetrics&) final { loadFinished(); }
 
-    WebCoreAVFResourceLoader& m_parent;
+    ThreadSafeWeakPtr<WebCoreAVFResourceLoader> m_parent;
     const Ref<GuaranteedSerialFunctionDispatcher> m_targetDispatcher;
     RefPtr<PlatformMediaResource> m_resource WTF_GUARDED_BY_CAPABILITY(m_targetDispatcher.get());
     SharedBufferBuilder m_buffer WTF_GUARDED_BY_CAPABILITY(m_targetDispatcher.get());
@@ -180,7 +180,7 @@ private:
 
 RefPtr<PlatformResourceMediaLoader> PlatformResourceMediaLoader::create(WebCoreAVFResourceLoader& parent, PlatformMediaResourceLoader& loader, ResourceRequest&& request)
 {
-    RefPtr resource = loader.requestResource(WTFMove(request), PlatformMediaResourceLoader::LoadOption::DisallowCaching);
+    RefPtr resource = loader.requestResource(WTF::move(request), PlatformMediaResourceLoader::LoadOption::DisallowCaching);
     if (!resource)
         return nullptr;
     Ref client = adoptRef(*new PlatformResourceMediaLoader { parent, *resource });
@@ -191,7 +191,7 @@ RefPtr<PlatformResourceMediaLoader> PlatformResourceMediaLoader::create(WebCoreA
 PlatformResourceMediaLoader::PlatformResourceMediaLoader(WebCoreAVFResourceLoader& parent, Ref<PlatformMediaResource>&& resource)
     : m_parent(parent)
     , m_targetDispatcher(parent.m_targetDispatcher)
-    , m_resource(WTFMove(resource))
+    , m_resource(WTF::move(resource))
 {
 }
 
@@ -210,7 +210,7 @@ void PlatformResourceMediaLoader::responseReceived(PlatformMediaResource&, const
 {
     assertIsCurrent(m_targetDispatcher.get());
 
-    m_parent.responseReceived(response.mimeType(), response.httpStatusCode(), response.contentRange(), response.expectedContentLength());
+    m_parent.get()->responseReceived(response.mimeType(), response.httpStatusCode(), response.contentRange(), response.expectedContentLength());
     completionHandler(ShouldContinuePolicyCheck::Yes);
 }
 
@@ -218,14 +218,14 @@ void PlatformResourceMediaLoader::loadFailed(const ResourceError& error)
 {
     assertIsCurrent(m_targetDispatcher.get());
 
-    m_parent.loadFailed(error);
+    m_parent.get()->loadFailed(error);
 }
 
 void PlatformResourceMediaLoader::loadFinished()
 {
     assertIsCurrent(m_targetDispatcher.get());
 
-    m_parent.loadFinished();
+    m_parent.get()->loadFinished();
 }
 
 void PlatformResourceMediaLoader::dataReceived(PlatformMediaResource&, const SharedBuffer& buffer)
@@ -233,7 +233,7 @@ void PlatformResourceMediaLoader::dataReceived(PlatformMediaResource&, const Sha
     assertIsCurrent(m_targetDispatcher.get());
 
     m_buffer.append(buffer);
-    m_parent.newDataStoredInSharedBuffer(*m_buffer.buffer());
+    m_parent.get()->newDataStoredInSharedBuffer(*m_buffer.buffer());
 }
 
 class DataURLResourceMediaLoader {
@@ -242,7 +242,7 @@ public:
     DataURLResourceMediaLoader(WebCoreAVFResourceLoader&, ResourceRequest&&);
 
 private:
-    WebCoreAVFResourceLoader& m_parent;
+    ThreadSafeWeakPtr<WebCoreAVFResourceLoader> m_parent;
 };
 
 DataURLResourceMediaLoader::DataURLResourceMediaLoader(WebCoreAVFResourceLoader& parent, ResourceRequest&& request)
@@ -254,25 +254,25 @@ DataURLResourceMediaLoader::DataURLResourceMediaLoader(WebCoreAVFResourceLoader&
     if (auto result = DataURLDecoder::decode(request.url())) {
         // data URLs can end up being unreasonably big so we want to avoid having to call isolatedCopy() here when passing the URL String to the loading thread.
         auto response = ResourceResponse::dataURLResponse(request.url(), *result);
-        auto buffer = SharedBuffer::create(WTFMove(result->data));
-        m_parent.m_targetDispatcher->dispatch([this, parent = Ref { m_parent }, buffer = WTFMove(buffer), mimeType = response.mimeType().isolatedCopy(), status =  response.httpStatusCode(), contentRange = response.contentRange()] {
+        auto buffer = SharedBuffer::create(WTF::move(result->data));
+        m_parent.get()->m_targetDispatcher->dispatch([this, parent = Ref { *m_parent.get() }, buffer = WTF::move(buffer), mimeType = response.mimeType().isolatedCopy(), status =  response.httpStatusCode(), contentRange = response.contentRange()] {
 
-            if (m_parent.m_dataURLMediaLoader.get() != this)
+            if (parent->m_dataURLMediaLoader.get() != this)
                 return;
 
-            if (m_parent.responseReceived(mimeType, status, contentRange, buffer->size()))
+            if (parent->responseReceived(mimeType, status, contentRange, buffer->size()))
                 return;
 
-            if (m_parent.newDataStoredInSharedBuffer(buffer))
+            if (parent->newDataStoredInSharedBuffer(buffer))
                 return;
 
-            m_parent.loadFinished();
+            parent->loadFinished();
         });
     } else {
-        m_parent.m_targetDispatcher->dispatch([this, parent = Ref { m_parent }] {
-            if (m_parent.m_dataURLMediaLoader.get() != this)
+        m_parent.get()->m_targetDispatcher->dispatch([this, parent = Ref { *m_parent.get() }] {
+            if (parent->m_dataURLMediaLoader.get() != this)
                 return;
-            m_parent.loadFailed(ResourceError(ResourceError::Type::General));
+            parent->loadFailed(ResourceError(ResourceError::Type::General));
         });
     }
 }
@@ -321,7 +321,7 @@ void WebCoreAVFResourceLoader::startLoading()
     }
 
     if (request.url().protocolIsData()) {
-        m_dataURLMediaLoader = WTF::makeUnique<DataURLResourceMediaLoader>(*this, WTFMove(request));
+        m_dataURLMediaLoader = WTF::makeUnique<DataURLResourceMediaLoader>(*this, WTF::move(request));
         return;
     }
 
@@ -335,7 +335,7 @@ void WebCoreAVFResourceLoader::startLoading()
             return;
     }
 
-    m_platformMediaLoader = PlatformResourceMediaLoader::create(*this, parent->player()->mediaResourceLoader(), WTFMove(request));
+    m_platformMediaLoader = PlatformResourceMediaLoader::create(*this, parent->player()->mediaResourceLoader(), WTF::move(request));
     if (m_platformMediaLoader)
         return;
 
@@ -354,7 +354,7 @@ void WebCoreAVFResourceLoader::stopLoading()
     if (m_platformMediaLoader)
         m_platformMediaLoader->stop();
 
-    callOnMainThread([m_parent = WTFMove(m_parent), loader = WTFMove(m_platformMediaLoader), avRequest = WTFMove(m_avRequest)] {
+    callOnMainThread([m_parent = WTF::move(m_parent), loader = WTF::move(m_platformMediaLoader), avRequest = WTF::move(m_avRequest)] {
         if (RefPtr parent = m_parent.get(); parent && avRequest)
             parent->didStopLoadingRequest(avRequest.get());
     });

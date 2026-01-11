@@ -43,7 +43,7 @@ struct GridAreaLines;
 struct UnplacedGridItems;
 
 class GridFormattingContext {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(GridFormattingContext);
+    WTF_MAKE_TZONE_ALLOCATED(GridFormattingContext);
 public:
 
     struct GridLayoutConstraints {

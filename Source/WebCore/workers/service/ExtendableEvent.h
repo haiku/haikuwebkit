@@ -35,7 +35,7 @@ class DOMPromise;
 template<typename> class ExceptionOr;
 
 class ExtendableEvent : public Event {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(ExtendableEvent);
+    WTF_MAKE_TZONE_ALLOCATED(ExtendableEvent);
 public:
     static Ref<ExtendableEvent> create(const AtomString& type, const ExtendableEventInit& initializer, IsTrusted isTrusted = IsTrusted::No)
     {

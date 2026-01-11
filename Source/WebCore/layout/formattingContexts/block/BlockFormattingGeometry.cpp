@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2026 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +35,7 @@
 #include "LayoutContext.h"
 #include "LayoutInitialContainingBlock.h"
 #include "Logging.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {
@@ -328,10 +329,10 @@ IntrinsicWidthConstraints BlockFormattingGeometry::intrinsicWidthConstraints(con
         auto& style = layoutBox.style();
         const auto& zoomFactor = style.usedZoomForLength();
         return fixedValue(style.marginStart(), zoomFactor).value_or(0)
-            + Style::evaluate<LayoutUnit>(style.borderLeftWidth(), Style::ZoomNeeded { })
+            + Style::evaluate<LayoutUnit>(style.usedBorderLeftWidth(), Style::ZoomNeeded { })
             + fixedValue(style.paddingLeft(), zoomFactor).value_or(0)
             + fixedValue(style.paddingRight(), zoomFactor).value_or(0)
-            + Style::evaluate<LayoutUnit>(style.borderRightWidth(), Style::ZoomNeeded { })
+            + Style::evaluate<LayoutUnit>(style.usedBorderRightWidth(), Style::ZoomNeeded { })
             + fixedValue(style.marginEnd(), zoomFactor).value_or(0);
     };
 

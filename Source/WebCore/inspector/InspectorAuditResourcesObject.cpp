@@ -95,7 +95,7 @@ ExceptionOr<Vector<InspectorAuditResourcesObject::Resource>> InspectorAuditResou
             m_resources.add(resource.id, cachedResource);
         }
 
-        resources.append(WTFMove(resource));
+        resources.append(WTF::move(resource));
     }
 
     return resources;

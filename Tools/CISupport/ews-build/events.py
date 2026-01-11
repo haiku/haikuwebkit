@@ -28,7 +28,6 @@ import re
 import time
 import twisted
 
-from base64 import b64encode
 from buildbot.process.results import SUCCESS, FAILURE, CANCELLED, WARNINGS, SKIPPED, EXCEPTION, RETRY
 from buildbot.util import httpclientservice, service
 from buildbot.www.hooks.github import GitHubEventHandler
@@ -98,8 +97,6 @@ class Events(service.BuildbotService):
         data['description'] = data.get('description', '')
         if len(data['description']) > self.MAX_GITHUB_DESCRIPTION:
             data['description'] = '{}...'.format(data['description'][:self.MAX_GITHUB_DESCRIPTION - 3])
-
-        auth_header = b64encode('{}:{}'.format(username, access_token).encode('utf-8')).decode('utf-8')
 
         TwistedAdditions.request(
             url=GitHub.commit_status_url(sha, repository),

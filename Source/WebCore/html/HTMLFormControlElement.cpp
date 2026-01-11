@@ -43,7 +43,7 @@
 #include "PopoverData.h"
 #include "PseudoClassChangeInvalidation.h"
 #include "RenderBox.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderTheme.h"
 #include "SelectionRestorationMode.h"
 #include "Settings.h"
@@ -56,7 +56,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLFormControlElement);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLFormControlElement);
 
 using namespace HTMLNames;
 
@@ -240,7 +240,8 @@ bool HTMLFormControlElement::isMouseFocusable() const
 #if (PLATFORM(GTK) || PLATFORM(WPE))
     return HTMLElement::isMouseFocusable();
 #else
-    // FIXME: We should remove the quirk once <rdar://problem/47334655> is fixed.
+    // FIXME: We can remove needsFormControlToBeMouseFocusable if there are no more quirks
+    // or if we decide to change the default behavior and make form control elements focusable
     if (!!tabIndexSetExplicitly() || protectedDocument()->quirks().needsFormControlToBeMouseFocusable())
         return HTMLElement::isMouseFocusable();
     return false;
@@ -254,7 +255,7 @@ void HTMLFormControlElement::runFocusingStepsForAutofocus()
 
 void HTMLFormControlElement::dispatchBlurEvent(RefPtr<Element>&& newFocusedElement)
 {
-    HTMLElement::dispatchBlurEvent(WTFMove(newFocusedElement));
+    HTMLElement::dispatchBlurEvent(WTF::move(newFocusedElement));
     hideVisibleValidationMessage();
 }
 

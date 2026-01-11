@@ -170,7 +170,7 @@ void InternalReadableStream::cancel(Exception&& exception)
 
     auto scope = DECLARE_CATCH_SCOPE(globalObject->vm());
     JSC::JSLockHolder lock(globalObject->vm());
-    cancel(*globalObject, toJSNewlyCreated(globalObject, JSC::jsCast<JSDOMGlobalObject*>(globalObject), DOMException::create(WTFMove(exception))));
+    cancel(*globalObject, toJSNewlyCreated(globalObject, JSC::jsCast<JSDOMGlobalObject*>(globalObject), DOMException::create(WTF::move(exception))));
     if (scope.exception()) [[unlikely]]
         scope.clearException();
 }

@@ -67,7 +67,7 @@ Protocol::ErrorStringOr<void> InspectorAuditAgent::setup(std::optional<Protocol:
     if (hasActiveAudit())
         return makeUnexpected("Must call teardown before calling setup again"_s);
 
-    InjectedScript injectedScript = injectedScriptForEval(errorString, WTFMove(executionContextId));
+    InjectedScript injectedScript = injectedScriptForEval(errorString, WTF::move(executionContextId));
     if (injectedScript.hasNoValue())
         return makeUnexpected(errorString);
 
@@ -92,7 +92,7 @@ Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, std::op
 {
     Protocol::ErrorString errorString;
 
-    InjectedScript injectedScript = injectedScriptForEval(errorString, WTFMove(executionContextId));
+    InjectedScript injectedScript = injectedScriptForEval(errorString, WTF::move(executionContextId));
     if (injectedScript.hasNoValue())
         return makeUnexpected(errorString);
 
@@ -112,14 +112,14 @@ Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, std::op
 
     muteConsole();
 
-    injectedScript.execute(errorString, functionString, WTFMove(options), result, wasThrown, savedResultIndex);
+    injectedScript.execute(errorString, functionString, WTF::move(options), result, wasThrown, savedResultIndex);
 
     unmuteConsole();
 
     if (!result)
         return makeUnexpected(errorString);
 
-    return { { result.releaseNonNull(), WTFMove(wasThrown) } };
+    return { { result.releaseNonNull(), WTF::move(wasThrown) } };
 }
 
 Protocol::ErrorStringOr<void> InspectorAuditAgent::teardown()

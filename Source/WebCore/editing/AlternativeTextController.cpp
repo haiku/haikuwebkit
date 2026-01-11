@@ -602,12 +602,12 @@ bool AlternativeTextController::respondToMarkerAtEndOfWord(const DocumentMarker&
     switch (marker.type()) {
     case DocumentMarkerType::Spelling:
     case DocumentMarkerType::Grammar:
-        m_rangeWithAlternative = WTFMove(wordRange);
+        m_rangeWithAlternative = WTF::move(wordRange);
         m_details = emptyString();
         startAlternativeTextUITimer((marker.type() == DocumentMarkerType::Spelling) ? AlternativeTextType::SpellingSuggestions : AlternativeTextType::GrammarSuggestions);
         break;
     case DocumentMarkerType::Replacement:
-        m_rangeWithAlternative = WTFMove(wordRange);
+        m_rangeWithAlternative = WTF::move(wordRange);
         m_details = marker.description();
         startAlternativeTextUITimer(AlternativeTextType::Reversion);
         break;
@@ -615,7 +615,7 @@ bool AlternativeTextController::respondToMarkerAtEndOfWord(const DocumentMarker&
         auto& markerData = std::get<DocumentMarker::DictationData>(marker.data());
         if (currentWord != markerData.originalText)
             return false;
-        m_rangeWithAlternative = WTFMove(wordRange);
+        m_rangeWithAlternative = WTF::move(wordRange);
         m_details = markerData.context;
         startAlternativeTextUITimer(AlternativeTextType::DictationAlternatives);
     }

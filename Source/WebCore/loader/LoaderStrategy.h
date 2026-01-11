@@ -58,7 +58,7 @@ class SubresourceLoader;
 struct FetchOptions;
 
 class WEBCORE_EXPORT LoaderStrategy : public CanMakeCheckedPtr<LoaderStrategy> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(LoaderStrategy);
+    WTF_MAKE_TZONE_ALLOCATED(LoaderStrategy);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(LoaderStrategy);
 public:
     virtual void loadResource(LocalFrame&, CachedResource&, ResourceRequest&&, const ResourceLoaderOptions&, CompletionHandler<void(RefPtr<SubresourceLoader>&&)>&&) = 0;

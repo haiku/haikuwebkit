@@ -13,15 +13,13 @@ layer at (8,72) size 192x192
     RenderInline {DIV} at (0,0) size 192x139 [bgcolor=#0000FF]
       RenderText {#text} at (0,0) size 67x19
         text run at (0,0) width 67: "Filler Text"
-      RenderBlock (anonymous) at (0,20) size 192x20
-        RenderBlock {DIV} at (0,0) size 192x20 [bgcolor=#FFA500]
-          RenderText {#text} at (0,0) size 67x19
-            text run at (0,0) width 67: "Filler Text"
+      RenderBlock {DIV} at (0,20) size 192x20 [bgcolor=#FFA500]
+        RenderText {#text} at (0,0) size 67x19
+          text run at (0,0) width 67: "Filler Text"
       RenderText {#text} at (0,0) size 0x0
-      RenderBlock (anonymous) at (0,100) size 192x20
-        RenderBlock {DIV} at (0,0) size 192x20 [bgcolor=#FFA500]
-          RenderText {#text} at (0,0) size 67x19
-            text run at (0,0) width 67: "Filler Text"
+      RenderBlock {DIV} at (0,100) size 192x20 [bgcolor=#FFA500]
+        RenderText {#text} at (0,0) size 67x19
+          text run at (0,0) width 67: "Filler Text"
       RenderText {#text} at (0,120) size 67x19
         text run at (0,120) width 67: "Filler Text"
     RenderText {#text} at (0,0) size 0x0
@@ -29,9 +27,8 @@ layer at (8,264) size 192x59
   RenderInline (relative positioned) {DIV} at (0,40) size 192x59
     RenderText {#text} at (0,40) size 67x19
       text run at (0,40) width 67: "Filler Text"
-    RenderBlock (anonymous) at (0,60) size 192x20
-      RenderBlock {DIV} at (0,0) size 192x20 [bgcolor=#FFA500]
-        RenderText {#text} at (0,0) size 67x19
-          text run at (0,0) width 67: "Filler Text"
+    RenderBlock {DIV} at (0,60) size 192x20 [bgcolor=#FFA500]
+      RenderText {#text} at (0,0) size 67x19
+        text run at (0,0) width 67: "Filler Text"
     RenderText {#text} at (0,80) size 67x19
       text run at (0,80) width 67: "Filler Text"

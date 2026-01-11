@@ -155,11 +155,11 @@ void AXLogger::log(const Vector<Ref<AXCoreObject>>& objects)
     }
 }
 
-void AXLogger::log(const std::pair<Ref<AccessibilityObject>, AXNotification>& notification)
+void AXLogger::log(const std::pair<Ref<AccessibilityObject>, AXNotificationWithData>& notification)
 {
     if (shouldLog()) {
         TextStream stream(TextStream::LineMode::MultipleLine);
-        stream << "Notification " << notification.second << " for object ";
+        stream << "Notification " << notification.second.notification << " for object ";
         stream << notification.first.get();
         LOG(Accessibility, "%s", stream.release().utf8().data());
     }
@@ -416,8 +416,8 @@ TextStream& operator<<(TextStream& stream, const AccessibilitySearchCriteria& cr
     };
 
     stream << "SearchCriteria " << &criteria;
-    streamCriteriaObject("anchorObject"_s, criteria.anchorObject);
-    streamCriteriaObject("startObject"_s, criteria.startObject);
+    streamCriteriaObject("anchorObject"_s, RefPtr { criteria.anchorObject.get() }.get());
+    streamCriteriaObject("startObject"_s, RefPtr { criteria.startObject.get() }.get());
     stream.dumpProperty("searchDirection"_s, criteria.searchDirection);
 
     stream.nextLine();
@@ -603,6 +603,10 @@ TextStream& operator<<(WTF::TextStream& stream, const TextUnderElementMode& mode
         stream << ", inHiddenSubtree: 1";
     if (!mode.considerHiddenState)
         stream << ", considerHiddenState: 0";
+    if (mode.includeListMarkers == IncludeListMarkerText::Yes)
+        stream << ", includeListMarkers: 1";
+    if (mode.descendIntoContainers == DescendIntoContainers::Yes)
+        stream << ", descendIntoContainers: 1";
     if (mode.ignoredChildNode)
         stream << ", ignoredChildNode: " << mode.ignoredChildNode;
     if (mode.trimWhitespace == TrimWhitespace::No)
@@ -1315,7 +1319,7 @@ TextStream& operator<<(TextStream& stream, AXObjectCache& axObjectCache)
     RefPtr document = axObjectCache.document();
     if (!document)
         stream << "No document!";
-    else if (RefPtr root = axObjectCache.get(document->view())) {
+    else if (RefPtr root = axObjectCache.get(document->protectedView().get())) {
         constexpr OptionSet<AXStreamOptions> options = { AXStreamOptions::ObjectID, AXStreamOptions::Role, AXStreamOptions::ParentID, AXStreamOptions::IdentifierAttribute, AXStreamOptions::OuterHTML, AXStreamOptions::DisplayContents, AXStreamOptions::Address, AXStreamOptions::RendererOrNode };
         streamSubtree(stream, root.releaseNonNull(), options);
     } else
@@ -1356,7 +1360,7 @@ void streamAXCoreObject(TextStream& stream, const AXCoreObject& object, const Op
 
     auto id = options & AXStreamOptions::IdentifierAttribute ? object.identifierAttribute() : emptyString();
     if (!id.isEmpty())
-        stream.dumpProperty("identifier"_s, WTFMove(id));
+        stream.dumpProperty("identifier"_s, WTF::move(id));
 
     if (options & AXStreamOptions::OuterHTML) {
         auto role = object.role();

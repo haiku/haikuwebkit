@@ -122,7 +122,7 @@ static gpointer wpeDisplayHeadlessGetEGLDisplay(WPEDisplay* display, GError** er
 
         if (eglDisplay != EGL_NO_DISPLAY) {
             auto* priv = WPE_DISPLAY_HEADLESS(display)->priv;
-            priv->gbmDeviceFD = WTFMove(fd);
+            priv->gbmDeviceFD = WTF::move(fd);
             priv->gbmDevice = device;
             return eglDisplay;
         }
@@ -205,7 +205,7 @@ WPEDisplay* wpe_display_headless_new_for_device(const char* name, GError** error
 
     auto* display = WPE_DISPLAY_HEADLESS(wpe_display_headless_new());
     auto* priv = display->priv;
-    priv->drmDevice = WTFMove(drmDevice);
+    priv->drmDevice = WTF::move(drmDevice);
     return WPE_DISPLAY(display);
 #else
     UNUSED_PARAM(name);

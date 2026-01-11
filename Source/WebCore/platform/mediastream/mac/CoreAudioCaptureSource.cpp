@@ -75,7 +75,7 @@ static CaptureSourceOrError initializeCoreAudioCaptureSource(Ref<CoreAudioCaptur
         if (auto result = source->applyConstraints(*constraints))
             return CaptureSourceOrError(CaptureSourceError { result->invalidConstraint });
     }
-    return CaptureSourceOrError(WTFMove(source));
+    return CaptureSourceOrError(WTF::move(source));
 }
 
 CaptureSourceOrError CoreAudioCaptureSource::create(const CaptureDevice& device, MediaDeviceHashSalts&& hashSalts, const MediaConstraints* constraints, std::optional<PageIdentifier> pageIdentifier)
@@ -85,26 +85,26 @@ CaptureSourceOrError CoreAudioCaptureSource::create(const CaptureDevice& device,
     if (!coreAudioDevice)
         return CaptureSourceOrError({ "No CoreAudioCaptureSource device"_s, MediaAccessDenialReason::PermissionDenied });
 
-    auto source = adoptRef(*new CoreAudioCaptureSource(device, coreAudioDevice->deviceID(), WTFMove(hashSalts), pageIdentifier));
+    auto source = adoptRef(*new CoreAudioCaptureSource(device, coreAudioDevice->deviceID(), WTF::move(hashSalts), pageIdentifier));
 #elif PLATFORM(IOS_FAMILY)
     auto coreAudioDevice = AVAudioSessionCaptureDeviceManager::singleton().audioSessionDeviceWithUID(device.persistentId());
     if (!coreAudioDevice)
         return CaptureSourceOrError({ "No AVAudioSessionCaptureDevice device"_s, MediaAccessDenialReason::PermissionDenied });
 
-    auto source = adoptRef(*new CoreAudioCaptureSource(device, 0, WTFMove(hashSalts), pageIdentifier));
+    auto source = adoptRef(*new CoreAudioCaptureSource(device, 0, WTF::move(hashSalts), pageIdentifier));
 #endif
-    return initializeCoreAudioCaptureSource(WTFMove(source), constraints);
+    return initializeCoreAudioCaptureSource(WTF::move(source), constraints);
 }
 
 CaptureSourceOrError CoreAudioCaptureSource::createForTesting(String&& persistentID, uint32_t deviceID, AtomString&& label, MediaDeviceHashSalts&& hashSalts, const MediaConstraints* constraints, std::optional<PageIdentifier> pageIdentifier, std::optional<bool> echoCancellation)
 {
-    auto source = adoptRef(*new CoreAudioCaptureSource(CaptureDevice { WTFMove(persistentID), CaptureDevice::DeviceType::Microphone, WTFMove(label) }, deviceID, WTFMove(hashSalts), pageIdentifier));
+    auto source = adoptRef(*new CoreAudioCaptureSource(CaptureDevice { WTF::move(persistentID), CaptureDevice::DeviceType::Microphone, WTF::move(label) }, deviceID, WTF::move(hashSalts), pageIdentifier));
     if (echoCancellation) {
         source->m_echoCancellationCapability = *echoCancellation;
         source->initializeEchoCancellation(*echoCancellation);
     }
 
-    return initializeCoreAudioCaptureSource(WTFMove(source), constraints);
+    return initializeCoreAudioCaptureSource(WTF::move(source), constraints);
 }
 
 CoreAudioCaptureSourceFactory::CoreAudioCaptureSourceFactory()
@@ -169,7 +169,7 @@ const Vector<CaptureDevice>& CoreAudioCaptureSourceFactory::speakerDevices() con
 
 void CoreAudioCaptureSourceFactory::enableMutedSpeechActivityEventListener(Function<void()>&& callback)
 {
-    CoreAudioCaptureUnit::defaultSingleton().enableMutedSpeechActivityEventListener(WTFMove(callback));
+    CoreAudioCaptureUnit::defaultSingleton().enableMutedSpeechActivityEventListener(WTF::move(callback));
 }
 
 void CoreAudioCaptureSourceFactory::disableMutedSpeechActivityEventListener()
@@ -197,7 +197,7 @@ bool CoreAudioCaptureSourceFactory::shouldAudioCaptureUnitRenderAudio()
 }
 
 CoreAudioCaptureSource::CoreAudioCaptureSource(const CaptureDevice& device, uint32_t captureDeviceID, MediaDeviceHashSalts&& hashSalts, std::optional<PageIdentifier> pageIdentifier)
-    : RealtimeMediaSource(device, WTFMove(hashSalts), pageIdentifier)
+    : RealtimeMediaSource(device, WTF::move(hashSalts), pageIdentifier)
     , m_captureDeviceID(captureDeviceID)
     , m_unit(CoreAudioCaptureUnit::defaultSingleton())
 {
@@ -292,7 +292,7 @@ const RealtimeMediaSourceCapabilities& CoreAudioCaptureSource::capabilities()
         capabilities.setEchoCancellation(m_echoCancellationCapability ? (*m_echoCancellationCapability ? RealtimeMediaSourceCapabilities::EchoCancellation::On : RealtimeMediaSourceCapabilities::EchoCancellation::Off) : RealtimeMediaSourceCapabilities::EchoCancellation::OnOrOff);
         capabilities.setVolume({ 0.0, 1.0 });
         capabilities.setSampleRate(m_unit->sampleRateCapacities());
-        m_capabilities = WTFMove(capabilities);
+        m_capabilities = WTF::move(capabilities);
     }
     return m_capabilities.value();
 }
@@ -318,7 +318,7 @@ const RealtimeMediaSourceSettings& CoreAudioCaptureSource::settings()
         supportedConstraints.setSupportsSampleRate(true);
         settings.setSupportedConstraints(supportedConstraints);
 
-        m_currentSettings = WTFMove(settings);
+        m_currentSettings = WTF::move(settings);
     }
     return m_currentSettings.value();
 }

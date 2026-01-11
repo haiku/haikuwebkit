@@ -211,7 +211,7 @@ void CurlRequest::resume()
 /* `this` is protected inside this method. */
 void CurlRequest::callClient(Function<void(CurlRequest&, CurlRequestClient&)>&& task)
 {
-    runOnMainThread([this, protectedThis = Ref { *this }, task = WTFMove(task)]() mutable {
+    runOnMainThread([this, protectedThis = Ref { *this }, task = WTF::move(task)]() mutable {
         if (m_client)
             task(*this, Ref { *m_client });
     });
@@ -219,7 +219,7 @@ void CurlRequest::callClient(Function<void(CurlRequest&, CurlRequestClient&)>&& 
 
 void CurlRequest::runOnMainThread(Function<void()>&& task)
 {
-    // for platformLoadResourceSycnhronously: we need a way to execute code in the main thread
+    // for platformLoadResourceSynchronously: we need a way to execute code in the main thread
     // while it is also locked waiting for the resource. This is done with a dedicated message
     // queue.
     if (m_messageQueue)
@@ -231,7 +231,7 @@ void CurlRequest::runOnMainThread(Function<void()>&& task)
 void CurlRequest::runOnWorkerThreadIfRequired(Function<void()>&& task)
 {
     if (isMainThread())
-        CurlContext::singleton().scheduler().callOnWorkerThread(WTFMove(task));
+        CurlContext::singleton().scheduler().callOnWorkerThread(WTF::move(task));
     else
         task();
 }
@@ -353,7 +353,7 @@ size_t CurlRequest::didReceiveHeader(String&& header)
 
     // The HTTP standard requires to use \r\n but for compatibility it recommends to accept also \n.
     if ((header != emptyLineCRLF) && (header != emptyLineLF)) {
-        m_response.headers.append(WTFMove(header));
+        m_response.headers.append(WTF::move(header));
         return receiveBytes;
     }
 
@@ -390,7 +390,7 @@ size_t CurlRequest::didReceiveHeader(String&& header)
         CurlContext::singleton().setProxyAuthMethod(m_response.availableProxyAuth);
 
     if (auto info = m_curlHandle->certificateInfo())
-        m_response.certificateInfo = WTFMove(*info);
+        m_response.certificateInfo = WTF::move(*info);
 
     m_response.networkLoadMetrics = networkLoadMetrics();
 
@@ -443,7 +443,7 @@ size_t CurlRequest::didReceiveData(std::span<const uint8_t> receivedData)
 #endif
         } else {
             callClient([buffer = SharedBuffer::create(receivedData)](CurlRequest& request, CurlRequestClient& client) mutable {
-                client.curlDidReceiveData(request, WTFMove(buffer));
+                client.curlDidReceiveData(request, WTF::move(buffer));
             });
         }
     }
@@ -461,7 +461,7 @@ void CurlRequest::didReceiveHeaderFromMultipart(Vector<String>&& headers)
     response.headers.clear();
 
     for (auto& header : headers)
-        response.headers.append(WTFMove(header));
+        response.headers.append(WTF::move(header));
 
     invokeDidReceiveResponse(response, [this] {
         runOnWorkerThreadIfRequired([this, protectedThis = Ref { *this }]() {
@@ -480,7 +480,7 @@ void CurlRequest::didReceiveDataFromMultipart(std::span<const uint8_t> receivedD
 
     if (receivedData.size()) {
         callClient([buffer = SharedBuffer::create(receivedData)](CurlRequest& request, CurlRequestClient& client) mutable {
-            client.curlDidReceiveData(request, WTFMove(buffer));
+            client.curlDidReceiveData(request, WTF::move(buffer));
         });
     }
 }
@@ -523,11 +523,11 @@ void CurlRequest::didCompleteTransfer(CURLcode result)
         auto metrics = networkLoadMetrics();
 
         finalizeTransfer();
-        callClient([networkLoadMetrics = WTFMove(metrics)](CurlRequest& request, CurlRequestClient& client) mutable {
+        callClient([networkLoadMetrics = WTF::move(metrics)](CurlRequest& request, CurlRequestClient& client) mutable {
             networkLoadMetrics.responseEnd = MonotonicTime::now();
             networkLoadMetrics.markComplete();
 
-            client.curlDidComplete(request, WTFMove(networkLoadMetrics));
+            client.curlDidComplete(request, WTF::move(networkLoadMetrics));
         });
     } else {
         auto type = (result == CURLE_OPERATION_TIMEDOUT && timeoutInterval()) ? ResourceError::Type::Timeout : ResourceError::Type::General;
@@ -535,11 +535,11 @@ void CurlRequest::didCompleteTransfer(CURLcode result)
 
         CertificateInfo certificateInfo;
         if (auto info = m_curlHandle->certificateInfo())
-            certificateInfo = WTFMove(*info);
+            certificateInfo = WTF::move(*info);
 
         finalizeTransfer();
-        callClient([error = WTFMove(resourceError), certificateInfo = WTFMove(certificateInfo)](CurlRequest& request, CurlRequestClient& client) mutable {
-            client.curlDidFailWithError(request, WTFMove(error), WTFMove(certificateInfo));
+        callClient([error = WTF::move(resourceError), certificateInfo = WTF::move(certificateInfo)](CurlRequest& request, CurlRequestClient& client) mutable {
+            client.curlDidFailWithError(request, WTF::move(error), WTF::move(certificateInfo));
         });
     }
 
@@ -636,9 +636,9 @@ void CurlRequest::invokeDidReceiveResponseForFile(const URL& url)
     auto mimeType = MIMETypeRegistry::mimeTypeForPath(url.path().toString());
 
     // DidReceiveResponse must not be called immediately
-    runOnWorkerThreadIfRequired([this, protectedThis = Ref { *this }, url = crossThreadCopy(url), mimeType = crossThreadCopy(WTFMove(mimeType))]() mutable {
+    runOnWorkerThreadIfRequired([this, protectedThis = Ref { *this }, url = crossThreadCopy(url), mimeType = crossThreadCopy(WTF::move(mimeType))]() mutable {
         CurlResponse response;
-        response.url = WTFMove(url);
+        response.url = WTF::move(url);
         response.statusCode = 200;
         response.headers.append(makeString("Content-Type: "_s, mimeType));
 
@@ -654,11 +654,11 @@ void CurlRequest::invokeDidReceiveResponse(const CurlResponse& response, Functio
     ASSERT(!m_didNotifyResponse || m_multipartHandle);
 
     m_didNotifyResponse = true;
-    m_responseCompletionHandler = WTFMove(completionHandler);
+    m_responseCompletionHandler = WTF::move(completionHandler);
 
-    // FIXME: Replace this isolatedCopy with WTFMove.
+    // FIXME: Replace this isolatedCopy with WTF::move.
     callClient([response = response.isolatedCopy()](CurlRequest& request, CurlRequestClient& client) mutable {
-        client.curlDidReceiveResponse(request, WTFMove(response));
+        client.curlDidReceiveResponse(request, WTF::move(response));
     });
 }
 
@@ -673,7 +673,7 @@ void CurlRequest::completeDidReceiveResponse()
 
     m_didReturnFromNotify = true;
 
-    if (auto responseCompletionHandler = WTFMove(m_responseCompletionHandler))
+    if (auto responseCompletionHandler = WTF::move(m_responseCompletionHandler))
         responseCompletionHandler();
 }
 
@@ -777,7 +777,7 @@ NetworkLoadMetrics CurlRequest::networkLoadMetrics()
         }
     }
 
-    return WTFMove(*networkLoadMetrics);
+    return WTF::move(*networkLoadMetrics);
 }
 
 void CurlRequest::enableDownloadToFile()

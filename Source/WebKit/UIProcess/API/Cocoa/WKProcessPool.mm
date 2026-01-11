@@ -372,7 +372,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     for (NSString *extension in nsExtensions)
         extensions.add(extension);
 
-    protectedProcessPool(self)->addSupportedPlugin(domain, name, WTFMove(mimeTypes), WTFMove(extensions));
+    protectedProcessPool(self)->addSupportedPlugin(domain, name, WTF::move(mimeTypes), WTF::move(extensions));
 }
 
 - (void)_clearSupportedPlugins

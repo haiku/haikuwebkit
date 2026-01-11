@@ -78,15 +78,15 @@ std::pair<RefPtr<WebCore::WebTransportSession>, Ref<WebTransportSessionPromise>>
             connection = getConnection();
         }
 
-        auto [session, promise] = WebKit::WebTransportSession::initialize(WTFMove(connection), workerSession, url, options, m_webPageProxyID, scope->clientOrigin());
+        auto [session, promise] = WebKit::WebTransportSession::initialize(WTF::move(connection), workerSession, url, options, m_webPageProxyID, scope->clientOrigin());
         workerSession->attachSession(session);
-        return { WTFMove(workerSession), WTFMove(promise) };
+        return { WTF::move(workerSession), WTF::move(promise) };
     }
 
     Ref document = downcast<Document>(context);
     ASSERT(RunLoop::isMain());
     auto [session, promise] = WebKit::WebTransportSession::initialize(WebProcess::singleton().ensureNetworkProcessConnection().connection(), client, url, options, m_webPageProxyID, document->clientOrigin());
-    return { WTFMove(session), WTFMove(promise) };
+    return { WTF::move(session), WTF::move(promise) };
 }
 
 #if USE(LIBRICE)

@@ -74,7 +74,7 @@ public:
     bool shouldShapeTextAcrossInlineBoxes() const { return m_shouldShapeTextAcrossInlineBoxes; }
 
     // Integration codepath
-    void setNestedListMarkerOffsets(HashMap<CheckedRef<const ElementBox>, LayoutUnit>&& nestedListMarkerOffsets) { m_nestedListMarkerOffsets = WTFMove(nestedListMarkerOffsets); }
+    void setNestedListMarkerOffsets(HashMap<CheckedRef<const ElementBox>, LayoutUnit>&& nestedListMarkerOffsets) { m_nestedListMarkerOffsets = WTF::move(nestedListMarkerOffsets); }
     LayoutUnit nestedListMarkerOffset(const ElementBox& listMarkerBox) const { return m_nestedListMarkerOffsets.get(listMarkerBox); }
     void setShouldNotSynthesizeInlineBlockBaseline() { m_shouldNotSynthesizeInlineBlockBaseline = true; }
     bool shouldNotSynthesizeInlineBlockBaseline() const { return m_shouldNotSynthesizeInlineBlockBaseline; }

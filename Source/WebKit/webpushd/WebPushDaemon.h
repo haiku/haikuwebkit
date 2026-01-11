@@ -71,7 +71,7 @@ namespace WebPushD {
 using EncodedMessage = Vector<uint8_t>;
 
 class WebPushDaemon final : public CanMakeCheckedPtr<WebPushDaemon> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebPushDaemon);
+    WTF_MAKE_TZONE_ALLOCATED(WebPushDaemon);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebPushDaemon);
     friend class WTF::NeverDestroyed<WebPushDaemon>;
 public:

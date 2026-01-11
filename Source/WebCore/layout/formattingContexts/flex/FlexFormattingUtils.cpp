@@ -30,7 +30,7 @@
 #include "LayoutBoxInlines.h"
 #include "LayoutContext.h"
 #include "LogicalFlexItem.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 
 namespace WebCore {
 namespace Layout {

@@ -88,6 +88,7 @@ Shared/glib/JavaScriptEvaluationResultGLib.cpp
 Shared/glib/ProcessExecutablePathGLib.cpp
 Shared/glib/UserMessage.cpp
 Shared/glib/WebContextMenuItemGlib.cpp
+Shared/glib/WebKitContextMenuGAction.cpp @no-unify
 
 Shared/libwpe/NativeWebKeyboardEventLibWPE.cpp
 Shared/libwpe/NativeWebMouseEventLibWPE.cpp
@@ -328,6 +329,7 @@ WebProcess/WebPage/CoordinatedGraphics/AcceleratedSurface.cpp
 WebProcess/WebPage/CoordinatedGraphics/CoordinatedSceneState.cpp
 WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
+WebProcess/WebPage/CoordinatedGraphics/NonCompositedFrameRenderer.cpp
 WebProcess/WebPage/CoordinatedGraphics/ThreadedCompositor.cpp
 
 WebProcess/WebPage/glib/WebPageGLib.cpp

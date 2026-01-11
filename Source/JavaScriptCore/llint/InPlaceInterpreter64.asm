@@ -10200,7 +10200,9 @@ end
     # t3 is not used after this
     subp cfr, t3
     push t3, PC
-    push PL, wasmInstance
+    # ditto for PL, t3 is okay to use as scratch
+    subp PL, cfr, t3
+    push t3, wasmInstance
 
     # set up the call frame
     move sp, t2
@@ -10214,7 +10216,7 @@ end
     # reserved
     # reserved
     # (first_non_arg_addr - cfr), PC
-    # PL, wasmInstance <- t2 = native argument stack (pushed by mINT)
+    # (PL - cfr), wasmInstance <- t2 = native argument stack (pushed by mINT)
     # call frame
     # call frame
     # call frame
@@ -10578,7 +10580,7 @@ _wasm_ipint_call_return_location_wide32:
     # reserved
     # reserved
     # (first_non_arg_addr - cfr), PC
-    # PL, wasmInstance  <- sc3
+    # (PL - cfr), wasmInstance  <- sc3
     # call frame return
     # call frame return
     # call frame
@@ -10744,7 +10746,7 @@ mintAlign(_end)
     # return result
     # return result     <- mintRetDst => new SP
     # (first_non_arg_addr - cfr), PC
-    # PL, wasmInstance  <- sc3
+    # (PL - cfr), wasmInstance  <- sc3
     # call frame return <- mintRetSrc
     # call frame return
     # call frame
@@ -10754,7 +10756,8 @@ mintAlign(_end)
 
     # note: we don't care about t3 anymore
 if ARM64 or ARM64E
-    loadpairq [sc3], PL, wasmInstance
+    loadpairq [sc3], t3, wasmInstance
+    addp t3, cfr, PL
 else
     loadq [sc3], wasmInstance
 end
@@ -10770,7 +10773,8 @@ end
     storep ws0, UnboxedWasmCalleeStackSlot[cfr]
 if X86_64
     move sc2, wasmInstance
-    loadq 8[sc3], PL
+    loadq 8[sc3], t3
+    addp t3, cfr, PL
     loadp (2 * SlotSize)[sc3], PC
 end
 

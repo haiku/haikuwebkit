@@ -354,7 +354,7 @@ bool BitmapImageSource::isCompatibleWithOptionsAtIndex(unsigned index, Subsampli
 
 void BitmapImageSource::decode(Function<void(DecodingStatus)>&& decodeCallback)
 {
-    m_decodeCallbacks.append(WTFMove(decodeCallback));
+    m_decodeCallbacks.append(WTF::move(decodeCallback));
     unsigned index = currentFrameIndex();
 
     if (isPendingDecodingAtIndex(index, SubsamplingLevel::Default, DecodingMode::Asynchronous)) {
@@ -571,7 +571,7 @@ Expected<Ref<NativeImage>, DecodingStatus> BitmapImageSource::nativeImageAtIndex
         DecodingOptions decodingOptions = { DecodingMode::Synchronous, options.shouldDecodeToHDR() };
         PlatformImagePtr platformImage = m_decoder->createFrameImageAtIndex(index, subsamplingLevel, decodingOptions);
 
-        RefPtr nativeImage = NativeImage::create(WTFMove(platformImage));
+        RefPtr nativeImage = NativeImage::create(WTF::move(platformImage));
         if (!nativeImage)
             return makeUnexpected(DecodingStatus::Invalid);
 
@@ -655,7 +655,7 @@ RefPtr<NativeImage> BitmapImageSource::preTransformedNativeImageAtIndex(unsigned
     auto sourceRect = FloatRect { FloatPoint(), sourceSize };
 
     buffer->context().drawNativeImage(*nativeImage, destinationRect, sourceRect, { orientation });
-    return ImageBuffer::sinkIntoNativeImage(WTFMove(buffer));
+    return ImageBuffer::sinkIntoNativeImage(WTF::move(buffer));
 }
 
 IntSize BitmapImageSource::frameSizeAtIndex(unsigned index, SubsamplingLevel subsamplingLevel) const

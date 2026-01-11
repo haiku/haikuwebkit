@@ -30,6 +30,7 @@
 #include "AXObjectCache.h"
 #include "DocumentView.h"
 #include "FrameSelection.h"
+#include "HTMLMarqueeElement.h"
 #include "LayoutIntegrationLineLayout.h"
 #include "LegacyRenderSVGContainer.h"
 #include "LegacyRenderSVGRoot.h"
@@ -58,7 +59,7 @@
 #include "RenderSVGInline.h"
 #include "RenderSVGRoot.h"
 #include "RenderSVGText.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "RenderTable.h"
 #include "RenderTableCell.h"
 #include "RenderTableRow.h"
@@ -86,6 +87,24 @@ namespace WebCore {
 
 RenderTreeBuilder* RenderTreeBuilder::s_current;
 
+static bool isRenderMarquee(const RenderObject& renderer)
+{
+    if (auto* renderElement = dynamicDowncast<RenderElement>(renderer)) {
+        if (RefPtr marquee = dynamicDowncast<HTMLMarqueeElement>(renderElement->element()))
+            return marquee->hasRenderMarquee();
+    }
+    return false;
+}
+
+static bool isWithinNeverLaidOutRenderMarqueeSubtree(const RenderObject& renderer)
+{
+    for (CheckedPtr renderObject = &renderer; renderObject && !renderObject->everHadLayout(); renderObject = renderObject->parent()) {
+        if (isRenderMarquee(*renderObject))
+            return true;
+    }
+    return false;
+}
+
 enum class IsRemoval : bool { No, Yes };
 static void invalidateLineLayout(RenderObject& renderer, IsRemoval isRemoval)
 {
@@ -93,9 +112,11 @@ static void invalidateLineLayout(RenderObject& renderer, IsRemoval isRemoval)
     if (!container)
         return;
 
-    if (isRemoval == IsRemoval::Yes && !renderer.everHadLayout()) {
+    if (isRemoval == IsRemoval::Yes && !renderer.everHadLayout()
+        && !isWithinNeverLaidOutRenderMarqueeSubtree(renderer)) {
         // Certain mutations can make renderer to be removed before running layout. In such cases we don't have to try to
         // run invalidation only remove it from layout tree.
+        // One exception is for RenderMarquee, which may have run preferred width computation without performing layout.
         if (auto* inlineLayout = container->inlineLayout())
             inlineLayout->removedFromTree(*renderer.parent(), renderer);
         return;
@@ -234,7 +255,7 @@ void RenderTreeBuilder::destroy(RenderObject& renderer, CanCollapseAnonymousBloc
 
     auto delayDestroyRendererIfApplicable = [&] {
         CheckedRef rendererToDelete = *toDestroy;
-        if (rendererToDelete->view().layoutContext().addToDetachedRendererList(WTFMove(toDestroy))) {
+        if (rendererToDelete->view().layoutContext().addToDetachedRendererList(WTF::move(toDestroy))) {
             rendererToDelete->willBeDestroyed();
             rendererToDelete->setIsBeingDestroyed();
             rendererToDelete->weakPtrFactory().revokeAll();
@@ -248,7 +269,7 @@ void RenderTreeBuilder::attach(RenderElement& parent, RenderPtr<RenderObject> ch
     reportVisuallyNonEmptyContent(parent, *child);
     ASSERT(!parent.beingDestroyed());
     ASSERT(child);
-    attachInternal(parent, WTFMove(child), beforeChild);
+    attachInternal(parent, WTF::move(child), beforeChild);
 }
 
 void RenderTreeBuilder::attachInternal(RenderElement& parent, RenderPtr<RenderObject> child, RenderObject* beforeChild)
@@ -257,13 +278,13 @@ void RenderTreeBuilder::attachInternal(RenderElement& parent, RenderPtr<RenderOb
         if (&parent == &parentCandidate) {
             // Parents inside multicols can't call internal attach directly.
             if (CheckedPtr blockFlow = dynamicDowncast<RenderBlockFlow>(parent); blockFlow && blockFlow->multiColumnFlow()) {
-                blockFlowBuilder().attach(*blockFlow, WTFMove(child), beforeChild);
+                blockFlowBuilder().attach(*blockFlow, WTF::move(child), beforeChild);
                 return;
             }
-            attachToRenderElement(parent, WTFMove(child), beforeChild);
+            attachToRenderElement(parent, WTF::move(child), beforeChild);
             return;
         }
-        attachInternal(parentCandidate, WTFMove(child), beforeChild);
+        attachInternal(parentCandidate, WTF::move(child), beforeChild);
     };
 
     ASSERT(&parent.view() == &m_view);
@@ -285,14 +306,14 @@ void RenderTreeBuilder::attachInternal(RenderElement& parent, RenderPtr<RenderOb
     }
 
     if (auto* text = dynamicDowncast<RenderSVGText>(parent)) {
-        svgBuilder().attach(*text, WTFMove(child), beforeChild);
+        svgBuilder().attach(*text, WTF::move(child), beforeChild);
         return;
     }
 
     if (parent.style().display() == DisplayType::Ruby || parent.style().display() == DisplayType::RubyBlock) {
         auto& parentCandidate = rubyBuilder().findOrCreateParentForStyleBasedRubyChild(parent, *child, beforeChild);
         if (&parentCandidate == &parent) {
-            rubyBuilder().attachForStyleBasedRuby(parentCandidate, WTFMove(child), beforeChild);
+            rubyBuilder().attachForStyleBasedRuby(parentCandidate, WTF::move(child), beforeChild);
             return;
         }
         insertRecursiveIfNeeded(parentCandidate);
@@ -300,14 +321,14 @@ void RenderTreeBuilder::attachInternal(RenderElement& parent, RenderPtr<RenderOb
     }
 
     if (auto* parentBlockFlow = dynamicDowncast<RenderBlockFlow>(parent)) {
-        blockFlowBuilder().attach(*parentBlockFlow, WTFMove(child), beforeChild);
+        blockFlowBuilder().attach(*parentBlockFlow, WTF::move(child), beforeChild);
         return;
     }
 
     if (auto* row = dynamicDowncast<RenderTableRow>(parent)) {
         auto& parentCandidate = tableBuilder().findOrCreateParentForChild(*row, *child, beforeChild);
         if (&parentCandidate == &parent) {
-            tableBuilder().attach(*row, WTFMove(child), beforeChild);
+            tableBuilder().attach(*row, WTF::move(child), beforeChild);
             return;
         }
         insertRecursiveIfNeeded(parentCandidate);
@@ -317,7 +338,7 @@ void RenderTreeBuilder::attachInternal(RenderElement& parent, RenderPtr<RenderOb
     if (auto* tableSection = dynamicDowncast<RenderTableSection>(parent)) {
         auto& parentCandidate = tableBuilder().findOrCreateParentForChild(*tableSection, *child, beforeChild);
         if (&parent == &parentCandidate) {
-            tableBuilder().attach(*tableSection, WTFMove(child), beforeChild);
+            tableBuilder().attach(*tableSection, WTF::move(child), beforeChild);
             return;
         }
         insertRecursiveIfNeeded(parentCandidate);
@@ -327,7 +348,7 @@ void RenderTreeBuilder::attachInternal(RenderElement& parent, RenderPtr<RenderOb
     if (auto* table = dynamicDowncast<RenderTable>(parent)) {
         auto& parentCandidate = tableBuilder().findOrCreateParentForChild(*table, *child, beforeChild);
         if (&parentCandidate == &parent) {
-            tableBuilder().attach(*table, WTFMove(child), beforeChild);
+            tableBuilder().attach(*table, WTF::move(child), beforeChild);
             return;
         }
         insertRecursiveIfNeeded(parentCandidate);
@@ -335,73 +356,73 @@ void RenderTreeBuilder::attachInternal(RenderElement& parent, RenderPtr<RenderOb
     }
 
     if (auto* button = dynamicDowncast<RenderButton>(parent)) {
-        formControlsBuilder().attach(*button, WTFMove(child), beforeChild);
+        formControlsBuilder().attach(*button, WTF::move(child), beforeChild);
         return;
     }
 
     if (auto* menuList = dynamicDowncast<RenderMenuList>(parent)) {
-        formControlsBuilder().attach(*menuList, WTFMove(child), beforeChild);
+        formControlsBuilder().attach(*menuList, WTF::move(child), beforeChild);
         return;
     }
 
     if (auto* container = dynamicDowncast<LegacyRenderSVGContainer>(parent)) {
-        svgBuilder().attach(*container, WTFMove(child), beforeChild);
+        svgBuilder().attach(*container, WTF::move(child), beforeChild);
         return;
     }
 
     if (auto* svgInline = dynamicDowncast<RenderSVGInline>(parent)) {
-        svgBuilder().attach(*svgInline, WTFMove(child), beforeChild);
+        svgBuilder().attach(*svgInline, WTF::move(child), beforeChild);
         return;
     }
 
     if (auto* svgRoot = dynamicDowncast<RenderSVGRoot>(parent)) {
-        svgBuilder().attach(*svgRoot, WTFMove(child), beforeChild);
+        svgBuilder().attach(*svgRoot, WTF::move(child), beforeChild);
         return;
     }
 
     if (auto* svgRoot = dynamicDowncast<LegacyRenderSVGRoot>(parent)) {
-        svgBuilder().attach(*svgRoot, WTFMove(child), beforeChild);
+        svgBuilder().attach(*svgRoot, WTF::move(child), beforeChild);
         return;
     }
 
 #if ENABLE(MATHML)
     if (auto* mathMLFenced = dynamicDowncast<RenderMathMLFenced>(parent)) {
-        mathMLBuilder().attach(*mathMLFenced, WTFMove(child), beforeChild);
+        mathMLBuilder().attach(*mathMLFenced, WTF::move(child), beforeChild);
         return;
     }
 #endif
 
     if (auto* gridParent = dynamicDowncast<RenderGrid>(parent)) {
-        attachToRenderGrid(*gridParent, WTFMove(child), beforeChild);
+        attachToRenderGrid(*gridParent, WTF::move(child), beforeChild);
         return;
     }
 
     if (auto* parentBlock = dynamicDowncast<RenderBlock>(parent)) {
-        blockBuilder().attach(*parentBlock, WTFMove(child), beforeChild);
+        blockBuilder().attach(*parentBlock, WTF::move(child), beforeChild);
         return;
     }
 
     if (auto* inlineParent = dynamicDowncast<RenderInline>(parent)) {
-        inlineBuilder().attach(*inlineParent, WTFMove(child), beforeChild);
+        inlineBuilder().attach(*inlineParent, WTF::move(child), beforeChild);
         return;
     }
 
-    attachToRenderElement(parent, WTFMove(child), beforeChild);
+    attachToRenderElement(parent, WTF::move(child), beforeChild);
 }
 
 void RenderTreeBuilder::attachIgnoringContinuation(RenderElement& parent, RenderPtr<RenderObject> child, RenderObject* beforeChild)
 {
     if (auto* inlineParent = dynamicDowncast<RenderInline>(parent)) {
-        inlineBuilder().attachIgnoringContinuation(*inlineParent, WTFMove(child), beforeChild);
+        inlineBuilder().attachIgnoringContinuation(*inlineParent, WTF::move(child), beforeChild);
         return;
     }
 
     if (auto* parentBlock = dynamicDowncast<RenderBlock>(parent)) {
-        blockBuilder().attachIgnoringContinuation(*parentBlock, WTFMove(child), beforeChild);
+        blockBuilder().attachIgnoringContinuation(*parentBlock, WTF::move(child), beforeChild);
         return;
     }
 
-    attachInternal(parent, WTFMove(child), beforeChild);
+    attachInternal(parent, WTF::move(child), beforeChild);
 }
 
 RenderPtr<RenderObject> RenderTreeBuilder::detach(RenderElement& parent, RenderObject& child, WillBeDestroyed willBeDestroyed, CanCollapseAnonymousBlock canCollapseAnonymousBlock)
@@ -449,14 +470,14 @@ void RenderTreeBuilder::attachToRenderElement(RenderElement& parent, RenderPtr<R
         else {
             auto newTable = Table::createAnonymousTableWithStyle(parent.protectedDocument(), parent.style());
             table = newTable.get();
-            attach(parent, WTFMove(newTable), beforeChild);
+            attach(parent, WTF::move(newTable), beforeChild);
         }
 
-        attach(*table, WTFMove(child));
+        attach(*table, WTF::move(child));
         return;
     }
     auto& newChild = *child.get();
-    attachToRenderElementInternal(parent, WTFMove(child), beforeChild);
+    attachToRenderElementInternal(parent, WTF::move(child), beforeChild);
     parent.didAttachChild(newChild, beforeChild);
 }
 
@@ -480,7 +501,7 @@ void RenderTreeBuilder::attachToRenderElementInternal(RenderElement& parent, Ren
     ASSERT(!is<RenderText>(beforeChild) || !downcast<RenderText>(*beforeChild).inlineWrapperForDisplayContents());
 
     // Take the ownership.
-    auto* newChild = parent.attachRendererInternal(WTFMove(child), beforeChild);
+    auto* newChild = parent.attachRendererInternal(WTF::move(child), beforeChild);
     if (parent.renderTreeBeingDestroyed()) {
         ASSERT_NOT_REACHED();
         return;
@@ -552,11 +573,11 @@ void RenderTreeBuilder::move(RenderBoxModelObject& from, RenderBoxModelObject& t
         // Takes care of adding the new child correctly if toBlock and fromBlock
         // have different kind of children (block vs inline).
         auto childToMove = detachFromRenderElement(from, child, WillBeDestroyed::No);
-        attach(to, WTFMove(childToMove), beforeChild);
+        attach(to, WTF::move(childToMove), beforeChild);
     } else {
         auto internalMoveScope = SetForScope { m_internalMovesType, IsInternalMove::Yes };
         auto childToMove = detachFromRenderElement(from, child, WillBeDestroyed::No);
-        attachToRenderElementInternal(to, WTFMove(childToMove), beforeChild);
+        attachToRenderElementInternal(to, WTF::move(childToMove), beforeChild);
     }
 
     auto findBFCRootAndDestroyInlineTree = [&] {
@@ -773,7 +794,7 @@ void RenderTreeBuilder::createAnonymousWrappersForInlineContent(RenderBlock& par
 
         auto newBlock = Block::createAnonymousBlockWithStyle(parent.protectedDocument(), parent.style());
         auto& block = *newBlock;
-        attachToRenderElementInternal(parent, WTFMove(newBlock), inlineRunStart);
+        attachToRenderElementInternal(parent, WTF::move(newBlock), inlineRunStart);
         moveChildren(parent, block, inlineRunStart, child, RenderTreeBuilder::NormalizeAfterInsertion::No);
     }
 #ifndef NDEBUG
@@ -804,7 +825,7 @@ RenderObject* RenderTreeBuilder::splitAnonymousBoxesAroundChild(RenderBoxModelOb
             // so that the table repainting logic knows the structure is dirty.
             // See for example RenderTableCell:clippedOverflowRectForRepaint.
             markBoxForRelayoutAfterSplit(*parentBox);
-            attachToRenderElementInternal(*parentBox, WTFMove(newPostBox), boxToSplit.nextSibling());
+            attachToRenderElementInternal(*parentBox, WTF::move(newPostBox), boxToSplit.nextSibling());
             moveChildren(boxToSplit, postBox, beforeChild, nullptr, RenderTreeBuilder::NormalizeAfterInsertion::Yes);
 
             markBoxForRelayoutAfterSplit(boxToSplit);
@@ -843,9 +864,9 @@ void RenderTreeBuilder::childFlowStateChangesAndAffectsParentBlock(RenderElement
     auto* parent = child.parent();
     auto newBlock = Block::createAnonymousBlockWithStyle(parent->protectedDocument(), parent->style());
     auto& block = *newBlock;
-    attachToRenderElementInternal(*parent, WTFMove(newBlock), &child);
+    attachToRenderElementInternal(*parent, WTF::move(newBlock), &child);
     auto thisToMove = detachFromRenderElement(*parent, child, WillBeDestroyed::No);
-    attachToRenderElementInternal(block, WTFMove(thisToMove));
+    attachToRenderElementInternal(block, WTF::move(thisToMove));
 }
 
 void RenderTreeBuilder::removeAnonymousWrappersForInlineChildrenIfNeeded(RenderElement& parent)
@@ -999,8 +1020,6 @@ void RenderTreeBuilder::updateAfterDescendants(RenderElement& renderer)
         listBuilder().updateItemMarker(*listItem);
     if (auto* blockFlow = dynamicDowncast<RenderBlockFlow>(renderer))
         multiColumnBuilder().updateAfterDescendants(*blockFlow);
-    if (auto* inlineRenderer = dynamicDowncast<RenderInline>(renderer))
-        inlineBuilder().updateAfterDescendants(*inlineRenderer);
 }
 
 RenderPtr<RenderObject> RenderTreeBuilder::detachFromRenderGrid(RenderGrid& parent, RenderObject& child, WillBeDestroyed willBeDestroyed)
@@ -1081,7 +1100,7 @@ void RenderTreeBuilder::attachToRenderGrid(RenderGrid& parent, RenderPtr<RenderO
     if (!newChild.isOutOfFlowPositioned())
         parent.setNeedsItemPlacement();
 
-    blockBuilder().attach(parent, WTFMove(child), beforeChild);
+    blockBuilder().attach(parent, WTF::move(child), beforeChild);
 }
 
 void RenderTreeBuilder::reportVisuallyNonEmptyContent(const RenderElement& parent, const RenderObject& child)

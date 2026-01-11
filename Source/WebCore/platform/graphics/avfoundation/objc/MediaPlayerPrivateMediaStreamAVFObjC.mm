@@ -75,7 +75,7 @@
     if (!(self = [super init]))
         return nil;
 
-    _callback = WTFMove(callback);
+    _callback = WTF::move(callback);
 
     return self;
 }
@@ -136,7 +136,7 @@ namespace WebCore {
 MediaPlayerPrivateMediaStreamAVFObjC::NativeImageCreator MediaPlayerPrivateMediaStreamAVFObjC::m_nativeImageCreator = nullptr;
 void MediaPlayerPrivateMediaStreamAVFObjC::setNativeImageCreator(NativeImageCreator&& callback)
 {
-    m_nativeImageCreator = WTFMove(callback);
+    m_nativeImageCreator = WTF::move(callback);
 }
 
 MediaPlayerPrivateMediaStreamAVFObjC::MediaPlayerPrivateMediaStreamAVFObjC(MediaPlayer& player)
@@ -179,7 +179,7 @@ MediaPlayerPrivateMediaStreamAVFObjC::~MediaPlayerPrivateMediaStreamAVFObjC()
 
     destroyLayers();
 
-    auto audioTrackMap = WTFMove(m_audioTrackMap);
+    auto audioTrackMap = WTF::move(m_audioTrackMap);
     for (auto& track : audioTrackMap.values())
         track->clear();
 
@@ -297,7 +297,7 @@ void MediaPlayerPrivateMediaStreamAVFObjC::processNewVideoFrame(VideoFrame& vide
             RefPtr<VideoFrame> videoFrame;
             {
                 Locker locker { protectedThis->m_currentVideoFrameLock };
-                videoFrame = WTFMove(protectedThis->m_currentVideoFrame);
+                videoFrame = WTF::move(protectedThis->m_currentVideoFrame);
             }
             if (videoFrame)
                 protectedThis->processNewVideoFrame(*videoFrame, metadata, presentationTime);
@@ -871,7 +871,7 @@ RetainPtr<PlatformLayer> MediaPlayerPrivateMediaStreamAVFObjC::createVideoFullsc
 void MediaPlayerPrivateMediaStreamAVFObjC::setVideoFullscreenLayer(PlatformLayer* videoFullscreenLayer, WTF::Function<void()>&& completionHandler)
 {
     updateCurrentFrameImage();
-    m_videoLayerManager->setVideoFullscreenLayer(videoFullscreenLayer, WTFMove(completionHandler), m_imagePainter.cgImage ? RefPtr { m_imagePainter.cgImage }->platformImage() : nullptr);
+    m_videoLayerManager->setVideoFullscreenLayer(videoFullscreenLayer, WTF::move(completionHandler), m_imagePainter.cgImage ? RefPtr { m_imagePainter.cgImage }->platformImage() : nullptr);
 }
 
 void MediaPlayerPrivateMediaStreamAVFObjC::setVideoFullscreenFrame(const FloatRect& frame)
@@ -920,7 +920,7 @@ void updateTracksOfKind(MemoryCompactRobinHoodHashMap<String, RefT>& trackMap, T
     for (auto& track : addedPrivateTracks) {
         RefT newTrack = itemFactory(track.get());
         trackMap.add(track->id(), newTrack.copyRef());
-        addedTracks.append(WTFMove(newTrack));
+        addedTracks.append(WTF::move(newTrack));
     }
 
     int index = 0;
@@ -1021,7 +1021,7 @@ void MediaPlayerPrivateMediaStreamAVFObjC::updateTracks()
             break;
         }
     };
-    updateTracksOfKind(m_audioTrackMap, TrackKind::Audio, currentTracks, &AudioTrackPrivateMediaStream::create, WTFMove(setAudioTrackState));
+    updateTracksOfKind(m_audioTrackMap, TrackKind::Audio, currentTracks, &AudioTrackPrivateMediaStream::create, WTF::move(setAudioTrackState));
 
     if (!player->isVideoPlayer())
         return;
@@ -1050,7 +1050,7 @@ void MediaPlayerPrivateMediaStreamAVFObjC::updateTracks()
             break;
         }
     };
-    updateTracksOfKind(m_videoTrackMap, TrackKind::Video, currentTracks, &VideoTrackPrivateMediaStream::create, WTFMove(setVideoTrackState));
+    updateTracksOfKind(m_videoTrackMap, TrackKind::Video, currentTracks, &VideoTrackPrivateMediaStream::create, WTF::move(setVideoTrackState));
 }
 
 const PlatformTimeRanges& MediaPlayerPrivateMediaStreamAVFObjC::seekable() const
@@ -1215,7 +1215,7 @@ void MediaPlayerPrivateMediaStreamAVFObjC::audioOutputDeviceChanged()
 void MediaPlayerPrivateMediaStreamAVFObjC::scheduleDeferredTask(Function<void ()>&& function)
 {
     ASSERT(function);
-    callOnMainThread([weakThis = WeakPtr { *this }, function = WTFMove(function)] {
+    callOnMainThread([weakThis = WeakPtr { *this }, function = WTF::move(function)] {
         if (!weakThis)
             return;
         auto protectedMediaPlayer = RefPtr { weakThis->m_player.get() };
@@ -1282,7 +1282,7 @@ void MediaPlayerPrivateMediaStreamAVFObjC::setVideoLayerSizeFenced(const FloatSi
 
     m_storedBounds = sampleBufferDisplayLayer->rootLayer().bounds;
     m_storedBounds->size = size;
-    sampleBufferDisplayLayer->updateBoundsAndPosition(*m_storedBounds, WTFMove(fence));
+    sampleBufferDisplayLayer->updateBoundsAndPosition(*m_storedBounds, WTF::move(fence));
 }
 
 void MediaPlayerPrivateMediaStreamAVFObjC::requestHostingContext(LayerHostingContextCallback&& callback)
@@ -1292,7 +1292,7 @@ void MediaPlayerPrivateMediaStreamAVFObjC::requestHostingContext(LayerHostingCon
         callback(context);
         return;
     }
-    m_layerHostingContextCallback = WTFMove(callback);
+    m_layerHostingContextCallback = WTF::move(callback);
 }
 
 void MediaPlayerPrivateMediaStreamAVFObjC::setShouldMaintainAspectRatio(bool shouldMaintainAspectRatio)

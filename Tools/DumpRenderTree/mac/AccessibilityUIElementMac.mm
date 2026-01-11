@@ -32,12 +32,16 @@
 #import "JSBasics.h"
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/JSStringRefCF.h>
-#import <WebCore/CocoaAccessibilityConstants.h>
 #import <WebKit/WebFrame.h>
 #import <WebKit/WebHTMLView.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/Vector.h>
 #import <wtf/cocoa/VectorCocoa.h>
+
+// Must include after any headers which include AppKit, because it contains
+// macros that clash with NSAccessibility declarations.
+// FIXME: Can be put back into sort order once building with -fmodules.
+#import <WebCore/CocoaAccessibilityConstants.h>
 
 #if HAVE(ACCESSIBILITY_FRAMEWORK)
 #import <Accessibility/Accessibility.h>
@@ -170,6 +174,11 @@ static NSString* attributesOfElement(id accessibilityObject)
         // Skip screen-specific information.
         if ([attribute isEqualToString:@"_AXPrimaryScreenHeight"] || [attribute isEqualToString:@"AXRelativeFrame"])
             continue;
+
+        if ([attribute isEqualToString:@"AXPerformsOwnTextStitching"]) {
+            // Exposing this in tests is not valuable, so remove it to decrease test maintenance burden.
+            continue;
+        }
 
         // accessibilityAttributeValue: can throw an if an attribute is not returned.
         // For DumpRenderTree's purpose, we should ignore those exceptions

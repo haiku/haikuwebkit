@@ -31,9 +31,9 @@ namespace WebKit {
 void DefaultUndoController::registerEditCommand(Ref<WebEditCommandProxy>&& command, UndoOrRedo undoOrRedo)
 {
     if (undoOrRedo == UndoOrRedo::Undo)
-        m_undoStack.append(WTFMove(command));
+        m_undoStack.append(WTF::move(command));
     else
-        m_redoStack.append(WTFMove(command));
+        m_redoStack.append(WTF::move(command));
 }
 
 void DefaultUndoController::clearAllEditCommands()

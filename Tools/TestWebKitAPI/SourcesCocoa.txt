@@ -270,6 +270,7 @@ Tests/WebKitCocoa/SimulateClickOverText.mm @nonARC
 Tests/WebKitCocoa/SiteIsolation.mm @nonARC
 Tests/WebKitCocoa/SiteIsolationUtilities.mm @nonARC
 Tests/WebKitCocoa/SnapshotStore.mm @nonARC
+Tests/WebKitCocoa/ImmersiveVideoMetadata.mm @nonARC
 Tests/WebKitCocoa/SpeechRecognition.mm @nonARC
 Tests/WebKitCocoa/StopSuspendResumeAllMedia.mm @nonARC
 Tests/WebKitCocoa/StorageQuota.mm @nonARC

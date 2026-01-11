@@ -141,7 +141,7 @@ void RemoteLayerWithRemoteRenderingBackingStore::ensureBackingStore(const Parame
             .includeDisplayList = m_parameters.includeDisplayList,
 #endif
         };
-        m_bufferSet->setConfiguration(WTFMove(configuration));
+        m_bufferSet->setConfiguration(WTF::move(configuration));
     }
 }
 

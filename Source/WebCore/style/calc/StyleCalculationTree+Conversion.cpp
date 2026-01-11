@@ -35,7 +35,7 @@
 #include "CSSCalcTree.h"
 #include "CSSPrimitiveNumericCategory.h"
 #include "CSSUnevaluatedCalc.h"
-#include "RenderStyleInlines.h"
+#include "RenderStyle+GettersInlines.h"
 #include "StyleBuilderState.h"
 #include "StyleCalculationTree.h"
 #include "StyleLengthResolution.h"
@@ -182,10 +182,10 @@ CSSCalc::Child toCSS(const IndirectNode<Blend>& root, const ToCSSConversionOptio
         );
 
         if (auto replacement = CSSCalc::simplify(product, options.simplification))
-            return WTFMove(*replacement);
+            return WTF::move(*replacement);
 
         auto type = toType(product);
-        return CSSCalc::makeChild(WTFMove(product), *type);
+        return CSSCalc::makeChild(WTF::move(product), *type);
     };
 
     auto sum = add(
@@ -194,10 +194,10 @@ CSSCalc::Child toCSS(const IndirectNode<Blend>& root, const ToCSSConversionOptio
     );
 
     if (auto replacement = simplify(sum, options.simplification))
-        return WTFMove(*replacement);
+        return WTF::move(*replacement);
 
     auto type = CSSCalc::toType(sum);
-    return CSSCalc::makeChild(WTFMove(sum), *type);
+    return CSSCalc::makeChild(WTF::move(sum), *type);
 }
 
 template<typename CalculationOp> CSSCalc::Child toCSS(const IndirectNode<CalculationOp>& root, const ToCSSConversionOptions& options)
@@ -207,10 +207,10 @@ template<typename CalculationOp> CSSCalc::Child toCSS(const IndirectNode<Calcula
     auto op = WTF::apply([&](const auto& ...x) { return CalcOp { toCSS(x, options)... }; } , *root);
 
     if (auto replacement = CSSCalc::simplify(op, options.simplification))
-        return WTFMove(*replacement);
+        return WTF::move(*replacement);
 
     auto type = toType(op);
-    return CSSCalc::makeChild(WTFMove(op), *type);
+    return CSSCalc::makeChild(WTF::move(op), *type);
 }
 
 // MARK: - To.
@@ -365,7 +365,7 @@ CSSCalc::Tree toCSS(const Tree& tree, const ToCSSOptions& toCSSOptions)
     auto type = CSSCalc::getType(root);
 
     return CSSCalc::Tree {
-        .root = WTFMove(root),
+        .root = WTF::move(root),
         .type = type,
         .stage = CSSCalc::Stage::Computed,
     };

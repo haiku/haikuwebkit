@@ -153,7 +153,7 @@ void PageTimelineAgent::internalStart(std::optional<int>&& maxCallStackDepth)
     RunLoop::currentSingleton().observeEvent(*m_runLoopObserver);
 #endif
 
-    InspectorTimelineAgent::internalStart(WTFMove(maxCallStackDepth));
+    InspectorTimelineAgent::internalStart(WTF::move(maxCallStackDepth));
 
     if (auto* client = m_inspectedPage->inspectorController().inspectorBackendClient())
         client->timelineRecordingChanged(true);
@@ -279,7 +279,7 @@ void PageTimelineAgent::mainFrameStartedLoading()
 
     // Pre-emptively disable breakpoints. The frontend must re-enable them.
     if (auto* webDebuggerAgent = Ref { m_instrumentingAgents.get() }->enabledWebDebuggerAgent())
-        webDebuggerAgent->setBreakpointsActive(false);
+        std::ignore = webDebuggerAgent->setBreakpointsActive(false);
 
     // Inform the frontend we started an auto capture. The frontend must stop capture.
     autoCaptureStarted();
@@ -338,7 +338,7 @@ void PageTimelineAgent::captureScreenshot()
 
     if (auto snapshot = snapshotFrameRect(*localMainFrame, localMainFrameView->unobscuredContentRect(), { { }, PixelFormat::BGRA8, DestinationColorSpace::SRGB() })) {
         auto snapshotRecord = TimelineRecordFactory::createScreenshotData(snapshot->toDataURL("image/png"_s));
-        pushCurrentRecord(WTFMove(snapshotRecord), TimelineRecordType::Screenshot, false, snapshotStartTime);
+        pushCurrentRecord(WTF::move(snapshotRecord), TimelineRecordType::Screenshot, false, snapshotStartTime);
         didCompleteCurrentRecord(TimelineRecordType::Screenshot);
     }
 }

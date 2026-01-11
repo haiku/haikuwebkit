@@ -129,7 +129,7 @@ static const WebAssemblyBuiltinSet* findEnabledBuiltinSet(const String& qualifie
 static void defineImportedStringConstant(VM& vm, WriteBarrier<JSWebAssemblyInstance>& instance, const Wasm::Import& import)
 {
     String text = makeString(import.field);
-    JSValue string = jsString(vm, WTFMove(text));
+    JSValue string = jsString(vm, WTF::move(text));
     instance->setGlobal(import.kindIndex, string);
 }
 
@@ -661,7 +661,7 @@ void WebAssemblyModuleRecord::initializeExports(JSGlobalObject* globalObject)
                 case Wasm::GlobalInformation::BindingMode::Portable: {
                     ASSERT(global.mutability == Wasm::Mutable);
                     Ref<Wasm::Global> globalRef = Wasm::Global::create(global.type, Wasm::Mutability::Mutable, initialVector);
-                    JSWebAssemblyGlobal* globalValue = JSWebAssemblyGlobal::create(vm, globalObject->webAssemblyGlobalStructure(), WTFMove(globalRef));
+                    JSWebAssemblyGlobal* globalValue = JSWebAssemblyGlobal::create(vm, globalObject->webAssemblyGlobalStructure(), WTF::move(globalRef));
                     m_instance->linkGlobal(vm, globalIndex, globalValue);
                     break;
                 }
@@ -698,7 +698,7 @@ void WebAssemblyModuleRecord::initializeExports(JSGlobalObject* globalObject)
                 ASSERT(global.mutability == Wasm::Mutable);
                 // For reference types, set to 0 and set the real value via the instance afterwards.
                 Ref<Wasm::Global> globalRef = Wasm::Global::create(global.type, Wasm::Mutability::Mutable, Wasm::isRefType(global.type) ? 0 : initialBits);
-                JSWebAssemblyGlobal* globalValue = JSWebAssemblyGlobal::create(vm, globalObject->webAssemblyGlobalStructure(), WTFMove(globalRef));
+                JSWebAssemblyGlobal* globalValue = JSWebAssemblyGlobal::create(vm, globalObject->webAssemblyGlobalStructure(), WTF::move(globalRef));
                 m_instance->linkGlobal(vm, globalIndex, globalValue);
                 if (Wasm::isRefType(global.type))
                     m_instance->setGlobal(globalIndex, JSValue::decode(initialBits));

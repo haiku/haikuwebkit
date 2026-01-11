@@ -51,7 +51,7 @@ UserMessageHandlersNamespace::~UserMessageHandlersNamespace()
 
 void UserMessageHandlersNamespace::didInvalidate(UserContentProvider& provider)
 {
-    auto oldMap = WTFMove(m_messageHandlers);
+    auto oldMap = WTF::move(m_messageHandlers);
 
     provider.forEachUserMessageHandler([&](const UserMessageHandlerDescriptor& descriptor) {
         if (RefPtr userMessageHandler = oldMap.take({ descriptor.name(), descriptor.world() })) {

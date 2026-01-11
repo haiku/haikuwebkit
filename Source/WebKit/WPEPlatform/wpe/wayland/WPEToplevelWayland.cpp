@@ -63,7 +63,7 @@ struct DMABufFeedback {
         FormatTable& operator=(const FormatTable&) = delete;
         FormatTable(FormatTable&& other)
         {
-            *this = WTFMove(other);
+            *this = WTF::move(other);
         }
 
         FormatTable(unsigned size, Data* data)
@@ -122,9 +122,9 @@ struct DMABufFeedback {
     DMABufFeedback& operator=(const DMABufFeedback&) = delete;
 
     DMABufFeedback(DMABufFeedback&& other)
-        : formatTable(WTFMove(other.formatTable))
-        , pendingTranche(WTFMove(other.pendingTranche))
-        , tranches(WTFMove(other.tranches))
+        : formatTable(WTF::move(other.formatTable))
+        , pendingTranche(WTF::move(other.pendingTranche))
+        , tranches(WTF::move(other.tranches))
     {
 #if USE(LIBDRM)
         memcpy(&mainDevice, &other.mainDevice, sizeof(dev_t));
@@ -176,7 +176,7 @@ struct DMABufFeedback {
         Tranche& operator=(const Tranche&) = delete;
         Tranche(Tranche&& other)
             : flags(other.flags)
-            , formats(WTFMove(other.formats))
+            , formats(WTF::move(other.formats))
         {
             other.flags = 0;
 #if USE(LIBDRM)
@@ -460,14 +460,14 @@ static const struct zwp_linux_dmabuf_feedback_v1_listener linuxDMABufFeedbackLis
         // one. Return early and skip emitting the signal if there is no usable formats table in the end.
         if (!priv->pendingDMABufFeedback->formatTable) {
             if (priv->committedDMABufFeedback && priv->committedDMABufFeedback->formatTable)
-                priv->pendingDMABufFeedback->formatTable = WTFMove(priv->committedDMABufFeedback->formatTable);
+                priv->pendingDMABufFeedback->formatTable = WTF::move(priv->committedDMABufFeedback->formatTable);
             else {
                 priv->pendingDMABufFeedback.reset();
                 return;
             }
         }
 
-        priv->committedDMABufFeedback = WTFMove(priv->pendingDMABufFeedback);
+        priv->committedDMABufFeedback = WTF::move(priv->pendingDMABufFeedback);
         priv->preferredBufferFormats = nullptr;
         wpe_toplevel_preferred_buffer_formats_changed(toplevel);
     },
@@ -501,7 +501,7 @@ static const struct zwp_linux_dmabuf_feedback_v1_listener linuxDMABufFeedbackLis
         if (!priv->pendingDMABufFeedback)
             return;
 
-        priv->pendingDMABufFeedback->tranches.append(WTFMove(priv->pendingDMABufFeedback->pendingTranche));
+        priv->pendingDMABufFeedback->tranches.append(WTF::move(priv->pendingDMABufFeedback->pendingTranche));
     },
     // tranche_target_device
     [](void* data, struct zwp_linux_dmabuf_feedback_v1*, struct wl_array* device)

@@ -40,8 +40,15 @@ bool canLookUp(const URL&);
 enum class NavigationType : bool { MainFrame, SubFrame };
 void lookUp(const URL&, NavigationType, SSBLookupResult *cachedResult, CompletionHandler<void(SSBLookupResult *, NSError *)>&&);
 
+struct NamespacedCollection {
+    String listNamespace;
+    String collectionID;
+};
+
 using NamespacedLists = NSDictionary<NSString *, NSArray<NSString *> *>;
-void listsForNamespace(const String& listNamespace, CompletionHandler<void(NamespacedLists *, NSError *)>&&);
+void listsForNamespace(NamespacedCollection&&, CompletionHandler<void(NamespacedLists *, NSError *)>&&);
+
+NamespacedCollection namespacedCollectionForTextExtraction();
 
 } // namespace WebKit::SafeBrowsingUtilities
 

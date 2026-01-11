@@ -119,8 +119,8 @@ static GstFlowReturn iceTransportHandleSample(WebKitGstIceTransport* self, GstAp
         return GST_FLOW_ERROR;
     }
 
-    auto data = WTFMove(*handle);
-    webkitGstWebRTCIceAgentSend(agent.get(), rice_stream_get_id(riceStream.get()), protocol, WTFMove(from), WTFMove(to), WTFMove(data));
+    auto data = WTF::move(*handle);
+    webkitGstWebRTCIceAgentSend(agent.get(), rice_stream_get_id(riceStream.get()), protocol, WTF::move(from), WTF::move(to), WTF::move(data));
     return GST_FLOW_OK;
 }
 
@@ -223,6 +223,12 @@ static void populateCandidateStats(const RiceCandidate* candidate, GstWebRTCICEC
         GST_WEBRTC_ICE_CANDIDATE_STATS_RELATED_ADDRESS(gstStats) = g_strdup(relatedAddress.ascii().data());
         GST_WEBRTC_ICE_CANDIDATE_STATS_RELATED_PORT(gstStats) = rice_address_get_port(candidate->related_address);
     }
+
+    if (candidate->transport_type != RICE_TRANSPORT_TYPE_TCP) {
+        GST_WEBRTC_ICE_CANDIDATE_STATS_TCP_TYPE(gstStats) = GST_WEBRTC_ICE_TCP_CANDIDATE_TYPE_NONE;
+        return;
+    }
+
     switch (candidate->tcp_type) {
     case RICE_TCP_TYPE_ACTIVE:
         GST_WEBRTC_ICE_CANDIDATE_STATS_TCP_TYPE(gstStats) = GST_WEBRTC_ICE_TCP_CANDIDATE_TYPE_ACTIVE;
@@ -234,16 +240,26 @@ static void populateCandidateStats(const RiceCandidate* candidate, GstWebRTCICEC
         GST_WEBRTC_ICE_CANDIDATE_STATS_TCP_TYPE(gstStats) = GST_WEBRTC_ICE_TCP_CANDIDATE_TYPE_SO;
         break;
     case RICE_TCP_TYPE_NONE:
+        GST_WEBRTC_ICE_CANDIDATE_STATS_TCP_TYPE(gstStats) = GST_WEBRTC_ICE_TCP_CANDIDATE_TYPE_NONE;
         break;
     };
 #endif
 }
 
 #if GST_CHECK_VERSION(1, 27, 0)
-static void fillCredentials(const GRefPtr<RiceStream>& stream, bool isLocal, GstWebRTCICECandidateStats*)
+static void fillCredentials(const GRefPtr<RiceStream>& stream, bool isLocal, GstWebRTCICECandidateStats* stats)
 {
     GUniquePtr<RiceCredentials> credentials(isLocal ? rice_stream_get_local_credentials(stream.get()) : rice_stream_get_remote_credentials(stream.get()));
-    // rice_credentials_get_ufrag_bytes(credentials.get(), stats->);
+    std::array<char, 256> bytes;
+    auto size = rice_credentials_get_ufrag_bytes(credentials.get(), bytes.data());
+    RELEASE_ASSERT_WITH_SECURITY_IMPLICATION(size <= 256);
+
+    StringBuilder builder;
+    for (size_t i = 0; i < size; i++)
+        builder.append(bytes[i]);
+
+    auto ufrag = builder.toString();
+    GST_WEBRTC_ICE_CANDIDATE_STATS_USERNAME_FRAGMENT(stats) = g_strdup(ufrag.ascii().data());
 }
 #endif
 
@@ -277,10 +293,52 @@ bool webkitGstWebRTCIceTransportGetSelectedPair(WebKitGstIceTransport* transport
     return true;
 }
 
+#if GST_CHECK_VERSION(1, 27, 0)
+static GstWebRTCICECandidate* riceCandidateToGst(const RiceCandidate* candidate, const GRefPtr<RiceStream>& stream, bool isLocal)
+{
+    RELEASE_ASSERT(candidate);
+    GstWebRTCICECandidate* gstCandidate = g_new0(GstWebRTCICECandidate, 1);
+    gstCandidate->stats = g_new0(GstWebRTCICECandidateStats, 1);
+
+    // FIXME: Fill those fields.
+    gstCandidate->sdp_mid = nullptr;
+    gstCandidate->sdp_mline_index = -1;
+
+    gstCandidate->candidate = rice_candidate_to_sdp_string(candidate);
+    gstCandidate->component = candidate->component_id;
+
+    populateCandidateStats(candidate, gstCandidate->stats);
+    fillCredentials(stream, isLocal, gstCandidate->stats);
+    return gstCandidate;
+}
+
+static GstWebRTCICECandidatePair* webkitGstWebRTCIceTransportGetSelectedCandidatePair(GstWebRTCICETransport* ice)
+{
+    auto transport = WEBKIT_GST_WEBRTC_ICE_TRANSPORT(ice);
+    auto iceStream = transport->priv->stream.get();
+    if (!iceStream) [[unlikely]]
+        return nullptr;
+
+    auto riceStream = webkitGstWebRTCIceStreamGetRiceStream(iceStream.get());
+    GstWebRTCICECandidatePair* candidatesPair = g_new0(GstWebRTCICECandidatePair, 1);
+    auto& [localCandidate, remoteCandidate] = transport->priv->selectedPair;
+    if (localCandidate)
+        candidatesPair->local = riceCandidateToGst(localCandidate.get(), riceStream, true);
+    if (remoteCandidate)
+        candidatesPair->remote = riceCandidateToGst(remoteCandidate.get(), riceStream, false);
+    return candidatesPair;
+}
+#endif
+
 static void webkit_gst_webrtc_ice_transport_class_init(WebKitGstIceTransportClass* klass)
 {
     auto gobjectClass = G_OBJECT_CLASS(klass);
     gobjectClass->constructed = webkitGstWebRTCIceTransportConstructed;
+
+#if GST_CHECK_VERSION(1, 27, 0)
+    auto transportClass = GST_WEBRTC_ICE_TRANSPORT_CLASS(klass);
+    transportClass->get_selected_candidate_pair = webkitGstWebRTCIceTransportGetSelectedCandidatePair;
+#endif
 }
 
 WebKitGstIceTransport* webkitGstWebRTCCreateIceTransport(WebKitGstIceAgent* agent, GThreadSafeWeakPtr<WebKitGstIceStream>&& stream, GstWebRTCICEComponent component, bool isController)

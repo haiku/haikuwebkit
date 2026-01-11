@@ -42,7 +42,7 @@ Ref<MediaResourceSniffer> MediaResourceSniffer::create(PlatformMediaResourceLoad
 {
     if (maxSize)
         request.addHTTPHeaderField(HTTPHeaderName::Range, makeString("bytes="_s, 0, '-', *maxSize));
-    auto resource = loader.requestResource(WTFMove(request), PlatformMediaResourceLoader::LoadOption::DisallowCaching);
+    auto resource = loader.requestResource(WTF::move(request), PlatformMediaResourceLoader::LoadOption::DisallowCaching);
     if (!resource)
         return adoptRef(*new MediaResourceSniffer());
     Ref sniffer = adoptRef(*new MediaResourceSniffer(*resource , maxSize.value_or(SIZE_MAX)));
@@ -57,7 +57,7 @@ MediaResourceSniffer::MediaResourceSniffer()
 }
 
 MediaResourceSniffer::MediaResourceSniffer(Ref<PlatformMediaResource>&& resource, size_t maxSize)
-    : m_resource(WTFMove(resource))
+    : m_resource(WTF::move(resource))
     , m_maxSize(maxSize)
 {
 }
@@ -90,7 +90,7 @@ void MediaResourceSniffer::dataReceived(PlatformMediaResource&, const SharedBuff
     if (mimeType.isEmpty() && m_received < m_maxSize)
         return;
     if (!m_producer.isSettled())
-        m_producer.resolve(ContentType { WTFMove(mimeType) });
+        m_producer.resolve(ContentType { WTF::move(mimeType) });
     cancel();
 }
 
@@ -107,7 +107,7 @@ void MediaResourceSniffer::loadFinished(PlatformMediaResource&, const NetworkLoa
         return;
     Ref contiguousBuffer = m_content.takeBufferAsContiguous();
     auto mimeType = MIMESniffer::getMIMETypeFromContent(contiguousBuffer->span());
-    m_producer.resolve(ContentType { WTFMove(mimeType) });
+    m_producer.resolve(ContentType { WTF::move(mimeType) });
     cancel();
 }
 

@@ -672,4 +672,195 @@ TEST(WTF_StringCommon, CountMatchedCharacters16)
     }
 }
 
+class CopyElementsDoubleToFloatTest : public testing::Test {
+protected:
+    void testConversion(size_t length)
+    {
+        // Allocate source and destination.
+        Vector<double> source(length);
+        Vector<float> destination(length);
+
+        // Initialize source with test data.
+        for (size_t i = 0; i < length; ++i)
+            source[i] = static_cast<double>(i) * 1.5 + 0.25;
+
+        // Perform conversion.
+        WTF::copyElements(std::span<float>(destination), std::span<const double>(source));
+
+        // Verify results.
+        for (size_t i = 0; i < length; ++i) {
+            float expected = static_cast<float>(source[i]);
+            EXPECT_FLOAT_EQ(destination[i], expected)
+                << "Mismatch at index " << i << " for length " << length;
+        }
+    }
+};
+
+TEST_F(CopyElementsDoubleToFloatTest, VerySmallSizes)
+{
+    // Test sizes smaller than SIMD width.
+    for (size_t length = 1; length < 8; ++length)
+        testConversion(length);
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, ExactlySIMDWidth)
+{
+    // Test exactly 8 elements (one SIMD iteration).
+    testConversion(8);
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, JustAboveSIMDWidth)
+{
+    // Test 9-15 elements (one SIMD iteration + scalar remainder).
+    for (size_t length = 9; length < 16; ++length)
+        testConversion(length);
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, ExactlyTwoSIMDIterations)
+{
+    // Test exactly 16 elements (two SIMD iterations).
+    testConversion(16);
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, MediumSizes)
+{
+    // Test various medium sizes.
+    Vector<size_t> sizes = { 17, 20, 24, 31, 32, 48, 63, 64, 96, 127, 128 };
+    for (size_t length : sizes)
+        testConversion(length);
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, LargeSizes)
+{
+    // Test large sizes.
+    Vector<size_t> sizes = { 192, 256, 512, 1024, 2048, 4096 };
+    for (size_t length : sizes)
+        testConversion(length);
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, EdgeCasesAroundSIMDBoundaries)
+{
+    // Test specifically around multiples of 8 (SIMD width).
+    Vector<size_t> sizes = { 7, 8, 9, 15, 16, 17, 23, 24, 25, 31, 32, 33 };
+    for (size_t length : sizes)
+        testConversion(length);
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, SpecialValues)
+{
+    size_t length = 16;
+    Vector<double> source(length);
+    Vector<float> destination(length);
+
+    // Test special floating point values.
+    source[0] = 0.0;
+    source[1] = -0.0;
+    source[2] = 1.0;
+    source[3] = -1.0;
+    source[4] = std::numeric_limits<double>::infinity();
+    source[5] = -std::numeric_limits<double>::infinity();
+    source[6] = std::numeric_limits<double>::quiet_NaN();
+    source[7] = std::numeric_limits<double>::max();
+    source[8] = std::numeric_limits<double>::min();
+    source[9] = std::numeric_limits<double>::lowest();
+    source[10] = std::numeric_limits<double>::epsilon();
+    source[11] = std::numeric_limits<double>::denorm_min();
+    source[12] = 3.14159265358979323846;
+    source[13] = 2.71828182845904523536;
+    source[14] = 1.41421356237309504880;
+    source[15] = 1.61803398874989484820;
+
+    WTF::copyElements(std::span<float>(destination), std::span<const double>(source));
+
+    // Verify special values.
+    EXPECT_EQ(destination[0], 0.0f);
+    EXPECT_EQ(destination[1], -0.0f);
+    EXPECT_EQ(destination[2], 1.0f);
+    EXPECT_EQ(destination[3], -1.0f);
+    EXPECT_TRUE(std::isinf(destination[4]) && destination[4] > 0);
+    EXPECT_TRUE(std::isinf(destination[5]) && destination[5] < 0);
+    EXPECT_TRUE(std::isnan(destination[6]));
+    EXPECT_EQ(destination[7], std::numeric_limits<float>::infinity()); // Overflow to inf.
+    EXPECT_EQ(destination[8], 0.0f); // Underflows to zero.
+    EXPECT_FALSE(std::signbit(destination[8])); // But should be positive zero.
+    EXPECT_LT(destination[9], 0.0f); // Should be negative.
+
+    // Check mathematical constants (with appropriate tolerance).
+    EXPECT_NEAR(destination[12], 3.14159265f, 1e-6f);
+    EXPECT_NEAR(destination[13], 2.71828183f, 1e-6f);
+    EXPECT_NEAR(destination[14], 1.41421356f, 1e-6f);
+    EXPECT_NEAR(destination[15], 1.61803399f, 1e-6f);
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, PrecisionLoss)
+{
+    size_t length = 8;
+    Vector<double> source(length);
+    Vector<float> destination(length);
+
+    // Test values that will lose precision when converted to float.
+    source[0] = 1.0000000001; // Extra precision lost.
+    source[1] = 1234567890.123456789; // Large number.
+    source[2] = 0.123456789012345; // Many decimal places.
+    source[3] = 1e-40; // Very small number.
+    source[4] = 1e40; // Very large number.
+    source[5] = 9007199254740992.0; // 2^53, exact in double.
+    source[6] = 16777217.0; // 2^24 + 1, loses precision in float.
+    source[7] = 0.1 + 0.2; // Classic floating point issue.
+
+    WTF::copyElements(std::span<float>(destination), std::span<const double>(source));
+
+    // Verify conversions (with appropriate tolerance for precision loss).
+    for (size_t i = 0; i < length; ++i) {
+        float expected = static_cast<float>(source[i]);
+        EXPECT_FLOAT_EQ(destination[i], expected) << "Mismatch at index " << i;
+    }
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, StressTestMultipleIterations)
+{
+    // Stress test: run many conversions to catch any memory corruption.
+    for (int iteration = 0; iteration < 100; ++iteration) {
+        for (size_t length = 1; length <= 32; ++length) {
+            Vector<double> source(length);
+            Vector<float> destination(length);
+
+            for (size_t i = 0; i < length; ++i)
+                source[i] = static_cast<double>(iteration * 100 + i);
+
+            WTF::copyElements(std::span<float>(destination), std::span<const double>(source));
+
+            for (size_t i = 0; i < length; ++i) {
+                EXPECT_FLOAT_EQ(destination[i], static_cast<float>(source[i]))
+                    << "Iteration " << iteration << ", length " << length << ", index " << i;
+            }
+        }
+    }
+}
+
+TEST_F(CopyElementsDoubleToFloatTest, AlignmentVariations)
+{
+    // Test with different alignments to ensure SIMD code handles unaligned data.
+    size_t baseLength = 32;
+    Vector<double> largeSource(baseLength + 8);
+    Vector<float> largeDest(baseLength + 8);
+
+    // Initialize.
+    for (size_t i = 0; i < largeSource.size(); ++i)
+        largeSource[i] = static_cast<double>(i) * 0.5;
+
+    // Test with different offsets (different alignments).
+    for (size_t offset = 0; offset < 8; ++offset) {
+        std::span<const double> sourceSpan(largeSource.subspan(offset).data(), baseLength);
+        std::span<float> destSpan(largeDest.mutableSpan().subspan(offset).data(), baseLength);
+
+        WTF::copyElements(destSpan, sourceSpan);
+
+        for (size_t i = 0; i < baseLength; ++i) {
+            EXPECT_FLOAT_EQ(destSpan[i], static_cast<float>(sourceSpan[i]))
+                << "Offset " << offset << ", index " << i;
+        }
+    }
+}
+
 } // namespace

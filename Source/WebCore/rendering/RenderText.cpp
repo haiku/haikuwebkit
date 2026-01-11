@@ -86,7 +86,7 @@ namespace WebCore {
 
 using namespace WTF::Unicode;
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderText);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderText);
 
 struct SameSizeAsRenderText : public RenderObject {
 #if ENABLE(TEXT_AUTOSIZING)
@@ -428,13 +428,13 @@ void RenderText::initiateFontLoadingByAccessingGlyphDataAndComputeCanUseSimplifi
     }
 }
 
-void RenderText::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)
+void RenderText::styleDidChange(Style::Difference diff, const RenderStyle* oldStyle)
 {
     // There is no need to ever schedule repaints from a style change of a text run, since
     // we already did this for the parent of the text run.
     // We do have to schedule layouts, though, since a style change can force us to
     // need to relayout.
-    if (diff == StyleDifference::Layout) {
+    if (diff == Style::DifferenceResult::Layout) {
         setNeedsLayoutAndPreferredWidthsUpdate();
         m_knownToHaveNoOverflowAndNoFallbackFonts = false;
     }
@@ -460,7 +460,7 @@ void RenderText::styleDidChange(StyleDifference diff, const RenderStyle* oldStyl
         RenderText::setText(originalText(), true);
 
     // FIXME: First line change on the block comes in as equal on text.
-    auto needsLayoutBoxStyleUpdate = layoutBox() && (diff >= StyleDifference::RecompositeLayer || (&style() != &firstLineStyle()));
+    auto needsLayoutBoxStyleUpdate = layoutBox() && (diff >= Style::DifferenceResult::RecompositeLayer || (&style() != &firstLineStyle()));
     if (needsLayoutBoxStyleUpdate)
         LayoutIntegration::LineLayout::updateStyle(*this);
 
@@ -1584,7 +1584,7 @@ Vector<char16_t> RenderText::previousCharacter() const
 static String convertToFullSizeKana(const String& string)
 {
     // https://www.w3.org/TR/css-text-3/#small-kana
-    static constexpr std::pair<char32_t, char16_t> kanasMap[] = {
+    static constexpr SortedArrayMap sortedMap { std::to_array<std::pair<char32_t, char16_t>>({
         { 0x3041, 0x3042 },
         { 0x3043, 0x3044 },
         { 0x3045, 0x3046 },
@@ -1643,9 +1643,7 @@ static String convertToFullSizeKana(const String& string)
         { 0x1B165, 0x30F1 },
         { 0x1B166, 0x30F2 },
         { 0x1B167, 0x30F3 }
-    };
-
-    static constexpr SortedArrayMap sortedMap { kanasMap };
+    }) };
 
     auto codePoints = StringView { string }.codePoints();
 

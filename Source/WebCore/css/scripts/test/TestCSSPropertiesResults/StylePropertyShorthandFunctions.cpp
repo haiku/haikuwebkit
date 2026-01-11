@@ -32,7 +32,6 @@ StylePropertyShorthand allShorthand()
         CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeWithDefaultPreviousTwo,
         CSSPropertyID::CSSPropertyTestColor,
         CSSPropertyID::CSSPropertyTestColorAllowsTypesAbsolute,
-        CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport,
         CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport,
         CSSPropertyID::CSSPropertyTestCustomExtractor,
         CSSPropertyID::CSSPropertyTestFunctionBoundedParameters,
@@ -93,6 +92,9 @@ StylePropertyShorthand allShorthand()
         CSSPropertyID::CSSPropertyTestMatchOneWithSettingsFlag,
         CSSPropertyID::CSSPropertyTestNumericValueRange,
         CSSPropertyID::CSSPropertyTestProperty,
+        CSSPropertyID::CSSPropertyTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin,
+        CSSPropertyID::CSSPropertyTestRenderStyleHasExplicitlySetPolicyAllBorderRadius,
+        CSSPropertyID::CSSPropertyTestRenderStyleHasExplicitlySetPolicyValueOnly,
         CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelEnum,
         CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelRaw,
         CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelReference,
@@ -198,7 +200,6 @@ StylePropertyShorthandVector matchingShorthandsForLonghand(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeWithDefaultPreviousTwo:
     case CSSPropertyID::CSSPropertyTestColor:
     case CSSPropertyID::CSSPropertyTestColorAllowsTypesAbsolute:
-    case CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport:
     case CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport:
     case CSSPropertyID::CSSPropertyTestCustomExtractor:
     case CSSPropertyID::CSSPropertyTestFunctionBoundedParameters:
@@ -260,6 +261,9 @@ StylePropertyShorthandVector matchingShorthandsForLonghand(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestMediumPriority:
     case CSSPropertyID::CSSPropertyTestNumericValueRange:
     case CSSPropertyID::CSSPropertyTestProperty:
+    case CSSPropertyID::CSSPropertyTestRenderStyleHasExplicitlySetPolicyAllAuthorOrigin:
+    case CSSPropertyID::CSSPropertyTestRenderStyleHasExplicitlySetPolicyAllBorderRadius:
+    case CSSPropertyID::CSSPropertyTestRenderStyleHasExplicitlySetPolicyValueOnly:
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelEnum:
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelRaw:
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelReference:

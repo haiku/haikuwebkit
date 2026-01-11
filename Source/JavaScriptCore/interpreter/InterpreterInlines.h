@@ -132,7 +132,7 @@ template<typename... Args> requires (std::is_convertible_v<Args, JSValue> && ...
 ALWAYS_INLINE JSValue Interpreter::tryCallWithArguments(CachedCall& cachedCall, JSValue thisValue, Args... args)
 {
     VM& vm = this->vm();
-    static_assert(sizeof...(args) <= 3);
+    static_assert(sizeof...(args) <= 6);
 
     ASSERT(!vm.isCollectorBusyOnCurrentThread());
     ASSERT(vm.currentThreadIsHoldingAPILock());
@@ -155,13 +155,19 @@ ALWAYS_INLINE JSValue Interpreter::tryCallWithArguments(CachedCall& cachedCall, 
     auto* callee = cachedCall.m_protoCallFrame.callee();
 
     if constexpr (!sizeof...(args))
-        return JSValue::decode(vmEntryToJavaScriptWith0Arguments(entry, &vm, codeBlock, callee, thisValue, args...));
+        return JSValue::decode(vmEntryToJavaScriptWith0Arguments(entry, &vm, codeBlock, callee, thisValue, nullptr, args...));
     else if constexpr (sizeof...(args) == 1)
-        return JSValue::decode(vmEntryToJavaScriptWith1Arguments(entry, &vm, codeBlock, callee, thisValue, args...));
+        return JSValue::decode(vmEntryToJavaScriptWith1Arguments(entry, &vm, codeBlock, callee, thisValue, nullptr, args...));
     else if constexpr (sizeof...(args) == 2)
-        return JSValue::decode(vmEntryToJavaScriptWith2Arguments(entry, &vm, codeBlock, callee, thisValue, args...));
+        return JSValue::decode(vmEntryToJavaScriptWith2Arguments(entry, &vm, codeBlock, callee, thisValue, nullptr, args...));
     else if constexpr (sizeof...(args) == 3)
-        return JSValue::decode(vmEntryToJavaScriptWith3Arguments(entry, &vm, codeBlock, callee, thisValue, args...));
+        return JSValue::decode(vmEntryToJavaScriptWith3Arguments(entry, &vm, codeBlock, callee, thisValue, nullptr, args...));
+    else if constexpr (sizeof...(args) == 4)
+        return JSValue::decode(vmEntryToJavaScriptWith4Arguments(entry, &vm, codeBlock, callee, thisValue, nullptr, args...));
+    else if constexpr (sizeof...(args) == 5)
+        return JSValue::decode(vmEntryToJavaScriptWith5Arguments(entry, &vm, codeBlock, callee, thisValue, nullptr, args...));
+    else if constexpr (sizeof...(args) == 6)
+        return JSValue::decode(vmEntryToJavaScriptWith6Arguments(entry, &vm, codeBlock, callee, thisValue, nullptr, args...));
     else
         return { };
 }

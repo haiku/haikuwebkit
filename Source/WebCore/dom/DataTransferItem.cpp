@@ -47,26 +47,26 @@ namespace WebCore {
 
 Ref<DataTransferItem> DataTransferItem::create(WeakPtr<DataTransferItemList>&& list, const String& type, Kind kind)
 {
-    return adoptRef(*new DataTransferItem(WTFMove(list), type, kind));
+    return adoptRef(*new DataTransferItem(WTF::move(list), type, kind));
 }
 
 Ref<DataTransferItem> DataTransferItem::create(WeakPtr<DataTransferItemList>&& list, const String& type, Ref<File>&& file)
 {
-    return adoptRef(*new DataTransferItem(WTFMove(list), type, WTFMove(file)));
+    return adoptRef(*new DataTransferItem(WTF::move(list), type, WTF::move(file)));
 }
 
 DataTransferItem::DataTransferItem(WeakPtr<DataTransferItemList>&& list, const String& type, Kind kind)
-    : m_list(WTFMove(list))
+    : m_list(WTF::move(list))
     , m_type(type)
     , m_kind(kind)
 {
 }
 
 DataTransferItem::DataTransferItem(WeakPtr<DataTransferItemList>&& list, const String& type, Ref<File>&& file)
-    : m_list(WTFMove(list))
+    : m_list(WTF::move(list))
     , m_type(type)
     , m_kind(Kind::File)
-    , m_file(WTFMove(file))
+    , m_file(WTF::move(file))
 {
 }
 

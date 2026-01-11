@@ -18,7 +18,6 @@ bridge/objc/objc_runtime.mm
 bridge/objc/objc_utility.mm
 crypto/cocoa/SerializedCryptoKeyWrapMac.mm
 editing/SmartReplaceCF.cpp
-editing/cocoa/DataDetection.mm
 editing/cocoa/EditingHTMLConverter.mm
 editing/cocoa/FontAttributeChangesCocoa.mm
 editing/cocoa/NodeHTMLConverter.mm
@@ -53,7 +52,6 @@ platform/cocoa/WebAVPlayerLayer.mm
 platform/graphics/BitmapImageDescriptor.cpp
 platform/graphics/avfoundation/AVTrackPrivateAVFObjCImpl.mm
 platform/graphics/avfoundation/AudioSourceProviderAVFObjC.mm
-platform/graphics/avfoundation/FormatDescriptionUtilities.cpp
 [ Mac ] platform/graphics/avfoundation/objc/AVOutputDeviceMenuControllerTargetPicker.mm
 [ Mac ] platform/graphics/avfoundation/objc/AVRoutePickerViewTargetPicker.mm
 platform/graphics/avfoundation/objc/CDMInstanceFairPlayStreamingAVFObjC.mm
@@ -71,7 +69,6 @@ platform/graphics/ca/TileCoverageMap.cpp
 platform/graphics/ca/cocoa/PlatformCAAnimationCocoa.mm
 [ Mac ] platform/graphics/ca/cocoa/PlatformCAFiltersCocoa.mm
 platform/graphics/ca/cocoa/PlatformCALayerCocoa.mm
-platform/graphics/cg/CGSubimageCacheWithTimer.cpp
 platform/graphics/cg/GradientCG.cpp
 platform/graphics/cg/GradientRendererCG.cpp
 platform/graphics/cg/GraphicsContextCG.cpp
@@ -79,7 +76,6 @@ platform/graphics/cg/GraphicsContextGLCG.cpp
 platform/graphics/cg/ImageBufferCGBitmapBackend.cpp
 platform/graphics/cg/ImageBufferCGPDFDocumentBackend.cpp
 platform/graphics/cg/ImageBufferIOSurfaceBackend.cpp
-platform/graphics/cg/ImageBufferUtilitiesCG.cpp
 [ iOS ] platform/graphics/cg/PDFDocumentImage.cpp
 platform/graphics/cg/PathCG.cpp
 platform/graphics/cocoa/CMUtilities.mm
@@ -124,7 +120,6 @@ platform/ios/WebAVPlayerController.mm
 [ iOS ] platform/ios/wak/WKView.mm
 [ iOS ] platform/ios/wak/WebCoreThread.mm
 [ iOS ] platform/ios/wak/WebCoreThreadRun.cpp
-platform/libwebrtc/LibWebRTCVPXVideoEncoder.cpp
 platform/mediarecorder/MediaRecorderPrivateEncoder.cpp
 [ iOS ] platform/mediastream/ios/ReplayKitCaptureSource.mm
 platform/mediastream/mac/AVVideoCaptureSource.mm
@@ -135,7 +130,6 @@ platform/network/cf/DNSResolveQueueCFNet.cpp
 platform/network/mac/ResourceHandleMac.mm
 platform/network/mac/SynchronousLoaderClient.mm
 platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm
-platform/text/cocoa/LocalizedDateCache.mm
 [ iOS ] platform/text/mac/TextBoundaries.mm
 rendering/AttachmentLayout.mm
 [ iOS ] rendering/ios/RenderThemeIOS.mm

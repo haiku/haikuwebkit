@@ -52,7 +52,7 @@ void AttachmentAssociatedElement::setAttachmentElement(Ref<HTMLAttachmentElement
         existingAttachment->remove();
 
     attachment->setInlineStyleProperty(CSSPropertyDisplay, CSSValueNone, IsImportant::Yes);
-    asProtectedHTMLElement()->ensureProtectedUserAgentShadowRoot()->appendChild(WTFMove(attachment));
+    asProtectedHTMLElement()->ensureProtectedUserAgentShadowRoot()->appendChild(WTF::move(attachment));
 }
 
 RefPtr<HTMLAttachmentElement> AttachmentAssociatedElement::attachmentElement() const

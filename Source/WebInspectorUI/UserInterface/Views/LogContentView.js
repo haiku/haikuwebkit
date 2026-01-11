@@ -132,7 +132,7 @@ WI.LogContentView = class LogContentView extends WI.ContentView
         this._clearLogNavigationItem.visibilityPriority = WI.NavigationItem.VisibilityPriority.High;
         this._clearLogNavigationItem.addEventListener(WI.ButtonNavigationItem.Event.Clicked, this._clearLog, this);
 
-        this._showConsoleTabNavigationItem = new WI.ButtonNavigationItem("show-tab", WI.UIString("Show Console tab"), "Images/SplitToggleUp.svg", 16, 16);
+        this._showConsoleTabNavigationItem = new WI.ButtonNavigationItem("show-tab", WI.UIString("Show Console Tab"), "Images/SplitToggleUp.svg", 16, 16);
         this._showConsoleTabNavigationItem.visibilityPriority = WI.NavigationItem.VisibilityPriority.High;
         this._showConsoleTabNavigationItem.addEventListener(WI.ButtonNavigationItem.Event.Clicked, this._showConsoleTab, this);
 

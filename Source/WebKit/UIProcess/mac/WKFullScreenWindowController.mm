@@ -443,13 +443,13 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     OBJC_ALWAYS_LOG(OBJC_LOGIDENTIFIER);
 
-    gpuProcess->postWillTakeSnapshotNotification([self, protectedSelf = RetainPtr { self }, completionHandler = WTFMove(completionHandler), logIdentifier = OBJC_LOGIDENTIFIER] () mutable {
+    gpuProcess->postWillTakeSnapshotNotification([self, protectedSelf = RetainPtr { self }, completionHandler = WTF::move(completionHandler), logIdentifier = OBJC_LOGIDENTIFIER] () mutable {
         OBJC_ALWAYS_LOG(logIdentifier, " - finished posting snapshot notification");
 
-        [protectedSelf _continueEnteringFullscreenAfterPostingNotification:WTFMove(completionHandler)];
+        [protectedSelf _continueEnteringFullscreenAfterPostingNotification:WTF::move(completionHandler)];
     });
 #else
-    [self _continueEnteringFullscreenAfterPostingNotification:WTFMove(completionHandler)];
+    [self _continueEnteringFullscreenAfterPostingNotification:WTF::move(completionHandler)];
 #endif
 }
 
@@ -460,7 +460,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return completionHandler(false);
     }
     OBJC_ALWAYS_LOG(OBJC_LOGIDENTIFIER);
-    _enterFullScreenCompletionHandler = WTFMove(completionHandler);
+    _enterFullScreenCompletionHandler = WTF::move(completionHandler);
     _fullScreenState = EnteringFullScreen;
 
     _initialFrame = initialFrame;
@@ -572,7 +572,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     page->flushDeferredScrollEvents();
 
     if (_exitFullScreenCompletionHandler)
-        [self exitFullScreen:WTFMove(_exitFullScreenCompletionHandler)];
+        [self exitFullScreen:WTF::move(_exitFullScreenCompletionHandler)];
 }
 
 - (void)exitFullScreen:(CompletionHandler<void()>&&)completionHandler
@@ -582,7 +582,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         // Do not try to exit fullscreen during the enter animation; remember
         // that exit was requested and perform the exit upon enter fullscreen
         // animation complete.
-        _exitFullScreenCompletionHandler = WTFMove(completionHandler);
+        _exitFullScreenCompletionHandler = WTF::move(completionHandler);
         return;
     }
 
@@ -642,7 +642,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (_fullScreenState != WaitingToExitFullScreen)
         return completionHandler();
     _fullScreenState = ExitingFullScreen;
-    _beganExitFullScreenCompletionHandler = WTFMove(completionHandler);
+    _beganExitFullScreenCompletionHandler = WTF::move(completionHandler);
 
     RetainPtr window = [self window];
     if (![window isOnActiveSpace]) {

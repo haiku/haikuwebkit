@@ -40,7 +40,7 @@ template<typename IDLType> class DOMPromiseProxyWithResolveCallback;
 class DOMException;
 
 class FontFaceSet final : public RefCounted<FontFaceSet>, private FontEventClient, public EventTarget, public ActiveDOMObject {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(FontFaceSet);
+    WTF_MAKE_TZONE_ALLOCATED(FontFaceSet);
 public:
     static Ref<FontFaceSet> create(ScriptExecutionContext&, const Vector<Ref<FontFace>>& initialFaces);
     static Ref<FontFaceSet> create(ScriptExecutionContext&, CSSFontFaceSet& backing);
@@ -61,8 +61,8 @@ public:
     void load(ScriptExecutionContext&, const String& font, const String& text, LoadPromise&&);
     ExceptionOr<bool> check(ScriptExecutionContext&, const String& font, const String& text);
 
-    enum class LoadStatus { Loading, Loaded };
-    LoadStatus status() const;
+    enum class LoadStatus : bool { Loading, Loaded };
+    LoadStatus status() const { return m_status; }
 
     using ReadyPromise = DOMPromiseProxyWithResolveCallback<IDLInterface<FontFaceSet>>;
     ReadyPromise& ready() { return m_readyPromise.get(); }
@@ -85,12 +85,12 @@ private:
     struct PendingPromise : RefCounted<PendingPromise> {
         static Ref<PendingPromise> create(LoadPromise&& promise)
         {
-            return adoptRef(*new PendingPromise(WTFMove(promise)));
+            return adoptRef(*new PendingPromise(WTF::move(promise)));
         }
         ~PendingPromise();
 
     private:
-        PendingPromise(LoadPromise&&);
+        explicit PendingPromise(LoadPromise&&);
 
     public:
         Vector<Ref<FontFace>> faces;
@@ -98,11 +98,24 @@ private:
         bool hasReachedTerminalState { false };
     };
 
-    FontFaceSet(ScriptExecutionContext&, const Vector<Ref<FontFace>>&);
+    explicit FontFaceSet(ScriptExecutionContext&);
     FontFaceSet(ScriptExecutionContext&, CSSFontFaceSet&);
 
+    void setInitialState();
+
+    bool isPendingOnEnvironment() const;
+    void stopPendingOnEnvironment();
+
+    void switchStateToLoading();
+    void switchStateToLoaded();
+
     // FontEventClient
-    void faceFinished(CSSFontFace&, CSSFontFace::Status) final;
+    void faceDidStartLoading(CSSFontFace&) final;
+    void faceDidFinishLoading(CSSFontFace&, CSSFontFace::Status) final;
+
+    void didAddFace(CSSFontFace&) final;
+    void didDeletedFace(CSSFontFace&) final;
+
     void startedLoading() final;
     void completedLoading() final;
 
@@ -120,7 +133,16 @@ private:
     HashMap<RefPtr<FontFace>, Vector<Ref<PendingPromise>>> m_pendingPromises;
     UniqueRef<ReadyPromise> m_readyPromise;
 
-    bool m_isDocumentLoaded { true };
+    // https://drafts.csswg.org/css-font-loading/#dom-fontfaceset-loadingfonts-slot
+    HashSet<Ref<FontFace>> m_failedFonts;
+    HashSet<Ref<FontFace>> m_loadingFonts;
+    HashSet<Ref<FontFace>> m_loadedFonts;
+
+    LoadStatus m_status { LoadStatus::Loaded };
+    bool m_isStuckOnEnvironment { true };
+    bool m_isDocumentLoaded { false };
 };
 
-}
+} // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_EVENTTARGET(FontFaceSet)

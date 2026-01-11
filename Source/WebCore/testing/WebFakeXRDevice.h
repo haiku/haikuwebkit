@@ -61,7 +61,7 @@ public:
     const std::optional<Fov>& fieldOfView() const { return m_fov;}
 
     void setResolution(FakeXRViewInit::DeviceResolution resolution) { m_resolution = resolution; }
-    void setOffset(Pose&& offset) { m_offset = WTFMove(offset); }
+    void setOffset(Pose&& offset) { m_offset = WTF::move(offset); }
     void setProjection(const Vector<float>&);
     void setFieldOfView(const FakeXRViewInit::FieldOfViewInit&);
 private:
@@ -84,13 +84,13 @@ public:
     void setViews(Vector<PlatformXR::FrameData::View>&&);
     void setNativeBoundsGeometry(const Vector<FakeXRBoundsPoint>&);
     void setViewerOrigin(const std::optional<PlatformXR::FrameData::Pose>&);
-    void setFloorOrigin(std::optional<PlatformXR::FrameData::Pose>&& origin) { m_frameData.floorTransform = WTFMove(origin); }
+    void setFloorOrigin(std::optional<PlatformXR::FrameData::Pose>&& origin) { m_frameData.floorTransform = WTF::move(origin); }
     void setEmulatedPosition(bool emulated) { m_frameData.isPositionEmulated = emulated; }
     void setSupportsShutdownNotification(bool supportsShutdownNotification) { m_supportsShutdownNotification = supportsShutdownNotification; }
     void setVisibilityState(XRVisibilityState);
     void simulateShutdownCompleted();
     void scheduleOnNextFrame(Function<void()>&&);
-    void addInputConnection(Ref<WebFakeXRInputController>&& input) { m_inputConnections.append(WTFMove(input)); };
+    void addInputConnection(Ref<WebFakeXRInputController>&& input) { m_inputConnections.append(WTF::move(input)); };
 #if ENABLE(WEBXR_HIT_TEST)
     void setWorld(const FakeXRWorldInit&);
     void clearWorld();
@@ -143,7 +143,7 @@ public:
     void setViewerOrigin(FakeXRRigidTransformInit origin, bool emulatedPosition = false);
     void clearViewerOrigin() { m_device->setViewerOrigin(std::nullopt); }
     void simulateVisibilityChange(XRVisibilityState);
-    void setBoundsGeometry(Vector<FakeXRBoundsPoint>&& bounds) { m_device->setNativeBoundsGeometry(WTFMove(bounds)); }
+    void setBoundsGeometry(Vector<FakeXRBoundsPoint>&& bounds) { m_device->setNativeBoundsGeometry(WTF::move(bounds)); }
     void setFloorOrigin(FakeXRRigidTransformInit);
     void clearFloorOrigin() { m_device->setFloorOrigin(std::nullopt); }
     void simulateResetPose();

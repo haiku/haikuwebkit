@@ -1,13 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="http://127.0.0.1:8080/security/mixedContent/resources/style.css">
+<link rel="stylesheet" onload="window.cssDidLoad = true" href="http://127.0.0.1:8080/security/mixedContent/resources/style.css">
 </head>
 <body>
 This background color should be blue.
 <script>
-if (window.opener)
-  window.opener.postMessage('done', '*');
+var cssDidLoad = false;
+
+// rdar://161348735: onload doesn't fire with Site Isolation when resource is blocked by mixed content. so use setTimeout for now
+setTimeout(function()
+{
+    if (window.opener)
+        window.opener.postMessage(cssDidLoad ? 'done' : 'blocked', '*');
+    else if (window.parent !== window)
+        window.parent.postMessage(cssDidLoad ? 'done' : 'blocked', '*');
+}, 2000);
 </script>
 </body>
 </html>

@@ -97,9 +97,12 @@ static CheckedPtr<RenderBlockFlow> lastFormattedLineRoot(const RenderBlockFlow& 
         if (auto box = firstBoxOnLastFormattedLineWithContent(); box && box->isBlockLevelBox()) {
             ASSERT(box->renderer().settings().blocksInInlineLayoutEnabled());
             ASSERT(is<RenderBlockFlow>(box->renderer()));
-            if (auto* blockFlow = dynamicDowncast<RenderBlockFlow>(box->renderer())) {
+            if (CheckedPtr blockFlow = dynamicDowncast<RenderBlockFlow>(const_cast<RenderObject&>(box->renderer()))) {
                 if (CheckedPtr candidate = lastFormattedLineRoot(*blockFlow))
                     return candidate;
+                // This block itself might be the enclosing block on the last formatted line.
+                if (blockFlow->hasContentfulInlineLine())
+                    return blockFlow;
             }
         }
     }

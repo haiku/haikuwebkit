@@ -42,7 +42,7 @@ namespace Style {
 // Any <filter-function> or a reference to filter via <url>.
 // https://drafts.fxtf.org/filter-effects/#typedef-filter-function
 struct FilterValue {
-    FilterValue(Ref<FilterOperation> value) : value { WTFMove(value) } { }
+    FilterValue(Ref<FilterOperation> value) : value { WTF::move(value) } { }
 
     const FilterOperation& get() const { return value.get(); }
     const FilterOperation& platform() const { return value.get(); }

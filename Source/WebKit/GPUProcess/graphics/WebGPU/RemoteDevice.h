@@ -93,7 +93,7 @@ class RemoteDevice final : public IPC::StreamMessageReceiver {
 public:
     static Ref<RemoteDevice> create(GPUConnectionToWebProcess& gpuConnectionToWebProcess, RemoteGPU& gpu, WebCore::WebGPU::Device& device, WebGPU::ObjectHeap& objectHeap, Ref<IPC::StreamServerConnection>&& streamConnection, WebGPUIdentifier identifier, WebGPUIdentifier queueIdentifier)
     {
-        return adoptRef(*new RemoteDevice(gpuConnectionToWebProcess, gpu, device, objectHeap, WTFMove(streamConnection), identifier, queueIdentifier));
+        return adoptRef(*new RemoteDevice(gpuConnectionToWebProcess, gpu, device, objectHeap, WTF::move(streamConnection), identifier, queueIdentifier));
     }
 
     ~RemoteDevice();

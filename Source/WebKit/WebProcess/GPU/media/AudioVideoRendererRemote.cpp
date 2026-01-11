@@ -139,7 +139,7 @@ void AudioVideoRendererRemote::setMuted(bool muted)
 
 void AudioVideoRendererRemote::setPreservesPitchAndCorrectionAlgorithm(bool preservesPitch, std::optional<PitchCorrectionAlgorithm> algorithm)
 {
-    ensureOnDispatcherWithConnection([preservesPitch, algorithm = WTFMove(algorithm)](auto& renderer, auto& connection) {
+    ensureOnDispatcherWithConnection([preservesPitch, algorithm = WTF::move(algorithm)](auto& renderer, auto& connection) {
         connection.send(Messages::RemoteAudioVideoRendererProxyManager::SetPreservesPitchAndCorrectionAlgorithm(renderer.m_identifier, preservesPitch, algorithm), 0);
     });
 }
@@ -190,34 +190,34 @@ void AudioVideoRendererRemote::contentBoxRectChanged(const LayoutRect& rect)
 
 void AudioVideoRendererRemote::notifyFirstFrameAvailable(Function<void()>&& callback)
 {
-    ensureOnDispatcherWithConnection([callback = WTFMove(callback)](auto& renderer, auto&) mutable {
+    ensureOnDispatcherWithConnection([callback = WTF::move(callback)](auto& renderer, auto&) mutable {
         assertIsCurrent(queueSingleton());
-        renderer.m_firstFrameAvailableCallback = WTFMove(callback);
+        renderer.m_firstFrameAvailableCallback = WTF::move(callback);
     });
 }
 
 void AudioVideoRendererRemote::notifyWhenHasAvailableVideoFrame(Function<void(const MediaTime&, double)>&& callback)
 {
-    ensureOnDispatcherWithConnection([callback = WTFMove(callback)](auto& renderer, auto& connection) mutable {
+    ensureOnDispatcherWithConnection([callback = WTF::move(callback)](auto& renderer, auto& connection) mutable {
         assertIsCurrent(queueSingleton());
-        renderer.m_hasAvailableVideoFrameCallback = WTFMove(callback);
+        renderer.m_hasAvailableVideoFrameCallback = WTF::move(callback);
         connection.send(Messages::RemoteAudioVideoRendererProxyManager::NotifyWhenHasAvailableVideoFrame(renderer.m_identifier, !!renderer.m_hasAvailableVideoFrameCallback), 0);
     });
 }
 
 void AudioVideoRendererRemote::notifyWhenRequiresFlushToResume(Function<void()>&& callback)
 {
-    ensureOnDispatcherWithConnection([callback = WTFMove(callback)](auto& renderer, auto&) mutable {
+    ensureOnDispatcherWithConnection([callback = WTF::move(callback)](auto& renderer, auto&) mutable {
         assertIsCurrent(queueSingleton());
-        renderer.m_notifyWhenRequiresFlushToResumeCallback = WTFMove(callback);
+        renderer.m_notifyWhenRequiresFlushToResumeCallback = WTF::move(callback);
     });
 }
 
 void AudioVideoRendererRemote::notifyRenderingModeChanged(Function<void()>&& callback)
 {
-    ensureOnDispatcherWithConnection([callback = WTFMove(callback)](auto& renderer, auto&) mutable {
+    ensureOnDispatcherWithConnection([callback = WTF::move(callback)](auto& renderer, auto&) mutable {
         assertIsCurrent(queueSingleton());
-        renderer.m_renderingModeChangedCallback = WTFMove(callback);
+        renderer.m_renderingModeChangedCallback = WTF::move(callback);
     });
 }
 
@@ -230,9 +230,9 @@ void AudioVideoRendererRemote::expectMinimumUpcomingPresentationTime(const Media
 
 void AudioVideoRendererRemote::notifySizeChanged(Function<void(const MediaTime&, FloatSize)>&& callback)
 {
-    ensureOnDispatcherWithConnection([callback = WTFMove(callback)](auto& renderer, auto&) mutable {
+    ensureOnDispatcherWithConnection([callback = WTF::move(callback)](auto& renderer, auto&) mutable {
         assertIsCurrent(queueSingleton());
-        renderer.m_sizeChangedCallback = WTFMove(callback);
+        renderer.m_sizeChangedCallback = WTF::move(callback);
     });
 }
 
@@ -253,7 +253,7 @@ void AudioVideoRendererRemote::setPlatformDynamicRangeLimit(const PlatformDynami
 void AudioVideoRendererRemote::setResourceOwner(const ProcessIdentity& processIdentity)
 {
     ensureOnDispatcherWithConnection([processIdentity = ProcessIdentity { processIdentity }](auto& renderer, auto& connection) mutable {
-        connection.send(Messages::RemoteAudioVideoRendererProxyManager::SetResourceOwner(renderer.m_identifier, WTFMove(processIdentity)), 0);
+        connection.send(Messages::RemoteAudioVideoRendererProxyManager::SetResourceOwner(renderer.m_identifier, WTF::move(processIdentity)), 0);
     });
 }
 
@@ -279,7 +279,7 @@ RefPtr<VideoFrame> AudioVideoRendererRemote::currentVideoFrame() const
         auto [result] = sendResult.takeReply();
         if (!result)
             return;
-        videoFrame = RemoteVideoFrameProxy::create(gpuProcessConnection->connection(), gpuProcessConnection->protectedVideoFrameObjectHeapProxy(), WTFMove(*result));
+        videoFrame = RemoteVideoFrameProxy::create(gpuProcessConnection->connection(), gpuProcessConnection->protectedVideoFrameObjectHeapProxy(), WTF::move(*result));
     });
     return videoFrame;
 }
@@ -295,8 +295,18 @@ void AudioVideoRendererRemote::paintCurrentVideoFrameInContext(GraphicsContext& 
 
 RefPtr<NativeImage> AudioVideoRendererRemote::currentNativeImage() const
 {
+#if PLATFORM(COCOA)
+    RefPtr gpuProcessConnection = m_gpuProcessConnection.get();
     RefPtr videoFrame = currentVideoFrame();
-    return videoFrame ? videoFrame->copyNativeImage() : nullptr;
+    if (!videoFrame)
+        return nullptr;
+    ASSERT(gpuProcessConnection);
+
+    return gpuProcessConnection->protectedVideoFrameObjectHeapProxy()->getNativeImage(*videoFrame);
+#else
+    ASSERT_NOT_REACHED();
+    return nullptr;
+#endif
 }
 
 std::optional<VideoPlaybackQualityMetrics> AudioVideoRendererRemote::videoPlaybackQualityMetrics()
@@ -325,7 +335,7 @@ void AudioVideoRendererRemote::setVideoFullscreenLayer(PlatformLayer* videoFulls
 {
 #if PLATFORM(COCOA)
     Locker locker { m_lock };
-    m_videoLayerManager->setVideoFullscreenLayer(videoFullscreenLayer, WTFMove(completionHandler), nullptr);
+    m_videoLayerManager->setVideoFullscreenLayer(videoFullscreenLayer, WTF::move(completionHandler), nullptr);
 #endif
 }
 
@@ -419,7 +429,7 @@ Ref<MediaTimePromise> AudioVideoRendererRemote::seekTo(const MediaTime& time)
         return gpuProcessConnection->connection().sendWithPromisedReply<MediaPromiseConverter>(Messages::RemoteAudioVideoRendererProxyManager::SeekTo(m_identifier, time), 0)->whenSettled(queueSingleton(), [protectedThis](auto&& result) {
             if (result)
                 protectedThis->m_seeking = false;
-            return MediaTimePromise::createAndSettle(WTFMove(result));
+            return MediaTimePromise::createAndSettle(WTF::move(result));
         });
     });
 }
@@ -474,8 +484,16 @@ void AudioVideoRendererRemote::enqueueSample(TrackIdentifier trackIdentifier, Re
         Locker locker { m_lock };
         readyForMoreDataState(trackIdentifier).sampleEnqueued();
     }
-    ensureOnDispatcherWithConnection([trackIdentifier, sample = WTFMove(sample), expectedMinimum](auto& renderer, auto& connection) {
-        connection.sendWithAsyncReplyOnDispatcher(Messages::RemoteAudioVideoRendererProxyManager::EnqueueSample(renderer.m_identifier, trackIdentifier, MediaSamplesBlock::fromMediaSample(sample), expectedMinimum), queueSingleton(), [weakThis = ThreadSafeWeakPtr { renderer }, trackIdentifier](bool readyForMoreData) {
+    ensureOnDispatcherWithConnection([trackIdentifier, sample = WTF::move(sample), expectedMinimum](auto& renderer, auto& connection) {
+        assertIsCurrent(queueSingleton());
+        auto addResult = renderer.m_mediaSampleConverters.ensure(trackIdentifier, [] {
+            return MediaSampleConverter();
+        });
+        bool formatChanged = addResult.iterator->value.hasFormatChanged(sample);
+        auto block = addResult.iterator->value.convert(sample, MediaSampleConverter::SetTrackInfo::No);
+        if (formatChanged)
+            connection.send(Messages::RemoteAudioVideoRendererProxyManager::NewTrackInfoForTrack(renderer.m_identifier, trackIdentifier, Ref { const_cast<WebCore::TrackInfo&>(*addResult.iterator->value.currentTrackInfo()) }), 0);
+        connection.sendWithAsyncReplyOnDispatcher(Messages::RemoteAudioVideoRendererProxyManager::EnqueueSample(renderer.m_identifier, trackIdentifier, WTF::move(block), expectedMinimum), queueSingleton(), [weakThis = ThreadSafeWeakPtr { renderer }, trackIdentifier](bool readyForMoreData) {
             RefPtr protectedThis = weakThis.get();
             if (!protectedThis)
                 return;
@@ -520,10 +538,10 @@ Ref<AudioVideoRenderer::RequestPromise> AudioVideoRendererRemote::requestMediaDa
 
 void AudioVideoRendererRemote::notifyTrackNeedsReenqueuing(TrackIdentifier trackIdentifier, Function<void(TrackIdentifier, const MediaTime&)>&& callback)
 {
-    ensureOnDispatcher([protectedThis = Ref { *this }, trackIdentifier, callback = WTFMove(callback)]() mutable {
+    ensureOnDispatcher([protectedThis = Ref { *this }, trackIdentifier, callback = WTF::move(callback)]() mutable {
         assertIsCurrent(queueSingleton());
         if (callback)
-            protectedThis->m_trackNeedsReenqueuingCallbacks.set(trackIdentifier, WTFMove(callback));
+            protectedThis->m_trackNeedsReenqueuingCallbacks.set(trackIdentifier, WTF::move(callback));
         else
             protectedThis->m_trackNeedsReenqueuingCallbacks.remove(trackIdentifier);
     });
@@ -537,9 +555,9 @@ bool AudioVideoRendererRemote::timeIsProgressing() const
 
 void AudioVideoRendererRemote::notifyEffectiveRateChanged(Function<void(double)>&& callback)
 {
-    ensureOnDispatcher([protectedThis = Ref { *this }, callback = WTFMove(callback)]() mutable {
+    ensureOnDispatcher([protectedThis = Ref { *this }, callback = WTF::move(callback)]() mutable {
         assertIsCurrent(queueSingleton());
-        protectedThis->m_effectiveRateChangedCallback = WTFMove(callback);
+        protectedThis->m_effectiveRateChangedCallback = WTF::move(callback);
     });
 }
 
@@ -553,9 +571,9 @@ MediaTime AudioVideoRendererRemote::currentTime() const
 
 void AudioVideoRendererRemote::notifyTimeReachedAndStall(const MediaTime& time, Function<void(const MediaTime&)>&& callback)
 {
-    ensureOnDispatcherWithConnection([time, callback = WTFMove(callback)](auto& renderer, auto& connection) mutable {
+    ensureOnDispatcherWithConnection([time, callback = WTF::move(callback)](auto& renderer, auto& connection) mutable {
         assertIsCurrent(queueSingleton());
-        renderer.m_timeReachedAndStallCallback = WTFMove(callback);
+        renderer.m_timeReachedAndStallCallback = WTF::move(callback);
         connection.send(Messages::RemoteAudioVideoRendererProxyManager::NotifyTimeReachedAndStall(renderer.m_identifier, time), 0);
     });
 }
@@ -571,9 +589,9 @@ void AudioVideoRendererRemote::cancelTimeReachedAction()
 
 void AudioVideoRendererRemote::performTaskAtTime(const MediaTime& time, Function<void(const MediaTime&)>&& callback)
 {
-    ensureOnDispatcherWithConnection([time, callback = WTFMove(callback)](auto& renderer, auto& connection) mutable {
+    ensureOnDispatcherWithConnection([time, callback = WTF::move(callback)](auto& renderer, auto& connection) mutable {
         assertIsCurrent(queueSingleton());
-        renderer.m_performTaskAtTimeCallback = WTFMove(callback);
+        renderer.m_performTaskAtTimeCallback = WTF::move(callback);
         renderer.m_performTaskAtTime = time;
         connection.send(Messages::RemoteAudioVideoRendererProxyManager::PerformTaskAtTime(renderer.m_identifier, time), 0);
     });
@@ -602,9 +620,9 @@ void AudioVideoRendererRemote::applicationWillResignActive()
 
 void AudioVideoRendererRemote::notifyWhenErrorOccurs(Function<void(PlatformMediaError)>&& callback)
 {
-    ensureOnDispatcher([protectedThis = Ref { *this }, callback = WTFMove(callback)]() mutable {
+    ensureOnDispatcher([protectedThis = Ref { *this }, callback = WTF::move(callback)]() mutable {
         assertIsCurrent(queueSingleton());
-        protectedThis->m_errorCallback = WTFMove(callback);
+        protectedThis->m_errorCallback = WTF::move(callback);
     });
 }
 
@@ -620,7 +638,7 @@ void AudioVideoRendererRemote::ensureOnDispatcherSync(NOESCAPE Function<void()>&
     if (queueSingleton().isCurrent())
         function();
     else
-        queueSingleton().dispatchSync(WTFMove(function));
+        queueSingleton().dispatchSync(WTF::move(function));
 }
 
 void AudioVideoRendererRemote::ensureOnDispatcher(Function<void()>&& function)
@@ -628,12 +646,12 @@ void AudioVideoRendererRemote::ensureOnDispatcher(Function<void()>&& function)
     if (queueSingleton().isCurrent())
         function();
     else
-        queueSingleton().dispatch(WTFMove(function));
+        queueSingleton().dispatch(WTF::move(function));
 }
 
 void AudioVideoRendererRemote::ensureOnDispatcherWithConnection(Function<void(AudioVideoRendererRemote&, IPC::Connection&)>&& function)
 {
-    ensureOnDispatcher([weakThis = ThreadSafeWeakPtr { *this }, function = WTFMove(function)]() mutable {
+    ensureOnDispatcher([weakThis = ThreadSafeWeakPtr { *this }, function = WTF::move(function)]() mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -678,7 +696,7 @@ void AudioVideoRendererRemote::resolveRequestMediaDataWhenReadyIfNeeded(TrackIde
 
 void AudioVideoRendererRemote::requestHostingContext(LayerHostingContextCallback&& completionHandler)
 {
-    ensureOnDispatcher([weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTFMove(completionHandler)]() mutable {
+    ensureOnDispatcher([weakThis = ThreadSafeWeakPtr { *this }, completionHandler = WTF::move(completionHandler)]() mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis) {
             completionHandler({ });
@@ -702,10 +720,10 @@ void AudioVideoRendererRemote::requestHostingContext(LayerHostingContextCallback
             return;
         }
 
-        protectedThis->m_layerHostingContextRequests.append(WTFMove(completionHandler));
+        protectedThis->m_layerHostingContextRequests.append(WTF::move(completionHandler));
         gpuProcessConnection->connection().sendWithAsyncReplyOnDispatcher(Messages::RemoteAudioVideoRendererProxyManager::RequestHostingContext(protectedThis->m_identifier), queueSingleton(), [weakThis] (WebCore::HostingContext context) {
             if (RefPtr protectedThis = weakThis.get())
-                protectedThis->setLayerHostingContext(WTFMove(context));
+                protectedThis->setLayerHostingContext(WTF::move(context));
         }, 0);
     });
 }
@@ -727,12 +745,12 @@ void AudioVideoRendererRemote::setLayerHostingContext(WebCore::HostingContext&& 
         if (m_layerHostingContext.contextID == hostingContext.contextID)
             return;
 
-        m_layerHostingContext = WTFMove(hostingContext);
+        m_layerHostingContext = WTF::move(hostingContext);
 #if PLATFORM(COCOA)
         m_videoLayer = nullptr;
 #endif
     }
-    callOnMainRunLoop([layerHostingContext = WTFMove(layerHostingContext), layerHostingContextRequests = std::exchange(m_layerHostingContextRequests, { })]() mutable {
+    callOnMainRunLoop([layerHostingContext = WTF::move(layerHostingContext), layerHostingContextRequests = std::exchange(m_layerHostingContextRequests, { })]() mutable {
         for (auto& request : layerHostingContextRequests)
             request(layerHostingContext);
     });
@@ -761,14 +779,14 @@ void AudioVideoRendererRemote::setCDMInstance(CDMInstance* instance)
     if (RefPtr remoteInstance = dynamicDowncast<RemoteCDMInstance>(instance))
         identifier = remoteInstance->identifier();
 
-    ensureOnDispatcherWithConnection([identifier = WTFMove(identifier)](auto& renderer, auto& connection) mutable {
-        connection.send(Messages::RemoteAudioVideoRendererProxyManager::SetCDMInstance(renderer.m_identifier, WTFMove(identifier)), 0);
+    ensureOnDispatcherWithConnection([identifier = WTF::move(identifier)](auto& renderer, auto& connection) mutable {
+        connection.send(Messages::RemoteAudioVideoRendererProxyManager::SetCDMInstance(renderer.m_identifier, WTF::move(identifier)), 0);
     });
 }
 
 Ref<MediaPromise> AudioVideoRendererRemote::setInitData(Ref<SharedBuffer> initData)
 {
-    return invokeAsync(queueSingleton(), [weakThis = ThreadSafeWeakPtr { *this }, initData = WTFMove(initData)]() mutable {
+    return invokeAsync(queueSingleton(), [weakThis = ThreadSafeWeakPtr { *this }, initData = WTF::move(initData)]() mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return MediaPromise::createAndReject(PlatformMediaError::ClientDisconnected);
@@ -776,7 +794,7 @@ Ref<MediaPromise> AudioVideoRendererRemote::setInitData(Ref<SharedBuffer> initDa
         if (!protectedThis->isGPURunning() || !gpuProcessConnection)
             return MediaPromise::createAndReject(PlatformMediaError::IPCError);
 
-        return gpuProcessConnection->connection().sendWithPromisedReply<MediaPromiseConverter>(Messages::RemoteAudioVideoRendererProxyManager::SetInitData(protectedThis->m_identifier, WTFMove(initData)), 0);
+        return gpuProcessConnection->connection().sendWithPromisedReply<MediaPromiseConverter>(Messages::RemoteAudioVideoRendererProxyManager::SetInitData(protectedThis->m_identifier, WTF::move(initData)), 0);
     });
 }
 
@@ -795,8 +813,8 @@ void AudioVideoRendererRemote::setCDMSession(LegacyCDMSession* session)
     if (RefPtr remoteSession = dynamicDowncast<RemoteLegacyCDMSession>(session))
         identifier = remoteSession->identifier();
 
-    ensureOnDispatcherWithConnection([identifier = WTFMove(identifier)](auto& renderer, auto& connection) mutable {
-        connection.send(Messages::RemoteAudioVideoRendererProxyManager::SetLegacyCDMSession(renderer.m_identifier, WTFMove(identifier)), 0);
+    ensureOnDispatcherWithConnection([identifier = WTF::move(identifier)](auto& renderer, auto& connection) mutable {
+        connection.send(Messages::RemoteAudioVideoRendererProxyManager::SetLegacyCDMSession(renderer.m_identifier, WTF::move(identifier)), 0);
     });
 }
 #endif
@@ -817,17 +835,17 @@ void AudioVideoRendererRemote::setVideoLayerSizeFenced(const WebCore::FloatSize&
         m_videoLayerSize = size;
     }
 
-    ensureOnDispatcherWithConnection([size, sendRightAnnotated = WTFMove(sendRightAnnotated)](auto& renderer, auto& connection) mutable {
-        connection.send(Messages::RemoteAudioVideoRendererProxyManager::SetVideoLayerSizeFenced(renderer.m_identifier, size, WTFMove(sendRightAnnotated)), 0);
+    ensureOnDispatcherWithConnection([size, sendRightAnnotated = WTF::move(sendRightAnnotated)](auto& renderer, auto& connection) mutable {
+        connection.send(Messages::RemoteAudioVideoRendererProxyManager::SetVideoLayerSizeFenced(renderer.m_identifier, size, WTF::move(sendRightAnnotated)), 0);
     });
 }
 #endif
 
 void AudioVideoRendererRemote::notifyVideoLayerSizeChanged(Function<void(const MediaTime&, FloatSize)>&& callback)
 {
-    ensureOnDispatcher([protectedThis = Ref { *this }, callback = WTFMove(callback)]() mutable {
+    ensureOnDispatcher([protectedThis = Ref { *this }, callback = WTF::move(callback)]() mutable {
         assertIsCurrent(queueSingleton());
-        protectedThis->m_videoLayerSizeChangedCallback = WTFMove(callback);
+        protectedThis->m_videoLayerSizeChangedCallback = WTF::move(callback);
     });
 }
 
@@ -987,7 +1005,7 @@ void AudioVideoRendererRemote::MessageReceiver::layerHostingContextChanged(Remot
             parent->m_videoLayerSize = videoLayerSize;
         }
         parent->updateCacheState(state);
-        parent->setLayerHostingContext(WTFMove(hostingContext));
+        parent->setLayerHostingContext(WTF::move(hostingContext));
         if (parent->m_videoLayerSizeChangedCallback)
             parent->m_videoLayerSizeChangedCallback(state.currentTime, videoLayerSize);
     }

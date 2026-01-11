@@ -35,6 +35,7 @@
 #include "DocumentEventLoop.h"
 #include "DocumentInlines.h"
 #include "DocumentPage.h"
+#include "DocumentPrefetcher.h"
 #include "ElementInlines.h"
 #include "Event.h"
 #include "EventLoop.h"
@@ -62,6 +63,7 @@
 #include "ScriptSourceCode.h"
 #include "ScriptableDocumentParser.h"
 #include "Settings.h"
+#include "SpeculationRules.h"
 #include "TextNodeTraversal.h"
 #include "TrustedType.h"
 #include <JavaScriptCore/Error.h>
@@ -272,7 +274,7 @@ bool ScriptElement::prepareScript(const TextPosition& scriptStartPosition)
     // importScript. But WebKit supports the "charset" for importScript intentionally. So to be consistent,
     // even for the module tags, we handle the "charset" attribute.
     if (auto attributeValue = charsetAttributeValue(); !attributeValue.isEmpty())
-        m_characterEncoding = WTFMove(attributeValue);
+        m_characterEncoding = WTF::move(attributeValue);
     else
         m_characterEncoding = document->charset();
 
@@ -377,7 +379,7 @@ bool ScriptElement::requestClassicScript(const String& sourceURL)
             return false;
 
         if (script->load(document, scriptURL)) {
-            m_loadableScript = WTFMove(script);
+            m_loadableScript = WTF::move(script);
             m_isExternalScript = true;
         }
     }
@@ -694,7 +696,7 @@ void ScriptElement::registerSpeculationRules(const ScriptSourceCode& sourceCode)
     if (!frame)
         return;
 
-    if (frame->checkedScript()->registerSpeculationRules(sourceCode, document->baseURL()))
+    if (frame->checkedScript()->registerSpeculationRules(element.get(), sourceCode, document->baseURL()))
         document->considerSpeculationRules();
     else {
         dispatchErrorEvent();
@@ -702,7 +704,28 @@ void ScriptElement::registerSpeculationRules(const ScriptSourceCode& sourceCode)
     }
 }
 
-// TODO: Also implement unregister/update speculation rules
-// https://whatpr.org/html/11426/c9c4d33...28571ea/scripting.html#:~:text=The%20script%20%20HTML%20element,result%20%20given%20%20changedNode%20.
+// https://html.spec.whatwg.org/multipage/webappapis.html#unregister-speculation-rules
+void ScriptElement::unregisterSpeculationRules()
+{
+    if (scriptType() != ScriptType::SpeculationRules)
+        return;
+
+    Ref element = this->element();
+    Ref document = element->document();
+
+    if (!document->settings().speculationRulesPrefetchEnabled())
+        return;
+
+    auto removedURLs = document->speculationRules()->unregisterSpeculationRules(element);
+
+    // Remove prefetched resources that were initiated by the removed rules.
+    if (RefPtr frame = document->frame()) {
+        Ref prefetcher = frame->loader().documentPrefetcher();
+        for (const auto& url : removedURLs)
+            prefetcher->removePrefetch(url);
+    }
+
+    document->considerSpeculationRules();
+}
 
 }

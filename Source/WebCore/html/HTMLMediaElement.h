@@ -185,7 +185,7 @@ class HTMLMediaElement
 #endif
     , public CanMakeWeakPtr<HTMLMediaElement, WeakPtrFactoryInitialization::Eager>
 {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLMediaElement);
+    WTF_MAKE_TZONE_ALLOCATED(HTMLMediaElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HTMLMediaElement);
 public:
     USING_CAN_MAKE_WEAKPTR(SINGLE_ARG(CanMakeWeakPtr<HTMLMediaElement, WeakPtrFactoryInitialization::Eager>));
@@ -402,11 +402,11 @@ public:
     void addAudioTrack(Ref<AudioTrack>&&);
     void addTextTrack(Ref<TextTrack>&&);
     void addVideoTrack(Ref<VideoTrack>&&);
-    void removeAudioTrack(Ref<AudioTrack>&&);
+    void removeAudioTrack(AudioTrack&);
     void removeAudioTrack(TrackID);
     void removeTextTrack(TextTrack&, bool scheduleEvent = true);
     void removeTextTrack(TrackID, bool scheduleEvent = true);
-    void removeVideoTrack(Ref<VideoTrack>&&);
+    void removeVideoTrack(VideoTrack&);
     void removeVideoTrack(TrackID);
     void forgetResourceSpecificTracks();
     void closeCaptionTracksChanged();
@@ -423,7 +423,7 @@ public:
     void mediaPlayerDidRemoveVideoTrack(VideoTrackPrivate&) final;
     void mediaPlayerDidReportGPUMemoryFootprint(size_t) final;
 
-    Vector<RefPtr<PlatformTextTrack>> outOfBandTrackSources() final;
+    Vector<Ref<PlatformTextTrack>> outOfBandTrackSources() final;
 
     struct TrackGroup;
     void configureTextTrackGroupForLanguage(const TrackGroup&) const;
@@ -882,7 +882,7 @@ private:
     float mediaPlayerContentsScale() const override;
     bool mediaPlayerPlatformVolumeConfigurationRequired() const override;
     bool mediaPlayerIsLooping() const override;
-    CachedResourceLoader* mediaPlayerCachedResourceLoader() override;
+    CachedResourceLoader* mediaPlayerCachedResourceLoader() const override;
     Ref<PlatformMediaResourceLoader> mediaPlayerCreateResourceLoader() override;
     bool mediaPlayerShouldUsePersistentCache() const override;
     const String& mediaPlayerMediaCacheDirectory() const override;
@@ -1174,6 +1174,7 @@ private:
     bool limitedMatroskaSupportEnabled() const;
 
     void maybeUpdatePlayerPreload() const;
+    void canProduceAudioChanged();
 
     Timer m_progressEventTimer;
     Timer m_playbackProgressTimer;
@@ -1360,7 +1361,7 @@ private:
     const RefPtr<AudioTrackList> m_audioTracks;
     const RefPtr<TextTrackList> m_textTracks;
     const RefPtr<VideoTrackList> m_videoTracks;
-    Vector<RefPtr<TextTrack>> m_textTracksWhenResourceSelectionBegan;
+    Vector<Ref<TextTrack>> m_textTracksWhenResourceSelectionBegan;
 
     struct CueData;
     std::unique_ptr<CueData> m_cueData;

@@ -883,12 +883,12 @@ void VideoPresentationInterfaceAVKitLegacy::invalidatePlayerViewController()
 
 void VideoPresentationInterfaceAVKitLegacy::presentFullscreen(bool animated, Function<void(BOOL, NSError *)>&& completionHandler)
 {
-    [m_playerViewController enterFullScreenAnimated:animated completionHandler:makeBlockPtr(WTFMove(completionHandler)).get()];
+    [m_playerViewController enterFullScreenAnimated:animated completionHandler:makeBlockPtr(WTF::move(completionHandler)).get()];
 }
 
 void VideoPresentationInterfaceAVKitLegacy::dismissFullscreen(bool animated, Function<void(BOOL, NSError *)>&& completionHandler)
 {
-    [m_playerViewController exitFullScreenAnimated:animated completionHandler:makeBlockPtr(WTFMove(completionHandler)).get()];
+    [m_playerViewController exitFullScreenAnimated:animated completionHandler:makeBlockPtr(WTF::move(completionHandler)).get()];
 }
 
 void VideoPresentationInterfaceAVKitLegacy::tryToStartPictureInPicture()
