@@ -39,7 +39,6 @@
 
 #include <wtf/Deque.h>
 #include <wtf/Forward.h>
-#include <wtf/IsoMalloc.h>
 #include <wtf/RefCounted.h>
 #include <wtf/text/StringView.h>
 
@@ -52,7 +51,7 @@ namespace WebCore {
 class PlatformKeyboardEvent;
 
 class EditorClientHaiku : public EditorClient, public TextCheckerClient {
-    WTF_MAKE_ISO_ALLOCATED(EditorClientHaiku);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(EditorClientHaiku);
 public:
     EditorClientHaiku(BWebPage* page);
 

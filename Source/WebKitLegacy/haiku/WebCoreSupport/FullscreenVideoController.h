@@ -33,7 +33,6 @@
 #include <WebCore/IntPoint.h>
 #include <WebCore/IntSize.h>
 
-#include <wtf/IsoMalloc.h>
 #include <wtf/RefPtr.h>
 
 namespace WebCore {
@@ -42,7 +41,7 @@ class PlatformCALayer;
 }
 
 class HUDWidget {
-    WTF_MAKE_ISO_ALLOCATED(HUDWidget);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(HUDWidget);
 public:
     HUDWidget(const WebCore::IntRect& rect) : m_rect(rect) { }
     
@@ -102,7 +101,7 @@ private:
 };
 
 class FullscreenVideoController : public RefCounted<FullscreenVideoController>, public CanMakeWeakPtr<FullscreenVideoController> {
-    WTF_MAKE_ISO_ALLOCATED(FullscreenVideoController);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(FullscreenVideoController);
     WTF_MAKE_NONCOPYABLE(FullscreenVideoController);
 public:
     FullscreenVideoController();

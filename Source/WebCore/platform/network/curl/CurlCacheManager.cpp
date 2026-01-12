@@ -109,7 +109,7 @@ void CurlCacheManager::loadIndex()
     }
 
     // Create strings from buffer
-    auto headerContent = String::adopt(WTFMove(*buffer));
+    auto headerContent = String::adopt(std::move(*buffer));
     Vector<String> indexURLs = headerContent.split('\n');
 
     // Add entries to index
@@ -125,7 +125,7 @@ void CurlCacheManager::loadIndex()
             m_currentStorageSize += cacheEntry->entrySize();
             makeRoomForNewEntry();
             m_LRUEntryList.prependOrMoveToFirst(url);
-            m_index.set(url, WTFMove(cacheEntry));
+            m_index.set(url, std::move(cacheEntry));
         } else
             cacheEntry->invalidate();
 
@@ -193,7 +193,7 @@ void CurlCacheManager::didReceiveResponse(ResourceHandle& job, ResourceResponse&
         if (cacheable) {
             cacheEntry->setIsLoading(true);
             m_LRUEntryList.prependOrMoveToFirst(url);
-            m_index.set(url, WTFMove(cacheEntry));
+            m_index.set(url, std::move(cacheEntry));
             saveResponseHeaders(url, response);
         }
     } else

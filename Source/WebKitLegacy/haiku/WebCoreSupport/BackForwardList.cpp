@@ -67,14 +67,14 @@ void BackForwardList::addItem(Ref<HistoryItem>&& newItem)
     // Toss the first item if the list is getting too big, as long as we're not using it
     // (or even if we are, if we only want 1 entry).
     if (m_entries.size() == m_capacity && (m_current || m_capacity == 1)) {
-        RefPtr<HistoryItem> item = WTFMove(m_entries[0]);
+        RefPtr<HistoryItem> item = std::move(m_entries[0]);
         m_entries.removeAt(0);
         m_entryHash.remove(item);
         --m_current;
     }
 
     m_entryHash.add(newItem.ptr());
-    m_entries.insert(m_current + 1, WTFMove(newItem));
+    m_entries.insert(m_current + 1, std::move(newItem));
     ++m_current;
 }
 

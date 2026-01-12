@@ -49,7 +49,7 @@ namespace WebCore {
     struct FrameLoadRequest;
 
     class ChromeClientHaiku : public ChromeClient {
-        WTF_MAKE_ISO_ALLOCATED(ChromeClientHaiku);
+        WTF_DEPRECATED_MAKE_FAST_ALLOCATED(ChromeClientHaiku);
 
     public:
         ChromeClientHaiku(BWebPage*, BWebView*);

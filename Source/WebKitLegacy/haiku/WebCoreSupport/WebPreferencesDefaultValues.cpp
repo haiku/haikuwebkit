@@ -44,5 +44,10 @@ bool defaultMutationEventsEnabled()
     return true;
 }
 
+bool defaultFontFaceSetConstructorEnabled()
+{
+    return false;
+}
+
 };
 

@@ -35,12 +35,11 @@
 #include "ImageBuffer.h"
 
 #include "ImageBufferDataHaiku.h"
-#include <wtf/IsoMalloc.h>
 
 namespace WebCore {
 
 class ImageBufferHaikuSurfaceBackend : public ImageBufferBackend {
-    WTF_MAKE_ISO_ALLOCATED(ImageBufferHaikuSurfaceBackend);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(ImageBufferHaikuSurfaceBackend);
     WTF_MAKE_NONCOPYABLE(ImageBufferHaikuSurfaceBackend);
 public:
     static std::unique_ptr<ImageBufferHaikuSurfaceBackend> create(const ImageBufferBackend::Parameters&, const ImageBufferCreationContext&);

@@ -86,7 +86,7 @@ public:
     FontCustomPlatformData(area_id area, BFont font, FontPlatformData::CreationData&& creationData)
         : m_font(font)
         , m_area(area)
-        , creationData(WTFMove(creationData))
+        , creationData(std::move(creationData))
         , m_renderingResourceIdentifier(RenderingResourceIdentifier::generate())
     {
     }

@@ -76,7 +76,7 @@ std::optional<SharedMemory::Handle> SharedMemory::createHandle(Protection)
 {
     ASSERT(m_areaid);
 
-        return SharedMemory::Handle(WTFMove(m_areaid), m_size);
+        return SharedMemory::Handle(std::move(m_areaid), m_size);
 }
 
 } // namespace WebKit

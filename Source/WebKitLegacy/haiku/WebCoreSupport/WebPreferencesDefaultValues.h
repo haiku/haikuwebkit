@@ -38,5 +38,6 @@ bool defaultShouldConvertInvalidURLsToBlank();
 bool defaultPopoverAttributeEnabled();
 bool defaultSearchInputIncrementalAttributeAndSearchEventEnabled();
 bool defaultMutationEventsEnabled();
+bool defaultFontFaceSetConstructorEnabled();
 
 } // namespace WebKit

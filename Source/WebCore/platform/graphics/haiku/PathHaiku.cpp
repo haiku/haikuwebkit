@@ -182,7 +182,7 @@ PathHaiku::PathHaiku()
 
 PathHaiku::PathHaiku(const BShape& platformPath, RefPtr<PathStream>&& elementsStream)
     : m_platformPath(platformPath)
-    , m_elementsStream(WTFMove(elementsStream))
+    , m_elementsStream(std::move(elementsStream))
 {
 }
 
@@ -215,7 +215,7 @@ Ref<PathHaiku> PathHaiku::create(std::span<const PathSegment> stream)
 
 Ref<PathHaiku> PathHaiku::create(const BShape& platformPath, RefPtr<PathStream>&& elementsStream)
 {
-    return adoptRef(*new PathHaiku(platformPath, WTFMove(elementsStream)));
+    return adoptRef(*new PathHaiku(platformPath, std::move(elementsStream)));
 }
 
 PlatformPathPtr PathHaiku::emptyPlatformPath()
@@ -228,7 +228,7 @@ Ref<PathImpl> PathHaiku::copy() const
 {
     auto elementsStream = m_elementsStream ? RefPtr<PathImpl> { m_elementsStream->copy() } : nullptr;
 
-    return PathHaiku::create(m_platformPath, downcast<PathStream>(WTFMove(elementsStream)));
+    return PathHaiku::create(m_platformPath, downcast<PathStream>(std::move(elementsStream)));
 }
 
 PlatformPathPtr PathHaiku::platformPath() const

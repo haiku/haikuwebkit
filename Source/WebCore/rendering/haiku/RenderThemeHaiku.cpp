@@ -35,7 +35,7 @@
 #include "PaintInfo.h"
 #include "RenderBox.h"
 #include "RenderElement.h"
-#include "RenderStyleSetters.h"
+#include "RenderStyle+SettersInlines.h"
 #include "UserAgentScripts.h"
 #include "UserAgentStyleSheets.h"
 #include <ControlLook.h>

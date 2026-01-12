@@ -65,11 +65,11 @@ class WebBlobRegistry final : public BlobRegistry {
 private:
     void registerInternalFileBlobURL(const URL& url, Ref<BlobDataFileReference>&& reference, const String& contentType, const String&) final override
     {
-        m_blobRegistry.registerInternalFileBlobURL(url, WTFMove(reference), contentType);
+        m_blobRegistry.registerInternalFileBlobURL(url, std::move(reference), contentType);
     }
     void registerInternalBlobURL(const URL& url, Vector<BlobPart>&& parts, const String& contentType) final override
     {
-        m_blobRegistry.registerInternalBlobURL(url, WTFMove(parts), contentType);
+        m_blobRegistry.registerInternalBlobURL(url, std::move(parts), contentType);
     }
     void registerBlobURL(const URL& url, const URL& srcURL, const PolicyContainer& container, const std::optional<SecurityOriginData>& topOrigin) final override
     {
@@ -77,7 +77,7 @@ private:
     }
     void registerInternalBlobURLOptionallyFileBacked(const URL& url, const URL& srcURL, RefPtr<BlobDataFileReference>&& reference, const String& contentType) final override
     {
-        m_blobRegistry.registerInternalBlobURLOptionallyFileBacked(url, srcURL, WTFMove(reference), contentType, { });
+        m_blobRegistry.registerInternalBlobURLOptionallyFileBacked(url, srcURL, std::move(reference), contentType, { });
     }
     void registerInternalBlobURLForSlice(const URL& url, const URL& srcURL, long long start, long long end, const String& contentType) final override
     {
@@ -105,7 +105,7 @@ private:
     }
     void writeBlobsToTemporaryFilesForIndexedDB(const Vector<String>& blobURLs, CompletionHandler<void(Vector<String>&& filePaths)>&& completionHandler) final override
     {
-        m_blobRegistry.writeBlobsToTemporaryFilesForIndexedDB(blobURLs, WTFMove(completionHandler));
+        m_blobRegistry.writeBlobsToTemporaryFilesForIndexedDB(blobURLs, std::move(completionHandler));
     }
 
     BlobRegistryImpl* blobRegistryImpl() final { return &m_blobRegistry; }

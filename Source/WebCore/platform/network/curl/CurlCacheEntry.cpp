@@ -115,7 +115,7 @@ bool CurlCacheEntry::readCachedData(ResourceHandle* job)
     }
 
     if (auto bufferSize = buffer->size())
-        job->getInternal()->client()->didReceiveBuffer(job, SharedBuffer::create(WTFMove(*buffer)), bufferSize);
+        job->getInternal()->client()->didReceiveBuffer(job, SharedBuffer::create(std::move(*buffer)), bufferSize);
 
     return true;
 }
@@ -149,7 +149,7 @@ bool CurlCacheEntry::loadResponseHeaders()
         return false;
     }
 
-    String headerContent = String::adopt(WTFMove(*buffer));
+    String headerContent = String::adopt(std::move(*buffer));
     Vector<String> headerFields = headerContent.split('\n');
 
     Vector<String>::const_iterator it = headerFields.begin();

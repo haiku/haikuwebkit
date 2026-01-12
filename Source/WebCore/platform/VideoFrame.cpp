@@ -26,6 +26,8 @@
 #include "config.h"
 #include "VideoFrame.h"
 
+#include "NativeImage.h"
+
 #if ENABLE(VIDEO)
 
 #if USE(GSTREAMER)

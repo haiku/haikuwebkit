@@ -399,7 +399,7 @@ void FullscreenVideoController::draw()
     FontCascadeDescription desc;
 
     desc.setComputedSize(textSize);
-    FontCascade font = FontCascade(WTFMove(desc));
+    FontCascade font = FontCascade(std::move(desc));
     font.update(nullptr);
 
     String s;

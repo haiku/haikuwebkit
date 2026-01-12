@@ -83,7 +83,7 @@ bool ResourceHandle::start()
         return true;
     }
 
-    d->m_curlRequest = createCurlRequest(WTFMove(request));
+    d->m_curlRequest = createCurlRequest(std::move(request));
 
     if (auto credential = getCredential(d->m_firstRequest, false)) {
         d->m_curlRequest->setUserPass(credential->user(), credential->password());
@@ -360,7 +360,7 @@ void ResourceHandle::restartRequestWithCredential(const ProtectionSpace& protect
     auto previousRequest = d->m_curlRequest->resourceRequest();
     d->m_curlRequest->cancel();
 
-    d->m_curlRequest = createCurlRequest(WTFMove(previousRequest), RequestStatus::ReusedRequest);
+    d->m_curlRequest = createCurlRequest(std::move(previousRequest), RequestStatus::ReusedRequest);
     d->m_curlRequest->setAuthenticationScheme(protectionSpace.authenticationScheme());
     d->m_curlRequest->setUserPass(credential.user(), credential.password());
     d->m_curlRequest->start();
@@ -385,7 +385,7 @@ void ResourceHandle::platformLoadResourceSynchronously(NetworkingContext* contex
     }
 
     auto requestCopy = handle->firstRequest();
-    handle->d->m_curlRequest = handle->createCurlRequest(WTFMove(requestCopy));
+    handle->d->m_curlRequest = handle->createCurlRequest(std::move(requestCopy));
 
     if (auto credential = handle->getCredential(handle->d->m_firstRequest, false)) {
         handle->d->m_curlRequest->setUserPass(credential->user(), credential->password());
@@ -489,8 +489,8 @@ void ResourceHandle::willSendRequest()
     incrementRedirectCount();
 
     ResourceResponse responseCopy = delegate()->response();
-    client()->willSendRequestAsync(this, WTFMove(newRequest), WTFMove(responseCopy), [this, protectedThis = Ref { *this }] (ResourceRequest&& request) {
-        continueAfterWillSendRequest(WTFMove(request));
+    client()->willSendRequestAsync(this, std::move(newRequest), std::move(responseCopy), [this, protectedThis = Ref { *this }] (ResourceRequest&& request) {
+        continueAfterWillSendRequest(std::move(request));
     });
 }
 
@@ -511,7 +511,7 @@ void ResourceHandle::continueAfterWillSendRequest(ResourceRequest&& request)
     auto credential = getCredential(request, true);
 
     d->m_curlRequest->cancel();
-    d->m_curlRequest = createCurlRequest(WTFMove(request));
+    d->m_curlRequest = createCurlRequest(std::move(request));
 
     if (shouldForwardCredential && credential)
         d->m_curlRequest->setUserPass(credential->user(), credential->password());
@@ -556,7 +556,7 @@ void ResourceHandle::handleDataURL()
 
     if (base64) {
         data = PAL::decodeURLEscapeSequences(data);
-        didReceiveResponse(WTFMove(response), [this, protectedThis = Ref { *this }] {
+        didReceiveResponse(std::move(response), [this, protectedThis = Ref { *this }] {
             continueAfterDidReceiveResponse();
         });
 
@@ -569,7 +569,7 @@ void ResourceHandle::handleDataURL()
     } else {
         PAL::TextEncoding encoding(charset);
         data = PAL::decodeURLEscapeSequences(data, encoding);
-        didReceiveResponse(WTFMove(response), [this, protectedThis = Ref { *this }] {
+        didReceiveResponse(std::move(response), [this, protectedThis = Ref { *this }] {
             continueAfterDidReceiveResponse();
         });
 
@@ -577,7 +577,7 @@ void ResourceHandle::handleDataURL()
         if (client()) {
             auto encodedData = encoding.encode(data, PAL::UnencodableHandling::URLEncodedEntities);
             if (encodedData.size())
-                client()->didReceiveBuffer(this, SharedBuffer::create(WTFMove(encodedData)), originalSize);
+                client()->didReceiveBuffer(this, SharedBuffer::create(std::move(encodedData)), originalSize);
         }
     }
 

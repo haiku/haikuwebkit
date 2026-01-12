@@ -50,7 +50,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(CurlRequest);
 
 CurlRequest::CurlRequest(const ResourceRequest&request, CurlRequestClient* client, CaptureNetworkLoadMetrics captureExtraMetrics, RefPtr<SynchronousLoaderMessageQueue>&& messageQueue)
     : m_client(client)
-    , m_messageQueue(WTFMove(messageQueue))
+    , m_messageQueue(std::move(messageQueue))
     , m_request(request.isolatedCopy())
     , m_startState(StartState::WaitingForStart)
     , m_formDataStream(m_request.httpBody())
@@ -223,9 +223,9 @@ void CurlRequest::runOnMainThread(Function<void()>&& task)
     // while it is also locked waiting for the resource. This is done with a dedicated message
     // queue.
     if (m_messageQueue)
-        m_messageQueue->append(makeUnique<Function<void()>>(WTFMove(task)));
+        m_messageQueue->append(makeUnique<Function<void()>>(std::move(task)));
     else
-        ensureOnMainThread(WTFMove(task));
+        ensureOnMainThread(std::move(task));
 }
 
 void CurlRequest::runOnWorkerThreadIfRequired(Function<void()>&& task)

@@ -29,10 +29,8 @@
 
 #include <WebCore/CryptoClient.h>
 
-#include <wtf/IsoMalloc.h>
-
 class WebCryptoClient:  public WebCore::CryptoClient {
-    WTF_MAKE_ISO_ALLOCATED(WebCryptoClient);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(WebCryptoClient);
 public:
     WebCryptoClient() = default;
     ~WebCryptoClient() = default;

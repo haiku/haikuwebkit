@@ -34,7 +34,6 @@
 #include <wtf/HashCountedSet.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
-#include <wtf/IsoMalloc.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RunLoop.h>
 #include <wtf/glib/RunLoopSourcePriority.h>
@@ -67,7 +66,7 @@ public:
 };
 
 class IconDatabase: public RefCounted<IconDatabase> {
-    WTF_MAKE_ISO_ALLOCATED(IconDatabase);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(IconDatabase);
 
 private:
     class IconSnapshot {
@@ -148,7 +147,7 @@ private:
     };
 
     class PageURLRecord {
-        WTF_MAKE_NONCOPYABLE(PageURLRecord); WTF_MAKE_ISO_ALLOCATED(PageURLRecord);
+        WTF_MAKE_NONCOPYABLE(PageURLRecord); WTF_DEPRECATED_MAKE_FAST_ALLOCATED(PageURLRecord);
     public:
         PageURLRecord(const String& pageURL);
         ~PageURLRecord();

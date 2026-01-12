@@ -124,7 +124,7 @@ class FrameLoaderClientHaiku : public LocalFrameLoaderClient {
 		std::optional<WebCore::HitTestResult>&&, FramePolicyFunction&&) override;
     void dispatchDecidePolicyForNavigationAction(const NavigationAction&,
         const ResourceRequest&, const WebCore::ResourceResponse&, FormState*,
-		const String& clientRedirectSourceForHistory, std::optional<NavigationIdentifier> navigationID, std::optional<HitTestResult>&&, bool hasOpener, IsPerformingHTTPFallback, SandboxFlags, PolicyDecisionMode, FramePolicyFunction&&) override;
+		const String& clientRedirectSourceForHistory, std::optional<NavigationIdentifier> navigationID, std::optional<HitTestResult>&&, bool hasOpener, NavigationUpgradeToHTTPSBehavior, SandboxFlags, PolicyDecisionMode, FramePolicyFunction&&) override;
     void cancelPolicyCheck() override;
     void updateSandboxFlags(WebCore::SandboxFlags) override {}
 
@@ -153,7 +153,7 @@ class FrameLoaderClientHaiku : public LocalFrameLoaderClient {
     void finishedLoading(DocumentLoader*) override;
     void updateGlobalHistory() override;
     void updateGlobalHistoryRedirectLinks() override;
-    void updateOpener(const WebCore::Frame&) override;
+    void updateOpener(std::optional<FrameIdentifier>) override;
 
     ShouldGoToHistoryItem shouldGoToHistoryItem(HistoryItem&, WebCore::IsSameDocumentNavigation,
         ProcessSwapDisposition) const override;

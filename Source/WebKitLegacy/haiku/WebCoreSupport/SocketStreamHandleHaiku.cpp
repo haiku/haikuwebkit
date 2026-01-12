@@ -84,9 +84,9 @@ std::optional<size_t> SocketStreamHandleImpl::platformSendInternal(std::span<con
     auto writeBuffer = makeUniqueArray<uint8_t>(data.size());
     memcpy(writeBuffer.get(), data.data(), data.size());
 
-    callOnWorkerThread([this, writeBuffer = WTFMove(writeBuffer), writeBufferSize = data.size()]() mutable {
+    callOnWorkerThread([this, writeBuffer = std::move(writeBuffer), writeBufferSize = data.size()]() mutable {
         ASSERT(!isMainThread());
-        m_writeBuffer = WTFMove(writeBuffer);
+        m_writeBuffer = std::move(writeBuffer);
         m_writeBufferSize = writeBufferSize;
         m_writeBufferOffset = 0;
     });
@@ -182,7 +182,7 @@ void SocketStreamHandleImpl::threadEntryPoint()
                 break;
             }
 
-            callOnMainThread([this, protectedThis = Ref{*this}, buffer = WTFMove(readBuffer), size = bytesRead ] {
+            callOnMainThread([this, protectedThis = Ref{*this}, buffer = std::move(readBuffer), size = bytesRead ] {
                 if (m_state == Open)
                     m_client.didReceiveSocketStreamData(*this, std::span<const unsigned char>(buffer.get(), size));
             });
@@ -219,7 +219,7 @@ void SocketStreamHandleImpl::stopThread()
 void SocketStreamHandleImpl::callOnWorkerThread(Function<void()>&& task)
 {
     ASSERT(isMainThread());
-    m_taskQueue.append(std::make_unique<Function<void()>>(WTFMove(task)));
+    m_taskQueue.append(std::make_unique<Function<void()>>(std::move(task)));
 }
 
 void SocketStreamHandleImpl::executeTasks()

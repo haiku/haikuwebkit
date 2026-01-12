@@ -58,7 +58,7 @@ RefPtr<FontCustomPlatformData> FontCustomPlatformData::create(SharedBuffer& buff
 	}
 
     FontPlatformData::CreationData creationData = { buffer, itemInCollection };
-	return adoptRef(new FontCustomPlatformData(area, font, WTFMove(creationData)));
+	return adoptRef(new FontCustomPlatformData(area, font, std::move(creationData)));
 }
 
 RefPtr<FontCustomPlatformData> FontCustomPlatformData::createMemorySafe(SharedBuffer&, const String&)

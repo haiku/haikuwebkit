@@ -63,7 +63,7 @@ void FontCascade::drawGlyphs(GraphicsContext& graphicsContext, const Font& font,
     else
         bfont = *font.platformData().font();
 
-    if (smoothing == FontSmoothingMode::NoSmoothing)
+    if (smoothing == FontSmoothingMode::None)
         bfont.SetFlags(B_DISABLE_ANTIALIASING);
     else
         bfont.SetFlags(B_FORCE_ANTIALIASING);

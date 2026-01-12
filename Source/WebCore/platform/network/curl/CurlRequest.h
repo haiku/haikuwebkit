@@ -58,7 +58,7 @@ public:
 
     static Ref<CurlRequest> create(const ResourceRequest& request, CurlRequestClient& client, CaptureNetworkLoadMetrics captureMetrics = CaptureNetworkLoadMetrics::Basic, RefPtr<SynchronousLoaderMessageQueue>&& messageQueue = nullptr)
     {
-        return adoptRef(*new CurlRequest(request, &client, captureMetrics, WTFMove(messageQueue)));
+        return adoptRef(*new CurlRequest(request, &client, captureMetrics, std::move(messageQueue)));
     }
 
     ~CurlRequest() = default;

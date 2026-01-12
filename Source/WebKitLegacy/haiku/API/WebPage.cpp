@@ -343,7 +343,7 @@ BWebPage::BWebPage(BWebView* webView, BPrivate::Network::BUrlContext* context)
     pageClients.visitedLinkStore = &viewGroup->visitedLinkStore();
     // webGLStateTracker *
 
-    fPagePrivate = std::make_unique<BPrivate::WebPagePrivate>(WebCore::Page::create(WTFMove(pageClients)));
+    fPagePrivate = std::make_unique<BPrivate::WebPagePrivate>(WebCore::Page::create(std::move(pageClients)));
     storageProvider->setPage(*page());
 
 #if ENABLE(GEOLOCATION)

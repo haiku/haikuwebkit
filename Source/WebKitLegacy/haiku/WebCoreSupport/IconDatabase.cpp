@@ -85,7 +85,7 @@ static String urlForLogging(const String& url)
 #endif
 
 class DefaultIconDatabaseClient final : public IconDatabaseClient {
-    WTF_MAKE_ISO_ALLOCATED(DefaultIconDatabaseClient);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(DefaultIconDatabaseClient);
 public:
     void didImportIconURLForPageURL(const String&) override { }
     void didImportIconDataForPageURL(const String&) override { }
@@ -120,7 +120,7 @@ PlatformImagePtr IconDatabase::IconRecord::image(const IntSize&)
 void IconDatabase::IconRecord::setImageData(RefPtr<SharedBuffer>&& data)
 {
     m_dataSet = true;
-    m_imageData = WTFMove(data);
+    m_imageData = std::move(data);
     m_image = nullptr;
 
     if (!m_imageData || !m_imageData->size()) {
@@ -175,7 +175,7 @@ void IconDatabase::PageURLRecord::setIconRecord(RefPtr<IconRecord>&& icon)
     if (m_iconRecord)
         m_iconRecord->retainingPageURLs().remove(m_pageURL);
 
-    m_iconRecord = WTFMove(icon);
+    m_iconRecord = std::move(icon);
 
     if (m_iconRecord)
         m_iconRecord->retainingPageURLs().add(m_pageURL);
@@ -197,7 +197,7 @@ void IconDatabase::setClient(std::unique_ptr<IconDatabaseClient>&& client)
     if (!client)
         return;
 
-    m_client = WTFMove(client);
+    m_client = std::move(client);
 }
 
 bool IconDatabase::open(const String& directory, const String& filename)
@@ -521,7 +521,7 @@ void IconDatabase::setIconDataForIconURL(RefPtr<SharedBuffer>&& data, const Stri
             icon = getOrCreateIconRecord(iconURL);
 
         // Update the data and set the time stamp
-        icon->setImageData(WTFMove(data));
+        icon->setImageData(std::move(data));
         icon->setTimestamp((int)WallTime::now().secondsSinceEpoch().seconds());
 
         // Copy the current retaining pageURLs - if any - to notify them of the change
@@ -1314,7 +1314,7 @@ bool IconDatabase::readFromDatabase()
 
                 if (m_iconsPendingReading.contains(icons[i])) {
                     // Set the new data
-                    icons[i]->setImageData(WTFMove(imageData));
+                    icons[i]->setImageData(std::move(imageData));
 
                     // Remove this icon from the set that needs to be read
                     m_iconsPendingReading.remove(icons[i]);
