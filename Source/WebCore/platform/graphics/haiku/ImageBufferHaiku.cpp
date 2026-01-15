@@ -179,7 +179,7 @@ Vector<uint8_t> encodeData(BBitmap* bitmap, const String& mimeType, std::optiona
     uint32 translatorType = 0;
 
     BTranslatorRoster* roster = BTranslatorRoster::Default();
-    translator_id* translators;
+    translator_id* translators = NULL;
     int32 translatorCount;
     roster->GetAllTranslators(&translators, &translatorCount);
     for (int32 i = 0; i < translatorCount; i++) {
@@ -208,6 +208,7 @@ Vector<uint8_t> encodeData(BBitmap* bitmap, const String& mimeType, std::optiona
         if (translatorType)
             break;
     }
+    delete[] translators;
 
 
     BMallocIO translatedStream;
