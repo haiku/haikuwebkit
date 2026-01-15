@@ -503,7 +503,7 @@ Vector<uint8_t> ImageBuffer::toData(Ref<ImageBuffer> source, const String& mimeT
         return { };
 #if USE(SKIA)
     return encodeData(*image, mimeType, quality);
-#elif USE(CG) || USE(CAIRO)
+#elif USE(CG) || USE(CAIRO) || USE(HAIKU)
     return encodeData(image->platformImage().get(), mimeType, quality);
 #endif
 }
