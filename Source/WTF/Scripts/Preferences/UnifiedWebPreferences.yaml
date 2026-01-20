@@ -4494,6 +4494,7 @@ LargestContentfulPaintEnabled:
   humanReadableDescription: "Enable Largest Contentful Paint performance entries"
   defaultValue:
     WebKitLegacy:
+      "PLATFORM(HAIKU)": false
       default: true
     WebKit:
       default: true
