@@ -165,14 +165,15 @@ static const char* temporaryFileDirectory()
     return g_get_tmp_dir();
 #elif OS(HAIKU)
     static char buffer[B_PATH_NAME_LENGTH];
-    if (buffer[0] == 0) {
+    static std::once_flag once;
+    std::call_once(once, [] {
         BPath path;
         if (find_directory(B_SYSTEM_TEMP_DIRECTORY, &path) == B_OK) {
             strcpy(buffer, path.Path());
         } else {
             strcpy(buffer, "/tmp");
         }
-    }
+    });
     return buffer;
 #else
     if (auto* tmpDir = getenv("TMPDIR"))
