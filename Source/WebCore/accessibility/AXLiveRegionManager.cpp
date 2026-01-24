@@ -200,12 +200,12 @@ LiveRegionSnapshot AXLiveRegionManager::buildLiveRegionSnapshot(AccessibilityObj
             for (auto& child : object.unignoredChildren())
                 collectDescendants(downcast<AccessibilityObject>(child.get()));
 
-            snapshot.objects.append({ object.objectID(), textForObject(object), object.languageIncludingAncestors(), WTF::move(descendants) });
+            snapshot.objects.append({ object.objectID(), object.announcementText(), object.languageIncludingAncestors(), WTF::move(descendants) });
             return;
         }
 
         if (shouldIncludeInSnapshot(object))
-            snapshot.objects.append({ object.objectID(), textForObject(object), object.languageIncludingAncestors(), { } });
+            snapshot.objects.append({ object.objectID(), object.announcementText(), object.languageIncludingAncestors(), { } });
         else {
             for (auto& child : object.unignoredChildren())
                 buildObjectList(downcast<AccessibilityObject>(child.get()));
@@ -248,18 +248,6 @@ bool AXLiveRegionManager::shouldIncludeInSnapshot(AccessibilityObject& object) c
         return true;
 
     return false;
-}
-
-String AXLiveRegionManager::textForObject(AccessibilityObject& object) const
-{
-    if (String description = object.description(); description.length())
-        return description;
-
-    TextUnderElementMode mode;
-    mode.includeListMarkers = IncludeListMarkerText::Yes;
-    // We want all of the text beneath this object when speaking live regions.
-    mode.descendIntoContainers = DescendIntoContainers::Yes;
-    return object.textUnderElement(mode);
 }
 
 AXLiveRegionManager::LiveRegionDiff AXLiveRegionManager::computeChanges(const Vector<LiveRegionObject>& oldObjects, const Vector<LiveRegionObject>& newObjects) const

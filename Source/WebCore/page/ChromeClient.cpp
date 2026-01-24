@@ -97,7 +97,7 @@ RefPtr<ShapeDetection::TextDetector> ChromeClient::createTextDetector() const
     return nullptr;
 }
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 ExceptionOr<Vector<ValidatedDigitalCredentialRequest>> ChromeClient::validateAndParseDigitalCredentialRequests(const SecurityOrigin&, const Document&, const Vector<UnvalidatedDigitalCredentialRequest>&)
 {
     return Exception { ExceptionCode::NotSupportedError, "Digital credentials are not supported."_s };

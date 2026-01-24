@@ -275,7 +275,7 @@ public:
     String debugDescription() const;
     TextMarkerOrigin origin() const { return m_data.origin; }
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     AXTextMarker toTextRunMarker(std::optional<AXID> stopAtID = std::nullopt) const;
     // True if this marker points to an object with non-empty text runs.
     bool isInTextRun() const;
@@ -352,12 +352,12 @@ public:
     CharacterRange characterRangeForLine(unsigned lineIndex) const;
     // The AXTextMarkerRange of the line that is `lineIndex` lines away from the start of this marker.
     AXTextMarkerRange markerRangeForLineIndex(unsigned lineIndex) const;
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
     friend bool operator==(const AXTextMarker& a, const AXTextMarker& b) { return a.isEqual(b); }
 
 private:
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     const AXTextRuns* runs() const;
     // Are we at the start or end of a line?
     bool atLineBoundaryForDirection(AXDirection) const;
@@ -367,7 +367,7 @@ private:
     bool atLineEnd() const { return atLineBoundaryForDirection(AXDirection::Next); }
     // True when two nodes are visually the same (i.e. on the boundary of an object)
     bool equivalentTextPosition(const AXTextMarker&) const;
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
     TextMarkerData m_data;
 };
@@ -419,7 +419,7 @@ public:
     bool isConfined() const;
     String toString(IncludeListMarkerText = IncludeListMarkerText::Yes, IncludeImageAltText = IncludeImageAltText::No) const;
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     // Returns the bounds (frame) of the text in this range relative to the viewport.
     // Analagous to AXCoreObject::relativeFrame().
     FloatRect viewportRelativeFrame() const;
@@ -427,7 +427,7 @@ public:
 #if PLATFORM(COCOA)
     RetainPtr<NSAttributedString> toAttributedString(AXCoreObject::SpellCheck) const;
 #endif // PLATFORM(COCOA)
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
     String debugDescription() const;
 private:
@@ -459,15 +459,15 @@ inline bool operator>=(const AXTextMarkerRange& range1, const AXTextMarkerRange&
     return range1 == range2 || range1 > range2;
 }
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 String listMarkerTextOnSameLine(const AXTextMarker&);
 #endif
 
 namespace Accessibility {
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 AXIsolatedObject* findObjectWithRuns(AXIsolatedObject& start, AXDirection direction, std::optional<AXID> stopAtID = std::nullopt, const std::function<void(AXIsolatedObject&)>& exitObject = [] (AXIsolatedObject&) { });
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
 } // namespace Accessibility
 

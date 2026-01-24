@@ -138,7 +138,7 @@ void HistoryController::saveScrollPositionAndViewStateToItem(HistoryItem* item)
 
 Ref<LocalFrame> HistoryController::protectedFrame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 /*

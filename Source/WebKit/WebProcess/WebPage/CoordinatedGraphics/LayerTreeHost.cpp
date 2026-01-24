@@ -182,6 +182,8 @@ void LayerTreeHost::invalidateRenderingUpdateRunLoopObserver()
 
 void LayerTreeHost::updateRendering()
 {
+    invalidateRenderingUpdateRunLoopObserver();
+
     RELEASE_ASSERT(!m_isUpdatingRendering);
     if (m_layerTreeStateIsFrozen)
         return;
@@ -233,7 +235,6 @@ void LayerTreeHost::updateRendering()
     m_forceFrameSync = false;
 
     page->didUpdateRendering();
-    invalidateRenderingUpdateRunLoopObserver();
 
     // Eject any backing stores whose only reference is held in the HashMap cache.
     m_imageBackingStores.removeIf([](auto& it) {
@@ -312,7 +313,6 @@ void LayerTreeHost::updateRenderingWithForcedRepaint()
     // not need to cancel pending ones and immediately flush again (re-entrancy!).
     if (m_isUpdatingRendering)
         return;
-    invalidateRenderingUpdateRunLoopObserver();
     updateRendering();
 }
 
@@ -334,10 +334,8 @@ void LayerTreeHost::sizeDidChange()
     m_pendingResize = true;
     if (m_isWaitingForRenderer)
         scheduleRenderingUpdate();
-    else {
-        invalidateRenderingUpdateRunLoopObserver();
+    else
         updateRendering();
-    }
 }
 
 void LayerTreeHost::pauseRendering()

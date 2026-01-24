@@ -58,6 +58,7 @@ public:
     virtual void copyFrom(std::span<const uint8_t>, size_t offset) = 0;
 
     virtual bool isRemoteBufferProxy() const { return false; }
+    virtual bool isBufferImpl() const { return false; }
 
 protected:
     Buffer() = default;

@@ -51,7 +51,7 @@ public:
 
     T* get() const LIFETIME_BOUND;
 
-    WARN_UNUSED_RETURN T* leakWeak();
+    [[nodiscard]] T* leakWeak();
 
     T& operator*() const LIFETIME_BOUND { ASSERT(get()); return *get(); }
     ALWAYS_INLINE T* operator->() const LIFETIME_BOUND { return get(); }

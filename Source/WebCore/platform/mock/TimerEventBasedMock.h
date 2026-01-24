@@ -52,7 +52,7 @@ public:
     }
 
 protected:
-    Vector<RefPtr<TimerEvent> > m_timerEvents;
+    Vector<Ref<TimerEvent>> m_timerEvents;
 };
 
 class TimerEvent : public RefCountedAndCanMakeWeakPtr<TimerEvent> {

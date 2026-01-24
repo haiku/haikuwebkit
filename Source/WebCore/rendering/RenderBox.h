@@ -453,6 +453,8 @@ public:
 
     inline bool hasHorizontalOverflow() const;
     inline bool hasVerticalOverflow() const;
+
+    inline bool hasScrollableOverflow() const;
     inline bool hasScrollableOverflowX() const;
     inline bool hasScrollableOverflowY() const;
 

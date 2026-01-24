@@ -81,6 +81,8 @@ private:
 
     // https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats-totaldecodetime
     MediaTime m_totalVideoDecodeTime { MediaTime::zeroTime() };
+
+    String m_videoDecoderName;
 };
 
 } // namespace WebCore

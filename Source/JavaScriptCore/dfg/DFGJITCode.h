@@ -95,6 +95,7 @@ public:
         MasqueradesAsUndefinedWatchpointSet,
         ArrayBufferDetachWatchpointSet,
         ArrayIteratorProtocolWatchpointSet,
+        SetIteratorProtocolWatchpointSet,
         NumberToStringWatchpointSet,
         StructureCacheClearedWatchpointSet,
         StringToStringWatchpointSet,

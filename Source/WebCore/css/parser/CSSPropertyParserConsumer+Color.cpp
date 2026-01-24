@@ -638,9 +638,6 @@ static std::optional<CSS::Color> consumeContrastColorFunction(CSSParserTokenRang
 
     ASSERT(range.peek().functionId() == CSSValueContrastColor);
 
-    if (!state.propertyParserState.context.contrastColorEnabled)
-        return std::nullopt;
-
     auto args = consumeFunction(range);
 
     auto color = consumeColor(args, state);

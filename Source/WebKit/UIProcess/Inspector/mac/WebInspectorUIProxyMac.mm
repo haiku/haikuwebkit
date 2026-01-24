@@ -34,6 +34,7 @@
 #import "GlobalFindInPageState.h"
 #import "Logging.h"
 #import "MessageSenderInlines.h"
+#import "WKAPICast.h"
 #import "WKInspectorPrivateMac.h"
 #import "WKInspectorViewController.h"
 #import "WKObject.h"

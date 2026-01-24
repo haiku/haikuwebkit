@@ -19,12 +19,16 @@ if (WIN32)
         win/PathWalker.cpp
         win/SignalsWin.cpp
         win/ThreadingWin.cpp
+        win/WTFCRTDebug.cpp
         win/Win32Handle.cpp
     )
     list(APPEND WTF_LIBRARIES
         DbgHelp
         shlwapi
         winmm
+    )
+    list(APPEND WTF_PUBLIC_HEADERS
+        win/WTFCRTDebug.h
     )
 else ()
     list(APPEND WTF_SOURCES

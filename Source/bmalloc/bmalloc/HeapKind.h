@@ -42,6 +42,7 @@ static constexpr unsigned numHeaps = 2;
 
 BINLINE bool isGigacage(HeapKind heapKind)
 {
+#if GIGACAGE_ENABLED
     switch (heapKind) {
     case HeapKind::Primary:
         return false;
@@ -50,6 +51,10 @@ BINLINE bool isGigacage(HeapKind heapKind)
     }
     BCRASH();
     return false;
+#else
+    BUNUSED(heapKind);
+    return false;
+#endif
 }
 
 BINLINE Gigacage::Kind gigacageKind(HeapKind kind)

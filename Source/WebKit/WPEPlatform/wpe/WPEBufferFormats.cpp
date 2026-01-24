@@ -333,7 +333,7 @@ void wpe_buffer_formats_builder_append_format(WPEBufferFormatsBuilder* builder, 
 
 /**
  * wpe_buffer_formats_builder_end:
- * @builder: a #WPEBufferFormatsBuilder
+ * @builder: (transfer full): a #WPEBufferFormatsBuilder
  *
  * End the builder process and return the constructed #WPEBufferFormats.
  * This function calls wpe_buffer_formats_builder_unref() on @builder.

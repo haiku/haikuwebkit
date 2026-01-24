@@ -27,28 +27,22 @@
 #include "config.h"
 #include "CSSFilterRenderer.h"
 
-#include "ColorMatrix.h"
-#include "DropShadowFilterOperationWithStyleColor.h"
-#include "FEColorMatrix.h"
-#include "FEComponentTransfer.h"
-#include "FEDropShadow.h"
-#include "FEGaussianBlur.h"
-#include "FilterOperations.h"
 #include "Logging.h"
-#include "ReferenceFilterOperation.h"
 #include "ReferencedSVGResources.h"
 #include "RenderElement.h"
 #include "RenderObjectInlines.h"
 #include "SVGFilterElement.h"
 #include "SVGFilterRenderer.h"
 #include "SourceGraphic.h"
+#include "StyleFilter.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(CSSFilterRenderer);
 
-RefPtr<CSSFilterRenderer> CSSFilterRenderer::createGeneric(RenderElement& renderer, const auto& filter, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, bool showDebugOverlay, const GraphicsContext& destinationContext)
+RefPtr<CSSFilterRenderer> CSSFilterRenderer::create(RenderElement& renderer, const Style::Filter& filter, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, bool showDebugOverlay, const GraphicsContext& destinationContext)
 {
     bool hasFilterThatMovesPixels = filter.hasFilterThatMovesPixels();
     bool hasFilterThatShouldBeRestrictedBySecurityOrigin = filter.hasFilterThatShouldBeRestrictedBySecurityOrigin();
@@ -66,16 +60,6 @@ RefPtr<CSSFilterRenderer> CSSFilterRenderer::createGeneric(RenderElement& render
     LOG_WITH_STREAM(Filters, stream << "CSSFilterRenderer::create built filter " << filterRenderer.get() << " for " << filter << " supported rendering mode(s) " << filterRenderer->filterRenderingModes());
 
     return filterRenderer;
-}
-
-RefPtr<CSSFilterRenderer> CSSFilterRenderer::create(RenderElement& renderer, const Style::Filter& filter, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, bool showDebugOverlay, const GraphicsContext& destinationContext)
-{
-    return createGeneric(renderer, filter, geometry, preferredRenderingModes, showDebugOverlay, destinationContext);
-}
-
-RefPtr<CSSFilterRenderer> CSSFilterRenderer::create(RenderElement& renderer, const FilterOperations& operations, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, bool showDebugOverlay, const GraphicsContext& destinationContext)
-{
-    return createGeneric(renderer, operations, geometry, preferredRenderingModes, showDebugOverlay, destinationContext);
 }
 
 Ref<CSSFilterRenderer> CSSFilterRenderer::create(Vector<Ref<FilterFunction>>&& functions, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, bool showDebugOverlay)
@@ -102,98 +86,12 @@ CSSFilterRenderer::CSSFilterRenderer(Vector<Ref<FilterFunction>>&& functions, co
     clampFilterRegionIfNeeded();
 }
 
-static RefPtr<FilterEffect> createBlurEffect(const BlurFilterOperation& blurOperation)
+static RefPtr<SVGFilterElement> referenceFilterElement(const Style::FilterReference& filterReference, RenderElement& renderer)
 {
-    float stdDeviation = blurOperation.stdDeviation();
-    return FEGaussianBlur::create(stdDeviation, stdDeviation, EdgeModeType::None);
-}
-
-static RefPtr<FilterEffect> createBrightnessEffect(const BasicComponentTransferFilterOperation& componentTransferOperation)
-{
-    float amount = narrowPrecisionToFloat(componentTransferOperation.amount());
-    ColorMatrix<5, 4> brightnessMatrix = brightnessColorMatrix(amount);
-    return FEColorMatrix::create(ColorMatrixType::FECOLORMATRIX_TYPE_MATRIX, brightnessMatrix.data());
-}
-
-static RefPtr<FilterEffect> createContrastEffect(const BasicComponentTransferFilterOperation& componentTransferOperation)
-{
-    float amount = narrowPrecisionToFloat(componentTransferOperation.amount());
-    ColorMatrix<5, 4> contrastMatrix = contrastColorMatrix(amount);
-    return FEColorMatrix::create(ColorMatrixType::FECOLORMATRIX_TYPE_MATRIX, contrastMatrix.data());
-}
-
-static RefPtr<FilterEffect> createDropShadowEffect(const DropShadowFilterOperation& dropShadowOperation)
-{
-    float std = dropShadowOperation.stdDeviation();
-    return FEDropShadow::create(std, std, dropShadowOperation.x(), dropShadowOperation.y(), dropShadowOperation.color(), 1);
-}
-
-static RefPtr<FilterEffect> createDropShadowEffect(const Style::DropShadowFilterOperationWithStyleColor& dropShadowOperation, const RenderStyle& style)
-{
-    Style::ColorResolver colorResolver { style };
-
-    float std = dropShadowOperation.stdDeviation();
-    return FEDropShadow::create(std, std, dropShadowOperation.x(), dropShadowOperation.y(), colorResolver.colorResolvingCurrentColor(dropShadowOperation.styleColor()), 1);
-}
-
-static RefPtr<FilterEffect> createGrayScaleEffect(const BasicColorMatrixFilterOperation& colorMatrixOperation)
-{
-    auto grayscaleMatrix = grayscaleColorMatrix(colorMatrixOperation.amount());
-    Vector<float> inputParameters {
-        grayscaleMatrix.at(0, 0), grayscaleMatrix.at(0, 1), grayscaleMatrix.at(0, 2), 0, 0,
-        grayscaleMatrix.at(1, 0), grayscaleMatrix.at(1, 1), grayscaleMatrix.at(1, 2), 0, 0,
-        grayscaleMatrix.at(2, 0), grayscaleMatrix.at(2, 1), grayscaleMatrix.at(2, 2), 0, 0,
-        0, 0, 0, 1, 0,
-    };
-
-    return FEColorMatrix::create(ColorMatrixType::FECOLORMATRIX_TYPE_MATRIX, WTF::move(inputParameters));
-}
-
-static RefPtr<FilterEffect> createHueRotateEffect(const BasicColorMatrixFilterOperation& colorMatrixOperation)
-{
-    Vector<float> inputParameters { narrowPrecisionToFloat(colorMatrixOperation.amount()) };
-    return FEColorMatrix::create(ColorMatrixType::FECOLORMATRIX_TYPE_HUEROTATE, WTF::move(inputParameters));
-}
-
-static RefPtr<FilterEffect> createInvertEffect(const BasicComponentTransferFilterOperation& componentTransferOperation)
-{
-    float amount = narrowPrecisionToFloat(componentTransferOperation.amount());
-    ColorMatrix<5, 4> invertMatrix = invertColorMatrix(amount);
-    return FEColorMatrix::create(ColorMatrixType::FECOLORMATRIX_TYPE_MATRIX, invertMatrix.data());
-}
-
-static RefPtr<FilterEffect> createOpacityEffect(const BasicComponentTransferFilterOperation& componentTransferOperation)
-{
-    float amount = narrowPrecisionToFloat(componentTransferOperation.amount());
-    ColorMatrix<5, 4> opacityMatrix = opacityColorMatrix(amount);
-    return FEColorMatrix::create(ColorMatrixType::FECOLORMATRIX_TYPE_MATRIX, opacityMatrix.data());
-}
-
-static RefPtr<FilterEffect> createSaturateEffect(const BasicColorMatrixFilterOperation& colorMatrixOperation)
-{
-    Vector<float> inputParameters { narrowPrecisionToFloat(colorMatrixOperation.amount()) };
-    return FEColorMatrix::create(ColorMatrixType::FECOLORMATRIX_TYPE_SATURATE, WTF::move(inputParameters));
-}
-
-static RefPtr<FilterEffect> createSepiaEffect(const BasicColorMatrixFilterOperation& colorMatrixOperation)
-{
-    auto sepiaMatrix = sepiaColorMatrix(colorMatrixOperation.amount());
-    Vector<float> inputParameters {
-        sepiaMatrix.at(0, 0), sepiaMatrix.at(0, 1), sepiaMatrix.at(0, 2), 0, 0,
-        sepiaMatrix.at(1, 0), sepiaMatrix.at(1, 1), sepiaMatrix.at(1, 2), 0, 0,
-        sepiaMatrix.at(2, 0), sepiaMatrix.at(2, 1), sepiaMatrix.at(2, 2), 0, 0,
-        0, 0, 0, 1, 0,
-    };
-
-    return FEColorMatrix::create(ColorMatrixType::FECOLORMATRIX_TYPE_MATRIX, WTF::move(inputParameters));
-}
-
-static RefPtr<SVGFilterElement> referenceFilterElement(const Style::ReferenceFilterOperation& filterOperation, RenderElement& renderer)
-{
-    RefPtr filterElement = ReferencedSVGResources::referencedFilterElement(renderer.protectedTreeScopeForSVGReferences(), filterOperation);
+    RefPtr filterElement = ReferencedSVGResources::referencedFilterElement(renderer.protectedTreeScopeForSVGReferences(), filterReference);
 
     if (!filterElement) {
-        LOG_WITH_STREAM(Filters, stream << " buildReferenceFilter: failed to find filter renderer, adding pending resource " << filterOperation.url());
+        LOG_WITH_STREAM(Filters, stream << " buildReferenceFilter: failed to find filter renderer, adding pending resource " << filterReference.url);
         // Although we did not find the referenced filter, it might exist later in the document.
         // FIXME: This skips anonymous RenderObjects. <https://webkit.org/b/131085>
         // FIXME: Unclear if this does anything.
@@ -203,27 +101,27 @@ static RefPtr<SVGFilterElement> referenceFilterElement(const Style::ReferenceFil
     return filterElement;
 }
 
-static bool isIdentityReferenceFilter(const Style::ReferenceFilterOperation& filterOperation, RenderElement& renderer)
+static bool isIdentityReferenceFilter(const Style::FilterReference& filterReference, RenderElement& renderer)
 {
-    RefPtr filterElement = referenceFilterElement(filterOperation, renderer);
+    RefPtr filterElement = referenceFilterElement(filterReference, renderer);
     if (!filterElement)
         return false;
 
     return SVGFilterRenderer::isIdentity(*filterElement);
 }
 
-static IntOutsets calculateReferenceFilterOutsets(const Style::ReferenceFilterOperation& filterOperation, RenderElement& renderer, const FloatRect& targetBoundingBox)
+static IntOutsets calculateReferenceFilterOutsets(const Style::FilterReference& filterReference, RenderElement& renderer, const FloatRect& targetBoundingBox)
 {
-    RefPtr filterElement = referenceFilterElement(filterOperation, renderer);
+    RefPtr filterElement = referenceFilterElement(filterReference, renderer);
     if (!filterElement)
         return { };
 
     return SVGFilterRenderer::calculateOutsets(*filterElement, targetBoundingBox);
 }
 
-static RefPtr<SVGFilterRenderer> createReferenceFilter(const CSSFilterRenderer& filter, const Style::ReferenceFilterOperation& filterOperation, RenderElement& renderer, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
+static RefPtr<SVGFilterRenderer> createReferenceFilter(const CSSFilterRenderer& filter, const Style::FilterReference& filterReference, RenderElement& renderer, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
 {
-    RefPtr filterElement = referenceFilterElement(filterOperation, renderer);
+    RefPtr filterElement = referenceFilterElement(filterReference, renderer);
     if (!filterElement)
         return nullptr;
 
@@ -240,60 +138,28 @@ static RefPtr<SVGFilterRenderer> createReferenceFilter(const CSSFilterRenderer& 
     return filterRenderer;
 }
 
-RefPtr<FilterFunction> CSSFilterRenderer::buildFilterFunction(RenderElement& renderer, const FilterOperation& operation, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
+RefPtr<FilterFunction> CSSFilterRenderer::buildFilterFunction(RenderElement& renderer, const Style::FilterValue& filterValue, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
 {
-    switch (operation.type()) {
-    case FilterOperation::Type::AppleInvertLightness:
-        ASSERT_NOT_REACHED(); // AppleInvertLightness is only used in -apple-color-filter.
-        break;
-
-    case FilterOperation::Type::Blur:
-        return createBlurEffect(uncheckedDowncast<BlurFilterOperation>(operation));
-
-    case FilterOperation::Type::Brightness:
-        return createBrightnessEffect(downcast<BasicComponentTransferFilterOperation>(operation));
-
-    case FilterOperation::Type::Contrast:
-        return createContrastEffect(downcast<BasicComponentTransferFilterOperation>(operation));
-
-    case FilterOperation::Type::DropShadow:
-        return createDropShadowEffect(uncheckedDowncast<DropShadowFilterOperation>(operation));
-
-    case FilterOperation::Type::DropShadowWithStyleColor:
-        return createDropShadowEffect(uncheckedDowncast<Style::DropShadowFilterOperationWithStyleColor>(operation), renderer.style());
-
-    case FilterOperation::Type::Grayscale:
-        return createGrayScaleEffect(downcast<BasicColorMatrixFilterOperation>(operation));
-
-    case FilterOperation::Type::HueRotate:
-        return createHueRotateEffect(downcast<BasicColorMatrixFilterOperation>(operation));
-
-    case FilterOperation::Type::Invert:
-        return createInvertEffect(downcast<BasicComponentTransferFilterOperation>(operation));
-
-    case FilterOperation::Type::Opacity:
-        return createOpacityEffect(downcast<BasicComponentTransferFilterOperation>(operation));
-
-    case FilterOperation::Type::Saturate:
-        return createSaturateEffect(downcast<BasicColorMatrixFilterOperation>(operation));
-
-    case FilterOperation::Type::Sepia:
-        return createSepiaEffect(downcast<BasicColorMatrixFilterOperation>(operation));
-
-    case FilterOperation::Type::Reference:
-        return createReferenceFilter(*this, uncheckedDowncast<Style::ReferenceFilterOperation>(operation), renderer, preferredRenderingModes, destinationContext);
-
-    default:
-        break;
-    }
-
-    return nullptr;
+    return WTF::switchOn(filterValue,
+        [&](const Style::FilterReference& filterReference) -> RefPtr<FilterFunction> {
+            return createReferenceFilter(*this, filterReference, renderer, preferredRenderingModes, destinationContext);
+        },
+        [&](const Style::BlurFunction& blurFunction) -> RefPtr<FilterFunction> {
+            return Style::evaluate<Ref<FilterEffect>>(blurFunction, renderer.style());
+        },
+        [&](const Style::DropShadowFunction& dropShadowFunction) -> RefPtr<FilterFunction> {
+            return Style::evaluate<Ref<FilterEffect>>(dropShadowFunction, renderer.style());
+        },
+        []<CSSValueID C, typename T>(const FunctionNotation<C, T>& filterFunction) -> RefPtr<FilterFunction> {
+            return Style::evaluate<Ref<FilterEffect>>(filterFunction);
+        }
+    );
 }
 
-bool CSSFilterRenderer::buildFilterFunctions(RenderElement& renderer, const auto& filter, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
+bool CSSFilterRenderer::buildFilterFunctions(RenderElement& renderer, const Style::Filter& filter, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
 {
     for (auto& value : filter) {
-        auto function = buildFilterFunction(renderer, value.get(), preferredRenderingModes, destinationContext);
+        auto function = buildFilterFunction(renderer, value, preferredRenderingModes, destinationContext);
         if (!function)
             continue;
 
@@ -404,32 +270,15 @@ bool CSSFilterRenderer::isIdentity(RenderElement& renderer, const Style::Filter&
         return false;
 
     for (auto& value : filter) {
-        Ref operation = value.value;
-        if (RefPtr referenceOperation = dynamicDowncast<Style::ReferenceFilterOperation>(operation)) {
-            if (!isIdentityReferenceFilter(*referenceOperation, renderer))
-                return false;
-            continue;
-        }
-
-        if (!operation->isIdentity())
-            return false;
-    }
-
-    return true;
-}
-bool CSSFilterRenderer::isIdentity(RenderElement& renderer, const FilterOperations& operations)
-{
-    if (operations.hasFilterThatShouldBeRestrictedBySecurityOrigin())
-        return false;
-
-    for (auto& operation : operations) {
-        if (RefPtr referenceOperation = dynamicDowncast<Style::ReferenceFilterOperation>(operation)) {
-            if (!isIdentityReferenceFilter(*referenceOperation, renderer))
-                return false;
-            continue;
-        }
-
-        if (!operation->isIdentity())
+        auto hasNonIdentityComponent = WTF::switchOn(value,
+            [&](const Style::FilterReference& filterReference) {
+                return !isIdentityReferenceFilter(filterReference, renderer);
+            },
+            [](const auto& filterFunction) {
+                return !filterFunction->isIdentity();
+            }
+        );
+        if (hasNonIdentityComponent)
             return false;
     }
 
@@ -440,30 +289,21 @@ IntOutsets CSSFilterRenderer::calculateOutsets(RenderElement& renderer, const St
 {
     IntOutsets outsets;
 
+    auto zoom = renderer.style().usedZoomForLength();
+
     for (auto& value : filter) {
-        Ref operation = value.value;
-        if (RefPtr referenceOperation = dynamicDowncast<Style::ReferenceFilterOperation>(operation)) {
-            outsets += calculateReferenceFilterOutsets(*referenceOperation, renderer, targetBoundingBox);
-            continue;
-        }
-
-        outsets += operation->outsets();
-    }
-
-    return outsets;
-}
-
-IntOutsets CSSFilterRenderer::calculateOutsets(RenderElement& renderer, const FilterOperations& operations, const FloatRect& targetBoundingBox)
-{
-    IntOutsets outsets;
-
-    for (auto& operation : operations) {
-        if (RefPtr referenceOperation = dynamicDowncast<Style::ReferenceFilterOperation>(operation)) {
-            outsets += calculateReferenceFilterOutsets(*referenceOperation, renderer, targetBoundingBox);
-            continue;
-        }
-
-        outsets += operation->outsets();
+        WTF::switchOn(value,
+            [&](const Style::FilterReference& filterReference) {
+                outsets += calculateReferenceFilterOutsets(filterReference, renderer, targetBoundingBox);
+            },
+            [&](const Style::BlurFunction& blurFunction) {
+                outsets += blurFunction->calculateOutsets(zoom);
+            },
+            [&](const Style::DropShadowFunction& dropShadowFunction) {
+                outsets += dropShadowFunction->calculateOutsets(zoom);
+            },
+            []<CSSValueID C, typename T>(const FunctionNotation<C, T>&) { }
+        );
     }
 
     return outsets;

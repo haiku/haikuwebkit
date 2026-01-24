@@ -79,7 +79,7 @@ Identifier OpaqueJSString::identifier(VM* vm) const
     return Identifier::fromString(*vm, m_string.span16());
 }
 
-const char16_t* OpaqueJSString::characters()
+const char16_t* OpaqueJSString::characters() LIFETIME_BOUND
 {
     // m_characters is put in a local here to avoid an extra atomic load.
     char16_t* characters = m_characters;

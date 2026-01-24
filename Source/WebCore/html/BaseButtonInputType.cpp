@@ -32,6 +32,7 @@
 #include "config.h"
 #include "BaseButtonInputType.h"
 
+#include "AXObjectCache.h"
 #include "HTMLInputElement.h"
 #include "HTMLNames.h"
 #include "RenderButton.h"
@@ -68,8 +69,12 @@ bool BaseButtonInputType::storesValueSeparateFromAttribute()
 
 void BaseButtonInputType::setValue(const String& sanitizedValue, bool, TextFieldEventBehavior, TextControlSetValueSelection)
 {
-    ASSERT(element());
-    protectedElement()->setAttributeWithoutSynchronization(valueAttr, AtomString { sanitizedValue });
+    RefPtr element = this->element();
+    ASSERT(element);
+    element->setAttributeWithoutSynchronization(valueAttr, AtomString { sanitizedValue });
+
+    if (CheckedPtr cache = element->protectedDocument()->existingAXObjectCache())
+        cache->valueChanged(*element);
 }
 
 bool BaseButtonInputType::dirAutoUsesValue() const

@@ -42,17 +42,17 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RTCTrackEvent);
 
-Ref<RTCTrackEvent> RTCTrackEvent::create(const AtomString& type, CanBubble canBubble, IsCancelable cancelable, RefPtr<RTCRtpReceiver>&& receiver, RefPtr<MediaStreamTrack>&& track, Vector<Ref<MediaStream>>&& streams, RefPtr<RTCRtpTransceiver>&& transceiver)
+Ref<RTCTrackEvent> RTCTrackEvent::create(const AtomString& type, CanBubble canBubble, IsCancelable cancelable, Ref<RTCRtpReceiver>&& receiver, Ref<MediaStreamTrack>&& track, Vector<Ref<MediaStream>>&& streams, Ref<RTCRtpTransceiver>&& transceiver)
 {
     return adoptRef(*new RTCTrackEvent(type, canBubble, cancelable, WTF::move(receiver), WTF::move(track), WTF::move(streams), WTF::move(transceiver)));
 }
 
-Ref<RTCTrackEvent> RTCTrackEvent::create(const AtomString& type, const Init& initializer, IsTrusted isTrusted)
+Ref<RTCTrackEvent> RTCTrackEvent::create(const AtomString& type, Init&& initializer, IsTrusted isTrusted)
 {
-    return adoptRef(*new RTCTrackEvent(type, initializer, isTrusted));
+    return adoptRef(*new RTCTrackEvent(type, WTF::move(initializer), isTrusted));
 }
 
-RTCTrackEvent::RTCTrackEvent(const AtomString& type, CanBubble canBubble, IsCancelable cancelable, RefPtr<RTCRtpReceiver>&& receiver, RefPtr<MediaStreamTrack>&& track, Vector<Ref<MediaStream>>&& streams, RefPtr<RTCRtpTransceiver>&& transceiver)
+RTCTrackEvent::RTCTrackEvent(const AtomString& type, CanBubble canBubble, IsCancelable cancelable, Ref<RTCRtpReceiver>&& receiver, Ref<MediaStreamTrack>&& track, Vector<Ref<MediaStream>>&& streams, Ref<RTCRtpTransceiver>&& transceiver)
     : Event(EventInterfaceType::RTCTrackEvent, type, canBubble, cancelable)
     , m_receiver(WTF::move(receiver))
     , m_track(WTF::move(track))
@@ -61,12 +61,12 @@ RTCTrackEvent::RTCTrackEvent(const AtomString& type, CanBubble canBubble, IsCanc
 {
 }
 
-RTCTrackEvent::RTCTrackEvent(const AtomString& type, const Init& initializer, IsTrusted isTrusted)
+RTCTrackEvent::RTCTrackEvent(const AtomString& type, Init&& initializer, IsTrusted isTrusted)
     : Event(EventInterfaceType::RTCTrackEvent, type, initializer, isTrusted)
-    , m_receiver(initializer.receiver)
-    , m_track(initializer.track)
+    , m_receiver(initializer.receiver.releaseNonNull())
+    , m_track(initializer.track.releaseNonNull())
     , m_streams(initializer.streams)
-    , m_transceiver(initializer.transceiver)
+    , m_transceiver(initializer.transceiver.releaseNonNull())
 {
 }
 

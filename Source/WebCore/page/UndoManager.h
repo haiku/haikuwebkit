@@ -52,7 +52,7 @@ public:
     void removeItem(UndoItem&);
     void removeAllItems();
     ExceptionOr<void> addItem(Ref<UndoItem>&&);
-    Document& document() { return m_document.get(); }
+    Document& document() { return m_document; }
 
 private:
     UndoManager(Document&);

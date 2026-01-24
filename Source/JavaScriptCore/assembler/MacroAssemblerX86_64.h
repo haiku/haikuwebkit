@@ -6172,7 +6172,7 @@ public:
             m_assembler.movaps_rr(src, dest);
     }
 
-    void materializeVector(v128_t value, FPRegisterID dest)
+    void move128ToVector(v128_t value, FPRegisterID dest)
     {
         if (bitEquals(value, vectorAllZeros())) {
             moveZeroToVector(dest);

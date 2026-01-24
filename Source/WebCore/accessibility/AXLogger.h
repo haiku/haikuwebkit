@@ -46,7 +46,7 @@ enum class AXStreamOptions : uint16_t {
     OuterHTML = 1 << 4,
     DisplayContents = 1 << 5,
     Address = 1 << 6,
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     TextRuns = 1 << 7,
 #endif
     RendererOrNode = 1 << 8,

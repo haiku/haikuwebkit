@@ -112,10 +112,10 @@ void GPUCommandEncoder::copyTextureToTexture(
 
 void GPUCommandEncoder::clearBuffer(
     const GPUBuffer& buffer,
-    std::optional<GPUSize64> offset,
+    GPUSize64 offset,
     std::optional<GPUSize64> size)
 {
-    protectedBacking()->clearBuffer(buffer.backing(), offset.value_or(0), size);
+    protectedBacking()->clearBuffer(buffer.backing(), offset, size);
 }
 
 void GPUCommandEncoder::pushDebugGroup(String&& groupLabel)

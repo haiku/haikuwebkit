@@ -107,7 +107,7 @@ void IndentOutdentCommand::indentIntoBlockquote(const Position& start, const Pos
     if (!nodeToSplitTo)
         return;
 
-    RefPtr<Node> outerBlock = (start.containerNode() == nodeToSplitTo) ? start.containerNode() : splitTreeToNode(*start.containerNode(), *nodeToSplitTo);
+    RefPtr<Node> outerBlock = (start.containerNode() == nodeToSplitTo) ? RefPtr { start.containerNode() } : splitTreeToNode(*start.containerNode(), *nodeToSplitTo);
     if (!outerBlock)
         return;
 

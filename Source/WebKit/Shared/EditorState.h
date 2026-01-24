@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "ArgumentCoders.h"
 #include "IdentifierTypes.h"
 #include <WebCore/Color.h>
 #include <WebCore/ElementContext.h>

@@ -28,6 +28,7 @@
 #include "JSCInlines.h"
 #include "PropertyNameArray.h"
 #include "ResourceExhaustion.h"
+#include "ScopedArguments.h"
 #include "TypeError.h"
 #include <wtf/Assertions.h>
 
@@ -1371,6 +1372,8 @@ JSArray* JSArray::fastSlice(JSGlobalObject* globalObject, JSObject* source, uint
         switch (source->type()) {
         case DirectArgumentsType:
             return DirectArguments::fastSlice(globalObject, jsCast<DirectArguments*>(source), startIndex, count);
+        case ScopedArgumentsType:
+            return ScopedArguments::fastSlice(globalObject, jsCast<ScopedArguments*>(source), startIndex, count);
         default:
             return nullptr;
         }
@@ -2379,7 +2382,7 @@ static uint64_t fastFlatIntoBuffer(JSGlobalObject* globalObject, T* resultBuffer
 JSArray* JSArray::fastFlat(JSGlobalObject* globalObject, uint64_t depth, uint64_t length)
 {
     VM& vm = globalObject->vm();
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     IndexingType sourceType = this->indexingType();
 

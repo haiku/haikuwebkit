@@ -172,6 +172,7 @@ WebXRWebGLLayer::WebXRWebGLLayer(WebXRSession& session, WebXRRenderingContext&& 
     , m_ignoreDepthValues(ignoreDepthValues)
     , m_isCompositionEnabled(isCompositionEnabled)
 {
+    updateViewports();
 }
 
 WebXRWebGLLayer::~WebXRWebGLLayer()
@@ -245,7 +246,7 @@ ExceptionOr<RefPtr<WebXRViewport>> WebXRWebGLLayer::getViewport(WebXRView& view)
     // 7. Set the view’s viewport modifiable flag to false.
     view.setViewportModifiable(false);
 
-    computeViewports();
+    updateViewports();
 
     // 8. Let viewport be the XRViewport from the list of viewport objects associated with view.
     // 9. Return viewport.
@@ -336,7 +337,7 @@ void WebXRWebGLLayer::canvasResized(CanvasBase&)
 }
 
 // https://immersive-web.github.io/webxr/#xrview-obtain-a-scaled-viewport
-void WebXRWebGLLayer::computeViewports()
+void WebXRWebGLLayer::updateViewports()
 {
     ASSERT(m_session);
 

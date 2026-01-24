@@ -115,7 +115,7 @@ public:
     // Find a value in the table.
     std::tuple<PropertyOffset, unsigned> get(const KeyType&);
     // Add a value to the table
-    WARN_UNUSED_RETURN std::tuple<PropertyOffset, unsigned, bool> add(VM&, const ValueType& entry);
+    [[nodiscard]] std::tuple<PropertyOffset, unsigned, bool> add(VM&, const ValueType& entry);
     // Remove a value from the table.
     std::tuple<PropertyOffset, unsigned> take(VM&, const KeyType&);
     PropertyOffset updateAttributeIfExists(const KeyType&, unsigned attributes);
@@ -355,7 +355,7 @@ inline std::tuple<PropertyOffset, unsigned> PropertyTable::get(const KeyType& ke
     return std::tuple { result.offset, result.attributes };
 }
 
-WARN_UNUSED_RETURN inline std::tuple<PropertyOffset, unsigned, bool> PropertyTable::add(VM& vm, const ValueType& entry)
+[[nodiscard]] inline std::tuple<PropertyOffset, unsigned, bool> PropertyTable::add(VM& vm, const ValueType& entry)
 {
     ASSERT(!m_deletedOffsets || !m_deletedOffsets->contains(entry.offset()));
 

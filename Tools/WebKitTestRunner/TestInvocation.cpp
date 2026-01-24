@@ -94,9 +94,6 @@ TestInvocation::TestInvocation(WKURLRef url, const TestOptions& options)
     , m_textOutput(OverflowPolicy::RecordOverflow)
 {
     m_urlString = toWTFString(adoptWK(WKURLCopyString(m_url.get())).get());
-
-    // FIXME: Improve this matching: webkit.org/b/304314.
-    m_dumpFrameLoadCallbacks = urlContains("loading/"_s) && !urlContains("://localhost"_s) && !urlContains("css-font-loading/"_s);
 }
 
 TestInvocation::~TestInvocation() = default;
@@ -593,6 +590,13 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
     }
     if (WKStringIsEqualToUTF8CString(messageName, "GetDumpFrameLoadCallbacks"))
         return adoptWK(WKBooleanCreate(m_dumpFrameLoadCallbacks));
+
+    if (WKStringIsEqualToUTF8CString(messageName, "SetGlobalFlag")) {
+        m_globalFlag = booleanValue(messageBody);
+        return nullptr;
+    }
+    if (WKStringIsEqualToUTF8CString(messageName, "GetGlobalFlag"))
+        return adoptWK(WKBooleanCreate(m_globalFlag));
 
     if (WKStringIsEqualToUTF8CString(messageName, "SetCanOpenWindows")) {
         m_canOpenWindows = booleanValue(messageBody);

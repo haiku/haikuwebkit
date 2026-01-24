@@ -48,7 +48,7 @@ public:
 private:
     CaretPosition(RefPtr<Node>&& offsetNode, unsigned offset);
 
-    RefPtr<Node> m_offsetNode;
+    const RefPtr<Node> m_offsetNode;
     unsigned m_offset;
 };
 

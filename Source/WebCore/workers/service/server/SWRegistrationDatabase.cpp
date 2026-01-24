@@ -51,7 +51,8 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(SWRegistrationDatabase);
 
 static constexpr auto scriptVersion = "V1"_s;
 #define RECORDS_TABLE_SCHEMA_PREFIX "CREATE TABLE "
-#define RECORDS_TABLE_SCHEMA_SUFFIX "(" \
+
+#define RECORDS_TABLE_SCHEMA_SUFFIX_V1 \
     "key TEXT NOT NULL ON CONFLICT FAIL UNIQUE ON CONFLICT REPLACE" \
     ", origin TEXT NOT NULL ON CONFLICT FAIL" \
     ", scopeURL TEXT NOT NULL ON CONFLICT FAIL" \
@@ -65,8 +66,22 @@ static constexpr auto scriptVersion = "V1"_s;
     ", referrerPolicy TEXT NOT NULL ON CONFLICT FAIL" \
     ", scriptResourceMap BLOB NOT NULL ON CONFLICT FAIL" \
     ", certificateInfo BLOB NOT NULL ON CONFLICT FAIL" \
-    ", preloadState BLOB NOT NULL ON CONFLICT FAIL" \
-    ")"_s;
+    ", preloadState BLOB NOT NULL ON CONFLICT FAIL"
+
+#define RECORDS_TABLE_SCHEMA_SUFFIX_V2 \
+    RECORDS_TABLE_SCHEMA_SUFFIX_V1 \
+    ", routes BLOB NOT NULL ON CONFLICT FAIL"
+
+static constexpr std::array<ASCIILiteral, 4> swRegistrationUpdatesV2 {
+    "ALTER TABLE Records RENAME TO RecordsOld"_s,
+    "CREATE TABLE Records(" RECORDS_TABLE_SCHEMA_SUFFIX_V2 ")"_s,
+    "INSERT INTO Records SELECT key, origin, scopeURL, topOrigin, lastUpdateCheckTime, updateViaCache, scriptURL, workerType, contentSecurityPolicy, crossOriginEmbedderPolicy, referrerPolicy, scriptResourceMap, certificateInfo, preloadState, X'' FROM RecordsOld"_s,
+    "DROP TABLE RecordsOld"_s,
+};
+
+#define RECORDS_TABLE_SCHEMA_SUFFIX RECORDS_TABLE_SCHEMA_SUFFIX_V2
+
+static constexpr int currentSWRegistrationVersion = 2;
 
 static String databaseFilePath(const String& directory)
 {
@@ -143,12 +158,12 @@ static std::optional<WorkerType> convertStringToWorkerType(const String& type)
 
 static ASCIILiteral currentRecordsTableSchema()
 {
-    return RECORDS_TABLE_SCHEMA_PREFIX "Records" RECORDS_TABLE_SCHEMA_SUFFIX;
+    return RECORDS_TABLE_SCHEMA_PREFIX "Records(" RECORDS_TABLE_SCHEMA_SUFFIX ")"_s;
 }
 
 static ASCIILiteral currentRecordsTableSchemaAlternate()
 {
-    return RECORDS_TABLE_SCHEMA_PREFIX "\"Records\"" RECORDS_TABLE_SCHEMA_SUFFIX;
+    return RECORDS_TABLE_SCHEMA_PREFIX "\"Records\"(" RECORDS_TABLE_SCHEMA_SUFFIX ")"_s;
 }
 
 static HashMap<URL, ImportedScriptAttributes> stripScriptSources(const MemoryCompactRobinHoodHashMap<URL, ServiceWorkerContextData::ImportedScript>& map)
@@ -181,7 +196,7 @@ ASCIILiteral SWRegistrationDatabase::statementString(StatementType type) const
     case StatementType::CountAllRecords:
         return "SELECT COUNT(*) FROM Records;"_s;
     case StatementType::InsertRecord:
-        return "INSERT INTO Records VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"_s;
+        return "INSERT INTO Records VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"_s;
     case StatementType::DeleteRecord:
         return "DELETE FROM Records WHERE key = ?"_s;
     case StatementType::Invalid:
@@ -274,6 +289,38 @@ bool SWRegistrationDatabase::prepareDatabase(ShouldCreateIfNotExists shouldCreat
     }
 
     checkedDatabase()->disableThreadingChecks();
+
+    int version = 1;
+    {
+        auto sql = checkedDatabase()->prepareStatement("PRAGMA user_version"_s);
+        if (sql && sql->step() == SQLITE_ROW)
+            version = sql->columnInt(0);
+    }
+
+    if (version < 0 || version > currentSWRegistrationVersion) {
+        RELEASE_LOG_ERROR(ServiceWorker, "Found unexpected SWRegistrationDatabase version: %d (expected: %d) at path: %s", version, currentSWRegistrationVersion, databasePath.utf8().data());
+        m_database = nullptr;
+        return false;
+    }
+
+    if (version < currentSWRegistrationVersion) {
+        SQLiteTransaction transaction(*m_database);
+        transaction.begin();
+
+        if (databaseExists) {
+            for (auto statement : swRegistrationUpdatesV2) {
+                if (!checkedDatabase()->executeCommand(statement)) {
+                    RELEASE_LOG_ERROR(ServiceWorker, "Error executing SWRegistrationDatabase statement update: %d", m_database->lastError());
+                    return false;
+                }
+            }
+        }
+
+        if (!checkedDatabase()->executeCommandSlow(makeString("PRAGMA user_version = "_s, currentSWRegistrationVersion)))
+            RELEASE_LOG_ERROR(ServiceWorker, "Error setting SWRegistrationDatabase user version: %d", m_database->lastError());
+
+        transaction.commit();
+    }
 
     if (!ensureValidRecordsTable()) {
         m_database = nullptr;
@@ -410,6 +457,19 @@ std::optional<Vector<ServiceWorkerContextData>> SWRegistrationDatabase::importRe
             continue;
         }
 
+        auto routesDataSpan = statement->columnBlobAsSpan(14);
+        std::optional<Vector<ServiceWorkerRoute>> routes;
+
+        if (routesDataSpan.size()) {
+            WTF::Persistence::Decoder routesDecoder(routesDataSpan);
+            routesDecoder >> routes;
+            if (!routes) {
+                RELEASE_LOG_ERROR(ServiceWorker, "SWRegistrationDatabase::importRegistrations failed to decode routes");
+                continue;
+            }
+        } else
+            routes = Vector<ServiceWorkerRoute> { };
+
         // Validate the input for this registration.
         // If any part of this input is invalid, let's skip this registration.
         // FIXME: Should we return an error skipping *all* registrations?
@@ -432,7 +492,7 @@ std::optional<Vector<ServiceWorkerContextData>> SWRegistrationDatabase::importRe
         auto registrationIdentifier = ServiceWorkerRegistrationIdentifier::generate();
         auto serviceWorkerData = ServiceWorkerData { workerIdentifier, registrationIdentifier, scriptURL, ServiceWorkerState::Activated, *workerType };
         auto registration = ServiceWorkerRegistrationData { WTF::move(*key), registrationIdentifier, WTF::move(scopeURL), *updateViaCache, lastUpdateCheckTime, std::nullopt, std::nullopt, WTF::move(serviceWorkerData) };
-        auto contextData = ServiceWorkerContextData { std::nullopt, WTF::move(registration), workerIdentifier, WTF::move(script), WTF::move(*certificateInfo), WTF::move(*contentSecurityPolicy), WTF::move(*coep), WTF::move(referrerPolicy), WTF::move(scriptURL), *workerType, true, LastNavigationWasAppInitiated::Yes, WTF::move(scriptResourceMap), std::nullopt, WTF::move(*navigationPreloadState) };
+        auto contextData = ServiceWorkerContextData { std::nullopt, WTF::move(registration), workerIdentifier, WTF::move(script), WTF::move(*certificateInfo), WTF::move(*contentSecurityPolicy), WTF::move(*coep), WTF::move(referrerPolicy), WTF::move(scriptURL), *workerType, true, LastNavigationWasAppInitiated::Yes, WTF::move(scriptResourceMap), std::nullopt, WTF::move(*navigationPreloadState), WTF::move(*routes) };
 
         registrations.append(WTF::move(contextData));
     }
@@ -497,6 +557,9 @@ std::optional<Vector<ServiceWorkerScripts>> SWRegistrationDatabase::updateRegist
         WTF::Persistence::Encoder navigationPreloadStateEncoder;
         navigationPreloadStateEncoder << data.navigationPreloadState;
 
+        WTF::Persistence::Encoder routesEncoder;
+        routesEncoder << data.routes;
+
         if (statement->bindText(1, data.registration.key.toDatabaseKey()) != SQLITE_OK
             || statement->bindText(2, data.registration.scopeURL.protocolHostAndPort()) != SQLITE_OK
             || statement->bindText(3, data.registration.scopeURL.path().toString()) != SQLITE_OK
@@ -511,6 +574,7 @@ std::optional<Vector<ServiceWorkerScripts>> SWRegistrationDatabase::updateRegist
             || statement->bindBlob(12, scriptResourceMapEncoder.span()) != SQLITE_OK
             || statement->bindBlob(13, certificateInfoEncoder.span()) != SQLITE_OK
             || statement->bindBlob(14, navigationPreloadStateEncoder.span()) != SQLITE_OK
+            || statement->bindBlob(15, routesEncoder.span()) != SQLITE_OK
             || statement->step() != SQLITE_DONE) {
             RELEASE_LOG_ERROR(ServiceWorker, "SWRegistrationDatabase::updateRegistrations failed to insert record (%i) - %s", m_database->lastError(), m_database->lastErrorMsg());
             return std::nullopt;

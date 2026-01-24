@@ -173,13 +173,13 @@ bool AccessibilityMathMLElement::isMathOperator() const
 
 bool AccessibilityMathMLElement::isMathFenceOperator() const
 {
-    auto* mathMLOperator = dynamicDowncast<RenderMathMLOperator>(renderer());
+    CheckedPtr mathMLOperator = dynamicDowncast<RenderMathMLOperator>(renderer());
     return mathMLOperator && mathMLOperator->hasOperatorFlag(MathMLOperatorDictionary::Fence);
 }
 
 bool AccessibilityMathMLElement::isMathSeparatorOperator() const
 {
-    auto* mathMLOperator = dynamicDowncast<RenderMathMLOperator>(renderer());
+    CheckedPtr mathMLOperator = dynamicDowncast<RenderMathMLOperator>(renderer());
     return mathMLOperator && mathMLOperator->hasOperatorFlag(MathMLOperatorDictionary::Separator);
 }
 
@@ -465,7 +465,7 @@ void AccessibilityMathMLElement::mathPostscripts(AccessibilityMathMultiscriptPai
 
 int AccessibilityMathMLElement::mathLineThickness() const
 {
-    auto* fraction = dynamicDowncast<RenderMathMLFraction>(renderer());
+    CheckedPtr fraction = dynamicDowncast<RenderMathMLFraction>(renderer());
     if (!fraction)
         return -1;
 

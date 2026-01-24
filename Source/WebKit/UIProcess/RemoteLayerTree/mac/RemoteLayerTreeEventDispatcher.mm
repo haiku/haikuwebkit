@@ -711,11 +711,7 @@ void RemoteLayerTreeEventDispatcher::updateAnimations()
 RefPtr<const RemoteAnimationStack> RemoteLayerTreeEventDispatcher::animationStackForNodeWithIDForTesting(WebCore::PlatformLayerIdentifier layerID) const
 {
     assertIsHeld(m_animationLock);
-
-    auto it = m_animationStacks.find(layerID);
-    if (it != m_animationStacks.end())
-        return it->value.ptr();
-    return nullptr;
+    return m_animationStacks.get(layerID);
 }
 
 HashSet<Ref<RemoteProgressBasedTimeline>> RemoteLayerTreeEventDispatcher::timelinesForScrollingNodeIDForTesting(WebCore::ScrollingNodeID scrollingNodeID)

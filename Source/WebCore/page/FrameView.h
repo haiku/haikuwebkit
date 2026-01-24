@@ -98,6 +98,12 @@ public:
     WEBCORE_EXPORT IntRect convertFromContainingViewToRenderer(const RenderElement*, const IntRect&) const;
     WEBCORE_EXPORT FloatRect convertFromContainingViewToRenderer(const RenderElement*, const FloatRect&) const;
 
+    WEBCORE_EXPORT FloatPoint absoluteToLayoutViewportPoint(FloatPoint) const;
+    FloatPoint layoutViewportToAbsolutePoint(FloatPoint) const;
+
+    WEBCORE_EXPORT FloatRect absoluteToLayoutViewportRect(FloatRect) const;
+    FloatRect layoutViewportToAbsoluteRect(FloatRect) const;
+
     // Override ScrollView methods to do point conversion via renderers, in order to take transforms into account.
     IntPoint convertToContainingView(IntPoint) const final;
     FloatPoint convertToContainingView(FloatPoint) const final;

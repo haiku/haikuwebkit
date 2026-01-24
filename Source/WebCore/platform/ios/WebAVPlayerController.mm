@@ -197,8 +197,8 @@ Class webAVPlayerControllerClassSingleton()
     BOOL _pictureInPictureInterrupted;
     BOOL _muted;
     NSTimeInterval _seekToTime;
-    WebAVMediaSelectionOption *_currentAudioMediaSelectionOption;
-    WebAVMediaSelectionOption *_currentLegibleMediaSelectionOption;
+    RetainPtr<WebAVMediaSelectionOption> _currentAudioMediaSelectionOption;
+    RetainPtr<WebAVMediaSelectionOption> _currentLegibleMediaSelectionOption;
     RetainPtr<AVPlayer> _player;
 }
 
@@ -243,8 +243,6 @@ Class webAVPlayerControllerClassSingleton()
     [_timing release];
     [_audioMediaSelectionOptions release];
     [_legibleMediaSelectionOptions release];
-    [_currentAudioMediaSelectionOption release];
-    [_currentLegibleMediaSelectionOption release];
     [_externalPlaybackAirPlayDeviceLocalizedName release];
     [_minTiming release];
     [_maxTiming release];
@@ -694,7 +692,7 @@ Class webAVPlayerControllerClassSingleton()
 
 - (WebAVMediaSelectionOption *)currentAudioMediaSelectionOption
 {
-    return _currentAudioMediaSelectionOption;
+    return _currentAudioMediaSelectionOption.get();
 }
 
 - (void)setCurrentAudioMediaSelectionOption:(WebAVMediaSelectionOption *)option
@@ -702,8 +700,7 @@ Class webAVPlayerControllerClassSingleton()
     if (option == _currentAudioMediaSelectionOption)
         return;
 
-    [_currentAudioMediaSelectionOption release];
-    _currentAudioMediaSelectionOption = [option retain];
+    _currentAudioMediaSelectionOption = option;
 
     if (!self.delegate)
         return;
@@ -721,7 +718,7 @@ Class webAVPlayerControllerClassSingleton()
 
 - (WebAVMediaSelectionOption *)currentLegibleMediaSelectionOption
 {
-    return _currentLegibleMediaSelectionOption;
+    return _currentLegibleMediaSelectionOption.get();
 }
 
 - (void)setCurrentLegibleMediaSelectionOption:(WebAVMediaSelectionOption *)option
@@ -729,8 +726,7 @@ Class webAVPlayerControllerClassSingleton()
     if (option == _currentLegibleMediaSelectionOption)
         return;
 
-    [_currentLegibleMediaSelectionOption release];
-    _currentLegibleMediaSelectionOption = [option retain];
+    _currentLegibleMediaSelectionOption = option;
 
     if (!self.delegate)
         return;
@@ -1142,6 +1138,7 @@ Class webAVPlayerControllerClassSingleton()
 
 @implementation WebAVMediaSelectionOption {
     RetainPtr<NSString> _localizedDisplayName;
+    RetainPtr<AVMediaType> _mediaType;
 }
 
 - (instancetype)initWithMediaType:(AVMediaType)mediaType displayName:(NSString *)displayName
@@ -1159,7 +1156,7 @@ Class webAVPlayerControllerClassSingleton()
 - (id)copyWithZone:(NSZone *)zone
 {
     RetainPtr displayName = adoptNS([_localizedDisplayName copyWithZone:zone]);
-    SUPPRESS_RETAINPTR_CTOR_ADOPT return [[WebAVMediaSelectionOption allocWithZone:zone] initWithMediaType:_mediaType displayName:displayName.get()];
+    SUPPRESS_RETAINPTR_CTOR_ADOPT return [[WebAVMediaSelectionOption allocWithZone:zone] initWithMediaType:_mediaType.get() displayName:displayName.get()];
 }
 
 - (NSString *)displayName
@@ -1170,6 +1167,11 @@ Class webAVPlayerControllerClassSingleton()
 - (NSString *)localizedDisplayName
 {
     return _localizedDisplayName.get();
+}
+
+- (AVMediaType)mediaType
+{
+    return _mediaType.get();
 }
 
 - (NSArray<NSNumber *> *)mediaSubTypes

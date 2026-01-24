@@ -199,7 +199,7 @@ public:
 
     void setPendingSharedProcess(WebKit::FrameProcess&);
 
-    void setHasStorageForCurrentSite(const WTF::URL&, bool);
+    void setHasStorageForCurrentSite(bool);
     bool hasStorageForCurrentSite() const { return m_hasStorageForCurrentSite; }
 
 private:

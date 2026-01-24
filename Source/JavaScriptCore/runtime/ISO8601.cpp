@@ -1106,8 +1106,11 @@ static std::optional<PlainDate> parseDate(StringParsingBuffer<CharacterType>& bu
     } else
         return std::nullopt;
 
-    if (format == TemporalDateFormat::YearMonth && buffer.atEnd())
+    if (format == TemporalDateFormat::YearMonth && buffer.atEnd()) {
+        if (!isYearWithinLimits(year)) [[unlikely]]
+            year = outOfRangeYear;
         return PlainDate(year, month, 1);
+    }
 
     if (*buffer == '-') {
         if (splitByHyphen || format != TemporalDateFormat::Date)

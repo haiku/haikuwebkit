@@ -98,8 +98,9 @@ class CallbackArgumentJSValue final : public CallbackArgument {
 class CallbackArgumentId final : public CallbackArgument {
     void set(NSInvocation *invocation, NSInteger argumentNumber, JSContext *context, JSValueRef argument, JSValueRef*) final
     {
-        id value = valueToObject(context, argument);
-        [invocation setArgument:&value atIndex:argumentNumber];
+        const RetainPtr<id> value = valueToObject(context, argument);
+        id rawValue = value.get();
+        [invocation setArgument:&rawValue atIndex:argumentNumber];
     }
 };
 
@@ -138,10 +139,11 @@ class CallbackArgumentNSNumber final : public CallbackArgument {
     void set(NSInvocation *invocation, NSInteger argumentNumber, JSContext *context, JSValueRef argument, JSValueRef* exception) final
     {
         ASSERT(exception && !*exception);
-        id value = valueToNumber([context JSGlobalContextRef], argument, exception);
+        const RetainPtr<id> value = valueToNumber([context JSGlobalContextRef], argument, exception);
         if (*exception)
             return;
-        [invocation setArgument:&value atIndex:argumentNumber];
+        id rawValue = value.get();
+        [invocation setArgument:&rawValue atIndex:argumentNumber];
     }
 };
 
@@ -149,10 +151,11 @@ class CallbackArgumentNSString final : public CallbackArgument {
     void set(NSInvocation *invocation, NSInteger argumentNumber, JSContext *context, JSValueRef argument, JSValueRef* exception) final
     {
         ASSERT(exception && !*exception);
-        id value = valueToString([context JSGlobalContextRef], argument, exception);
+        const RetainPtr<id> value = valueToString([context JSGlobalContextRef], argument, exception);
         if (*exception)
             return;
-        [invocation setArgument:&value atIndex:argumentNumber];
+        id rawValue = value.get();
+        [invocation setArgument:&rawValue atIndex:argumentNumber];
     }
 };
 
@@ -160,10 +163,11 @@ class CallbackArgumentNSDate final : public CallbackArgument {
     void set(NSInvocation *invocation, NSInteger argumentNumber, JSContext *context, JSValueRef argument, JSValueRef* exception) final
     {
         ASSERT(exception && !*exception);
-        id value = valueToDate([context JSGlobalContextRef], argument, exception);
+        const RetainPtr<id> value = valueToDate([context JSGlobalContextRef], argument, exception);
         if (*exception)
             return;
-        [invocation setArgument:&value atIndex:argumentNumber];
+        id rawValue = value.get();
+        [invocation setArgument:&rawValue atIndex:argumentNumber];
     }
 };
 
@@ -171,10 +175,11 @@ class CallbackArgumentNSArray final : public CallbackArgument {
     void set(NSInvocation *invocation, NSInteger argumentNumber, JSContext *context, JSValueRef argument, JSValueRef* exception) final
     {
         ASSERT(exception && !*exception);
-        id value = valueToArray([context JSGlobalContextRef], argument, exception);
+        const RetainPtr<id> value = valueToArray([context JSGlobalContextRef], argument, exception);
         if (*exception)
             return;
-        [invocation setArgument:&value atIndex:argumentNumber];
+        id rawValue = value.get();
+        [invocation setArgument:&rawValue atIndex:argumentNumber];
     }
 };
 
@@ -182,10 +187,11 @@ class CallbackArgumentNSDictionary final : public CallbackArgument {
     void set(NSInvocation *invocation, NSInteger argumentNumber, JSContext *context, JSValueRef argument, JSValueRef* exception) final
     {
         ASSERT(exception && !*exception);
-        id value = valueToDictionary([context JSGlobalContextRef], argument, exception);
+        const RetainPtr<id> value = valueToDictionary([context JSGlobalContextRef], argument, exception);
         if (*exception)
             return;
-        [invocation setArgument:&value atIndex:argumentNumber];
+        id rawValue = value.get();
+        [invocation setArgument:&rawValue atIndex:argumentNumber];
     }
 };
 
@@ -273,8 +279,8 @@ public:
     static ResultType typeStruct(const char* begin, const char* end)
     {
         StringRange copy(begin, end);
-        if (NSInvocation *invocation = valueToTypeInvocationFor(copy))
-            return makeUnique<CallbackArgumentStruct>(invocation, copy);
+        if (RetainPtr invocation = valueToTypeInvocationFor(copy))
+            return makeUnique<CallbackArgumentStruct>(invocation.get(), copy);
         return nullptr;
     }
 };
@@ -394,8 +400,8 @@ public:
     static ResultType typeStruct(const char* begin, const char* end)
     {
         StringRange copy(begin, end);
-        if (NSInvocation *invocation = typeToValueInvocationFor(copy))
-            return makeUnique<CallbackResultStruct>(invocation, copy);
+        if (RetainPtr invocation = typeToValueInvocationFor(copy))
+            return makeUnique<CallbackResultStruct>(invocation.get(), copy);
         return nullptr;
     }
 };

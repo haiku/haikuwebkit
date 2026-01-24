@@ -145,7 +145,7 @@ Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::LayerT
 void InspectorLayerTreeAgent::gatherLayersUsingRenderObjectHierarchy(RenderElement& renderer, JSON::ArrayOf<Inspector::Protocol::LayerTree::Layer>& layers)
 {
     if (renderer.hasLayer()) {
-        gatherLayersUsingRenderLayerHierarchy(CheckedPtr { downcast<RenderLayerModelObject>(renderer).layer() }.get(), layers);
+        gatherLayersUsingRenderLayerHierarchy(CheckedPtr { downcast<RenderLayerModelObject>(renderer).layer() }, layers);
         return;
     }
 

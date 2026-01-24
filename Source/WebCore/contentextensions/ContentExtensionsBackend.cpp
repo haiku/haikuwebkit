@@ -242,7 +242,7 @@ std::optional<String> customTrackerBlockingMessageForConsole(const ContentRuleLi
 
 ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(Page& page, const URL& url, OptionSet<ResourceType> resourceType, DocumentLoader& initiatingDocumentLoader, const URL& redirectFrom, const RuleListFilter& ruleListFilter) const
 {
-    Document* currentDocument = nullptr;
+    CheckedPtr<Document> currentDocument;
     URL mainDocumentURL;
     URL frameURL;
     bool mainFrameContext = false;

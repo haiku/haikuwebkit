@@ -135,6 +135,9 @@ private:
     void setupFillSource(SkPaint&);
     void setupStrokeSource(SkPaint&);
 
+    void saveLayer(float, CompositeMode);
+    void restoreLayer();
+
     enum class ShadowStyle : uint8_t { Outset, Inset };
     sk_sp<SkImageFilter> createDropShadowFilterIfNeeded(ShadowStyle) const;
     bool drawOutsetShadow(SkPaint&, Function<void(const SkPaint&)>&&);
@@ -156,7 +159,8 @@ private:
     };
 
     struct LayerState {
-        std::optional<CompositeMode> compositeMode;
+        CompositeMode compositeMode;
+        float opacity;
     };
 
     SkCanvas& m_canvas;

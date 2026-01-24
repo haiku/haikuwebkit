@@ -65,7 +65,7 @@ public:
     void start();
     void stop();
     bool isStopped() const;
-    WARN_UNUSED_RETURN GRefPtr<GstCaps> caps();
+    [[nodiscard]] GRefPtr<GstCaps> caps();
 
     std::pair<GstClockTime, GstClockTime> queryLatency();
 

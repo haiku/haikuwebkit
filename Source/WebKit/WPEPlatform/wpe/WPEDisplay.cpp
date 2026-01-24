@@ -228,7 +228,12 @@ static void wpe_display_class_init(WPEDisplayClass* displayClass)
 WPEView* wpeDisplayCreateView(WPEDisplay* display)
 {
     auto* wpeDisplayClass = WPE_DISPLAY_GET_CLASS(display);
-    return wpeDisplayClass->create_view(display);
+    auto* view = wpeDisplayClass->create_view(display);
+    if (view && wpeDisplayClass->create_toplevel && wpe_settings_get_boolean(wpe_display_get_settings(display), WPE_SETTING_CREATE_VIEWS_WITH_A_TOPLEVEL, nullptr)) {
+        if (GRefPtr<WPEToplevel> toplevel = adoptGRef(wpeDisplayClass->create_toplevel(display, 1)))
+            wpe_view_set_toplevel(view, toplevel.get());
+    }
+    return view;
 }
 
 bool wpeDisplayCheckEGLExtension(WPEDisplay* display, const char* extensionName)
@@ -752,4 +757,25 @@ WPEGamepadManager* wpe_display_create_gamepad_manager(WPEDisplay* display)
         manager = wpeGamepadManagerManetteCreate();
 #endif
     return manager;
+}
+
+/**
+ * wpe_display_create_toplevel:
+ * @display: a #WPEDisplay
+ * @max_views: the maximum number of views allowed, or 0 for no limit
+ *
+ * Create a new #WPEToplevel on @display with @max_views allowed.
+ * The parameter @max_views will be ignored if @display doesn't support
+ * multiple views per toplevel.
+ * This function returns %NULL if the platform implementation doesn't
+ * support explicit creation of #WPEToplevel.
+ *
+ * Returns: (transfer full) (nullable): a new #WPEToplevel or %NULL if not supported
+ */
+WPEToplevel* wpe_display_create_toplevel(WPEDisplay* display, guint maxViews)
+{
+    g_return_val_if_fail(WPE_IS_DISPLAY(display), nullptr);
+
+    auto* wpeDisplayClass = WPE_DISPLAY_GET_CLASS(display);
+    return wpeDisplayClass->create_toplevel ? wpeDisplayClass->create_toplevel(display, maxViews) : nullptr;
 }

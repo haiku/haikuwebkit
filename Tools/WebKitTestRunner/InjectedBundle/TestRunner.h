@@ -269,9 +269,9 @@ public:
 
     void setStopProvisionalFrameLoads() { m_shouldStopProvisionalFrameLoads = true; }
     bool shouldStopProvisionalFrameLoads() const { return m_shouldStopProvisionalFrameLoads; }
-    
-    bool globalFlag() const { return m_globalFlag; }
-    void setGlobalFlag(bool value) { m_globalFlag = value; }
+
+    bool globalFlag() const;
+    void setGlobalFlag(bool value);
 
     double databaseDefaultQuota() const { return m_databaseDefaultQuota; }
     void setDatabaseDefaultQuota(double quota) { m_databaseDefaultQuota = quota; }
@@ -533,8 +533,6 @@ private:
     bool m_willSendRequestReturnsNull { false };
     bool m_willSendRequestReturnsNullOnRedirect { false };
     bool m_shouldStopProvisionalFrameLoads { false };
-
-    bool m_globalFlag { false };
 
     bool m_shouldFinishAfterDownload { false };
     bool m_didCancelClientRedirect { false };

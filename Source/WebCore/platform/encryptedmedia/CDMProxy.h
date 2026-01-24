@@ -64,7 +64,7 @@ class KeyHandle : public ThreadSafeRefCounted<KeyHandle> {
 public:
     using KeyStatus = CDMInstanceSession::KeyStatus;
 
-    static RefPtr<KeyHandle> create(KeyStatus status, KeyIDType&& keyID, KeyHandleValueVariant&& keyHandleValue)
+    static Ref<KeyHandle> create(KeyStatus status, KeyIDType&& keyID, KeyHandleValueVariant&& keyHandleValue)
     {
         return adoptRef(*new KeyHandle(status, WTF::move(keyID), WTF::move(keyHandleValue)));
     }
@@ -92,7 +92,6 @@ public:
     friend bool operator==(const KeyHandle &k, const KeyIDType& keyID) { return k.m_id == keyID; }
 
 protected:
-
     KeyHandle(KeyStatus status, const KeyIDType& keyID, const KeyHandleValueVariant& keyHandleValue)
         : m_status(status)
         , m_id(keyID)
@@ -126,17 +125,17 @@ public:
     {
     }
 
-    bool add(RefPtr<T>&& key)
+    bool add(Ref<T>&& key)
     {
         auto findingResult = m_keys.find(key->id());
-        if (findingResult != m_keys.end() && findingResult->value == key)
+        if (findingResult != m_keys.end() && findingResult->value.ptr() == key.ptr())
             return false;
 
         m_keys.set(key->id(), WTF::move(key));
         return true;
     }
 
-    bool addKeys(Vector<RefPtr<T>>&& newKeys)
+    bool addKeys(Vector<Ref<T>>&& newKeys)
     {
         bool didKeyStoreChange = false;
         for (auto& key : newKeys) {
@@ -146,19 +145,19 @@ public:
         return didKeyStoreChange;
     }
 
-    void remove(const RefPtr<T>& key) { m_keys.remove(key->id()); }
+    void remove(const Ref<T>& key) { m_keys.remove(key->id()); }
     void clear() { m_keys.clear(); }
     bool containsKeyID(const KeyIDType& keyID) const { return m_keys.contains(keyID); }
 
-    WARN_UNUSED_RETURN RefPtr<T> keyHandle(const KeyIDType& keyID) const
+    [[nodiscard]] RefPtr<T> keyHandle(const KeyIDType& keyID) const
     {
         auto findingResult = m_keys.find(keyID);
         if (findingResult == m_keys.end())
             return { };
-        return findingResult->value;
+        return findingResult->value.ptr();
     }
 
-    WARN_UNUSED_RETURN KeyStatusVector allKeysAs(CDMInstanceSession::KeyStatus status) const
+    [[nodiscard]] KeyStatusVector allKeysAs(CDMInstanceSession::KeyStatus status) const
     {
         CDMInstanceSession::KeyStatusVector keyStatusVector = convertToJSKeyStatusVector();
         for (auto& keyStatus : keyStatusVector)
@@ -166,7 +165,7 @@ public:
         return keyStatusVector;
     }
 
-    WARN_UNUSED_RETURN KeyStatusVector convertToJSKeyStatusVector() const
+    [[nodiscard]] KeyStatusVector convertToJSKeyStatusVector() const
     {
         KeyStoreBase::KeyStatusVector vector;
         for (const auto& key : m_keys.values())
@@ -184,7 +183,7 @@ public:
     auto end() const LIFETIME_BOUND { return m_keys.end(); }
 
 protected:
-    HashMap<KeyIDType, RefPtr<T>> m_keys;
+    HashMap<KeyIDType, Ref<T>> m_keys;
 
 private:
     KeyStoreIDType m_id;
@@ -194,13 +193,12 @@ using KeyStore = KeyStoreBase<KeyHandle>;
 
 class ReferenceAwareKeyHandle : public KeyHandle {
 public:
-    static RefPtr<ReferenceAwareKeyHandle> createFrom(const RefPtr<KeyHandle>& other, KeyStoreIDType keyStoreID)
+    static Ref<ReferenceAwareKeyHandle> create(const Ref<KeyHandle>& other, KeyStoreIDType keyStoreID)
     {
-        RELEASE_ASSERT(other);
         return adoptRef(*new ReferenceAwareKeyHandle(other->status(), other->id(), other->value(), keyStoreID));
     }
 
-    void updateKeyFrom(RefPtr<ReferenceAwareKeyHandle>&& other)
+    void updateKeyFrom(Ref<ReferenceAwareKeyHandle>&& other)
     {
         ASSERT(isMainThread());
         ASSERT(m_id == other->id());
@@ -283,7 +281,7 @@ public:
 
     WEBCORE_EXPORT static void registerFactory(CDMProxyFactory&);
     WEBCORE_EXPORT static void unregisterFactory(CDMProxyFactory&);
-    WARN_UNUSED_RETURN WEBCORE_EXPORT static RefPtr<CDMProxy> createCDMProxyForKeySystem(const String&);
+    [[nodiscard]] WEBCORE_EXPORT static RefPtr<CDMProxy> createCDMProxyForKeySystem(const String&);
 
 protected:
     virtual RefPtr<CDMProxy> createCDMProxy(const String&) = 0;

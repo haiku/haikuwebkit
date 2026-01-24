@@ -60,7 +60,7 @@ void reportMemoryForDocumentIfFrameless(JSGlobalObject& lexicalGlobalObject, Doc
 
     VM& vm = lexicalGlobalObject.vm();
     size_t memoryCost = 0;
-    for (Node* node = &document; node; node = NodeTraversal::next(*node))
+    for (CheckedPtr<Node> node = &document; node; node = NodeTraversal::next(*node))
         memoryCost += node->approximateMemoryCost();
 
     // FIXME: Adopt reportExtraMemoryVisited, and switch to reportExtraMemoryAllocated.

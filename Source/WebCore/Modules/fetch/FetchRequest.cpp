@@ -273,20 +273,8 @@ ExceptionOr<void> FetchRequest::initializeWith(FetchRequest& input, Init&& init)
         m_navigationPreloadIdentifier = input.m_navigationPreloadIdentifier;
     }
 
-    if (RefPtr executionContext = scriptExecutionContext()) {
-        if (RefPtr document = dynamicDowncast<Document>(*executionContext); document && document->settings().localNetworkAccessEnabled()) {
-            switch (init.targetAddressSpace) {
-            case IPAddressSpace::Public:
-                m_targetAddressSpace = IPAddressSpace::Public;
-                break;
-            case IPAddressSpace::Local:
-                m_targetAddressSpace = IPAddressSpace::Local;
-                break;
-            }
-
-            m_targetAddressSpace = updateTargetAddressSpaceIfNeeded(m_targetAddressSpace, m_request.url());
-        }
-    }
+    if (RefPtr document = dynamicDowncast<Document>(context); document && document->settings().localNetworkAccessEnabled())
+        m_targetAddressSpace = updateTargetAddressSpaceIfNeeded(*init.targetAddressSpace, m_request.url());
 
     auto setBodyResult = init.body ? setBody(WTF::move(*init.body)) : setBody(input);
     if (setBodyResult.hasException())

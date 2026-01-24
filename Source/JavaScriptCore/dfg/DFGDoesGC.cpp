@@ -644,8 +644,6 @@ bool doesGC(Graph& graph, Node* node)
         return true;
 
     case StringFromCharCode:
-        // FIXME: Should we constant fold this case?
-        // https://bugs.webkit.org/show_bug.cgi?id=194308
         if (node->child1()->isInt32Constant() && (node->child1()->asUInt32() <= maxSingleCharacterString))
             return false;
         return true;

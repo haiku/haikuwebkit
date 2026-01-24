@@ -68,7 +68,7 @@ void IDBServer::registerConnection(IDBConnectionToClient& connection)
 {
     ASSERT(!isMainThread());
     ASSERT(!m_connectionMap.contains(connection.identifier()));
-    m_connectionMap.set(connection.identifier(), &connection);
+    m_connectionMap.set(connection.identifier(), connection);
 }
 
 void IDBServer::unregisterConnection(IDBConnectionToClient& connection)

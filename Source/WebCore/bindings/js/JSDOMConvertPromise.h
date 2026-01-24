@@ -49,9 +49,9 @@ template<typename T> struct Converter<IDLPromise<T>> : DefaultConverter<IDLPromi
         // 2. Let promise be the result of calling resolve with %Promise% as the this value and V as the single argument value.
         auto* promise = JSC::JSPromise::resolvedPromise(globalObject, value);
         if (scope.exception()) {
-            auto* scriptExecutionContext = globalObject->scriptExecutionContext();
-            if (auto* globalScope = dynamicDowncast<WorkerGlobalScope>(scriptExecutionContext)) {
-                auto* scriptController = globalScope->script();
+            CheckedPtr scriptExecutionContext = globalObject->scriptExecutionContext();
+            if (RefPtr globalScope = dynamicDowncast<WorkerGlobalScope>(scriptExecutionContext.get())) {
+                CheckedPtr scriptController = globalScope->script();
                 bool terminatorCausedException = vm.isTerminationException(scope.exception());
                 if (terminatorCausedException || (scriptController && scriptController->isTerminatingExecution())) {
                     scriptController->forbidExecution();
@@ -74,14 +74,9 @@ template<typename T> struct JSConverter<IDLPromise<T>> {
     static constexpr bool needsState = true;
     static constexpr bool needsGlobalObject = true;
 
-    static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, DOMPromise& promise)
+    static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, const DOMPromise& promise)
     {
         return promise.guardedObject();
-    }
-
-    static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, const RefPtr<DOMPromise>& promise)
-    {
-        return promise->guardedObject();
     }
 
     static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, const Ref<DOMPromise>& promise)
@@ -97,12 +92,12 @@ template<typename T> struct JSConverter<IDLPromise<T>> {
 };
 
 template<typename T> struct JSConverter<IDLPromiseIgnoringSuspension<T>> : public JSConverter<IDLPromise<T>> {
-    static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, DOMPromise& promise)
+    static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, const DOMPromise& promise)
     {
         return promise.guardedObject();
     }
 
-    static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, const RefPtr<DOMPromise>& promise)
+    static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, const Ref<DOMPromise>& promise)
     {
         return promise->guardedObject();
     }

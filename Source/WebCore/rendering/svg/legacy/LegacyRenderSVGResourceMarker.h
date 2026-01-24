@@ -83,4 +83,5 @@ private:
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::LegacyRenderSVGResourceMarker)
 static bool isType(const WebCore::RenderObject& renderer) { return renderer.isLegacyRenderSVGResourceMarker(); }
 static bool isType(const WebCore::LegacyRenderSVGResource& resource) { return resource.resourceType() == WebCore::MarkerResourceType; }
+static bool isType(const WebCore::LegacyRenderSVGResourceContainer& resource) { return resource.resourceType() == WebCore::MarkerResourceType; }
 SPECIALIZE_TYPE_TRAITS_END()

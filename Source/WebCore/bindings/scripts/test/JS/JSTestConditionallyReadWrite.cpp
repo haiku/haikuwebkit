@@ -270,7 +270,7 @@ static inline bool setJSTestConditionallyReadWrite_conditionallyReadWriteAttribu
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setConditionallyReadWriteAttribute(*nativeValueConversionResult.releaseReturnValue());
+        return impl.setConditionallyReadWriteAttribute(nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -310,7 +310,7 @@ static inline bool setJSTestConditionallyReadWrite_conditionalAndConditionallyRe
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setConditionalAndConditionallyReadWriteAttribute(*nativeValueConversionResult.releaseReturnValue());
+        return impl.setConditionalAndConditionallyReadWriteAttribute(nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -347,7 +347,7 @@ static inline bool setJSTestConditionallyReadWrite_enabledConditionallyReadWrite
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setEnabledConditionallyReadWriteBySettingAttribute(*nativeValueConversionResult.releaseReturnValue());
+        return impl.setEnabledConditionallyReadWriteBySettingAttribute(nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -380,7 +380,7 @@ static inline bool setJSTestConditionallyReadWrite_enabledConditionallyReadWrite
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setEnabledConditionallyReadWriteBySettingAttributeUnforgeable(*nativeValueConversionResult.releaseReturnValue());
+        return impl.setEnabledConditionallyReadWriteBySettingAttributeUnforgeable(nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -413,7 +413,7 @@ static inline bool setJSTestConditionallyReadWrite_enabledConditionallyReadWrite
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setEnabledConditionallyReadWriteBySettingAttributeUnforgeablePrivate(*nativeValueConversionResult.releaseReturnValue());
+        return impl.setEnabledConditionallyReadWriteBySettingAttributeUnforgeablePrivate(nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }

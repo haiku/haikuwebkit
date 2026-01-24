@@ -57,18 +57,19 @@ private:
     RenderPassEncoderImpl& operator=(RenderPassEncoderImpl&&) = delete;
 
     WGPURenderPassEncoder backing() const { return m_backing.get(); }
+    bool isRenderPassEncoderImpl() const final { return true; }
 
     void setPipeline(const RenderPipeline&) final;
 
-    void setIndexBuffer(const Buffer&, IndexFormat, std::optional<Size64> offset, std::optional<Size64>) final;
-    void setVertexBuffer(Index32 slot, const Buffer*, std::optional<Size64> offset, std::optional<Size64>) final;
+    void setIndexBuffer(const Buffer&, IndexFormat, Size64 offset, std::optional<Size64>) final;
+    void setVertexBuffer(Index32 slot, const Buffer*, Size64 offset, std::optional<Size64>) final;
 
-    void draw(Size32 vertexCount, std::optional<Size32> instanceCount,
-        std::optional<Size32> firstVertex, std::optional<Size32> firstInstance) final;
-    void drawIndexed(Size32 indexCount, std::optional<Size32> instanceCount,
-        std::optional<Size32> firstIndex,
-        std::optional<SignedOffset32> baseVertex,
-        std::optional<Size32> firstInstance) final;
+    void draw(Size32 vertexCount, Size32 instanceCount,
+        Size32 firstVertex, Size32 firstInstance) final;
+    void drawIndexed(Size32 indexCount, Size32 instanceCount,
+        Size32 firstIndex,
+        SignedOffset32 baseVertex,
+        Size32 firstInstance) final;
 
     void drawIndirect(const Buffer& indirectBuffer, Size64 indirectOffset) final;
     void drawIndexedIndirect(const Buffer& indirectBuffer, Size64 indirectOffset) final;
@@ -108,5 +109,9 @@ private:
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::RenderPassEncoderImpl)
+    static bool isType(const WebCore::WebGPU::RenderPassEncoder& encoder) { return encoder.isRenderPassEncoderImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

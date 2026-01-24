@@ -613,12 +613,12 @@ void WebTransport::createUnidirectionalStream(ScriptExecutionContext& context, W
         } ();
         if (stream.hasException())
             return promise->reject(stream.releaseException());
-        auto sendStream = stream.releaseReturnValue();
+        Ref sendStream = stream.releaseReturnValue();
         sink->setStream(sendStream.get());
         protectedThis->m_sendStreams.add(sendStream);
         ASSERT(!protectedThis->m_sendStreamSinks.contains(*identifier));
         protectedThis->m_sendStreamSinks.add(*identifier, WTF::move(sink));
-        promise->resolveWithNewlyCreated<IDLInterface<WebTransportSendStream>>(sendStream);
+        promise->resolveWithNewlyCreated<IDLInterface<WebTransportSendStream>>(WTF::move(sendStream));
     });
 }
 

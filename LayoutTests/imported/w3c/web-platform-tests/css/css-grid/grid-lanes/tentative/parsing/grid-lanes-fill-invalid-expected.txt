@@ -1,7 +1,0 @@
-
-PASS e.style['grid-lanes-fill'] = "10" should not set the property value
-PASS e.style['grid-lanes-fill'] = "true" should not set the property value
-PASS e.style['grid-lanes-fill'] = "default" should not set the property value
-PASS e.style['grid-lanes-fill'] = "set" should not set the property value
-PASS e.style['grid-lanes-fill'] = "before, after" should not set the property value
-

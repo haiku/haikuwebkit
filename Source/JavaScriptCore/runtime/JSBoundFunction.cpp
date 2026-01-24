@@ -29,6 +29,7 @@
 #include "DeferTermination.h"
 #include "ExecutableBaseInlines.h"
 #include "FunctionPrototype.h"
+#include "JSBoundFunctionInlines.h"
 #include "JSCInlines.h"
 #include "VMTrapsInlines.h"
 
@@ -266,7 +267,7 @@ JSString* JSBoundFunction::nameSlow(VM& vm)
 {
     JSGlobalObject* globalObject = this->globalObject();
     DeferTerminationForAWhile deferScope(vm);
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     unsigned nestingCount = 0;
     JSObject* cursor = m_targetFunction.get();

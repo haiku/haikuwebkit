@@ -204,7 +204,7 @@ public:
     static bool isFormattingTag(TagName);
 
 private:
-    Document& document() const { return m_document.get(); }
+    Document& document() const { return m_document; }
 
     // In the common case, this queue will have only one task because most
     // tokens produce only one DOM mutation.

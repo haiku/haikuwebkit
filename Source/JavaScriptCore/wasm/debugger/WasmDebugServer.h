@@ -35,6 +35,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include <JavaScriptCore/JSExportMacros.h>
 #include <JavaScriptCore/VM.h>
 #include <JavaScriptCore/WasmDebugServerUtilities.h>
+#include <JavaScriptCore/WasmGDBPacketParser.h>
 #include <JavaScriptCore/WasmVirtualAddress.h>
 
 #include <atomic>
@@ -110,7 +111,6 @@ public:
 #endif
 
     void trackInstance(JSWebAssemblyInstance*);
-    void untrackInstance(JSWebAssemblyInstance*);
     void trackModule(Module&);
     void untrackModule(Module&);
 
@@ -119,7 +119,7 @@ public:
 
     JS_EXPORT_PRIVATE bool isConnected() const;
 
-    JS_EXPORT_PRIVATE void handleRawPacket(StringView rawPacket);
+    JS_EXPORT_PRIVATE void handlePacket(StringView packet);
 
     ExecutionHandler& execution() const
     {
@@ -146,7 +146,6 @@ private:
     void closeSocket(SocketType&);
 
     void handleClient();
-    void handlePacket(StringView packet);
     void handleThreadManagement(StringView packet);
 
     void sendAck();
@@ -181,6 +180,8 @@ private:
     std::unique_ptr<ExecutionHandler> m_executionHandler;
 
     std::unique_ptr<ModuleManager> m_moduleManager;
+
+    GDBPacketParser m_packetParser;
 
 #if ENABLE(REMOTE_INSPECTOR)
     Function<bool(const String&)> m_rwiResponseHandler;

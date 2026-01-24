@@ -333,6 +333,7 @@ std::optional<PseudoElementType> CSSSelector::stylePseudoElementTypeFor(PseudoEl
 #endif
     case PseudoElement::Slotted:
     case PseudoElement::Part:
+    case PseudoElement::Picker:
     case PseudoElement::UserAgentPart:
     case PseudoElement::UserAgentPartLegacyAlias:
     case PseudoElement::WebKitUnknown:
@@ -962,6 +963,7 @@ bool complexSelectorMatchesElementBackedPseudoElement(const CSSSelector& complex
         switch (pseudoElement) {
         case CSSSelector::PseudoElement::Slotted:
         case CSSSelector::PseudoElement::Part:
+        case CSSSelector::PseudoElement::Picker:
         case CSSSelector::PseudoElement::UserAgentPart:
         case CSSSelector::PseudoElement::UserAgentPartLegacyAlias:
             return true;
@@ -1005,6 +1007,7 @@ bool isElementBackedPseudoElement(CSSSelector::PseudoElement pseudoElement)
 {
     switch (pseudoElement) {
     case CSSSelector::PseudoElement::Part:
+    case CSSSelector::PseudoElement::Picker:
     case CSSSelector::PseudoElement::Slotted:
     case CSSSelector::PseudoElement::UserAgentPart:
     case CSSSelector::PseudoElement::UserAgentPartLegacyAlias:

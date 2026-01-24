@@ -32,6 +32,7 @@
 #include "JSDOMConvertBufferSource.h"
 #include "JSDOMConvertInterface.h"
 #include "JSDOMConvertNumbers.h"
+#include "JSDOMConvertOptional.h"
 #include "JSDOMConvertPromise.h"
 #include "JSDOMConvertSerializedScriptValue.h"
 #include "JSDOMConvertStrings.h"
@@ -47,6 +48,8 @@
 #include <JavaScriptCore/FunctionPrototype.h>
 #include <JavaScriptCore/JSCInlines.h>
 #include <JavaScriptCore/JSString.h>
+#include <type_traits>
+#include <wtf/IsIncreasing.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/SortedArrayMap.h>
 
@@ -92,6 +95,17 @@ template<> ASCIILiteral expectedEnumerationValues<TestCallbackInterface::Enum>()
     return "\"value1\", \"value2\""_s;
 }
 
+IGNORE_WARNINGS_BEGIN("invalid-offsetof")
+
+static_assert(std::is_aggregate_v<TestCallbackInterface::Dictionary>);
+static_assert(IsIncreasing<
+      0
+    , offsetof(TestCallbackInterface::Dictionary, requiredMember)
+    , offsetof(TestCallbackInterface::Dictionary, optionalMember)
+>);
+
+IGNORE_WARNINGS_END
+
 template<> ConversionResult<IDLDictionary<TestCallbackInterface::Dictionary>> convertDictionary<TestCallbackInterface::Dictionary>(JSGlobalObject& lexicalGlobalObject, JSValue value)
 {
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
@@ -102,7 +116,6 @@ template<> ConversionResult<IDLDictionary<TestCallbackInterface::Dictionary>> co
         throwTypeError(&lexicalGlobalObject, throwScope);
         return ConversionResultException { };
     }
-    TestCallbackInterface::Dictionary result;
     JSValue optionalMemberValue;
     if (isNullOrUndefined)
         optionalMemberValue = jsUndefined();
@@ -110,12 +123,9 @@ template<> ConversionResult<IDLDictionary<TestCallbackInterface::Dictionary>> co
         optionalMemberValue = object->get(&lexicalGlobalObject, Identifier::fromString(vm, "optionalMember"_s));
         RETURN_IF_EXCEPTION(throwScope, ConversionResultException { });
     }
-    if (!optionalMemberValue.isUndefined()) {
-        auto optionalMemberConversionResult = convert<IDLLong>(lexicalGlobalObject, optionalMemberValue);
-        if (optionalMemberConversionResult.hasException(throwScope)) [[unlikely]]
-            return ConversionResultException { };
-        result.optionalMember = optionalMemberConversionResult.releaseReturnValue();
-    }
+    auto optionalMemberConversionResult = convert<IDLOptional<IDLLong>>(lexicalGlobalObject, optionalMemberValue);
+    if (optionalMemberConversionResult.hasException(throwScope)) [[unlikely]]
+        return ConversionResultException { };
     JSValue requiredMemberValue;
     if (isNullOrUndefined)
         requiredMemberValue = jsUndefined();
@@ -130,8 +140,10 @@ template<> ConversionResult<IDLDictionary<TestCallbackInterface::Dictionary>> co
     auto requiredMemberConversionResult = convert<IDLUSVString>(lexicalGlobalObject, requiredMemberValue);
     if (requiredMemberConversionResult.hasException(throwScope)) [[unlikely]]
         return ConversionResultException { };
-    result.requiredMember = requiredMemberConversionResult.releaseReturnValue();
-    return result;
+    return TestCallbackInterface::Dictionary {
+        requiredMemberConversionResult.releaseReturnValue(),
+        optionalMemberConversionResult.releaseReturnValue(),
+    };
 }
 
 JSTestCallbackInterface::JSTestCallbackInterface(JSObject* callback, JSDOMGlobalObject* globalObject)

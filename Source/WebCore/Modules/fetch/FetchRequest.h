@@ -114,7 +114,7 @@ private:
     const Ref<AbortSignal> m_signal;
     Markable<FetchIdentifier> m_navigationPreloadIdentifier;
     bool m_enableContentExtensionsCheck { true };
-    IPAddressSpace m_targetAddressSpace;
+    IPAddressSpace m_targetAddressSpace { IPAddressSpace::Public };
 };
 
 WebCoreOpaqueRoot root(FetchRequest*);

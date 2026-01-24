@@ -170,7 +170,7 @@ CSSRule* CSSComputedStyleDeclaration::parentRule() const
     return nullptr;
 }
 
-CSSRule* CSSComputedStyleDeclaration::cssRules() const
+CSSRuleList* CSSComputedStyleDeclaration::cssRules() const
 {
     return nullptr;
 }

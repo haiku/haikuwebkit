@@ -1843,6 +1843,7 @@ ALWAYS_INLINE EncodedJSValue genericTypedArrayViewProtoFuncSubarray(VM& vm, JSGl
     ViewClass* thisObject = jsCast<ViewClass*>(callFrame->thisValue());
 
     size_t thisLength = thisObject->length();
+    size_t srcByteOffset = thisObject->byteOffsetRaw();
 
     JSValue start = callFrame->argument(0);
     if (!start.isInt32()) [[unlikely]] {
@@ -1881,7 +1882,7 @@ ALWAYS_INLINE EncodedJSValue genericTypedArrayViewProtoFuncSubarray(VM& vm, JSGl
         return { };
     }
 
-    size_t newByteOffset = thisObject->byteOffsetRaw() + begin * ViewClass::elementSize;
+    size_t newByteOffset = srcByteOffset + begin * ViewClass::elementSize;
 
     scope.release();
     return JSValue::encode(speciesConstruct(globalObject, thisObject, [&]() {

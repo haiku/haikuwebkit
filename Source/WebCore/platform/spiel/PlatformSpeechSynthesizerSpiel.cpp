@@ -51,7 +51,7 @@ public:
     explicit SpielSpeechWrapper(const PlatformSpeechSynthesizer&, Function<void()>&&);
     ~SpielSpeechWrapper();
 
-    Vector<RefPtr<PlatformSpeechSynthesisVoice>> initializeVoiceList();
+    Vector<Ref<PlatformSpeechSynthesisVoice>> initializeVoiceList();
     void pause();
     void resume();
     void speakUtterance(RefPtr<PlatformSpeechSynthesisUtterance>&&);
@@ -154,9 +154,9 @@ String SpielSpeechWrapper::generateVoiceURI(const GRefPtr<SpielVoice>& voice, co
     return makeString(URI_PREFIX, unsafeSpan(spiel_provider_get_well_known_name(provider.get())), '#', unsafeSpan(spiel_voice_get_identifier(voice.get())), '#', language);
 }
 
-Vector<RefPtr<PlatformSpeechSynthesisVoice>> SpielSpeechWrapper::initializeVoiceList()
+Vector<Ref<PlatformSpeechSynthesisVoice>> SpielSpeechWrapper::initializeVoiceList()
 {
-    Vector<RefPtr<PlatformSpeechSynthesisVoice>> platformVoices;
+    Vector<Ref<PlatformSpeechSynthesisVoice>> platformVoices;
     auto voices = spiel_speaker_get_voices(m_speaker.get());
     unsigned position = 0;
     m_voices.clear();

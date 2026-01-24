@@ -37,8 +37,12 @@ PASS checkAddIceCandidateToStoppedTransceiver
 PASS checkBundleTagRejected
 PASS track with audio is muted after SRD
 PASS track with audio gets unmuted when packets flow.
-PASS track with audio gets muted when setting the transceiver direction in 'inactive'
+PASS track with audio gets muted when setting the transceiver direction to 'inactive'
+PASS track with audio gets unmuted when setting the transceiver direction to 'sendrecv' after 'inactive'
+FAIL track with audio stays muted when setting the transceiver direction to 'sendrecv' after 'inactive' but no packets flow assert_true: track remains muted expected true got false
 PASS track with video is muted after SRD
 PASS track with video gets unmuted when packets flow.
-PASS track with video gets muted when setting the transceiver direction in 'inactive'
+PASS track with video gets muted when setting the transceiver direction to 'inactive'
+PASS track with video gets unmuted when setting the transceiver direction to 'sendrecv' after 'inactive'
+FAIL track with video stays muted when setting the transceiver direction to 'sendrecv' after 'inactive' but no packets flow assert_true: track remains muted expected true got false
 

@@ -260,9 +260,10 @@ void MediaMetadata::refreshArtworkImage()
 
 void MediaMetadata::tryNextArtworkImage(uint32_t index, Vector<Pair>&& artworks)
 {
-    if (!m_session)
+    RefPtr session = m_session.get();
+    if (!session)
         return;
-    RefPtr document = m_session->document();
+    RefPtr document = session->document();
     if (!document)
         return;
 
@@ -306,8 +307,8 @@ void MediaMetadata::setTrackIdentifier(const String& identifier)
 
 void MediaMetadata::metadataUpdated()
 {
-    if (m_session)
-        m_session->metadataUpdated(*this);
+    if (RefPtr session = m_session.get())
+        session->metadataUpdated(*this);
 }
 
 }

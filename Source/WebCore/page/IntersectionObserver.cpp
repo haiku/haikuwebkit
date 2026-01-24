@@ -662,8 +662,7 @@ auto IntersectionObserver::updateObservations(const Frame& hostFrame) -> NeedNot
 
                 RefPtr targetFrameView = target->document().view();
                 targetBoundingClientRect = targetFrameView->absoluteToClientRect(*intersectionState.absoluteTargetRect, target->renderer()->style().usedZoom());
-                // FIXME: compute this when hostFrameView is not local.
-                clientRootBounds = downcast<LocalFrameView>(hostFrameView)->absoluteToLayoutViewportRect(*intersectionState.absoluteRootBounds);
+                clientRootBounds = hostFrameView->absoluteToLayoutViewportRect(*intersectionState.absoluteRootBounds);
 
                 if (intersectionState.isIntersecting) {
                     ASSERT(intersectionState.absoluteIntersectionRect);
@@ -686,9 +685,9 @@ auto IntersectionObserver::updateObservations(const Frame& hostFrame) -> NeedNot
                 reportedRootBounds,
                 { targetBoundingClientRect.x(), targetBoundingClientRect.y(), targetBoundingClientRect.width(), targetBoundingClientRect.height() },
                 { clientIntersectionRect.x(), clientIntersectionRect.y(), clientIntersectionRect.width(), clientIntersectionRect.height() },
-                intersectionState.intersectionRatio,
-                target.get(),
                 intersectionState.thresholdIndex > 0,
+                intersectionState.intersectionRatio,
+                *target,
             }));
 
             needNotify = NeedNotify::Yes;
@@ -719,8 +718,7 @@ std::optional<ReducedResolutionSeconds> IntersectionObserver::nowTimestamp() con
 
 void IntersectionObserver::appendQueuedEntry(Ref<IntersectionObserverEntry>&& entry)
 {
-    ASSERT(entry->target());
-    m_pendingTargets.append(*entry->target());
+    m_pendingTargets.append(entry->target());
     m_queuedEntries.append(WTF::move(entry));
 }
 

@@ -130,7 +130,7 @@ private:
     DownloadID m_downloadID;
     const Ref<DownloadManager::Client> m_client;
 
-    Vector<RefPtr<WebCore::BlobDataFileReference>> m_blobFileReferences;
+    Vector<Ref<WebCore::BlobDataFileReference>> m_blobFileReferences;
     RefPtr<SandboxExtension> m_sandboxExtension;
 
     const RefPtr<NetworkDataTask> m_download;

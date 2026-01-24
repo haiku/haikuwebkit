@@ -59,7 +59,7 @@ public:
     static Ref<PublicKeyCredential> create(Ref<AuthenticatorResponse>&&);
 
     ArrayBuffer* rawId() const;
-    AuthenticatorResponse* response() const { return m_response.ptr(); }
+    AuthenticatorResponse& response() const { return m_response; }
     AuthenticatorAttachment authenticatorAttachment() const;
     AuthenticationExtensionsClientOutputs getClientExtensionResults() const;
     PublicKeyCredentialJSON toJSON();

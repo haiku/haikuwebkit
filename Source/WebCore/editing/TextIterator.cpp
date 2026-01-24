@@ -1702,7 +1702,7 @@ void WordAwareIterator::advance()
     }
 }
 
-StringView WordAwareIterator::text() const
+StringView WordAwareIterator::text() const LIFETIME_BOUND
 {
     if (!m_buffer.isEmpty())
         return m_buffer.span();

@@ -49,7 +49,7 @@ public:
     WEBCORE_EXPORT void restore(Page&);
     void clear();
 
-    Page& page() const { return m_page.get(); }
+    Page& page() const { return m_page; }
     Ref<Page> protectedPage() const { return page(); }
     Document* document() const { return m_cachedMainFrame->document(); }
     DocumentLoader* documentLoader() const { return m_cachedMainFrame->documentLoader(); }

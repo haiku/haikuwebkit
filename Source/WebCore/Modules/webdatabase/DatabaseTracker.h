@@ -41,6 +41,7 @@
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeWeakHashSet.h>
 #include <wtf/WallTime.h>
+#include <wtf/WeakPtr.h>
 #include <wtf/text/StringHash.h>
 
 namespace WebCore {
@@ -179,7 +180,7 @@ private:
 
     String m_databaseDirectoryPath;
 
-    DatabaseManagerClient* m_client { nullptr };
+    WeakPtr<DatabaseManagerClient> m_client;
 
     HashMap<SecurityOriginData, HashCountedSet<String>> m_beingCreated WTF_GUARDED_BY_LOCK(m_databaseGuard);
     HashMap<SecurityOriginData, MemoryCompactRobinHoodHashSet<String>> m_beingDeleted WTF_GUARDED_BY_LOCK(m_databaseGuard);

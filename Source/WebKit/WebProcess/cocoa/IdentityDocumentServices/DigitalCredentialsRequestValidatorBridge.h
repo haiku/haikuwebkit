@@ -25,6 +25,8 @@
 
 #pragma once
 
+#if ENABLE(WEB_AUTHN)
+
 #include <WebCore/MobileDocumentRequest.h>
 #include <WebCore/ValidatedMobileDocumentRequest.h>
 #include <wtf/Vector.h>
@@ -42,3 +44,5 @@ Vector<WebCore::ValidatedMobileDocumentRequest> validateRequests(const WebCore::
 
 } // namespace DigitalCredentials
 } // namespace WebKit
+
+#endif // ENABLE(WEB_AUTHN)

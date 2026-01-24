@@ -46,11 +46,15 @@
 #import <WebGPU/DDModelTypes.h>
 #import <wtf/RetainPtr.h>
 
+#if PLATFORM(COCOA)
+#import <Metal/Metal.h>
+#endif
+
 namespace WebCore {
 
 class ModelDisplayBufferDisplayDelegate final : public GraphicsLayerContentsDisplayDelegate {
 public:
-    static Ref<ModelDisplayBufferDisplayDelegate> create(DDModelPlayer& modelPlayer, bool isOpaque = true, float contentsScale = 1)
+    static Ref<ModelDisplayBufferDisplayDelegate> create(DDModelPlayer& modelPlayer, bool isOpaque = false, float contentsScale = 1)
     {
         return adoptRef(*new ModelDisplayBufferDisplayDelegate(modelPlayer, isOpaque, contentsScale));
     }
@@ -138,6 +142,14 @@ void DDModelPlayer::ensureOnMainThreadWithProtectedThis(Function<void(Ref<DDMode
     });
 }
 
+static Vector<uint8_t> loadData(RetainPtr<CFStringRef> filename)
+{
+    RetainPtr<NSBundle> myBundle = [NSBundle bundleWithIdentifier:@"com.apple.WebCore"];
+    RetainPtr<NSURL> nsFileURL = [myBundle URLForResource:(NSString *)filename.get() withExtension:@""];
+    RetainPtr<NSData> data = [NSData dataWithContentsOfURL:nsFileURL.get() options:0 error:nil];
+    return makeVector(data.get());
+}
+
 // MARK: - ModelPlayer overrides.
 
 void DDModelPlayer::load(Model& modelSource, LayoutSize size)
@@ -157,7 +169,34 @@ void DDModelPlayer::load(Model& modelSource, LayoutSize size)
     if (!gpu)
         return;
 
-    m_currentModel = gpu->backing().createModelBacking(size.width().toUnsigned(), size.height().toUnsigned(), [protectedThis = Ref { *this }] (Vector<MachSendRight>&& surfaceHandles) {
+    DDModel::DDImageAsset diffuseTexture {
+        .data = loadData(adoptCF(static_cast<CFStringRef>(@"modelDefaultDiffuseData"))),
+        .width = 64,
+        .height = 64,
+        .depth = 1,
+        .bytesPerPixel = 2,
+        .textureType = MTLTextureTypeCube,
+        .pixelFormat = MTLPixelFormatR16Float,
+        .mipmapLevelCount = 0,
+        .arrayLength = 6,
+        .textureUsage = MTLTextureUsageShaderRead,
+        .swizzle = { }
+    };
+    DDModel::DDImageAsset specularTexture {
+        .data = loadData(adoptCF(static_cast<CFStringRef>(@"modelDefaultSpecularData"))),
+        .width = 256,
+        .height = 256,
+        .depth = 1,
+        .bytesPerPixel = 2,
+        .textureType = MTLTextureTypeCube,
+        .pixelFormat = MTLPixelFormatR16Float,
+        .mipmapLevelCount = 0,
+        .arrayLength = 6,
+        .textureUsage = MTLTextureUsageShaderRead,
+        .swizzle = { }
+    };
+
+    m_currentModel = gpu->backing().createModelBacking(size.width().toUnsigned(), size.height().toUnsigned(), diffuseTexture, specularTexture, [protectedThis = Ref { *this }] (Vector<MachSendRight>&& surfaceHandles) {
         if (surfaceHandles.size())
             protectedThis->m_displayBuffers = WTF::move(surfaceHandles);
     });
@@ -181,6 +220,12 @@ void DDModelPlayer::load(Model& modelSource, LayoutSize size)
                 auto [simdCenter, simdExtents] = model->getCenterAndExtents();
                 client->didUpdateBoundingBox(protectedThis.get(), FloatPoint3D(simdCenter.x, simdCenter.y, simdCenter.z), FloatPoint3D(simdExtents.x, simdExtents.y, simdExtents.z));
                 protectedThis->notifyEntityTransformUpdated();
+
+                auto environmentMap = protectedThis->m_environmentMap;
+                if (model && environmentMap) {
+                    model->setEnvironmentMap(*environmentMap);
+                    protectedThis->m_environmentMap = std::nullopt;
+                }
             }
         });
     } textureUpdatedCallback:^(DDBridgeUpdateTexture *updateTexture) {
@@ -350,7 +395,7 @@ GraphicsLayerContentsDisplayDelegate* DDModelPlayer::contentsDisplayDelegate()
 void DDModelPlayer::simulate(float elapsedTime)
 {
     RefPtr model = m_currentModel;
-    if (!model)
+    if (!model || !m_didFinishLoading)
         return;
 
     m_yawAcceleration *= 0.95f;
@@ -376,13 +421,15 @@ void DDModelPlayer::update()
     simulate(elapsedTime);
 
     [m_modelLoader update:elapsedTime];
-    if (RefPtr currentModel = m_currentModel)
-        currentModel->render();
+    if (m_didFinishLoading) {
+        if (RefPtr currentModel = m_currentModel)
+            currentModel->render();
 
-    if (++m_currentTexture >= m_displayBuffers.size())
-        m_currentTexture = 0;
-    if (auto* machSendRight = displayBuffer(); machSendRight && contentsDisplayDelegate())
-        RefPtr { m_contentsDisplayDelegate }->setDisplayBuffer(*machSendRight);
+        if (++m_currentTexture >= m_displayBuffers.size())
+            m_currentTexture = 0;
+        if (auto* machSendRight = displayBuffer(); machSendRight && contentsDisplayDelegate())
+            RefPtr { m_contentsDisplayDelegate }->setDisplayBuffer(*machSendRight);
+    }
 
     if (RefPtr client = m_client.get())
         client->didUpdate(*this);
@@ -455,6 +502,109 @@ void DDModelPlayer::setEntityTransform(TransformationMatrix matrix)
         model->setEntityTransform(static_cast<simd_float4x4>(matrix));
         notifyEntityTransformUpdated();
     }
+}
+
+static MTLPixelFormat computePixelFormat(size_t bytesPerComponent, size_t channelCount)
+{
+    switch (bytesPerComponent) {
+    default:
+    case 1:
+        switch (channelCount) {
+        case 1:
+            return MTLPixelFormatR8Unorm;
+        case 2:
+            return MTLPixelFormatRG8Unorm;
+        case 3:
+            return MTLPixelFormatRGB8Unorm;
+        case 4:
+        default:
+            return MTLPixelFormatRGBA8Unorm;
+        }
+    case 2:
+        switch (channelCount) {
+        case 1:
+            return MTLPixelFormatR16Float;
+        case 2:
+            return MTLPixelFormatRG16Float;
+        case 3:
+            return MTLPixelFormatRGB16Float;
+        case 4:
+        default:
+            return MTLPixelFormatRGBA16Float;
+        }
+    case 4:
+        switch (channelCount) {
+        case 1:
+            return MTLPixelFormatR32Float;
+        case 2:
+            return MTLPixelFormatRG32Float;
+        case 3:
+            return MTLPixelFormatRGB32Float;
+        case 4:
+        default:
+            return MTLPixelFormatRGBA32Float;
+        }
+    }
+}
+
+static std::optional<WebCore::DDModel::DDImageAsset> loadIBL(Ref<WebCore::SharedBuffer>&& data)
+{
+    RetainPtr imageAssetData = data->createNSData();
+    RetainPtr imageSource = adoptCF(CGImageSourceCreateWithData((CFDataRef)imageAssetData.get(), nullptr));
+    if (!imageSource) {
+        ASSERT_NOT_REACHED();
+        return std::nullopt;
+    }
+
+    RetainPtr platformImage = adoptCF(CGImageSourceCreateImageAtIndex(imageSource.get(), 0, nullptr));
+    if (!platformImage) {
+        ASSERT_NOT_REACHED();
+        return std::nullopt;
+    }
+
+    RetainPtr pixelDataCfData = adoptCF(CGDataProviderCopyData(CGImageGetDataProvider(platformImage.get())));
+    auto byteSpan = span(pixelDataCfData.get());
+
+    auto width = CGImageGetWidth(platformImage.get());
+    auto height = CGImageGetHeight(platformImage.get());
+    auto bytesPerPixel = static_cast<size_t>(byteSpan.size() / (width * height));
+    auto bytesPerComponent = CGImageGetBitsPerComponent(platformImage.get()) / 8;
+
+    MTLPixelFormat pixelFormat = computePixelFormat(bytesPerComponent, bytesPerPixel / bytesPerComponent);
+
+    return WebCore::DDModel::DDImageAsset {
+        .data = Vector<uint8_t> { byteSpan },
+        .width = static_cast<long>(width),
+        .height = static_cast<long>(height),
+        .depth = 1,
+        .bytesPerPixel = static_cast<long>(bytesPerPixel),
+        .textureType = MTLTextureType2D,
+        .pixelFormat = pixelFormat,
+        .mipmapLevelCount = 1,
+        .arrayLength = 1,
+        .textureUsage = MTLTextureUsageShaderRead,
+        .swizzle = WebCore::DDModel::DDImageAssetSwizzle {
+            .red = MTLTextureSwizzleRed,
+            .green = MTLTextureSwizzleGreen,
+            .blue = MTLTextureSwizzleBlue,
+            .alpha = MTLTextureSwizzleAlpha
+        }
+    };
+}
+
+void DDModelPlayer::setEnvironmentMap(Ref<WebCore::SharedBuffer>&& data)
+{
+    bool success = false;
+    if ((m_environmentMap = loadIBL(WTF::move(data)))) {
+        if (RefPtr currentModel = m_currentModel; currentModel && m_didFinishLoading) {
+            currentModel->setEnvironmentMap(*m_environmentMap);
+            m_environmentMap = std::nullopt;
+        }
+        success = true;
+    }
+
+    if (RefPtr client = m_client.get())
+        client->didFinishEnvironmentMapLoading(*this, success);
 }
 
 } // namespace WebCore

@@ -907,8 +907,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDeviceOrientationOrMotionPermissi
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDeviceOrientationOrMotionPermissionState.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDigitalCredential.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDigitalCredential.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDigitalCredentialRequest.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDigitalCredentialRequest.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDigitalCredentialGetRequest.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDigitalCredentialGetRequest.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDigitalCredentialRequestOptions.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDigitalCredentialRequestOptions.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSDistanceModelType.cpp
@@ -1163,10 +1163,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFace.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFace.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFaceSet.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFaceSet.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFaceSetLoadEvent.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFaceSetLoadEvent.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFaceSetLoadEventInit.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFaceSetLoadEventInit.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFaceSource.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFontFaceSource.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFormDataEvent.cpp

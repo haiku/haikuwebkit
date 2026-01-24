@@ -1223,8 +1223,7 @@ JSC_DEFINE_HOST_FUNCTION(regExpProtoFuncMatchAll, (JSGlobalObject* globalObject,
         auto* iterator = JSRegExpStringIterator::createWithInitialValues(vm, globalObject->regExpStringIteratorStructure());
         iterator->setRegExp(vm, matcher);
         iterator->setString(vm, string);
-        iterator->setGlobal(vm, jsBoolean(global));
-        iterator->setFullUnicode(vm, jsBoolean(fullUnicode));
+        iterator->setFlags(global, fullUnicode);
 
         return JSValue::encode(iterator);
     }
@@ -1280,8 +1279,7 @@ JSC_DEFINE_HOST_FUNCTION(regExpProtoFuncMatchAll, (JSGlobalObject* globalObject,
 
     regExpStringIterator->setRegExp(vm, matcher);
     regExpStringIterator->setString(vm, string);
-    regExpStringIterator->setGlobal(vm, jsBoolean(global));
-    regExpStringIterator->setFullUnicode(vm, jsBoolean(fullUnicode));
+    regExpStringIterator->setFlags(global, fullUnicode);
 
     return JSValue::encode(regExpStringIterator);
 }

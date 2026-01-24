@@ -353,7 +353,7 @@ NSString* PipelineLayout::errorValidatingBindGroupCompatibility(const PipelineLa
             continue;
 
         auto it = bindGroups.find(bindGroupIndex);
-        if (it == bindGroups.end() || !it->value.get())
+        if (it == bindGroups.end())
             return [NSString stringWithFormat:@"can not find bind group in pipeline for bindGroup index %zu", bindGroupIndex];
 
         RefPtr setBindGroupLayout = it->value->bindGroupLayout();

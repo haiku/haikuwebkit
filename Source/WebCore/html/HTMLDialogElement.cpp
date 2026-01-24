@@ -287,6 +287,16 @@ void HTMLDialogElement::removedFromAncestor(RemovalType removalType, ContainerNo
     setIsModal(false);
 }
 
+void HTMLDialogElement::attributeChanged(const QualifiedName& name, const AtomString& oldValue, const AtomString& newValue, AttributeModificationReason attributeModificationReason)
+{
+    HTMLElement::attributeChanged(name, oldValue, newValue, attributeModificationReason);
+    if (name == openAttr) {
+        auto isOpen = !newValue.isNull();
+        Style::PseudoClassChangeInvalidation styleInvalidation(*this, CSSSelector::PseudoClass::Open, isOpen);
+        m_isOpen = isOpen;
+    }
+}
+
 void HTMLDialogElement::setIsModal(bool newValue)
 {
     if (m_isModal == newValue)
@@ -305,7 +315,7 @@ void HTMLDialogElement::queueDialogToggleEventTask(ToggleState oldState, ToggleS
 
 bool HTMLDialogElement::isOpen() const
 {
-    return hasAttributeWithoutSynchronization(HTMLNames::openAttr);
+    return m_isOpen;
 }
 
 }

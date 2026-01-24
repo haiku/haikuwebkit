@@ -251,7 +251,7 @@ std::unique_ptr<Box> TreeBuilder::createLayoutBox(const ElementBox& parentContai
                 childLayoutBox = createContainer(elementAttributes(renderer), WTF::move(clonedStyle));
             } else if (displayType == DisplayType::TableColumn) {
                 childLayoutBox = createContainer(elementAttributes(renderer), WTF::move(clonedStyle));
-                auto& tableColElement = static_cast<HTMLTableColElement&>(*renderer.element());
+                auto& tableColElement = downcast<HTMLTableColElement>(*renderer.element());
                 auto columnWidth = tableColElement.width();
                 if (!columnWidth.isEmpty())
                     childLayoutBox->setColumnWidth(parseHTMLInteger(columnWidth).value_or(0));

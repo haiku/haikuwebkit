@@ -55,7 +55,7 @@ public:
     LegacyTileGrid(LegacyTileCache&, const IntSize&);
     ~LegacyTileGrid();
 
-    LegacyTileCache& tileCache() const { return m_tileCache.get(); }
+    LegacyTileCache& tileCache() const { return m_tileCache; }
     Ref<LegacyTileCache> protectedTileCache() const { return tileCache(); }
 
     CALayer *tileHostLayer() const;
@@ -118,7 +118,7 @@ private:
 
     float m_scale;
 
-    using TileMap = HashMap<TileIndex, RefPtr<LegacyTileGridTile>>;
+    using TileMap = HashMap<TileIndex, Ref<LegacyTileGridTile>>;
     TileMap m_tiles;
 
     IntRect m_validBounds;

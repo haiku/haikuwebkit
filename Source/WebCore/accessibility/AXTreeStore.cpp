@@ -36,7 +36,7 @@ namespace WebCore {
 template<>
 void AXTreeStore<AXIsolatedTree>::applyPendingChangesForAllIsolatedTrees()
 {
-    ASSERT(!isMainThread());
+    AX_ASSERT(!isMainThread());
 
     Locker locker { AXTreeStore<AXIsolatedTree>::s_storeLock };
     auto& map = AXTreeStore<AXIsolatedTree>::isolatedTreeMap();

@@ -56,7 +56,7 @@ protected:
     CSSStyleSheet* parentStyleSheet() const final;
     CSSRule* parentRule() const final;
     // FIXME: To implement.
-    CSSRule* cssRules() const override { return nullptr; }
+    CSSRuleList* cssRules() const override { return nullptr; }
     unsigned length() const final;
     String item(unsigned index) const final;
     RefPtr<DeprecatedCSSOMValue> getPropertyCSSValue(const String& propertyName) final;
@@ -73,7 +73,7 @@ protected:
     RefPtr<DeprecatedCSSOMValue> wrapForDeprecatedCSSOM(CSSValue*);
 
     enum class MutationType : uint8_t { NoChanges, StyleAttributeChanged, PropertyChanged };
-    WARN_UNUSED_RETURN bool willMutate();
+    [[nodiscard]] bool willMutate();
     void didMutate(MutationType);
 
     // CSSPropertyID versions of the CSSOM functions to support bindings.

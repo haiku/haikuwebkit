@@ -63,8 +63,8 @@ public:
 
     const String& identifier() const { return m_identifier; }
 
-    const CanvasRenderingContext& canvasContext() const { return m_context.get(); }
-    CanvasRenderingContext& canvasContext() { return m_context.get(); }
+    const CanvasRenderingContext& canvasContext() const { return m_context; }
+    CanvasRenderingContext& canvasContext() { return m_context; }
     HTMLCanvasElement* canvasElement() const;
 
     ScriptExecutionContext* scriptExecutionContext() const;

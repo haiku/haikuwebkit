@@ -251,10 +251,10 @@ static std::pair<LayoutType, std::optional<unsigned>> closestSnapOffsetWithInfoA
     return velocity < 0 ? *previous : *next;
 }
 
-static LayoutRect computeScrollSnapPortRect(const Style::ScrollPaddingBox& padding, const LayoutRect& rect)
+static LayoutRect computeScrollSnapPortRect(const RenderStyle& style, const LayoutRect& rect)
 {
     auto result = rect;
-    result.contract(Style::extentForRect(padding, rect, Style::ZoomNeeded { }));
+    result.contract(Style::extentForRect(style.scrollPaddingBox(), rect, style.usedZoomForLength()));
     return result;
 }
 
@@ -343,7 +343,7 @@ void updateSnapOffsetsForScrollableArea(ScrollableArea& scrollableArea, const Re
     }
 
     // The bounds of the scrolling container's snap port, where the top left of the scrolling container's border box is the origin.
-    auto scrollSnapPort = computeScrollSnapPortRect(scrollingElementStyle.scrollPaddingBox(), viewportRectInBorderBoxCoordinates);
+    auto scrollSnapPort = computeScrollSnapPortRect(scrollingElementStyle, viewportRectInBorderBoxCoordinates);
     LOG_WITH_STREAM(ScrollSnap, stream << "Computing scroll snap offsets for " << scrollableArea << " in snap port " << scrollSnapPort);
     for (auto& child : boxesWithScrollSnapPositions) {
         if (child.enclosingScrollableContainer() != &scrollingElementBox || !child.element())

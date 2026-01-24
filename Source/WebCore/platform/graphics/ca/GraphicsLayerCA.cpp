@@ -2345,6 +2345,9 @@ void GraphicsLayerCA::commitLayerChangesBeforeSublayers(CommitState& commitState
     if (m_uncommittedChanges & ContentsScalingFiltersChanged)
         updateContentsScalingFilters();
 
+    if (m_uncommittedChanges & ShadowPathChanged)
+        updateShadowPath();
+
     if (m_uncommittedChanges & ChildrenChanged) {
         updateSublayerList();
         // Sublayers may set this flag again, so clear it to avoid always updating sublayers in commitLayerChangesAfterSublayers().
@@ -3456,7 +3459,7 @@ void GraphicsLayerCA::updateAnimations()
     auto infiniteDuration = std::numeric_limits<double>::max();
     auto currentTime = Seconds(CACurrentMediaTime());
 
-    auto addAnimationGroup = [&](AnimatedProperty property, const Vector<RefPtr<PlatformCAAnimation>>& animations) {
+    auto addAnimationGroup = [&](AnimatedProperty property, const Vector<Ref<PlatformCAAnimation>>& animations) {
         auto caAnimationGroup = createPlatformCAAnimation(PlatformCAAnimation::AnimationType::Group, PlatformCAAnimation::makeGroupKeyPath());
         caAnimationGroup->setDuration(infiniteDuration);
         caAnimationGroup->setAnimations(animations);
@@ -3613,7 +3616,7 @@ void GraphicsLayerCA::updateAnimations()
             }
 
             LayerPropertyAnimation* earliestAnimation = nullptr;
-            Vector<RefPtr<PlatformCAAnimation>> caAnimations;
+            Vector<Ref<PlatformCAAnimation>> caAnimations;
             for (auto* animation : animations | std::views::reverse) {
                 if (!animation->m_beginTime)
                     animation->m_beginTime = currentTime - animationGroupBeginTime;
@@ -3629,7 +3632,7 @@ void GraphicsLayerCA::updateAnimations()
             // we must create a non-interpolating animation to set the current value for this transform-related property
             // until that animation begins.
             if (earliestAnimation) {
-                auto fillMode = Ref { *earliestAnimation->m_animation }->fillMode();
+                auto fillMode = earliestAnimation->m_animation->fillMode();
                 if (fillMode != PlatformCAAnimation::FillModeType::Backwards && fillMode != PlatformCAAnimation::FillModeType::Both) {
                     Seconds earliestBeginTime = *earliestAnimation->computedBeginTime() + animationGroupBeginTime;
                     if (earliestBeginTime > currentTime) {
@@ -3671,7 +3674,7 @@ void GraphicsLayerCA::setAnimationOnLayer(LayerPropertyAnimation& animation)
     auto property = animation.m_property;
     RefPtr layer = animatedLayer(property);
 
-    Ref caAnim = *animation.m_animation;
+    Ref caAnim = animation.m_animation;
 
     if (auto beginTime = animation.computedBeginTime())
         caAnim->setBeginTime(beginTime->seconds());
@@ -3949,7 +3952,7 @@ bool GraphicsLayerCA::createFilterAnimationsFromKeyframes(const GraphicsLayerKey
     auto& operations = downcast<GraphicsLayerFilterAnimationValue>(valueList.at(listIndex)).value();
 
     // FIXME: We can't currently hardware animate shadows.
-    if (operations.hasFilterOfType<FilterOperation::Type::DropShadowWithStyleColor>())
+    if (operations.hasFilterOfType<FilterOperation::Type::DropShadow>())
         return false;
 
     // Make sure the platform layer didn't fallback to using software filter compositing instead.
@@ -4641,7 +4644,7 @@ void GraphicsLayerCA::dumpAnimations(WTF::TextStream& textStream, ASCIILiteral c
         textStream << indent << '(' << animation.m_name;
         {
             TextStream::IndentScope indentScope(textStream);
-            textStream.dumpProperty("CA animation"_s, animation.m_animation.get());
+            textStream.dumpProperty("CA animation"_s, animation.m_animation.ptr());
             textStream.dumpProperty("property"_s, animation.m_property);
             textStream.dumpProperty("index"_s, animation.m_index);
             textStream.dumpProperty("time offset"_s, animation.m_timeOffset);
@@ -4729,6 +4732,7 @@ ASCIILiteral GraphicsLayerCA::layerChangeAsString(LayerChange layerChange)
     case LayerChange::DrawsHDRContentChanged: return "DrawsHDRContentChanged"_s;
     case LayerChange::TonemappingEnabledChanged: return "TonemappingEnabledChanged"_s;
 #endif
+    case LayerChange::ShadowPathChanged: return "ShadowPathChanged"_s;
     }
     ASSERT_NOT_REACHED();
     return ""_s;
@@ -4918,6 +4922,7 @@ void GraphicsLayerCA::changeLayerTypeTo(PlatformCALayer::LayerType newLayerType)
         | ContentsRectsChanged
         | SeparatedChanged
 #endif
+        | ShadowPathChanged
 #if ENABLE(INTERACTION_REGIONS_IN_EVENT_REGION) || HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
         | CoverageRectChanged);
 #else
@@ -5391,6 +5396,20 @@ void GraphicsLayerCA::purgeBackBufferForTesting()
 {
     if (RefPtr layer = primaryLayer())
         layer->purgeBackBufferForTesting();
+}
+
+void GraphicsLayerCA::setShadowPath(const Path& path)
+{
+    if (m_shadowPath.definitelyEqual(path))
+        return;
+
+    GraphicsLayer::setShadowPath(path);
+    noteLayerPropertyChanged(ShadowPathChanged);
+}
+
+void GraphicsLayerCA::updateShadowPath()
+{
+    m_layer->setShadowPath(m_shadowPath);
 }
 
 void GraphicsLayerCA::markFrontBufferVolatileForTesting()

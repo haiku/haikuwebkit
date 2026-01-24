@@ -117,6 +117,7 @@ private:
     std::unique_ptr<webrtc::AsyncDnsResolverInterface> CreateAsyncDnsResolver() final;
     void suspend() final;
     void resume() final;
+    bool shouldEnableServiceClass() final { return m_flags.enableServiceClass; }
 
 private:
     WebPageProxyIdentifier m_pageIdentifier;
@@ -175,7 +176,7 @@ void LibWebRTCProvider::startedNetworkThread()
     WebProcess::singleton().protectedLibWebRTCNetwork()->setAsActive();
 }
 
-std::unique_ptr<LibWebRTCProvider::SuspendableSocketFactory> LibWebRTCProvider::createSocketFactory(String&& userAgent, ScriptExecutionContextIdentifier identifier, bool isFirstParty, RegistrableDomain&& domain)
+std::unique_ptr<LibWebRTCProvider::SuspendableSocketFactory> LibWebRTCProvider::createSocketFactory(String&& userAgent, ScriptExecutionContextIdentifier identifier, bool isFirstParty, RegistrableDomain&& domain, bool enableServiceClass)
 {
     Ref webPage { m_webPage.get() };
     auto factory = makeUnique<RTCSocketFactory>(webPage->webPageProxyIdentifier(), WTF::move(userAgent), identifier, isFirstParty, WTF::move(domain));
@@ -184,7 +185,7 @@ std::unique_ptr<LibWebRTCProvider::SuspendableSocketFactory> LibWebRTCProvider::
     if (!page || !page->settings().webRTCSocketsProxyingEnabled())
         factory->disableRelay();
 
-    if (page && page->settings().webRTCSocketsServiceClassEnabled())
+    if (page && page->settings().webRTCSocketsServiceClassEnabled() && enableServiceClass)
         factory->enableServiceClass();
 
     return factory;

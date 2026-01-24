@@ -90,7 +90,7 @@
 #import <wtf/cocoa/Entitlements.h>
 #import <wtf/cocoa/SpanCocoa.h>
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 #import <WebCore/DigitalCredentialsRequestData.h>
 #endif
 
@@ -829,7 +829,7 @@ void PageClientImpl::showContactPicker(WebCore::ContactsRequestData&& requestDat
     [contentView() _showContactPicker:requestData completionHandler:WTF::move(completionHandler)];
 }
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 void PageClientImpl::showDigitalCredentialsPicker(const WebCore::DigitalCredentialsRequestData& requestData, WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&& completionHandler)
 {
     [contentView() _showDigitalCredentialsPicker:requestData completionHandler:WTF::move(completionHandler)];

@@ -205,7 +205,7 @@ protected:
 private:
     bool has(PlatformMediaSessionMediaType) const;
 
-    std::array<MediaSessionRestrictions, static_cast<unsigned>(PlatformMediaSessionMediaType::WebAudio) + 1> m_restrictions;
+    std::array<MediaSessionRestrictions, static_cast<unsigned>(PlatformMediaSessionMediaType::DOMMediaSession) + 1> m_restrictions;
 
     std::optional<bool> m_supportsSpatialAudioPlayback;
     std::optional<PlatformMediaSessionInterruptionType> m_currentInterruption;

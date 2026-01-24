@@ -99,3 +99,11 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::EmptyNodeList)
+    static bool isType(const WebCore::NodeList& nodeList) { return nodeList.isEmptyNodeList(); }
+SPECIALIZE_TYPE_TRAITS_END()
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::ChildNodeList)
+    static bool isType(const WebCore::NodeList& nodeList) { return nodeList.isChildNodeList(); }
+SPECIALIZE_TYPE_TRAITS_END()

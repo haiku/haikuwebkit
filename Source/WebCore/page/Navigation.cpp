@@ -956,7 +956,7 @@ struct AwaitingPromiseData : public RefCounted<AwaitingPromiseData> {
 };
 
 // https://webidl.spec.whatwg.org/#wait-for-all
-static void waitForAllPromises(Document& document, const Vector<RefPtr<DOMPromise>>& promises, Function<void()>&& fulfilledCallback, Function<void(JSC::JSValue)>&& rejectionCallback)
+static void waitForAllPromises(Document& document, const Vector<Ref<DOMPromise>>& promises, Function<void()>&& fulfilledCallback, Function<void(JSC::JSValue)>&& rejectionCallback)
 {
     if (promises.isEmpty()) {
         document.checkedEventLoop()->queueMicrotask(WTF::move(fulfilledCallback));
@@ -971,26 +971,21 @@ static void waitForAllPromises(Document& document, const Vector<RefPtr<DOMPromis
         if (promise->isSuspended())
             return;
 
-        promise->whenSettled([awaitingData, promise] () mutable {
-            if (promise->isSuspended())
+        promise->whenSettledWithResult([awaitingData](auto* globalObject, bool isFulfilled, auto result) mutable {
+            RefPtr context = globalObject ? globalObject->scriptExecutionContext() : nullptr;
+            if (!context || context->activeDOMObjectsAreSuspended() || context->activeDOMObjectsAreStopped())
                 return;
 
-            switch (promise->status()) {
-            case DOMPromise::Status::Fulfilled:
-                if (--awaitingData->remainingPromises > 0)
-                    break;
-                awaitingData->fulfilledCallback();
-                break;
-            case DOMPromise::Status::Rejected:
+            if (!isFulfilled) {
                 if (awaitingData->rejected)
-                    break;
+                    return;
                 awaitingData->rejected = true;
-                awaitingData->rejectionCallback(promise->result());
-                break;
-            case DOMPromise::Status::Pending:
-                ASSERT_NOT_REACHED();
-                break;
+                awaitingData->rejectionCallback(result);
+                return;
             }
+            if (--awaitingData->remainingPromises > 0)
+                return;
+            awaitingData->fulfilledCallback();
         });
     }
 }
@@ -1099,7 +1094,7 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
     if (apiMethodTracker)
         apiMethodTracker->info.clear();
 
-    Ref event = NavigateEvent::create(eventNames().navigateEvent, init, abortController.get());
+    Ref event = NavigateEvent::create(eventNames().navigateEvent, WTF::move(init), abortController.get());
     m_ongoingNavigateEvent = event.ptr();
     m_focusChangedDuringOngoingNavigation = FocusDidChange::No;
     m_suppressNormalScrollRestorationDuringOngoingNavigation = false;
@@ -1114,7 +1109,7 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
 
     if (event->defaultPrevented()) {
         // FIXME: If navigationType is "traverse", then consume history-action user activation.
-        if (!event->signal()->aborted())
+        if (!event->signal().aborted())
             abortOngoingNavigation(event);
         return DispatchResult::Aborted;
     }
@@ -1167,12 +1162,12 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
     }
 
     if (endResultIsSameDocument) {
-        Vector<RefPtr<DOMPromise>> promiseList;
+        Vector<Ref<DOMPromise>> promiseList;
 
         for (auto& handler : event->handlers()) {
             auto callbackResult = handler->invoke();
             if (callbackResult.type() != CallbackResultType::UnableToExecute) {
-                auto promise = callbackResult.releaseReturnValue();
+                Ref promise = callbackResult.releaseReturnValue();
                 // Because rejection is reported as `navigateerror` event, we can mark this as handled.
                 if (!promise->isSuspended())
                     promise->markAsHandled();

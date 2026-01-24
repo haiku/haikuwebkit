@@ -428,7 +428,7 @@ JSCValue* webkit_web_hit_test_result_get_js_node(WebKitWebHitTestResult* webHitT
     JSValueRef jsValue = nullptr;
     {
         JSC::JSLockHolder lock(globalObject);
-        jsValue = toRef(globalObject, toJS(globalObject, globalObject, webHitTestResult->priv->node.get()));
+        jsValue = toRef(globalObject, toJS(globalObject, globalObject, *webHitTestResult->priv->node));
     }
 
     return jsValue ? jscContextGetOrCreateValue(jsContext.get(), jsValue).leakRef() : nullptr;

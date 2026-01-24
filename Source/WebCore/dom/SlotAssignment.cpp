@@ -84,7 +84,7 @@ static HTMLSlotElement* nextSlotElementSkippingSubtree(ContainerNode& startingNo
             return NodeTraversal::nextSkippingChildren(node);
         return NodeTraversal::next(node);
     };
-    for (auto* node = nextNode(startingNode); node; node = nextNode(*node)) {
+    for (CheckedPtr node = nextNode(startingNode); node; node = nextNode(*node)) {
         if (auto* slotElement = dynamicDowncast<HTMLSlotElement>(*node))
             return slotElement;
     }
@@ -221,7 +221,7 @@ void NamedSlotAssignment::resolveSlotsAfterSlotMutation(ShadowRoot& shadowRoot, 
         slot->seenFirstElement = false;
 
     unsigned slotCount = 0;
-    HTMLSlotElement* currentElement = nextSlotElementSkippingSubtree(shadowRoot, subtreeToSkip);
+    CheckedPtr currentElement = nextSlotElementSkippingSubtree(shadowRoot, subtreeToSkip);
     for (; currentElement; currentElement = nextSlotElementSkippingSubtree(*currentElement, subtreeToSkip)) {
         auto& currentSlotName = slotNameFromAttributeValue(currentElement->attributeWithoutSynchronization(nameAttr));
         auto* currentSlot = m_slots.get(currentSlotName);
@@ -233,7 +233,7 @@ void NamedSlotAssignment::resolveSlotsAfterSlotMutation(ShadowRoot& shadowRoot, 
             continue;
         }
         if (currentSlot->seenFirstElement) {
-            if (mutationType == SlotMutationType::Insertion && currentSlot->oldElement == currentElement) {
+            if (mutationType == SlotMutationType::Insertion && currentSlot->oldElement == currentElement.get()) {
                 ASSERT(shadowRoot.shouldFireSlotchangeEvent());
                 currentElement->enqueueSlotChangeEvent();
                 currentSlot->oldElement = nullptr;
@@ -242,7 +242,7 @@ void NamedSlotAssignment::resolveSlotsAfterSlotMutation(ShadowRoot& shadowRoot, 
         }
         currentSlot->seenFirstElement = true;
         slotCount++;
-        if (currentSlot->element != currentElement) {
+        if (currentSlot->element != currentElement.get()) {
             if (shadowRoot.shouldFireSlotchangeEvent() && hasAssignedNodes(shadowRoot, *currentSlot)) {
                 currentSlot->oldElement = WTF::move(currentSlot->element);
                 currentElement->enqueueSlotChangeEvent();
@@ -425,7 +425,7 @@ void NamedSlotAssignment::assignSlots(ShadowRoot& shadowRoot)
         }
     }
 
-    if (auto* host = shadowRoot.host()) {
+    if (CheckedPtr host = shadowRoot.host()) {
         for (RefPtr child = host->firstChild(); child; child = child->nextSibling()) {
             if (!is<Text>(*child) && !is<Element>(*child))
                 continue;
@@ -457,11 +457,11 @@ void NamedSlotAssignment::assignToSlot(Node& child, const AtomString& slotName)
 
 HTMLSlotElement* ManualSlotAssignment::findAssignedSlot(const Node& node)
 {
-    auto* slot = node.manuallyAssignedSlot();
+    CheckedPtr slot = node.manuallyAssignedSlot();
     if (!slot)
         return nullptr;
-    auto* containingShadowRoot = slot->containingShadowRoot();
-    return containingShadowRoot && containingShadowRoot->host() == node.parentNode() ? slot : nullptr;
+    CheckedPtr containingShadowRoot = slot->containingShadowRoot();
+    return containingShadowRoot && containingShadowRoot->host() == node.parentNode() ? slot.unsafeGet() : nullptr;
 }
 
 static Vector<WeakPtr<Node, WeakPtrImplWithEventTargetData>> effectiveAssignedNodes(ShadowRoot& shadowRoot, const Vector<WeakPtr<Node, WeakPtrImplWithEventTargetData>>& manuallyAssingedNodes)
@@ -566,10 +566,10 @@ void ManualSlotAssignment::slotManualAssignmentDidChange(HTMLSlotElement& slot, 
         scheduleSlotChangeEventIfNeeded();
         return;
     }
-    for (auto& currentSlot : descendantsOfType<HTMLSlotElement>(shadowRoot)) {
+    for (CheckedRef currentSlot : descendantsOfType<HTMLSlotElement>(shadowRoot)) {
         if (affectedSlots.contains(currentSlot))
-            currentSlot.enqueueSlotChangeEvent();
-        else if (&currentSlot == &slot)
+            currentSlot->enqueueSlotChangeEvent();
+        else if (currentSlot.ptr() == &slot)
             scheduleSlotChangeEventIfNeeded();
     }
 }

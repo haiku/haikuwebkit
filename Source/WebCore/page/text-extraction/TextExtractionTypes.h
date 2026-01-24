@@ -32,7 +32,13 @@
 #include <WebCore/NodeIdentifier.h>
 #include <WebCore/WebKitJSHandle.h>
 #include <wtf/Forward.h>
+#include <wtf/TZoneMalloc.h>
 #include <wtf/URL.h>
+#include <wtf/UniqueRef.h>
+
+#if ENABLE(DATA_DETECTION)
+#include <WebCore/DataDetectorType.h>
+#endif
 
 namespace WebCore {
 
@@ -97,6 +103,9 @@ struct Request {
     bool includeEventListeners { false };
     bool includeAccessibilityAttributes { false };
     bool includeTextInAutoFilledControls { false };
+#if ENABLE(DATA_DETECTION)
+    OptionSet<DataDetectorType> dataDetectorTypes;
+#endif
 };
 
 struct Editable {
@@ -183,11 +192,14 @@ enum class ContainerType : uint8_t {
 using ItemData = Variant<ContainerType, TextItemData, ScrollableItemData, ImageItemData, SelectData, ContentEditableData, TextFormControlData, FormData, LinkItemData, IFrameData>;
 
 struct Item {
+    WTF_MAKE_STRUCT_TZONE_ALLOCATED_EXPORT(Item, WEBCORE_EXPORT);
+
     ItemData data;
     FloatRect rectInRootView;
     Vector<Item> children;
     String nodeName;
     std::optional<NodeIdentifier> nodeIdentifier;
+    std::optional<FrameIdentifier> frameIdentifier;
     OptionSet<EventListenerCategory> eventListeners;
     HashMap<String, String> ariaAttributes;
     String accessibilityRole;
@@ -207,6 +219,13 @@ struct Item {
         return std::nullopt;
     }
 };
+
+struct PageItems {
+    Item mainFrameItem;
+    HashMap<FrameIdentifier, UniqueRef<Item>> subFrameItems;
+};
+
+WEBCORE_EXPORT Item collatePageItems(PageItems&&);
 
 struct FilterRuleData {
     String name;

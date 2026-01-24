@@ -30,6 +30,7 @@
 
 #include <WebCore/AXCoreObject.h>
 #include <WebCore/AXIsolatedTree.h>
+#include <WebCore/AXLoggerBase.h>
 #include <WebCore/AXObjectCache.h>
 #include <WebCore/AXTreeStoreInlines.h>
 #include <WebCore/IntPoint.h>
@@ -47,9 +48,7 @@
 namespace WebCore {
 
 class AXIsolatedTree;
-#if ENABLE(AX_THREAD_TEXT_APIS)
 struct AXTextRuns;
-#endif
 
 class AXIsolatedObject final : public AXCoreObject {
     friend class AXIsolatedTree;
@@ -79,13 +78,8 @@ public:
     bool hasRowGroupTag() const final;
 
     const AccessibilityChildrenVector& children(bool updateChildrenIfNeeded = true) final;
-#if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     AXIsolatedObject* parentObject() const final { return tree()->objectForID(parent()); }
     AXIsolatedObject* parentObjectUnignored() const final { return downcast<AXIsolatedObject>(AXCoreObject::parentObjectUnignored()); }
-#else
-    AXIsolatedObject* parentObject() const final { return parentObjectUnignored(); }
-    AXIsolatedObject* parentObjectUnignored() const final { return tree()->objectForID(parent()); }
-#endif // ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     bool isEditableWebArea() const final { return boolAttributeValue(AXProperty::IsEditableWebArea); }
     bool canSetFocusAttribute() const final { return boolAttributeValue(AXProperty::CanSetFocusAttribute); }
     AttributedStringStyle stylesForAttributedString() const final;
@@ -97,7 +91,6 @@ public:
     AXIsolatedObject* crossFrameChildObject() const final;
 #endif
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
     const AXTextRuns* textRuns() const;
     bool hasTextRuns() final
     {
@@ -108,17 +101,10 @@ public:
     AXTextRunLineID listMarkerLineID() const final { return propertyValue<AXTextRunLineID>(AXProperty::ListMarkerLineID); };
     String listMarkerText() const final { return stringAttributeValue(AXProperty::ListMarkerText); }
     FontOrientation fontOrientation() const final { return propertyValue<FontOrientation>(AXProperty::FontOrientation); }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
 
     String description() const final { return stringAttributeValue(AXProperty::Description); }
 
-#if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     bool isIgnored() const final { return boolAttributeValue(AXProperty::IsIgnored); }
-#else
-    // When not including ignored objects in the core tree, we should never create an isolated object from
-    // an ignored live object, so we can hardcode this to false.
-    bool isIgnored() const final { return false; }
-#endif // ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
 
     AXTextMarkerRange textMarkerRange() const final;
 
@@ -140,6 +126,8 @@ private:
     AXIsolatedObject(IsolatedObjectData&&);
     bool isAXIsolatedObjectInstance() const final { return true; }
     AccessibilityObject* associatedAXObject() const;
+
+    RefPtr<AXIsolatedObject> approximateHitTest(const IntPoint&) const;
 
     void setProperty(AXProperty, AXPropertyValueVariant&&);
     void setPropertyInVector(AXProperty property, AXPropertyValueVariant&& value)
@@ -294,6 +282,7 @@ private:
     bool isDescriptionList() const final { return elementName() == ElementName::HTML_dl; }
     std::optional<InputType::Type> inputType() const final { return optionalAttributeValue<InputType::Type>(AXProperty::InputType); };
     FloatPoint screenRelativePosition() const final;
+    FloatRect screenRelativeRect() const;
     IntPoint remoteFrameOffset() const final;
     std::optional<IntRect> cachedRelativeFrame() const { return optionalAttributeValue<IntRect>(AXProperty::RelativeFrame); }
 #if PLATFORM(MAC)
@@ -335,7 +324,9 @@ private:
     bool isGrabbed() final { return boolAttributeValue(AXProperty::IsGrabbed); }
     bool isHiddenUntilFoundContainer() const final { return boolAttributeValue(AXProperty::IsHiddenUntilFoundContainer); }
     Vector<String> determineDropEffects() const final;
-    AXIsolatedObject* accessibilityHitTest(const IntPoint&) const final;
+
+    RefPtr<AXCoreObject> accessibilityHitTest(const IntPoint&) const final;
+
     AXIsolatedObject* focusedUIElement() const final
     {
         return tree()->focusedNode().unsafeGet();
@@ -625,7 +616,7 @@ private:
 
         RefPtr<AccessibilityObject> axObjectOnMainThread() const
         {
-            ASSERT(isMainThread());
+            AX_ASSERT(isMainThread());
 
             CheckedPtr cache = m_tree->axObjectCache();
             return cache ? cache->objectForID(m_axID) : nullptr;
@@ -668,7 +659,7 @@ inline T AXIsolatedObject::propertyValue(AXProperty property) const
 
     return WTF::switchOn(m_properties[index].second,
         [] (const T& typedValue) { return typedValue; },
-        [] (auto&) { ASSERT_NOT_REACHED();
+        [] (auto&) { AX_ASSERT_NOT_REACHED();
             return T(); }
     );
 }
@@ -688,7 +679,7 @@ inline bool AXIsolatedObject::hasPropertyFlag(AXPropertyFlag flag) const
 
 inline bool AXIsolatedObject::hasPropertyFlag(AXProperty property) const
 {
-    ASSERT(static_cast<uint16_t>(property) <= lastPropertyFlagIndex);
+    AX_ASSERT(static_cast<uint16_t>(property) <= lastPropertyFlagIndex);
     uint16_t propertyIndex = static_cast<uint16_t>(property);
     return hasPropertyFlag(static_cast<AXPropertyFlag>(1 << propertyIndex));
 }

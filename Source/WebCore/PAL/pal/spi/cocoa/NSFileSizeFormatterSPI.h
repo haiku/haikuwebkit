@@ -37,6 +37,11 @@ DECLARE_SYSTEM_HEADER
 #else
 
 typedef uint64_t NSFileSizeFormatterOptions;
-extern "C" NSString *NSLocalizedFileSizeDescription(uint64_t size, uint64_t maximumDisplayedValue, NSFileSizeFormatterOptions);
+
+WTF_EXTERN_C_BEGIN
+
+NSString *NSLocalizedFileSizeDescription(uint64_t size, uint64_t maximumDisplayedValue, NSFileSizeFormatterOptions);
+
+WTF_EXTERN_C_END
 
 #endif

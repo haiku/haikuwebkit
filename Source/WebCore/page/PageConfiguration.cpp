@@ -64,8 +64,6 @@
 #include <wtf/TZoneMallocInlines.h>
 #if ENABLE(WEB_AUTHN)
 #include "AuthenticatorCoordinatorClient.h"
-#endif
-#if HAVE(DIGITAL_CREDENTIALS_UI)
 #include "CredentialRequestCoordinatorClient.h"
 #endif
 #if ENABLE(APPLE_PAY)
@@ -105,7 +103,7 @@ PageConfiguration::PageConfiguration(
     UniqueRef<ChromeClient>&& chromeClient,
     UniqueRef<CryptoClient>&& cryptoClient,
     UniqueRef<DocumentSyncClient>&& documentSyncClient
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
     , Ref<CredentialRequestCoordinatorClient>&& credentialRequestCoordinatorClient
 #endif
 )
@@ -137,7 +135,7 @@ PageConfiguration::PageConfiguration(
     , historyItemClient(WTF::move(historyItemClient))
     , cryptoClient(WTF::move(cryptoClient))
     , documentSyncClient(WTF::move(documentSyncClient))
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
     , credentialRequestCoordinatorClient(WTF::move(credentialRequestCoordinatorClient))
 #endif
 {

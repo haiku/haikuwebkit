@@ -76,11 +76,8 @@ TEST(EnhancedSecurity, EnhancedSecurityEnablesTrue)
     [webView loadRequest:[NSURLRequest requestWithURL:url]];
     [webView _test_waitForDidFinishNavigation];
     EXPECT_EQ(true, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     NSString *processVariant = [webView _webContentProcessVariantForFrame:nil];
     EXPECT_STREQ("security", processVariant.UTF8String);
-#endif
 }
 
 TEST(EnhancedSecurity, EnhancedSecurityEnableFalse)
@@ -92,11 +89,8 @@ TEST(EnhancedSecurity, EnhancedSecurityEnableFalse)
     [webView loadRequest:[NSURLRequest requestWithURL:url]];
     [webView _test_waitForDidFinishNavigation];
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     NSString *processVariant = [webView _webContentProcessVariantForFrame:nil];
     EXPECT_STREQ("standard", processVariant.UTF8String);
-#endif
 }
 
 TEST(EnhancedSecurity, EnhancedSecurityDisablesJIT)
@@ -153,10 +147,7 @@ TEST(EnhancedSecurity, PSONToEnhancedSecurity)
     [webView loadRequest:[NSURLRequest requestWithURL:url]];
     TestWebKitAPI::Util::run(&finishedNavigation);
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("standard", [webView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
     pid_t pid1 = [webView _webProcessIdentifier];
     EXPECT_NE(pid1, 0);
 
@@ -173,10 +164,7 @@ TEST(EnhancedSecurity, PSONToEnhancedSecurity)
     TestWebKitAPI::Util::run(&finishedNavigation);
 
     EXPECT_EQ(true, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("security", [webView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
     EXPECT_NE(pid1, [webView _webProcessIdentifier]);
 }
 
@@ -197,10 +185,7 @@ TEST(EnhancedSecurity, PSONToEnhancedSecuritySamePage)
     [webView loadRequest:[NSURLRequest requestWithURL:url]];
     TestWebKitAPI::Util::run(&finishedNavigation);
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("standard", [webView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
     pid_t pid1 = [webView _webProcessIdentifier];
     EXPECT_NE(pid1, 0);
 
@@ -217,10 +202,7 @@ TEST(EnhancedSecurity, PSONToEnhancedSecuritySamePage)
     TestWebKitAPI::Util::run(&finishedNavigation);
 
     EXPECT_EQ(true, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("security", [webView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
     EXPECT_NE(pid1, [webView _webProcessIdentifier]);
 }
 
@@ -257,10 +239,7 @@ TEST(EnhancedSecurity, PSONToEnhancedSecuritySharedProcessPool)
     [webView loadRequest:[NSURLRequest requestWithURL:url]];
     TestWebKitAPI::Util::run(&finishedNavigation);
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("standard", [webView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
     pid_t pid1 = [webView _webProcessIdentifier];
     EXPECT_NE(pid1, 0);
 
@@ -279,10 +258,7 @@ TEST(EnhancedSecurity, PSONToEnhancedSecuritySharedProcessPool)
     TestWebKitAPI::Util::run(&finishedNavigation);
 
     EXPECT_EQ(true, isEnhancedSecurityEnabled(webView2.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("security", [webView2 _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
     EXPECT_NE(pid1, [webView2 _webProcessIdentifier]);
 }
 
@@ -309,10 +285,7 @@ TEST(EnhancedSecurity, PSONToEnhancedSecuritySharedProcessPoolReverse)
     [webView loadRequest:[NSURLRequest requestWithURL:url]];
     TestWebKitAPI::Util::run(&finishedNavigation);
     EXPECT_EQ(true, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("security", [webView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
     pid_t pid1 = [webView _webProcessIdentifier];
     EXPECT_NE(pid1, 0);
 
@@ -331,14 +304,10 @@ TEST(EnhancedSecurity, PSONToEnhancedSecuritySharedProcessPoolReverse)
     TestWebKitAPI::Util::run(&finishedNavigation);
 
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView2.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("standard", [webView2 _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
     EXPECT_NE(pid1, [webView2 _webProcessIdentifier]);
 }
 
-#if USE(APPLE_INTERNAL_SDK)
 TEST(EnhancedSecurity, ProcessVariantMatchesConfiguration)
 {
     auto webViewConfiguration1 = adoptNS([WKWebViewConfiguration new]);
@@ -361,7 +330,6 @@ TEST(EnhancedSecurity, ProcessVariantMatchesConfiguration)
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView2.get()));
     EXPECT_STREQ("standard", [webView2 _webContentProcessVariantForFrame:nil].UTF8String);
 }
-#endif
 
 TEST(EnhancedSecurity, ProcessCanLaunch)
 {
@@ -441,11 +409,11 @@ TEST(EnhancedSecurity, EnhancedSecurityNavigationStaysEnabledAfterSubFrameNaviga
         { "/webkit"_s, { "<html></html>"_s } }
     }, HTTPServer::Protocol::HttpsProxy);
 
-    auto webViewConfiguration = server.httpsProxyConfiguration();
-    [webViewConfiguration.processPool _setObject:@"WebProcessPlugInWithInternals" forBundleParameter:TestWebKitAPI::Util::TestPlugInClassNameParameter];
-    webViewConfiguration.defaultWebpagePreferences._enhancedSecurityEnabled = YES;
+    RetainPtr webViewConfiguration = server.httpsProxyConfiguration();
+    [webViewConfiguration.get().processPool _setObject:@"WebProcessPlugInWithInternals" forBundleParameter:TestWebKitAPI::Util::TestPlugInClassNameParameter];
+    webViewConfiguration.get().defaultWebpagePreferences._enhancedSecurityEnabled = YES;
 
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration]);
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     auto delegate = adoptNS([TestNavigationDelegate new]);
     [delegate allowAnyTLSCertificate];
 
@@ -473,11 +441,8 @@ TEST(EnhancedSecurity, EnhancedSecurityNavigationStaysEnabledAfterSubFrameNaviga
     EXPECT_WK_STREQ([webView _test_waitForAlert], "done");
 
     EXPECT_EQ(true, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("security", [webView _webContentProcessVariantForFrame:nil].UTF8String);
     EXPECT_STREQ("security", [webView _webContentProcessVariantForFrame:[webView firstChildFrame]._handle].UTF8String);
-#endif
 
 }
 
@@ -490,11 +455,11 @@ TEST(EnhancedSecurity, EnhancedSecurityNavigationStaysEnabledAfterSubFrameNaviga
         { "/webkit"_s, { "<html></html>"_s } }
     }, HTTPServer::Protocol::HttpsProxy);
 
-    auto webViewConfiguration = server.httpsProxyConfiguration();
-    [webViewConfiguration.processPool _setObject:@"WebProcessPlugInWithInternals" forBundleParameter:TestWebKitAPI::Util::TestPlugInClassNameParameter];
-    webViewConfiguration.defaultWebpagePreferences._enhancedSecurityEnabled = YES;
+    RetainPtr webViewConfiguration = server.httpsProxyConfiguration();
+    [webViewConfiguration.get().processPool _setObject:@"WebProcessPlugInWithInternals" forBundleParameter:TestWebKitAPI::Util::TestPlugInClassNameParameter];
+    webViewConfiguration.get().defaultWebpagePreferences._enhancedSecurityEnabled = YES;
 
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration]);
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     auto delegate = adoptNS([TestNavigationDelegate new]);
     [delegate allowAnyTLSCertificate];
 
@@ -522,11 +487,8 @@ TEST(EnhancedSecurity, EnhancedSecurityNavigationStaysEnabledAfterSubFrameNaviga
     EXPECT_WK_STREQ([webView _test_waitForAlert], "done");
 
     EXPECT_EQ(true, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("security", [webView _webContentProcessVariantForFrame:nil].UTF8String);
     EXPECT_STREQ("security", [webView _webContentProcessVariantForFrame:[webView firstChildFrame]._handle].UTF8String);
-#endif
 
 }
 
@@ -539,11 +501,11 @@ TEST(EnhancedSecurity, EnhancedSecurityNavigationStaysDisabledAfterSubFrameNavig
         { "/webkit"_s, { "<html></html>"_s } }
     }, HTTPServer::Protocol::HttpsProxy);
 
-    auto webViewConfiguration = server.httpsProxyConfiguration();
-    [webViewConfiguration.processPool _setObject:@"WebProcessPlugInWithInternals" forBundleParameter:TestWebKitAPI::Util::TestPlugInClassNameParameter];
-    webViewConfiguration.defaultWebpagePreferences._enhancedSecurityEnabled = NO;
+    RetainPtr webViewConfiguration = server.httpsProxyConfiguration();
+    [webViewConfiguration.get().processPool _setObject:@"WebProcessPlugInWithInternals" forBundleParameter:TestWebKitAPI::Util::TestPlugInClassNameParameter];
+    webViewConfiguration.get().defaultWebpagePreferences._enhancedSecurityEnabled = NO;
 
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration]);
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     auto delegate = adoptNS([TestNavigationDelegate new]);
     [delegate allowAnyTLSCertificate];
 
@@ -571,11 +533,8 @@ TEST(EnhancedSecurity, EnhancedSecurityNavigationStaysDisabledAfterSubFrameNavig
     EXPECT_WK_STREQ([webView _test_waitForAlert], "done");
 
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("standard", [webView _webContentProcessVariantForFrame:nil].UTF8String);
     EXPECT_STREQ("standard", [webView _webContentProcessVariantForFrame:[webView firstChildFrame]._handle].UTF8String);
-#endif
 
 }
 
@@ -588,11 +547,11 @@ TEST(EnhancedSecurity, EnhancedSecurityNavigationStaysDisabledAfterSubFrameNavig
         { "/webkit"_s, { "<html></html>"_s } }
     }, HTTPServer::Protocol::HttpsProxy);
 
-    auto webViewConfiguration = server.httpsProxyConfiguration();
-    [webViewConfiguration.processPool _setObject:@"WebProcessPlugInWithInternals" forBundleParameter:TestWebKitAPI::Util::TestPlugInClassNameParameter];
-    webViewConfiguration.defaultWebpagePreferences._enhancedSecurityEnabled = NO;
+    RetainPtr webViewConfiguration = server.httpsProxyConfiguration();
+    [webViewConfiguration.get().processPool _setObject:@"WebProcessPlugInWithInternals" forBundleParameter:TestWebKitAPI::Util::TestPlugInClassNameParameter];
+    webViewConfiguration.get().defaultWebpagePreferences._enhancedSecurityEnabled = NO;
 
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration]);
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     auto delegate = adoptNS([TestNavigationDelegate new]);
     [delegate allowAnyTLSCertificate];
 
@@ -620,11 +579,8 @@ TEST(EnhancedSecurity, EnhancedSecurityNavigationStaysDisabledAfterSubFrameNavig
     EXPECT_WK_STREQ([webView _test_waitForAlert], "done");
 
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("standard", [webView _webContentProcessVariantForFrame:nil].UTF8String);
     EXPECT_STREQ("standard", [webView _webContentProcessVariantForFrame:[webView firstChildFrame]._handle].UTF8String);
-#endif
 }
 
 TEST(EnhancedSecurity, WindowOpenWithNoopenerFromEnhancedSecurityPage)
@@ -634,11 +590,11 @@ TEST(EnhancedSecurity, WindowOpenWithNoopenerFromEnhancedSecurityPage)
         { "/webkit"_s, { "hi"_s } },
     }, HTTPServer::Protocol::HttpsProxy);
 
-    auto webViewConfiguration = server.httpsProxyConfiguration();
-    webViewConfiguration.defaultWebpagePreferences._enhancedSecurityEnabled = YES;
-    webViewConfiguration.preferences.javaScriptCanOpenWindowsAutomatically = YES;
+    RetainPtr webViewConfiguration = server.httpsProxyConfiguration();
+    webViewConfiguration.get().defaultWebpagePreferences._enhancedSecurityEnabled = YES;
+    webViewConfiguration.get().preferences.javaScriptCanOpenWindowsAutomatically = YES;
 
-    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration]);
+    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     auto openerDelegate = adoptNS([TestNavigationDelegate new]);
     [openerDelegate allowAnyTLSCertificate];
     [openerWebView setNavigationDelegate:openerDelegate.get()];
@@ -661,10 +617,7 @@ TEST(EnhancedSecurity, WindowOpenWithNoopenerFromEnhancedSecurityPage)
         TestWebKitAPI::Util::spinRunLoop();
 
     EXPECT_EQ(true, isEnhancedSecurityEnabled(openedWebView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("security", [openedWebView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
 
     bool hasOpener = [[openedWebView objectByEvaluatingJavaScript:@"!!window.opener"] boolValue];
     EXPECT_FALSE(hasOpener);
@@ -677,11 +630,11 @@ TEST(EnhancedSecurity, WindowOpenWithOpenerFromEnhancedSecurityPage)
         { "/webkit"_s, { "hi"_s } },
     }, HTTPServer::Protocol::HttpsProxy);
 
-    auto webViewConfiguration = server.httpsProxyConfiguration();
-    webViewConfiguration.defaultWebpagePreferences._enhancedSecurityEnabled = YES;
-    webViewConfiguration.preferences.javaScriptCanOpenWindowsAutomatically = YES;
+    RetainPtr webViewConfiguration = server.httpsProxyConfiguration();
+    webViewConfiguration.get().defaultWebpagePreferences._enhancedSecurityEnabled = YES;
+    webViewConfiguration.get().preferences.javaScriptCanOpenWindowsAutomatically = YES;
 
-    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration]);
+    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     auto openerDelegate = adoptNS([TestNavigationDelegate new]);
     [openerDelegate allowAnyTLSCertificate];
     [openerWebView setNavigationDelegate:openerDelegate.get()];
@@ -704,11 +657,8 @@ TEST(EnhancedSecurity, WindowOpenWithOpenerFromEnhancedSecurityPage)
         TestWebKitAPI::Util::spinRunLoop();
 
     EXPECT_EQ(true, isEnhancedSecurityEnabled(openedWebView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("security", [openedWebView _webContentProcessVariantForFrame:nil].UTF8String);
     EXPECT_EQ([openerWebView _webProcessIdentifier], [openedWebView _webProcessIdentifier]);
-#endif
 }
 
 TEST(EnhancedSecurity, WindowOpenNoopenerFromEnhancedSecurityInheritsEnhancedSecurity)
@@ -721,12 +671,12 @@ TEST(EnhancedSecurity, WindowOpenNoopenerFromEnhancedSecurityInheritsEnhancedSec
     auto processPoolConfiguration = psonProcessPoolConfiguration();
     auto processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
 
-    auto standardConfig = server.httpsProxyConfiguration();
-    [standardConfig setProcessPool:processPool.get()];
-    standardConfig.defaultWebpagePreferences._enhancedSecurityEnabled = NO;
-    standardConfig.preferences.javaScriptCanOpenWindowsAutomatically = YES;
+    RetainPtr standardConfig = server.httpsProxyConfiguration();
+    [standardConfig.get() setProcessPool:processPool.get()];
+    standardConfig.get().defaultWebpagePreferences._enhancedSecurityEnabled = NO;
+    standardConfig.get().preferences.javaScriptCanOpenWindowsAutomatically = YES;
 
-    auto standardWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:standardConfig]);
+    auto standardWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:standardConfig.get()]);
     auto standardDelegate = adoptNS([TestNavigationDelegate new]);
     [standardDelegate allowAnyTLSCertificate];
     [standardWebView setNavigationDelegate:standardDelegate.get()];
@@ -735,19 +685,16 @@ TEST(EnhancedSecurity, WindowOpenNoopenerFromEnhancedSecurityInheritsEnhancedSec
     [standardDelegate waitForDidFinishNavigation];
 
     EXPECT_EQ(false, isEnhancedSecurityEnabled(standardWebView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("standard", [standardWebView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
     pid_t standardPid = [standardWebView _webProcessIdentifier];
     EXPECT_NE(standardPid, 0);
 
-    auto enhancedConfig = server.httpsProxyConfiguration();
-    [enhancedConfig setProcessPool:processPool.get()];
-    enhancedConfig.defaultWebpagePreferences._enhancedSecurityEnabled = YES;
-    enhancedConfig.preferences.javaScriptCanOpenWindowsAutomatically = YES;
+    RetainPtr enhancedConfig = server.httpsProxyConfiguration();
+    [enhancedConfig.get() setProcessPool:processPool.get()];
+    enhancedConfig.get().defaultWebpagePreferences._enhancedSecurityEnabled = YES;
+    enhancedConfig.get().preferences.javaScriptCanOpenWindowsAutomatically = YES;
 
-    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) configuration:enhancedConfig]);
+    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) configuration:enhancedConfig.get()]);
     auto openerDelegate = adoptNS([TestNavigationDelegate new]);
     [openerDelegate allowAnyTLSCertificate];
     [openerWebView setNavigationDelegate:openerDelegate.get()];
@@ -771,11 +718,8 @@ TEST(EnhancedSecurity, WindowOpenNoopenerFromEnhancedSecurityInheritsEnhancedSec
         TestWebKitAPI::Util::spinRunLoop();
 
     EXPECT_EQ(true, isEnhancedSecurityEnabled(openedWebView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("security", [openedWebView _webContentProcessVariantForFrame:nil].UTF8String);
     EXPECT_NE(standardPid, [openedWebView _webProcessIdentifier]);
-#endif
 
     bool hasOpener = [[openedWebView objectByEvaluatingJavaScript:@"!!window.opener"] boolValue];
     EXPECT_FALSE(hasOpener);
@@ -791,12 +735,12 @@ TEST(EnhancedSecurity, WindowOpenNoopenerFromStandardWithEnhancedSecurityViaDele
     auto processPoolConfiguration = psonProcessPoolConfiguration();
     auto processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
 
-    auto standardConfig = server.httpsProxyConfiguration();
-    [standardConfig setProcessPool:processPool.get()];
-    standardConfig.defaultWebpagePreferences._enhancedSecurityEnabled = NO;
-    standardConfig.preferences.javaScriptCanOpenWindowsAutomatically = YES;
+    RetainPtr standardConfig = server.httpsProxyConfiguration();
+    [standardConfig.get() setProcessPool:processPool.get()];
+    standardConfig.get().defaultWebpagePreferences._enhancedSecurityEnabled = NO;
+    standardConfig.get().preferences.javaScriptCanOpenWindowsAutomatically = YES;
 
-    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:standardConfig]);
+    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:standardConfig.get()]);
     auto openerDelegate = adoptNS([TestNavigationDelegate new]);
     [openerDelegate allowAnyTLSCertificate];
     [openerWebView setNavigationDelegate:openerDelegate.get()];
@@ -833,8 +777,6 @@ TEST(EnhancedSecurity, WindowOpenNoopenerFromStandardWithEnhancedSecurityViaDele
     EXPECT_EQ(false, isEnhancedSecurityEnabled(openerWebView.get()));
     EXPECT_EQ(true, isEnhancedSecurityEnabled(openedWebView.get()));
 
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     pid_t openerPID = [openerWebView _webProcessIdentifier];
     pid_t openedPID = [openedWebView _webProcessIdentifier];
     bool isEnhanced = isEnhancedSecurityEnabled(openedWebView.get());
@@ -844,7 +786,6 @@ TEST(EnhancedSecurity, WindowOpenNoopenerFromStandardWithEnhancedSecurityViaDele
         EXPECT_NE(openerPID, openedPID);
     } else
         EXPECT_STREQ("standard", [openedWebView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
 
     bool hasOpener = [[openedWebView objectByEvaluatingJavaScript:@"!!window.opener"] boolValue];
     EXPECT_FALSE(hasOpener);
@@ -860,12 +801,12 @@ TEST(EnhancedSecurity, WindowOpenNoopenerFromEnhancedSecurityWithStandardViaDele
     auto processPoolConfiguration = psonProcessPoolConfiguration();
     auto processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
 
-    auto enhancedConfig = server.httpsProxyConfiguration();
-    [enhancedConfig setProcessPool:processPool.get()];
-    enhancedConfig.defaultWebpagePreferences._enhancedSecurityEnabled = YES;
-    enhancedConfig.preferences.javaScriptCanOpenWindowsAutomatically = YES;
+    RetainPtr enhancedConfig = server.httpsProxyConfiguration();
+    [enhancedConfig.get() setProcessPool:processPool.get()];
+    enhancedConfig.get().defaultWebpagePreferences._enhancedSecurityEnabled = YES;
+    enhancedConfig.get().preferences.javaScriptCanOpenWindowsAutomatically = YES;
 
-    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:enhancedConfig]);
+    auto openerWebView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:enhancedConfig.get()]);
     auto openerDelegate = adoptNS([TestNavigationDelegate new]);
     [openerDelegate allowAnyTLSCertificate];
     [openerWebView setNavigationDelegate:openerDelegate.get()];
@@ -902,12 +843,9 @@ TEST(EnhancedSecurity, WindowOpenNoopenerFromEnhancedSecurityWithStandardViaDele
     EXPECT_EQ(true, isEnhancedSecurityEnabled(openerWebView.get()));
     EXPECT_EQ(false, isEnhancedSecurityEnabled(openedWebView.get()));
 
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     pid_t openerPID = [openerWebView _webProcessIdentifier];
     EXPECT_STREQ("standard", [openedWebView _webContentProcessVariantForFrame:nil].UTF8String);
     EXPECT_NE(openerPID, [openedWebView _webProcessIdentifier]);
-#endif
 
     bool hasOpener = [[openedWebView objectByEvaluatingJavaScript:@"!!window.opener"] boolValue];
     EXPECT_FALSE(hasOpener);
@@ -926,10 +864,7 @@ TEST(EnhancedSecurity, LockdownModeTakesPrecedenceOverEnhancedSecurity)
 
     EXPECT_EQ(false, isJITEnabled(webView.get()));
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView.get()));
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("lockdown", [webView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
 }
 
 TEST(EnhancedSecurity, EnhancedSecurityRequestedWhenLockdownModeActive)
@@ -966,10 +901,7 @@ TEST(EnhancedSecurity, EnhancedSecurityRequestedWhenLockdownModeActive)
     EXPECT_EQ(false, isJITEnabled(webView.get()));
     EXPECT_EQ(false, isEnhancedSecurityEnabled(webView.get()));
     EXPECT_EQ(true, webViewConfiguration.get().defaultWebpagePreferences.isLockdownModeEnabled);
-// _webContentProcessVariantForFrame relies on private entitlements not available on public builds
-#if USE(APPLE_INTERNAL_SDK)
     EXPECT_STREQ("lockdown", [webView _webContentProcessVariantForFrame:nil].UTF8String);
-#endif
 }
 
 #if HAVE(ENHANCED_SECURITY_WEB_CONTENT_PROCESS)
@@ -988,10 +920,8 @@ TEST(EnhancedSecurity, SystemLockdownModeEnablesEnhancedSecurityWhenAPIOptsOut)
 
     EXPECT_EQ(false, isJITEnabled(webView.get()));
 
-#if USE(APPLE_INTERNAL_SDK)
     NSString *processVariant = [webView _webContentProcessVariantForFrame:nil];
     EXPECT_STREQ("security", processVariant.UTF8String);
-#endif
 
     [WKProcessPool _clearCaptivePortalModeEnabledGloballyForTesting];
 }

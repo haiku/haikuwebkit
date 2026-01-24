@@ -1,41 +1,30 @@
 set_property(DIRECTORY . PROPERTY FOLDER "bmalloc")
 
+if (USE_MIMALLOC)
+    add_subdirectory(mimalloc)
+endif ()
+
 set(bmalloc_PRIVATE_INCLUDE_DIRECTORIES
     "${BMALLOC_DIR}"
     "${BMALLOC_DIR}/bmalloc"
     "${BMALLOC_DIR}/libpas/src/libpas"
 )
 
+if (USE_MIMALLOC)
+    list(APPEND bmalloc_PRIVATE_INCLUDE_DIRECTORIES
+        "${BMALLOC_DIR}/mimalloc/mimalloc/include"
+    )
+endif ()
+
 set(bmalloc_SOURCES
-    bmalloc/AllIsoHeaps.cpp
-    bmalloc/Allocator.cpp
     bmalloc/AvailableMemory.cpp
-    bmalloc/Cache.cpp
     bmalloc/CryptoRandom.cpp
-    bmalloc/Deallocator.cpp
     bmalloc/SystemHeap.cpp
     bmalloc/Environment.cpp
-    bmalloc/FreeList.cpp
     bmalloc/Gigacage.cpp
-    bmalloc/Heap.cpp
-    bmalloc/HeapConstants.cpp
     bmalloc/HeapKind.cpp
-    bmalloc/IsoHeap.cpp
-    bmalloc/IsoHeapImpl.cpp
-    bmalloc/IsoMallocFallback.cpp
-    bmalloc/IsoPage.cpp
-    bmalloc/IsoSharedHeap.cpp
-    bmalloc/IsoSharedPage.cpp
-    bmalloc/IsoTLS.cpp
-    bmalloc/IsoTLSEntry.cpp
-    bmalloc/IsoTLSLayout.cpp
-    bmalloc/LargeMap.cpp
     bmalloc/Logging.cpp
     bmalloc/Mutex.cpp
-    bmalloc/ObjectType.cpp
-    bmalloc/ObjectTypeTable.cpp
-    bmalloc/PerProcess.cpp
-    bmalloc/Scavenger.cpp
     bmalloc/TZoneHeap.cpp
     bmalloc/TZoneHeapManager.cpp
     bmalloc/bmalloc.cpp
@@ -213,11 +202,8 @@ set(bmalloc_C_SOURCES
 
 set(bmalloc_PUBLIC_HEADERS
     bmalloc/Algorithm.h
-    bmalloc/AllIsoHeaps.h
-    bmalloc/AllIsoHeapsInlines.h
     bmalloc/AllocationCounts.h
     bmalloc/CompactAllocationMode.h
-    bmalloc/Allocator.h
     bmalloc/AvailableMemory.h
     bmalloc/BAssert.h
     bmalloc/BCompiler.h
@@ -227,93 +213,26 @@ set(bmalloc_PUBLIC_HEADERS
     bmalloc/BPlatform.h
     bmalloc/BSyscall.h
     bmalloc/BVMTags.h
-    bmalloc/Bits.h
-    bmalloc/BulkDecommit.h
-    bmalloc/BumpAllocator.h
-    bmalloc/BumpRange.h
-    bmalloc/Cache.h
-    bmalloc/Chunk.h
     bmalloc/CryptoRandom.h
-    bmalloc/Deallocator.h
     bmalloc/SystemHeap.h
-    bmalloc/DeferredDecommit.h
-    bmalloc/DeferredDecommitInlines.h
-    bmalloc/DeferredTrigger.h
-    bmalloc/DeferredTriggerInlines.h
-    bmalloc/EligibilityResult.h
-    bmalloc/EligibilityResultInlines.h
     bmalloc/Environment.h
     bmalloc/FailureAction.h
-    bmalloc/FixedVector.h
-    bmalloc/FreeList.h
-    bmalloc/FreeListInlines.h
     bmalloc/Gigacage.h
     bmalloc/GigacageConfig.h
     bmalloc/GigacageKind.h
-    bmalloc/Heap.h
-    bmalloc/HeapConstants.h
     bmalloc/HeapKind.h
-    bmalloc/IsoAllocator.h
-    bmalloc/IsoAllocatorInlines.h
-    bmalloc/IsoConfig.h
-    bmalloc/IsoDeallocator.h
-    bmalloc/IsoDeallocatorInlines.h
-    bmalloc/IsoDirectory.h
-    bmalloc/IsoDirectoryInlines.h
-    bmalloc/IsoDirectoryPage.h
-    bmalloc/IsoDirectoryPageInlines.h
-    bmalloc/IsoHeap.h
-    bmalloc/IsoHeapImpl.h
-    bmalloc/IsoHeapImplInlines.h
-    bmalloc/IsoHeapInlines.h
-    bmalloc/IsoMallocFallback.h
-    bmalloc/IsoPage.h
-    bmalloc/IsoPageInlines.h
-    bmalloc/IsoPageTrigger.h
-    bmalloc/IsoSharedConfig.h
-    bmalloc/IsoSharedHeap.h
-    bmalloc/IsoSharedHeapInlines.h
-    bmalloc/IsoSharedPage.h
-    bmalloc/IsoSharedPageInlines.h
-    bmalloc/IsoTLS.h
-    bmalloc/IsoTLSAllocatorEntry.h
-    bmalloc/IsoTLSAllocatorEntryInlines.h
-    bmalloc/IsoTLSDeallocatorEntry.h
-    bmalloc/IsoTLSDeallocatorEntryInlines.h
-    bmalloc/IsoTLSEntry.h
-    bmalloc/IsoTLSEntryInlines.h
-    bmalloc/IsoTLSInlines.h
-    bmalloc/IsoTLSLayout.h
-    bmalloc/LargeMap.h
-    bmalloc/LargeRange.h
-    bmalloc/LineMetadata.h
-    bmalloc/List.h
     bmalloc/Logging.h
     bmalloc/Map.h
     bmalloc/Mutex.h
-    bmalloc/Object.h
-    bmalloc/ObjectType.h
-    bmalloc/ObjectTypeTable.h
-    bmalloc/Packed.h
-    bmalloc/PerHeapKind.h
-    bmalloc/PerProcess.h
-    bmalloc/PerThread.h
-    bmalloc/PhysicalPageMap.h
     bmalloc/ProcessCheck.h
-    bmalloc/Range.h
-    bmalloc/Scavenger.h
     bmalloc/ScopeExit.h
-    bmalloc/SegmentedVector.h
     bmalloc/Sizes.h
-    bmalloc/SmallLine.h
-    bmalloc/SmallPage.h
     bmalloc/StaticPerProcess.h
     bmalloc/TZoneHeap.h
     bmalloc/TZoneHeapInlines.h
     bmalloc/TZoneHeapManager.h
     bmalloc/VMAllocate.h
     bmalloc/Vector.h
-    bmalloc/Zone.h
     bmalloc/bmalloc.h
     bmalloc/valgrind.h
 
@@ -700,10 +619,15 @@ set(bmalloc_PUBLIC_HEADERS
     libpas/src/libpas/thingy_heap_prefix.h
 )
 
+if (USE_MIMALLOC)
+    list(APPEND bmalloc_PUBLIC_HEADERS
+        mimalloc/mimalloc/include/mimalloc.h
+    )
+endif ()
+
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     list(APPEND bmalloc_SOURCES
         bmalloc/TZoneLog.cpp
-        bmalloc/Zone.cpp
     )
 endif ()
 
@@ -720,6 +644,9 @@ if (ATOMICS_REQUIRE_LIBATOMIC)
     list(APPEND bmalloc_LIBRARIES atomic)
 endif ()
 
+if (USE_MIMALLOC)
+    list(APPEND bmalloc_LIBRARIES $<TARGET_OBJECTS:mimalloc-obj>)
+endif ()
 
 # GCC fails to compile with -O1 due to always_inline and unresolved indirect calls.
 # But it works either with -O0 (skips inlining) or with -O2 (resolves the callee).
@@ -746,6 +673,14 @@ set(bmalloc_INTERFACE_DEPENDENCIES bmalloc_CopyHeaders)
 
 add_definitions(-D_GNU_SOURCE)
 add_definitions(-DPAS_BMALLOC=1)
+
+if (USE_MIMALLOC)
+    add_definitions(-DUSE_MIMALLOC=1)
+endif ()
+
+if (USE_SYSTEM_MALLOC)
+    add_definitions(-DUSE_SYSTEM_MALLOC=1)
+endif ()
 
 if (MSVC)
     add_compile_options(/wd4206)

@@ -122,9 +122,9 @@ public:
         std::optional<int> sampleRate;
         std::optional<int> sampleSize;
         std::optional<bool> echoCancellation;
-        String displaySurface;
         String deviceId;
         String groupId;
+        String displaySurface;
 
         String whiteBalanceMode;
         std::optional<double> zoom;

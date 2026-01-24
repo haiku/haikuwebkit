@@ -379,22 +379,22 @@ private:
     bool m_locked { false };
 };
 
-void* ArrayBuffer::data()
+void* ArrayBuffer::data() LIFETIME_BOUND
 {
     return m_contents.data();
 }
 
-const void* ArrayBuffer::data() const
+const void* ArrayBuffer::data() const LIFETIME_BOUND
 {
     return m_contents.data();
 }
 
-void* ArrayBuffer::dataWithoutPACValidation()
+void* ArrayBuffer::dataWithoutPACValidation() LIFETIME_BOUND
 {
     return m_contents.dataWithoutPACValidation();
 }
 
-const void* ArrayBuffer::dataWithoutPACValidation() const
+const void* ArrayBuffer::dataWithoutPACValidation() const LIFETIME_BOUND
 {
     return m_contents.dataWithoutPACValidation();
 }

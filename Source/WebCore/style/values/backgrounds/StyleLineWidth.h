@@ -46,6 +46,9 @@ struct LineWidth {
     constexpr LineWidth(Length length) : value { length } { }
     constexpr LineWidth(CSS::ValueLiteral<CSS::LengthUnit::Px> literal) : value { literal } { }
 
+    static Length snapLengthAsBorderWidth(float, float deviceScaleFactor);
+    static Length snapLengthAsBorderWidth(Length, float deviceScaleFactor);
+
     constexpr bool isZero() const { return value.isZero(); }
     constexpr bool isPositive() const { return value.isPositive(); }
 

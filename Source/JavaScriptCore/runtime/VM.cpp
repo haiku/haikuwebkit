@@ -69,8 +69,8 @@
 #include "JITWorklist.h"
 #include "JSAPIValueWrapper.h"
 #include "JSBigInt.h"
-#include "JSGlobalObject.h"
 #include "JSCellButterflyInlines.h"
+#include "JSGlobalObject.h"
 #include "JSIterator.h"
 #include "JSLock.h"
 #include "JSMap.h"
@@ -987,9 +987,15 @@ bool VM::hasExceptionsAfterHandlingTraps()
     return exception();
 }
 
+void VM::setHasTerminationRequest()
+{
+    m_hasTerminationRequest = true;
+    requestEntryScopeService(ConcurrentEntryScopeService::ResetTerminationRequest);
+}
+
 void VM::setException(Exception* exception)
 {
-    ASSERT(!exception || !isTerminationException(exception) || hasTerminationRequest());
+    ASSERT(!isTerminationException(exception) || hasTerminationRequest());
     m_exception = exception;
     m_lastException = exception;
     if (exception)
@@ -1347,7 +1353,7 @@ void VM::callPromiseRejectionCallback(Strong<JSPromise>& promise)
     if (!callback)
         return;
 
-    auto scope = DECLARE_CATCH_SCOPE(*this);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(*this);
 
     auto callData = JSC::getCallDataInline(callback);
     ASSERT(callData.type != CallData::Type::None);
@@ -1399,7 +1405,7 @@ void VM::drainMicrotasks()
                     if (RefPtr dispatcher = task.dispatcher())
                         return dispatcher->run(task);
 
-                    auto catchScope = DECLARE_CATCH_SCOPE(*this);
+                    auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(*this);
                     runInternalMicrotask(globalObject, task.job(), task.payload(), task.arguments());
                     catchScope.clearExceptionExceptTermination();
                     return QueuedTask::Result::Executed;

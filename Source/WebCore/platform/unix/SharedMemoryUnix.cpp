@@ -143,8 +143,12 @@ RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
     return instance;
 }
 
-RefPtr<SharedMemory> SharedMemory::map(Handle&& handle, Protection protection)
+RefPtr<SharedMemory> SharedMemory::map(Handle&& handle, Protection protection, CopyOnWrite copyOnWrite)
 {
+    // Copy-on-write is not supported on this platform.
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=305633
+    ASSERT_UNUSED(copyOnWrite, copyOnWrite == CopyOnWrite::No);
+
     void* data = mmap(0, handle.size(), accessModeMMap(protection), MAP_SHARED, handle.m_handle.value(), 0);
     if (data == MAP_FAILED)
         return nullptr;

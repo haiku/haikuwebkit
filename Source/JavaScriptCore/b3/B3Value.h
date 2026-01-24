@@ -452,6 +452,9 @@ protected:
         case Set:
         case WasmAddress:
         case WasmBoundsCheck:
+        case WasmStructGet:
+        case WasmRefCast:
+        case WasmRefTest:
         case VectorExtractLane:
         case VectorSplat:
         case VectorNot:
@@ -516,6 +519,8 @@ protected:
         case Store8:
         case Store16:
         case Store:
+        case WasmStructSet:
+        case WasmStructNew:
         case VectorReplaceLane:
         case VectorEqual:
         case VectorNotEqual:

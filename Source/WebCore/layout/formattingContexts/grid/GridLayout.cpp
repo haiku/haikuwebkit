@@ -39,6 +39,7 @@
 #include "TrackSizingFunctions.h"
 #include "UnplacedGridItem.h"
 #include "UsedTrackSizes.h"
+#include <wtf/Range.h>
 #include <wtf/Vector.h>
 
 namespace WebCore {
@@ -170,32 +171,28 @@ auto computeGridItemRects = [](const PlacedGridItems& placedGridItems, const Bor
 };
 
 // https://drafts.csswg.org/css-grid-1/#layout-algorithm
-std::pair<UsedTrackSizes, GridItemRects> GridLayout::layout(GridFormattingContext::GridLayoutConstraints, UnplacedGridItems& unplacedGridItems)
+std::pair<UsedTrackSizes, GridItemRects> GridLayout::layout(const GridFormattingContext::GridLayoutConstraints& layoutConstraints, UnplacedGridItems& unplacedGridItems,
+    const GridDefinition& gridDefinition)
 {
-    CheckedRef gridContainerStyle = this->gridContainerStyle();
-    auto& gridTemplateColumnsTrackSizes = gridContainerStyle->gridTemplateColumns().sizes;
-    auto& gridTemplateRowsTrackSizes = gridContainerStyle->gridTemplateRows().sizes;
+    auto& gridTemplateColumnsTrackSizes = gridDefinition.gridTemplateColumns.sizes;
+    auto& gridTemplateRowsTrackSizes = gridDefinition.gridTemplateRows.sizes;
 
     // 1. Run the Grid Item Placement Algorithm to resolve the placement of all grid items in the grid.
-    GridAutoFlowOptions autoFlowOptions {
-        .strategy = gridContainerStyle->gridAutoFlow().isDense() ? PackingStrategy::Dense : PackingStrategy::Sparse,
-        .direction = gridContainerStyle->gridAutoFlow().isRow() ? GridAutoFlowDirection::Row : GridAutoFlowDirection::Column
-    };
-    auto [ gridAreas, columnsCount, rowsCount ] = placeGridItems(unplacedGridItems, gridTemplateColumnsTrackSizes, gridTemplateRowsTrackSizes, autoFlowOptions);
+    auto [ gridAreas, columnsCount, rowsCount ] = placeGridItems(unplacedGridItems, gridTemplateColumnsTrackSizes, gridTemplateRowsTrackSizes, gridDefinition.autoFlowOptions);
     auto placedGridItems = formattingContext().constructPlacedGridItems(gridAreas);
 
     auto columnTrackSizingFunctionsList = trackSizingFunctions(columnsCount, gridTemplateColumnsTrackSizes);
     auto rowTrackSizingFunctionsList = trackSizingFunctions(rowsCount, gridTemplateRowsTrackSizes);
 
     // 3. Given the resulting grid container size, run the Grid Sizing Algorithm to size the grid.
-    UsedTrackSizes usedTrackSizes = performGridSizingAlgorithm(placedGridItems, columnTrackSizingFunctionsList, rowTrackSizingFunctionsList);
+    UsedTrackSizes usedTrackSizes = performGridSizingAlgorithm(placedGridItems, columnTrackSizingFunctionsList, rowTrackSizingFunctionsList, layoutConstraints);
 
     // 4. Lay out the grid items into their respective containing blocks. Each grid area’s
     // width and height are considered definite for this purpose.
     auto [ usedInlineSizes, usedBlockSizes ] = layoutGridItems(placedGridItems, usedTrackSizes);
 
     // https://drafts.csswg.org/css-grid-1/#alignment
-    const auto& zoomFactor = gridContainerStyle->usedZoomForLength();
+    const auto& zoomFactor = formattingContext().zoomFactor();
     auto usedInlineMargins = computeInlineMargins(placedGridItems, zoomFactor);
     auto usedBlockMargins = computeBlockMargins(placedGridItems, zoomFactor);
 
@@ -254,6 +251,14 @@ BorderBoxPositions GridLayout::performBlockAxisSelfAlignment(const PlacedGridIte
         case ItemPosition::FlexStart:
         case ItemPosition::SelfStart:
         case ItemPosition::Start:
+            return { };
+
+        // https://www.w3.org/TR/css-align-3/#align-grid
+        // Sizes as either stretch (typical non-replaced elements) or start (typical replaced
+        // elements); see Grid Item Sizing in [CSS-GRID-1]. The resulting box is then start-aligned.
+        //
+        // Stretching should be handled by GridLayout::layoutGridItems.
+        case ItemPosition::Normal:
             return { };
         default:
             ASSERT_NOT_IMPLEMENTED_YET();
@@ -315,13 +320,21 @@ TrackSizingFunctionsList GridLayout::trackSizingFunctions(size_t implicitGridTra
 
 // https://www.w3.org/TR/css-grid-1/#algo-grid-sizing
 UsedTrackSizes GridLayout::performGridSizingAlgorithm(const PlacedGridItems& placedGridItems,
-    const TrackSizingFunctionsList& columnTrackSizingFunctionsList, const TrackSizingFunctionsList& rowTrackSizingFunctionsList)
+    const TrackSizingFunctionsList& columnTrackSizingFunctionsList, const TrackSizingFunctionsList& rowTrackSizingFunctionsList, const GridFormattingContext::GridLayoutConstraints& layoutConstraints) const
 {
-    // 1. First, the track sizing algorithm is used to resolve the sizes of the grid columns.
-    auto columnSizes = TrackSizingAlgorithm::sizeTracks(placedGridItems, columnTrackSizingFunctionsList);
+    auto& integrationUtils = formattingContext().integrationUtils();
 
+    // 1. First, the track sizing algorithm is used to resolve the sizes of the grid columns.
+    auto columnSpanList = placedGridItems.map([](const PlacedGridItem& gridItem) {
+        return WTF::Range<size_t> { gridItem.columnStartLine(), gridItem.columnEndLine() };
+    });
+    auto columnSizes = TrackSizingAlgorithm::sizeTracks(placedGridItems, columnSpanList, columnTrackSizingFunctionsList, layoutConstraints.inlineAxisAvailableSpace, integrationUtils);
+
+    auto rowSpanList = placedGridItems.map([](const PlacedGridItem& gridItem) {
+        return WTF::Range<size_t> { gridItem.rowStartLine(), gridItem.rowEndLine() };
+    });
     // 2. Next, the track sizing algorithm resolves the sizes of the grid rows.
-    auto rowSizes = TrackSizingAlgorithm::sizeTracks(placedGridItems, rowTrackSizingFunctionsList);
+    auto rowSizes = TrackSizingAlgorithm::sizeTracks(placedGridItems, rowSpanList, rowTrackSizingFunctionsList, layoutConstraints.blockAxisAvailableSpace, integrationUtils);
 
     // 3. Then, if the min-content contribution of any grid item has changed based on the
     // row sizes and alignment calculated in step 2, re-resolve the sizes of the grid
@@ -405,30 +418,26 @@ std::pair<UsedInlineSizes, UsedBlockSizes> GridLayout::layoutGridItems(const Pla
 
     auto& formattingContext = this->formattingContext();
     auto& integrationUtils = formattingContext.integrationUtils();
+
+    CheckedRef formattingContextRootStyle = formattingContext.root().style();
+    auto columnsGap = GridLayoutUtils::computeGapValue(formattingContextRootStyle->columnGap());
+    auto rowsGap = GridLayoutUtils::computeGapValue(formattingContextRootStyle->rowGap());
+
     for (auto& gridItem : placedGridItems) {
         auto& gridItemBoxGeometry = formattingContext.geometryForGridItem(gridItem.layoutBox());
 
-        auto columnsGap = GridLayoutUtils::computeGapValue(formattingContext.root().style().columnGap());
-        auto usedInlineSizeForGridItem = GridLayoutUtils::usedInlineSizeForGridItem(gridItem, gridItemBoxGeometry.horizontalBorderAndPadding(), usedTrackSizes.columnSizes, columnsGap);
+        auto columnsSize = GridLayoutUtils::gridAreaDimensionSize(gridItem.columnStartLine(), gridItem.columnEndLine(), usedTrackSizes.columnSizes, columnsGap);
+        auto usedInlineSizeForGridItem = GridLayoutUtils::usedInlineSizeForGridItem(gridItem, gridItemBoxGeometry.horizontalBorderAndPadding(), columnsSize);
         usedInlineSizes.append(usedInlineSizeForGridItem);
 
-        auto usedBlockSizeForGridItem = GridLayoutUtils::usedBlockSizeForGridItem(gridItem) + gridItemBoxGeometry.verticalBorderAndPadding();
+        auto rowsSize = GridLayoutUtils::gridAreaDimensionSize(gridItem.rowStartLine(), gridItem.rowEndLine(), usedTrackSizes.rowSizes, rowsGap);
+        auto usedBlockSizeForGridItem = GridLayoutUtils::usedBlockSizeForGridItem(gridItem, gridItemBoxGeometry.verticalBorderAndPadding(), rowsSize);
         usedBlockSizes.append(usedBlockSizeForGridItem);
 
         auto& layoutBox = gridItem.layoutBox();
         integrationUtils.layoutWithFormattingContextForBox(layoutBox, usedInlineSizeForGridItem, usedBlockSizeForGridItem);
     }
     return { usedInlineSizes, usedBlockSizes };
-}
-
-const ElementBox& GridLayout::gridContainer() const
-{
-    return m_gridFormattingContext.root();
-}
-
-const RenderStyle& GridLayout::gridContainerStyle() const
-{
-    return gridContainer().style();
 }
 
 } // namespace Layout

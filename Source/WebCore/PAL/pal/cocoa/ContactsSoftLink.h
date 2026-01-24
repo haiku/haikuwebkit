@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 #include <wtf/Compiler.h>
 #include <wtf/Platform.h>
 
@@ -64,3 +67,5 @@ SOFT_LINK_CONSTANT_FOR_HEADER(PAL, Contacts, CNContactDatesKey, NSString *);
 SOFT_LINK_CONSTANT_FOR_HEADER(PAL, Contacts, CNContactUrlAddressesKey, NSString *);
 
 #endif
+
+#endif // !__has_feature(modules)

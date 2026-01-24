@@ -76,7 +76,7 @@ public:
 private:
     template<typename X> friend class InlineWeakRef;
 
-    WARN_UNUSED_RETURN T& leakWeak();
+    [[nodiscard]] T& leakWeak();
 
     T* m_ptr;
 } SWIFT_ESCAPABLE;

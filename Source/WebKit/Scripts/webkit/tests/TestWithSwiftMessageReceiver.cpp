@@ -23,8 +23,7 @@
  */
 
 #include "config.h"
-#include "Shared/WebKit-Swift.h"
-
+#include "Shared/WebKit-Swift.h" // NOLINT
 #include "Decoder.h" // NOLINT
 #include "HandleMessage.h" // NOLINT
 #include "TestWithSwiftMessages.h" // NOLINT

@@ -29,6 +29,9 @@
 
 #include "ArgumentCodersCocoa.h"
 #include "CoreIPCPKDateComponentsRange.h"
+#if USE(PASSKIT) && HAVE(WK_SECURE_CODING_PKPAYMENTMERCHANTSESSION)
+#include "CoreIPCPKPaymentMerchantSession.h"
+#endif
 #include <wtf/RetainPtr.h>
 #include <wtf/UniqueRef.h>
 
@@ -39,7 +42,9 @@ class CoreIPCCFType;
 class CoreIPCColor;
 #if USE(PASSKIT)
 class CoreIPCPKPaymentMethod;
+#if !HAVE(WK_SECURE_CODING_PKPAYMENTMERCHANTSESSION)
 class CoreIPCPKPaymentMerchantSession;
+#endif
 class CoreIPCPKPaymentSetupFeature;
 class CoreIPCPKContact;
 class CoreIPCPKSecureElementPass;

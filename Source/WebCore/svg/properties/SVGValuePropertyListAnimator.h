@@ -59,7 +59,7 @@ protected:
     using Base::computeCSSPropertyValue;
     using Base::m_attributeName;
 
-    RefPtr<ListType> m_list;
+    const Ref<ListType> m_list;
 };
 
 #define TZONE_TEMPLATE_PARAMS template<typename ListType, typename AnimationFunction>

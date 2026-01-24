@@ -42,6 +42,7 @@ JSTestDelegateToSharedSyntheticAttribute.h:
 JSTestDerivedDictionary.h: 
 JSTestDerivedDictionary2.h: 
 JSTestDictionary.h: 
+JSTestDictionaryLegacyNativeDictionaryRequiredInterfaceNullability.h: 
 JSTestDictionaryNoToNative.h: 
 JSTestDictionaryWithOnlyConditionalMembers.h: 
 JSTestDomainSecurity.h: 

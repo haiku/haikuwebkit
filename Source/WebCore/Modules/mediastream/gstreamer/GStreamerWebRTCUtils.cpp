@@ -275,10 +275,10 @@ std::optional<RTCIceCandidate::Fields> parseIceCandidateSDP(const String& sdp)
     NextSDPField nextSdpField { NextSDPField::None };
 
     for (auto token : view.split(' ')) {
-        auto tokenString = token.toStringWithoutCopying();
+        auto tokenString = token.toString();
         switch (i) {
         case 0:
-            foundation = tokenString;
+            foundation = WTF::move(tokenString);
             break;
         case 1:
             if (auto value = parseInteger<unsigned>(token))
@@ -289,7 +289,7 @@ std::optional<RTCIceCandidate::Fields> parseIceCandidateSDP(const String& sdp)
             }
             break;
         case 2:
-            transport = tokenString;
+            transport = WTF::move(tokenString);
             break;
         case 3:
             if (auto value = parseInteger<unsigned>(token))
@@ -300,7 +300,7 @@ std::optional<RTCIceCandidate::Fields> parseIceCandidateSDP(const String& sdp)
             }
             break;
         case 4:
-            address = tokenString;
+            address = WTF::move(tokenString);
             break;
         case 5:
             if (auto value = parseInteger<unsigned>(token))
@@ -331,16 +331,16 @@ std::optional<RTCIceCandidate::Fields> parseIceCandidateSDP(const String& sdp)
                     type = tokenString;
                     break;
                 case NextSDPField::Raddr:
-                    relatedAddress = tokenString;
+                    relatedAddress = WTF::move(tokenString);
                     break;
                 case NextSDPField::Rport:
                     relatedPort = parseInteger<unsigned>(token).value_or(0);
                     break;
                 case NextSDPField::TcpType:
-                    tcptype = tokenString;
+                    tcptype = WTF::move(tokenString);
                     break;
                 case NextSDPField::Ufrag:
-                    usernameFragment = tokenString;
+                    usernameFragment = WTF::move(tokenString);
                     break;
                 case NextSDPField::Generation:
                     // Unsupported.
@@ -364,16 +364,16 @@ std::optional<RTCIceCandidate::Fields> parseIceCandidateSDP(const String& sdp)
     fields.priority = priority;
     fields.protocol = toRTCIceProtocol(transport);
     if (!address.isEmpty()) {
-        fields.address = address;
+        fields.address = WTF::move(address);
         fields.port = port;
     }
     fields.type = toRTCIceCandidateType(type);
     fields.tcpType = toRTCIceTcpCandidateType(tcptype);
     if (!relatedAddress.isEmpty()) {
-        fields.relatedAddress = relatedAddress;
+        fields.relatedAddress = WTF::move(relatedAddress);
         fields.relatedPort = relatedPort;
     }
-    fields.usernameFragment = usernameFragment;
+    fields.usernameFragment = WTF::move(usernameFragment);
     return fields;
 }
 

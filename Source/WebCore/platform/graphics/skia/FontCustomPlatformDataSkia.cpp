@@ -105,7 +105,8 @@ RefPtr<FontCustomPlatformData> FontCustomPlatformData::create(SharedBuffer& buff
     SkString familyName;
 
     const auto bufferData = buffer.createSkData();
-    if (itemInCollection.isNull())
+    bool isCollection = spanHasPrefix(buffer.span(), "ttcf"_span);
+    if (itemInCollection.isNull() || !isCollection)
         typeface = FontCache::forCurrentThread()->fontManager().makeFromData(bufferData);
     else {
         size_t index = 0;

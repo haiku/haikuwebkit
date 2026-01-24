@@ -68,7 +68,7 @@ Data Data::empty()
     return { OSObjectPtr<dispatch_data_t> { dispatch_data_empty } };
 }
 
-std::span<const uint8_t> Data::span() const
+std::span<const uint8_t> Data::span() const LIFETIME_BOUND
 {
     if (!m_data.data() && m_dispatchData) {
         const void* data = nullptr;

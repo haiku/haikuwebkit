@@ -30,6 +30,7 @@
 #include "AuxiliaryProcessMain.h"
 #include "WebProcess.h"
 #include <libintl.h>
+#include <locale.h>
 
 #if !USE(GTK4) && USE(CAIRO)
 #include <gtk/gtk.h>
@@ -86,6 +87,9 @@ public:
 #if !USE(GTK4) && USE(CAIRO)
         gtk_init(nullptr, nullptr);
 #endif
+
+        if (!setlocale(LC_ALL, ""))
+            g_warning("Locale not supported by C library.\n\tUsing the fallback 'C' locale.");
 
         bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
         bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");

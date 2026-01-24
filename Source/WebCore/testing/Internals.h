@@ -297,7 +297,7 @@ public:
 
     Ref<CSSComputedStyleDeclaration> computedStyleIncludingVisitedInfo(Element&) const;
 
-    Node* ensureUserAgentShadowRoot(Element& host);
+    Node& ensureUserAgentShadowRoot(Element& host);
     Node* shadowRoot(Element& host);
     ExceptionOr<String> shadowRootType(const Node&) const;
     const AtomString& userAgentPart(Element&);
@@ -347,7 +347,7 @@ public:
 
     double preferredRenderingUpdateInterval();
 
-    Node* treeScopeRootNode(Node&);
+    Node& treeScopeRootNode(Node&);
     Node* parentTreeScope(Node&);
 
     String visiblePlaceholder(Element&);
@@ -619,6 +619,9 @@ public:
     // BaseAudioContext lifetime testing.
     static uint64_t baseAudioContextIdentifier(const BaseAudioContext&);
     static bool isBaseAudioContextAlive(uint64_t contextID);
+
+    Vector<float> waveShaperProcessCurveWithData(Vector<float> source, Vector<float> curve);
+
 #endif
 
     unsigned numberOfIntersectionObservers(const Document&) const;
@@ -775,6 +778,7 @@ public:
     void simulateSpeechSynthesizerVoiceListChange();
     void enableMockSpeechSynthesizer();
     void enableMockSpeechSynthesizerForMediaElement(HTMLMediaElement&);
+    void setInitialVoiceListToEmpty();
     ExceptionOr<void> setSpeechUtteranceDuration(double);
     unsigned minimumExpectedVoiceCount();
 #endif
@@ -804,6 +808,7 @@ public:
     uint64_t sframeCounter(const RTCRtpSFrameTransform&);
     uint64_t sframeKeyId(const RTCRtpSFrameTransform&);
     void setEnableWebRTCEncryption(bool);
+    bool hasPeerConnectionEnabledServiceClass(const RTCPeerConnection&);
 #endif
 
     String getImageSourceURL(Element&);
@@ -1525,7 +1530,7 @@ public:
     Vector<Ref<AbstractRange>> textExtractionHighlightRanges() const;
 
 #if ENABLE(WEBXR)
-    ExceptionOr<RefPtr<WebXRTest>> xrTest();
+    ExceptionOr<Ref<WebXRTest>> xrTest();
 #endif
 
 #if ENABLE(ENCRYPTED_MEDIA)

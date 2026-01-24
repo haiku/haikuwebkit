@@ -40,6 +40,7 @@
 #import "_WKElementActionInternal.h"
 #import <UIKit/UIView.h>
 #import <WebCore/CaptionDisplaySettingsOptions.h>
+#import <WebCore/ContextMenuItem.h>
 #import <WebCore/DataDetection.h>
 #import <WebCore/FloatRect.h>
 #import <WebCore/LocalizedStrings.h>
@@ -548,7 +549,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
     BOOL hasAnimation = elementInfo.isAnimatedImage || !elementInfo._animationsUnderElement.isEmpty();
-    if (!hasAnimation || !elementInfo.canShowAnimationControls)
+    if (!hasAnimation)
         return;
 
     if (![_delegate respondsToSelector:@selector(_allowAnimationControls)] || ![_delegate _allowAnimationControls])

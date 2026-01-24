@@ -64,12 +64,12 @@ public:
     void visitNodesConcurrently(JSC::AbstractSlotVisitor&) const;
 
 private:
-    StaticRange(SimpleRange&&);
+    explicit StaticRange(SimpleRange&&);
 
     bool isLiveRange() const final { return false; }
 };
 
-}
+} // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::StaticRange)
     static bool isType(const WebCore::AbstractRange& range) { return !range.isLiveRange(); }

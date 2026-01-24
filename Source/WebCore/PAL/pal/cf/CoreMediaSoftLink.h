@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 #include <wtf/Platform.h>
 
 #if USE(AVFOUNDATION)
@@ -565,3 +568,5 @@ SOFT_LINK_FUNCTION_FOR_HEADER(PAL, CoreMedia, CMDerivedObjectCreate, OSStatus, (
 #endif // PLATFORM(MAC)
 
 #endif // USE(AVFOUNDATION)
+
+#endif // !__has_feature(modules)

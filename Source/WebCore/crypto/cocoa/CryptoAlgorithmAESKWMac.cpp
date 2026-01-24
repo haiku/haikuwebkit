@@ -30,12 +30,19 @@
 #include <CommonCrypto/CommonCrypto.h>
 #include <pal/PALSwift.h>
 
+#if !defined(CLANG_WEBKIT_BRANCH)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#include "PALSwift-Generated.h"
+#pragma clang diagnostic pop
+#endif // !defined(CLANG_WEBKIT_BRANCH)
+
 namespace WebCore {
 
 static ExceptionOr<Vector<uint8_t>> wrapKeyAESKWCryptoKit(const Vector<uint8_t>& key, const Vector<uint8_t>& data)
 {
 #if !defined(CLANG_WEBKIT_BRANCH)
-    auto rv = PAL::AesKw::wrap(data.span(), key.span());
+    auto rv = pal::AesKw::wrap(data.span(), key.span());
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return Exception { ExceptionCode::OperationError };
     return WTF::move(rv.result);
@@ -49,7 +56,7 @@ static ExceptionOr<Vector<uint8_t>> wrapKeyAESKWCryptoKit(const Vector<uint8_t>&
 static ExceptionOr<Vector<uint8_t>> unwrapKeyAESKWCryptoKit(const Vector<uint8_t>& key, const Vector<uint8_t>& data)
 {
 #if !defined(CLANG_WEBKIT_BRANCH)
-    auto rv = PAL::AesKw::unwrap(data.span(), key.span());
+    auto rv = pal::AesKw::unwrap(data.span(), key.span());
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return Exception { ExceptionCode::OperationError };
     return WTF::move(rv.result);

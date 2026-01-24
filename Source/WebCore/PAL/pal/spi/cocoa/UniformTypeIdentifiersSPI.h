@@ -34,6 +34,8 @@ DECLARE_SYSTEM_HEADER
 #include <UniformTypeIdentifiers/UTTypePriv.h>
 #else
 
+#include <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+
 @interface UTType ()
 
 + (void)_enumerateAllDeclaredTypesUsingBlock:(void (NS_NOESCAPE ^)(UTType *type, BOOL *stop))block;

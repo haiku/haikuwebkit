@@ -179,10 +179,10 @@ static Class elementClass(const QualifiedName& tag, Class defaultClass)
 {
     if (!elementClassMap)
         createElementClassMap();
-    Class objcClass = lookupElementClass(tag);
+    RetainPtr<Class> objcClass = lookupElementClass(tag);
     if (!objcClass)
         objcClass = defaultClass;
-    return objcClass;
+    return objcClass.autorelease();
 }
 
 #if PLATFORM(IOS_FAMILY)
@@ -780,10 +780,10 @@ DOMNodeFilter *kit(WebCore::NodeFilter* impl)
 {
     if (!impl)
         return nil;
-    
-    if (DOMNodeFilter *wrapper = getDOMWrapper(impl))
-        return retainPtr(wrapper).autorelease();
-    
+
+    if (RetainPtr wrapper = getDOMWrapper(impl))
+        return wrapper.autorelease();
+
     auto wrapper = adoptNS([[DOMNodeFilter alloc] _init]);
     wrapper->_internal = reinterpret_cast<DOMObjectInternal*>(impl);
     impl->ref();

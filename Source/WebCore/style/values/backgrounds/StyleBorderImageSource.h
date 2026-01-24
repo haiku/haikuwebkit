@@ -75,7 +75,7 @@ template<> struct CSSValueConversion<BorderImageSource> { auto operator()(Builde
 
 template<> struct Blending<BorderImageSource> {
     auto canBlend(const BorderImageSource&, const BorderImageSource&) -> bool;
-    auto blend(const BorderImageSource&, const BorderImageSource&, const BlendingContext&) -> BorderImageSource;
+    auto blend(const BorderImageSource&, const BorderImageSource&, const RenderStyle&, const RenderStyle&, const BlendingContext&) -> BorderImageSource;
 };
 
 } // namespace Style

@@ -53,12 +53,9 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCStreamTesterProxyMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverMessageReceiver.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverMessageReceiver.swift
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverMessagesReplies.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverSwiftMessageReceiver.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverSwiftMessageReceiver.swift
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverSwiftMessages.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverSwiftMessagesReplies.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/ISO18013MobileDocumentRequest+Extras.swift
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIAction.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIAction.mm

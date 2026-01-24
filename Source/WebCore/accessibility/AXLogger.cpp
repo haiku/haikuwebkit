@@ -246,7 +246,7 @@ void AXLogger::log(const String& collectionName, const AXObjectCache::DeferredCo
         [&size] (const WeakListHashSet<Element, WeakPtrImplWithEventTargetData>& typedCollection) { size = typedCollection.computeSize(); },
         [&size] (const WeakHashMap<Element, String, WeakPtrImplWithEventTargetData>& typedCollection) { size = typedCollection.computeSize(); },
         [] (auto&) {
-            ASSERT_NOT_REACHED();
+            AX_ASSERT_NOT_REACHED();
             return;
         });
     if (size)
@@ -591,7 +591,7 @@ TextStream& operator<<(WTF::TextStream& stream, const TextUnderElementMode& mode
         childrenInclusion = "IncludeNameFromContentsChildren"_s;
         break;
     default:
-        ASSERT_NOT_REACHED();
+        AX_ASSERT_NOT_REACHED();
         break;
     }
 
@@ -645,11 +645,6 @@ WTF::TextStream& operator<<(WTF::TextStream& stream, const AXPropertyVector& pro
 TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
 {
     switch (property) {
-#if !ENABLE(AX_THREAD_TEXT_APIS)
-    case AXProperty::AttributedText:
-        stream << "AttributedText";
-        break;
-#endif // !ENABLE(AX_THREAD_TEXT_APIS)
     case AXProperty::AXColumnCount:
         stream << "AXColumnCount";
         break;
@@ -1041,14 +1036,12 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
     case AXProperty::LinethroughColor:
         stream << "LinethroughColor";
         break;
-#if ENABLE(AX_THREAD_TEXT_APIS)
     case AXProperty::ListMarkerLineID:
         stream << "ListMarkerLineID";
         break;
     case AXProperty::ListMarkerText:
         stream << "ListMarkerText";
         break;
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
     case AXProperty::LiveRegionAtomic:
         stream << "LiveRegionAtomic";
         break;
@@ -1221,19 +1214,12 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
     case AXProperty::TextContentPrefixFromListMarker:
         stream << "TextContentPrefixFromListMarker";
         break;
-#if !ENABLE(AX_THREAD_TEXT_APIS)
-    case AXProperty::TextContent:
-        stream << "TextContent";
-        break;
-#endif // !ENABLE(AX_THREAD_TEXT_APIS)
     case AXProperty::TextInputMarkedTextMarkerRange:
         stream << "TextInputMarkedTextMarkerRange";
         break;
-#if ENABLE(AX_THREAD_TEXT_APIS)
     case AXProperty::TextRuns:
         stream << "TextRuns";
         break;
-#endif
     case AXProperty::TitleAttribute:
         stream << "TitleAttribute";
         break;
@@ -1279,7 +1265,7 @@ TextStream& operator<<(TextStream& stream, const AXCoreObject& object)
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 TextStream& operator<<(TextStream& stream, AXIsolatedTree& tree)
 {
-    ASSERT(!isMainThread());
+    AX_ASSERT(!isMainThread());
     TextStream::GroupScope groupScope(stream);
     stream << "treeID " << tree.treeID();
     stream.dumpProperty("rootNodeID"_s, tree.rootNode()->objectID());
@@ -1292,7 +1278,7 @@ TextStream& operator<<(TextStream& stream, AXIsolatedTree& tree)
 
 void streamIsolatedSubtreeOnMainThread(TextStream& stream, const AXIsolatedTree& tree, AXID objectID, const OptionSet<AXStreamOptions>& options)
 {
-    ASSERT(isMainThread());
+    AX_ASSERT(isMainThread());
 
     stream.increaseIndent();
     TextStream::GroupScope groupScope(stream);
@@ -1328,12 +1314,12 @@ TextStream& operator<<(TextStream& stream, AXObjectCache& axObjectCache)
     return stream;
 }
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 static void streamTextRuns(TextStream& stream, const AXTextRuns& runs)
 {
     stream.dumpProperty("textRuns"_s, runs.debugDescription());
 }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif
 
 void streamAXCoreObject(TextStream& stream, const AXCoreObject& object, const OptionSet<AXStreamOptions>& options)
 {
@@ -1375,7 +1361,7 @@ void streamAXCoreObject(TextStream& stream, const AXCoreObject& object, const Op
             stream.dumpProperty("outerHTML"_s, objectWithInterestingHTML->outerHTML().left(150));
     }
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     if (options & AXStreamOptions::TextRuns) {
         if (auto* isolatedObject = dynamicDowncast<AXIsolatedObject>(object)) {
             if (auto* runs = isolatedObject->textRuns(); runs && runs->size())
@@ -1385,7 +1371,7 @@ void streamAXCoreObject(TextStream& stream, const AXCoreObject& object, const Op
                 streamTextRuns(stream, runs);
         }
     }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif
 
     if (options & AXStreamOptions::DisplayContents) {
         if (axObject && axObject->hasDisplayContents())

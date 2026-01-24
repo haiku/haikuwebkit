@@ -34,7 +34,9 @@ enum AriaNotificationInterrupt {
     "pending"
 };
 
-dictionary AriaNotifyOptions {
+[
+    LegacyNativeDictionaryRequiredInterfaceNullability,
+] dictionary AriaNotifyOptions {
     AriaNotificationPriority priority;
     AriaNotificationInterrupt interrupt;
 };

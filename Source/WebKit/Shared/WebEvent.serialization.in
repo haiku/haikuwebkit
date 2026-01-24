@@ -236,7 +236,7 @@ class WebKit::WebWheelEvent : WebKit::WebEvent {
 #if PLATFORM(COCOA)
     bool directionInvertedFromDevice();
 #endif
-#if PLATFORM(COCOA) || PLATFORM(GTK) || USE(LIBWPE)
+#if PLATFORM(COCOA) || PLATFORM(GTK) || USE(LIBWPE) || ENABLE(WPE_PLATFORM)
     WebKit::WebWheelEvent::Phase phase();
     WebKit::WebWheelEvent::Phase momentumPhase();
     bool hasPreciseScrollingDeltas();

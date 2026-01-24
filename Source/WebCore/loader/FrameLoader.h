@@ -318,6 +318,9 @@ public:
     const URL& previousURL() const { return m_previousURL; }
 
     bool isHTTPFallbackInProgress() const { return m_navigationUpgradeToHTTPSBehavior == NavigationUpgradeToHTTPSBehavior::HTTPFallback; }
+    bool shouldNavigateWithHTTP(bool isSameSiteNavigation) const;
+    bool isNavigationUpgradeToHTTPSDisabled() const { return m_navigationUpgradeToHTTPSBehavior == NavigationUpgradeToHTTPSBehavior::Disabled; }
+    bool isHTTPFallbackInProgressOrUpgradeDisabled() const { return isHTTPFallbackInProgress() || isNavigationUpgradeToHTTPSDisabled(); }
     void resetHTTPFallbackInProgress() { m_navigationUpgradeToHTTPSBehavior = NavigationUpgradeToHTTPSBehavior::BasedOnPolicy; }
     NavigationUpgradeToHTTPSBehavior navigationUpgradeToHTTPSBehavior() const { return m_navigationUpgradeToHTTPSBehavior; }
     void setNavigationUpgradeToHTTPSBehavior(NavigationUpgradeToHTTPSBehavior behavior) { m_navigationUpgradeToHTTPSBehavior = behavior; }
@@ -562,6 +565,8 @@ private:
     const Ref<DocumentPrefetcher> m_documentPrefetcher;
 
     Function<bool()> m_pendingDispatchNavigateEvent;
+
+    bool m_needsCancellationForContentRuleListCrossOriginRedirect { false };
 };
 
 // This function is called by createWindow() in JSDOMWindowBase.cpp, for example, for

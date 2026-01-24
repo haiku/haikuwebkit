@@ -85,17 +85,21 @@ private:
     void appendItem(ContextMenuItem&, ContextMenu* parentMenu);
 
     void createAndAppendFontSubMenu(ContextMenuItem&);
+#if !PLATFORM(GTK) && !PLATFORM(WPE)
     void createAndAppendSpellingAndGrammarSubMenu(ContextMenuItem&);
-    void createAndAppendSpellingSubMenu(ContextMenuItem&);
-    void createAndAppendSpeechSubMenu(ContextMenuItem&);
     void createAndAppendWritingDirectionSubMenu(ContextMenuItem&);
     void createAndAppendTextDirectionSubMenu(ContextMenuItem&);
+#endif
+#if PLATFORM(COCOA)
+    void createAndAppendSpeechSubMenu(ContextMenuItem&);
     void createAndAppendSubstitutionsSubMenu(ContextMenuItem&);
     void createAndAppendTransformationsSubMenu(ContextMenuItem&);
-    bool shouldEnableCopyLinkWithHighlight() const;
+#endif
 #if PLATFORM(GTK)
     void createAndAppendUnicodeSubMenu(ContextMenuItem&);
 #endif
+
+    bool shouldEnableCopyLinkWithHighlight() const;
 
 #if ENABLE(PDFJS)
     void performPDFJSAction(LocalFrame&, const String& action);

@@ -65,11 +65,12 @@ enum class TextExtractionOutputFormat : uint8_t {
 
 using TextExtractionOptionFlags = OptionSet<TextExtractionOptionFlag>;
 using TextExtractionFilterPromise = NativePromise<String, void>;
-using TextExtractionFilterCallback = Function<Ref<TextExtractionFilterPromise>(const String&, std::optional<WebCore::NodeIdentifier>&&)>;
+using TextExtractionFilterCallback = Function<Ref<TextExtractionFilterPromise>(const String&, std::optional<WebCore::FrameIdentifier>&&, std::optional<WebCore::NodeIdentifier>&&)>;
 
 struct TextExtractionOptions {
     TextExtractionOptions(TextExtractionOptions&& other)
-        : filterCallbacks(WTF::move(other.filterCallbacks))
+        : mainFrameIdentifier(WTF::move(other.mainFrameIdentifier))
+        , filterCallbacks(WTF::move(other.filterCallbacks))
         , nativeMenuItems(WTF::move(other.nativeMenuItems))
         , replacementStrings(WTF::move(other.replacementStrings))
         , version(other.version)
@@ -79,8 +80,9 @@ struct TextExtractionOptions {
     {
     }
 
-    TextExtractionOptions(Vector<TextExtractionFilterCallback>&& filters, Vector<String>&& items, HashMap<String, String>&& replacementStrings, std::optional<TextExtractionVersion> version, TextExtractionOptionFlags flags, TextExtractionOutputFormat outputFormat, TextExtractionURLCache* urlCache = nullptr)
-        : filterCallbacks(WTF::move(filters))
+    TextExtractionOptions(WebCore::FrameIdentifier&& mainFrameIdentifier, Vector<TextExtractionFilterCallback>&& filters, Vector<String>&& items, HashMap<String, String>&& replacementStrings, std::optional<TextExtractionVersion> version, TextExtractionOptionFlags flags, TextExtractionOutputFormat outputFormat, TextExtractionURLCache* urlCache = nullptr)
+        : mainFrameIdentifier(WTF::move(mainFrameIdentifier))
+        , filterCallbacks(WTF::move(filters))
         , nativeMenuItems(WTF::move(items))
         , replacementStrings(WTF::move(replacementStrings))
         , version(version)
@@ -90,6 +92,7 @@ struct TextExtractionOptions {
     {
     }
 
+    WebCore::FrameIdentifier mainFrameIdentifier;
     Vector<TextExtractionFilterCallback> filterCallbacks;
     Vector<String> nativeMenuItems;
     HashMap<String, String> replacementStrings;
@@ -106,5 +109,12 @@ struct TextExtractionResult {
 };
 
 void convertToText(WebCore::TextExtraction::Item&&, TextExtractionOptions&&, CompletionHandler<void(TextExtractionResult&&)>&&);
+
+struct FrameAndNodeIdentifiers {
+    std::optional<WebCore::FrameIdentifier> frameIdentifier;
+    WebCore::NodeIdentifier nodeIdentifier;
+};
+
+std::optional<FrameAndNodeIdentifiers> parseFrameAndNodeIdentifiers(StringView);
 
 } // namespace WebKit

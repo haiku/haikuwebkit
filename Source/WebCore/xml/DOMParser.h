@@ -40,7 +40,7 @@ public:
 private:
     explicit DOMParser(Document& contextDocument);
 
-    RefPtr<Document> protectedContextDocument() const { return m_contextDocument.get(); }
+    RefPtr<Document> protectedContextDocument() const { return m_contextDocument; }
 
     WeakPtr<Document, WeakPtrImplWithEventTargetData> m_contextDocument;
     const Ref<const Settings> m_settings;

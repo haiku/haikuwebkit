@@ -234,14 +234,7 @@ namespace JSC::B3 {
 #define FOR_EACH_NUMBERED_ABSTRACT_HEAP(macro) \
     macro(properties) \
     /* WasmGC Struct access are analyzed via field index and field type. We can include Wasm type definition to further make alias analysis better. */ \
-    macro(JSWebAssemblyStruct_i8) \
-    macro(JSWebAssemblyStruct_i16) \
-    macro(JSWebAssemblyStruct_i32) \
-    macro(JSWebAssemblyStruct_i64) \
-    macro(JSWebAssemblyStruct_f32) \
-    macro(JSWebAssemblyStruct_f64) \
-    macro(JSWebAssemblyStruct_v128) \
-    macro(JSWebAssemblyStruct_ref) \
+    macro(JSWebAssemblyStruct_fields) \
     /* WasmGC Array access are analyzed via element index and element type. Not using IndexedAbstractHeap right now intentionally since large Wasm array has different base offset. */ \
     macro(JSWebAssemblyArray_i8) \
     macro(JSWebAssemblyArray_i16) \
@@ -354,6 +347,8 @@ public:
     void decorateFenceRead(const AbstractHeap*, Value*);
     void decorateFenceWrite(const AbstractHeap*, Value*);
     void decorateFencedAccess(const AbstractHeap*, Value*);
+    void decorateWasmStructGet(const AbstractHeap*, Value*);
+    void decorateWasmStructSet(const AbstractHeap*, Value*);
 
     void computeRangesAndDecorateInstructions();
 
@@ -382,6 +377,8 @@ private:
     Vector<HeapForValue> m_heapForFenceRead;
     Vector<HeapForValue> m_heapForFenceWrite;
     Vector<HeapForValue> m_heapForFencedAccess;
+    Vector<HeapForValue> m_heapForWasmStructGet;
+    Vector<HeapForValue> m_heapForWasmStructSet;
 };
 
 } // namespace JSC::B3

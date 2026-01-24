@@ -321,7 +321,8 @@ WI.Layers3DContentView = class Layers3DContentView extends WI.ContentView
                     return;
                 }
 
-                layerGroup.clear();
+                while (layerGroup.children.length > 0)
+                    layerGroup.remove(layerGroup.children[0]);
 
                 fillMesh.geometry?.dispose();
                 fillMesh.material?.map?.dispose();
@@ -547,7 +548,8 @@ WI.Layers3DContentView = class Layers3DContentView extends WI.ContentView
                 child.material?.map?.dispose();
                 child.material?.dispose();
             }
-            layerGroup.clear();
+            while (layerGroup.children.length > 0)
+                layerGroup.remove(layerGroup.children[0]);
 
             this._populateLayerGroup(layerGroup, layer);
         }

@@ -54,6 +54,7 @@ public:
     virtual void undestroy() = 0;
 
     virtual bool isRemoteTextureProxy() const { return false; }
+    virtual bool isTextureImpl() const { return false; }
 
 protected:
     Texture() = default;

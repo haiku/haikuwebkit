@@ -30,7 +30,7 @@
 
 #define WTF_NOEXPORT
 
-#if USE(SYSTEM_MALLOC) || !USE(TZONE_MALLOC)
+#if !USE(TZONE_MALLOC)
 
 #include <wtf/FastMalloc.h>
 
@@ -73,7 +73,7 @@
 #define WTF_MAKE_INHERITED_TZONE_ALLOCATED(name) \
     using __thisIsHereToForceASemicolonAfterThisMacro UNUSED_TYPE_ALIAS = int
 
-#else // !USE(SYSTEM_MALLOC) && USE(TZONE_MALLOC)
+#else // USE(TZONE_MALLOC)
 
 #include <bmalloc/TZoneHeap.h>
 

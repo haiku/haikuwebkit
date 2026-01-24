@@ -46,13 +46,26 @@
 #include <JavaScriptCore/JSDestructibleObjectHeapCellType.h>
 #include <JavaScriptCore/SlotVisitorMacros.h>
 #include <JavaScriptCore/SubspaceInlines.h>
+#include <type_traits>
 #include <wtf/GetPtr.h>
+#include <wtf/IsIncreasing.h>
 #include <wtf/PointerPreparations.h>
 #include <wtf/URL.h>
 #include <wtf/text/MakeString.h>
 
 namespace WebCore {
 using namespace JSC;
+
+IGNORE_WARNINGS_BEGIN("invalid-offsetof")
+
+static_assert(std::is_aggregate_v<TestPromiseRejectionEvent::Init>);
+static_assert(IsIncreasing<
+      0
+    , offsetof(TestPromiseRejectionEvent::Init, promise)
+    , offsetof(TestPromiseRejectionEvent::Init, reason)
+>);
+
+IGNORE_WARNINGS_END
 
 template<> ConversionResult<IDLDictionary<TestPromiseRejectionEvent::Init>> convertDictionary<TestPromiseRejectionEvent::Init>(JSGlobalObject& lexicalGlobalObject, JSValue value)
 {
@@ -64,7 +77,6 @@ template<> ConversionResult<IDLDictionary<TestPromiseRejectionEvent::Init>> conv
         throwTypeError(&lexicalGlobalObject, throwScope);
         return ConversionResultException { };
     }
-    TestPromiseRejectionEvent::Init result;
     JSValue bubblesValue;
     if (isNullOrUndefined)
         bubblesValue = jsUndefined();
@@ -75,7 +87,6 @@ template<> ConversionResult<IDLDictionary<TestPromiseRejectionEvent::Init>> conv
     auto bubblesConversionResult = convertOptionalWithDefault<IDLBoolean>(lexicalGlobalObject, bubblesValue, [&]() -> ConversionResult<IDLBoolean> { return Converter<IDLBoolean>::ReturnType { false }; });
     if (bubblesConversionResult.hasException(throwScope)) [[unlikely]]
         return ConversionResultException { };
-    result.bubbles = bubblesConversionResult.releaseReturnValue();
     JSValue cancelableValue;
     if (isNullOrUndefined)
         cancelableValue = jsUndefined();
@@ -86,7 +97,6 @@ template<> ConversionResult<IDLDictionary<TestPromiseRejectionEvent::Init>> conv
     auto cancelableConversionResult = convertOptionalWithDefault<IDLBoolean>(lexicalGlobalObject, cancelableValue, [&]() -> ConversionResult<IDLBoolean> { return Converter<IDLBoolean>::ReturnType { false }; });
     if (cancelableConversionResult.hasException(throwScope)) [[unlikely]]
         return ConversionResultException { };
-    result.cancelable = cancelableConversionResult.releaseReturnValue();
     JSValue composedValue;
     if (isNullOrUndefined)
         composedValue = jsUndefined();
@@ -97,7 +107,6 @@ template<> ConversionResult<IDLDictionary<TestPromiseRejectionEvent::Init>> conv
     auto composedConversionResult = convertOptionalWithDefault<IDLBoolean>(lexicalGlobalObject, composedValue, [&]() -> ConversionResult<IDLBoolean> { return Converter<IDLBoolean>::ReturnType { false }; });
     if (composedConversionResult.hasException(throwScope)) [[unlikely]]
         return ConversionResultException { };
-    result.composed = composedConversionResult.releaseReturnValue();
     JSValue promiseValue;
     if (isNullOrUndefined)
         promiseValue = jsUndefined();
@@ -112,7 +121,6 @@ template<> ConversionResult<IDLDictionary<TestPromiseRejectionEvent::Init>> conv
     auto promiseConversionResult = convert<IDLPromise<IDLAny>>(lexicalGlobalObject, promiseValue);
     if (promiseConversionResult.hasException(throwScope)) [[unlikely]]
         return ConversionResultException { };
-    result.promise = promiseConversionResult.releaseReturnValue();
     JSValue reasonValue;
     if (isNullOrUndefined)
         reasonValue = jsUndefined();
@@ -123,8 +131,15 @@ template<> ConversionResult<IDLDictionary<TestPromiseRejectionEvent::Init>> conv
     auto reasonConversionResult = convertOptionalWithDefault<IDLAny>(lexicalGlobalObject, reasonValue, [&]() -> ConversionResult<IDLAny> { return Converter<IDLAny>::ReturnType { jsUndefined() }; });
     if (reasonConversionResult.hasException(throwScope)) [[unlikely]]
         return ConversionResultException { };
-    result.reason = reasonConversionResult.releaseReturnValue();
-    return result;
+    return TestPromiseRejectionEvent::Init {
+        EventInit {
+            bubblesConversionResult.releaseReturnValue(),
+            cancelableConversionResult.releaseReturnValue(),
+            composedConversionResult.releaseReturnValue(),
+        },
+        promiseConversionResult.releaseReturnValue(),
+        reasonConversionResult.releaseReturnValue(),
+    };
 }
 
 // Attributes

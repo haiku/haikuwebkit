@@ -58,7 +58,7 @@ public:
     WEBCORE_EXPORT Ref<HTMLTableSectionElement> createTBody();
     WEBCORE_EXPORT Ref<HTMLTableCaptionElement> createCaption();
     WEBCORE_EXPORT void deleteCaption();
-    WEBCORE_EXPORT ExceptionOr<Ref<HTMLElement>> insertRow(int index = -1);
+    WEBCORE_EXPORT ExceptionOr<Ref<HTMLTableRowElement>> insertRow(int index = -1);
     WEBCORE_EXPORT ExceptionOr<void> deleteRow(int index);
 
     WEBCORE_EXPORT Ref<HTMLCollection> rows();

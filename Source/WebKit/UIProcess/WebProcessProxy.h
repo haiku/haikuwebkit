@@ -42,6 +42,8 @@
 #include "UserContentControllerIdentifier.h"
 #include "VisibleWebPageCounter.h"
 #include "WebPageProxyIdentifier.h"
+#include "WebPermissionControllerProxy.h"
+#include "WebProcessCreationParameters.h"
 #include <WebCore/CrossOriginMode.h>
 #include <WebCore/FrameIdentifier.h>
 #include <WebCore/MediaProducer.h>
@@ -136,7 +138,6 @@ class WebFrameProxy;
 class WebLockRegistryProxy;
 class WebPageGroup;
 class WebPageProxy;
-class WebPermissionControllerProxy;
 class WebPreferences;
 class WebProcessPool;
 class WebUserContentControllerProxy;
@@ -183,8 +184,8 @@ class WebProcessProxy final : public AuxiliaryProcessProxy {
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebProcessProxy);
 public:
     using WebPageProxyMap = HashMap<WebPageProxyIdentifier, WeakRef<WebPageProxy>>;
-    using UserInitiatedActionByAuthorizationTokenMap = HashMap<WTF::UUID, RefPtr<API::UserInitiatedAction>>;
-    typedef HashMap<WebCore::UserGestureTokenIdentifier, RefPtr<API::UserInitiatedAction>> UserInitiatedActionMap;
+    using UserInitiatedActionByAuthorizationTokenMap = HashMap<WTF::UUID, Ref<API::UserInitiatedAction>>;
+    using UserInitiatedActionMap = HashMap<WebCore::UserGestureTokenIdentifier, Ref<API::UserInitiatedAction>>;
 
     enum class IsPrewarmed : bool { No, Yes };
 

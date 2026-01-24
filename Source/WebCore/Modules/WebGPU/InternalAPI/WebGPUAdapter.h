@@ -49,6 +49,7 @@ public:
     bool isFallbackAdapter() const { return m_isFallbackAdapter; }
     virtual bool xrCompatible() = 0;
     virtual bool isRemoteAdapterProxy() const { return false; }
+    virtual bool isAdapterImpl() const { return false; }
 
     virtual void requestDevice(const DeviceDescriptor&, CompletionHandler<void(RefPtr<Device>&&)>&&) = 0;
 

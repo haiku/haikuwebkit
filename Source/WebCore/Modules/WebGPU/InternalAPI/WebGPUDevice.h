@@ -143,6 +143,7 @@ public:
     virtual void pauseAllErrorReporting(bool pause) = 0;
 
     virtual bool isRemoteDeviceProxy() const { return false; }
+    virtual bool isDeviceImpl() const { return false; }
     virtual Ref<BindGroupLayout> emptyBindGroupLayout() const = 0;
 
 protected:

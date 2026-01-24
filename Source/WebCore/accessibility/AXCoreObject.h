@@ -215,6 +215,51 @@ struct AccessibilitySearchTextCriteria {
         : start(AccessibilitySearchTextStartFrom::Selection)
         , direction(AccessibilitySearchTextDirection::Forward)
     { }
+
+    String debugDescription() const
+    {
+        String startFrom;
+        switch (start) {
+        case AccessibilitySearchTextStartFrom::Begin:
+            startFrom = "begin"_s;
+            break;
+        case AccessibilitySearchTextStartFrom::Selection:
+            startFrom = "selection"_s;
+            break;
+        case AccessibilitySearchTextStartFrom::End:
+            startFrom = "end"_s;
+            break;
+        }
+
+        String directionString;
+        switch (direction) {
+        case AccessibilitySearchTextDirection::Forward:
+            directionString = "forward"_s;
+            break;
+        case AccessibilitySearchTextDirection::Backward:
+            directionString = "backward"_s;
+            break;
+        case AccessibilitySearchTextDirection::Closest:
+            directionString = "closest"_s;
+            break;
+        case AccessibilitySearchTextDirection::All:
+            directionString = "all"_s;
+            break;
+        }
+
+        StringBuilder allSearchStrings;
+        for (unsigned i = 0; i < searchStrings.size(); i++) {
+            allSearchStrings.append(searchStrings[i]);
+            if (i != searchStrings.size() - 1)
+                allSearchStrings.append(", "_s);
+        }
+
+        return makeString(
+            "starting from "_s, startFrom, ", "_s,
+            "with direction "_s, directionString, ", "_s,
+            "seeking strings: {"_s, allSearchStrings.toString(), "}"_s
+        );
+    }
 };
 
 struct AccessibilityText {
@@ -753,7 +798,7 @@ public:
     virtual Vector<String> determineDropEffects() const = 0;
 
     // Called on the root AX object to return the deepest available element.
-    virtual AXCoreObject* accessibilityHitTest(const IntPoint&) const = 0;
+    virtual RefPtr<AXCoreObject> accessibilityHitTest(const IntPoint&) const = 0;
 
     virtual AXCoreObject* focusedUIElement() const = 0;
     virtual AXCoreObject* focusedUIElementInAnyLocalFrame() const = 0;
@@ -837,7 +882,7 @@ public:
 
     virtual std::optional<String> textContent() const = 0;
     virtual String textContentPrefixFromListMarker() const = 0;
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     virtual bool hasTextRuns() = 0;
     virtual TextEmissionBehavior textEmissionBehavior() const = 0;
     bool emitsNewline() const;
@@ -1454,13 +1499,13 @@ inline Vector<AXID> AXCoreObject::childrenIDs(bool updateChildrenIfNeeded)
     return axIDs(children(updateChildrenIfNeeded));
 }
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 inline bool AXCoreObject::emitsNewline() const
 {
     auto behavior = textEmissionBehavior();
     return behavior == TextEmissionBehavior::Newline || behavior == TextEmissionBehavior::DoubleNewline;
 }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
 namespace Accessibility {
 
@@ -1615,6 +1660,22 @@ template<typename U> inline void performFunctionOnMainThread(U&& lambda)
     });
 }
 
+template<typename T = std::monostate>
+struct TimeoutSafeSemaphore : RefCounted<TimeoutSafeSemaphore<T>> {
+    // This struct is useful for passing in lambdas from one thread to another, as it is ref-counted,
+    // meaning it won't be destroyed out from any thread involved even when a timeout happens
+    // and one of the threads moves on (which would normally destroy the semaphore it had on
+    // the stack, causing a use-after-free).
+
+    BinarySemaphore semaphore;
+    std::atomic<bool> shouldSignal { true };
+    std::optional<T> value { std::nullopt };
+
+    void signal() { semaphore.signal(); }
+    bool wait(Seconds timeout) { return semaphore.waitFor(timeout); }
+};
+
+
 template<typename U>
 inline DidTimeout performFunctionOnMainThreadAndWaitWithTimeout(U&& lambda, Seconds timeout)
 {
@@ -1623,18 +1684,7 @@ inline DidTimeout performFunctionOnMainThreadAndWaitWithTimeout(U&& lambda, Seco
         return DidTimeout::No;
     }
 
-    // Because this is ref-counted, we can give it to the lambda to keep alive
-    // even if this thread gave up due to a timeout and moved on (which would normally destroy
-    // the semaphore, causing a use-after-free).
-    struct TimeoutSafeSemaphore : RefCounted<TimeoutSafeSemaphore> {
-        BinarySemaphore semaphore;
-        std::atomic<bool> shouldSignal { true };
-
-        void signal() { semaphore.signal(); }
-        bool wait(Seconds timeout) { return semaphore.waitFor(timeout); }
-    };
-
-    Ref<TimeoutSafeSemaphore> semaphore = adoptRef(*new TimeoutSafeSemaphore);
+    Ref<TimeoutSafeSemaphore<>> semaphore = adoptRef(*new TimeoutSafeSemaphore<>);
     ensureOnMainThread([semaphore, lambda = std::forward<U>(lambda)] () mutable {
         lambda();
         // Only signal if the calling thread didn't timeout waiting for the main-thread to complete the lambda.
@@ -1648,6 +1698,41 @@ inline DidTimeout performFunctionOnMainThreadAndWaitWithTimeout(U&& lambda, Seco
         semaphore->shouldSignal.exchange(false, std::memory_order_acq_rel);
     }
     return completedInTime ? DidTimeout::No : DidTimeout::Yes;
+}
+
+template<typename RetrieveValueType>
+struct TimeoutableValue {
+    // If a timeout ocurred, this will have std::nullopt.
+    std::optional<RetrieveValueType> value { std::nullopt };
+};
+
+template<typename U>
+inline auto retrieveValueFromMainThreadWithTimeout(U&& lambda, Seconds timeout)
+{
+    using RetrieveValueType = decltype(lambda());
+
+    if (isMainThread()) {
+        auto value = std::forward<U>(lambda)();
+        return TimeoutableValue<RetrieveValueType> { value };
+    }
+
+    Ref<TimeoutSafeSemaphore<RetrieveValueType>> semaphore = adoptRef(*new TimeoutSafeSemaphore<RetrieveValueType>);
+    ensureOnMainThread([semaphore, lambda = std::forward<U>(lambda)] () mutable {
+        // Execute lambda and store result.
+        semaphore->value = lambda();
+        // Only signal if the calling thread didn't timeout waiting for the main-thread to complete the lambda.
+        if (semaphore->shouldSignal.exchange(false, std::memory_order_acq_rel))
+            semaphore->signal();
+    });
+
+    bool completedInTime = semaphore->wait(timeout);
+    if (!completedInTime) {
+        // If we timed out, prevent a later signal attempt from the lambda.
+        semaphore->shouldSignal.exchange(false, std::memory_order_acq_rel);
+        return TimeoutableValue<RetrieveValueType> { std::nullopt };
+    }
+    // If we completed in time, the value was written before the signal, so we can safely read it.
+    return TimeoutableValue<RetrieveValueType> { semaphore->value };
 }
 
 template<typename T, typename U> inline T retrieveValueFromMainThread(U&& lambda)
@@ -1677,7 +1762,7 @@ using PlatformRoleMap = HashMap<AccessibilityRole, String, DefaultHash<unsigned>
 void initializeRoleMap();
 PlatformRoleMap createPlatformRoleMap();
 String roleToPlatformString(AccessibilityRole);
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 std::optional<AXTextMarkerRange> markerRangeFrom(NSRange, const AXCoreObject&);
 #endif
 Color defaultColor();

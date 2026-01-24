@@ -295,7 +295,7 @@ ExceptionOr<String> requireTrustedTypesForPreNavigationCheckPasses(ScriptExecuti
 
     auto convertedScriptSource = processValueWithDefaultPolicy(scriptExecutionContext, expectedType, scriptSource, sink);
     if (std::holds_alternative<Exception>(convertedScriptSource))
-        throwScope.clearException();
+        TRY_CLEAR_EXCEPTION(throwScope, WTF::move(std::get<Exception>(convertedScriptSource)));
     else if (!std::holds_alternative<std::monostate>(convertedScriptSource)) {
         auto stringifiedConvertedScriptSource = WTF::visit(TrustedTypeVisitor { }, convertedScriptSource);
 

@@ -242,13 +242,13 @@ bool isDataTableWithTraversal(HTMLTableElement& tableElement, AXObjectCache& cac
                     if (topSectionIndicatesLayoutTable(tableSectionElement))
                         return false;
                 } else if (elementName == ElementName::HTML_tbody)
-                    firstBody = firstBody ? firstBody : tableSectionElement;
+                    firstBody = firstBody ? firstBody : RefPtr { tableSectionElement };
                 else {
                     ASSERT_WITH_MESSAGE(elementName == ElementName::HTML_tfoot, "table section elements should always have either thead, tbody, or tfoot tag");
-                    firstFoot = firstFoot ? firstFoot : tableSectionElement;
+                    firstFoot = firstFoot ? firstFoot : RefPtr { tableSectionElement };
                 }
             } else if (auto* tableRow = dynamicDowncast<HTMLTableRowElement>(currentElement.get())) {
-                firstRow = firstRow ? firstRow : tableRow;
+                firstRow = firstRow ? firstRow : RefPtr { tableRow };
 
                 rowCount += 1;
                 if (isDataTableBasedOnRowColumnCount())

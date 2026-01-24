@@ -25,10 +25,16 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
+
 #if HAVE(AVROUTING_FRAMEWORK)
 
 #include <wtf/SoftLinking.h>
 
+// FIXME: Properly support using WKA in modules.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnon-modular-include-in-module"
 #include <WebKitAdditions/AVRoutingSoftLinkAdditions.h>
+#pragma clang diagnostic pop
 
 #endif // HAVE(AVROUTING_FRAMEWORK)

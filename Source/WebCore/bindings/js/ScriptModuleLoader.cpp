@@ -291,7 +291,7 @@ JSC::JSValue ScriptModuleLoader::evaluate(JSC::JSGlobalObject* jsGlobalObject, J
         if (RefPtr frame = downcast<Document>(*m_context).frame())
             RELEASE_AND_RETURN(scope, frame->script().evaluateModule(sourceURL, *moduleRecord, awaitedValue, resumeMode));
     } else {
-        if (auto* script = downcast<WorkerOrWorkletGlobalScope>(*m_context).script())
+        if (CheckedPtr script = downcast<WorkerOrWorkletGlobalScope>(*m_context).script())
             RELEASE_AND_RETURN(scope, script->evaluateModule(sourceURL, *moduleRecord, awaitedValue, resumeMode));
     }
     return JSC::jsUndefined();
@@ -356,9 +356,9 @@ JSC::JSInternalPromise* ScriptModuleLoader::importModule(JSC::JSGlobalObject* js
         parameters = ModuleFetchParameters::create(type, emptyString(), /* isTopLevelModule */ true);
 
         if (m_ownerType == OwnerType::Document) {
-            auto& document = downcast<Document>(*m_context);
-            baseURL = document.baseURL();
-            scriptFetcher = CachedScriptFetcher::create(document.charset());
+            CheckedRef document = downcast<Document>(*m_context);
+            baseURL = document->baseURL();
+            scriptFetcher = CachedScriptFetcher::create(document->charset());
         } else {
             // https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options
             baseURL = m_context->url();
@@ -433,7 +433,7 @@ JSC::JSObject* ScriptModuleLoader::createImportMetaProperties(JSC::JSGlobalObjec
         if (!domGlobalObject) [[unlikely]]
             return JSC::throwVMTypeError(globalObject, scope);
 
-        auto* context = domGlobalObject->scriptExecutionContext();
+        CheckedPtr context = domGlobalObject->scriptExecutionContext();
         if (!context) [[unlikely]]
             return JSC::throwVMTypeError(globalObject, scope);
 

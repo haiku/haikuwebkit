@@ -74,6 +74,7 @@ namespace JSC::LOL {
     macro(op_bitand) \
     macro(op_bitor) \
     macro(op_bitxor) \
+    macro(op_mov) \
 
 
 #define FOR_EACH_OP_WITH_SLOW_CASE(macro) \

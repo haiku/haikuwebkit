@@ -79,7 +79,7 @@
     if (!length)
         return nullptr;
     if (!text.is8Bit())
-        return reinterpret_cast<const unichar*>(text.span16().data());
+        return reinterpret_cast<const unichar*>(text.unsafeSpan16().data());
     if (_upconvertedText.isEmpty()) {
         auto characters = text.span8();
         _upconvertedText.appendRange(characters.begin(), characters.end());

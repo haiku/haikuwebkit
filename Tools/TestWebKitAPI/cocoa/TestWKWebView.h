@@ -209,6 +209,7 @@ class Color;
 - (Vector<WebCore::Color>)sampleColors;
 - (Vector<WebCore::Color>)sampleColorsWithInterval:(unsigned)interval;
 - (RetainPtr<_WKFrameTreeNode>)frameTree;
+- (void)typeCharacter:(char)character;
 @end
 
 #if PLATFORM(IOS_FAMILY)
@@ -251,7 +252,6 @@ class Color;
 - (BOOL)acceptsFirstMouseAtPoint:(NSPoint)pointInWindow;
 - (NSWindow *)hostWindow;
 - (void)typeCharacter:(char)character modifiers:(NSEventModifierFlags)modifiers;
-- (void)typeCharacter:(char)character;
 - (void)sendKey:(NSString *)characters code:(unsigned short)keyCode isDown:(BOOL)isDown modifiers:(NSEventModifierFlags)modifiers;
 - (void)setEventTimestampOffset:(NSTimeInterval)offset;
 @property (nonatomic, readonly) NSArray<NSString *> *collectLogsForNewConnections;

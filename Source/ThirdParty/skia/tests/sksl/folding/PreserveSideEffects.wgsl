@@ -4,7 +4,7 @@ struct _GlobalUniforms {
   colorGreen: vec4<f32>,
   colorRed: vec4<f32>,
 };
-@binding(0) @group(0) var<uniform> _globalUniforms: _GlobalUniforms;
+@group(0) @binding(0) var<uniform> _globalUniforms : _GlobalUniforms;
 fn test_matrix_b() -> bool {
   {
     var ok: bool = true;
@@ -187,8 +187,7 @@ fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
     var _skTemp28: vec4<f32>;
     var _skTemp29: bool;
     if _0_ok && (_1_num == 9.0) {
-      let _skTemp30 = test_matrix_b();
-      _skTemp29 = _skTemp30;
+      _skTemp29 = test_matrix_b();
     } else {
       _skTemp29 = false;
     }

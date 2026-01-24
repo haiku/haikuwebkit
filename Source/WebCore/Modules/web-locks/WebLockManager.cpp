@@ -263,14 +263,14 @@ void WebLockManager::didCompleteLockRequest(WebLockIdentifier lockIdentifier, bo
 
             Ref lock = WebLock::create(*request.lockIdentifier, request.name, request.mode);
             auto result = request.grantedCallback->invoke(lock.ptr());
-            RefPtr<DOMPromise> waitingPromise = result.type() == CallbackResultType::Success ? result.releaseReturnValue() : nullptr;
-            if (!waitingPromise || waitingPromise->isSuspended()) {
+            if (result.type() != CallbackResultType::Success || result.returnValue()->isSuspended()) {
                 manager.m_mainThreadBridge->releaseLock(*request.lockIdentifier, request.name);
                 manager.settleReleasePromise(*request.lockIdentifier, Exception { ExceptionCode::ExistingExceptionError });
                 return;
             }
 
-            DOMPromise::whenPromiseIsSettled(waitingPromise->globalObject(), waitingPromise->promise(), [weakThis = WeakPtr { manager }, lockIdentifier = *request.lockIdentifier, name = request.name, waitingPromise] {
+            Ref waitingPromise = result.releaseReturnValue();
+            waitingPromise->whenSettled([weakThis = WeakPtr { manager }, lockIdentifier = *request.lockIdentifier, name = request.name, waitingPromise] {
                 RefPtr protectedThis = weakThis.get();
                 if (!protectedThis)
                     return;
@@ -279,11 +279,12 @@ void WebLockManager::didCompleteLockRequest(WebLockIdentifier lockIdentifier, bo
             });
         } else {
             auto result = request.grantedCallback->invoke(nullptr);
-            RefPtr<DOMPromise> waitingPromise = result.type() == CallbackResultType::Success ? result.releaseReturnValue() : nullptr;
-            if (!waitingPromise || waitingPromise->isSuspended()) {
+            if (result.type() != CallbackResultType::Success || result.returnValue()->isSuspended()) {
                 manager.settleReleasePromise(*request.lockIdentifier, Exception { ExceptionCode::ExistingExceptionError });
                 return;
             }
+
+            Ref waitingPromise = result.releaseReturnValue();
             manager.settleReleasePromise(*request.lockIdentifier, static_cast<JSC::JSValue>(waitingPromise->promise()));
         }
     });
@@ -333,13 +334,13 @@ void WebLockManager::signalToAbortTheRequest(WebLockIdentifier lockIdentifier, J
         if (wasAborted && weakThis)
             weakThis->m_pendingRequests.remove(lockIdentifier);
     });
-    if (auto releasePromise = m_releasePromises.take(lockIdentifier))
+    if (RefPtr releasePromise = m_releasePromises.take(lockIdentifier))
         releasePromise->reject<IDLAny>(reason);
 }
 
 void WebLockManager::settleReleasePromise(WebLockIdentifier lockIdentifier, ExceptionOr<JSC::JSValue>&& result)
 {
-    auto releasePromise = m_releasePromises.take(lockIdentifier);
+    RefPtr releasePromise = m_releasePromises.take(lockIdentifier);
     if (!releasePromise)
         return;
 
@@ -360,8 +361,8 @@ void WebLockManager::clientIsGoingAway()
         return;
 
     // Reject all pending promises before clearing
-    for (auto& pair : m_releasePromises)
-        RefPtr { pair.value }->reject(ExceptionCode::AbortError, "Promise was rejected because the browsing context is going away"_s);
+    for (Ref promise : m_releasePromises.values())
+        promise->reject(ExceptionCode::AbortError, "Promise was rejected because the browsing context is going away"_s);
 
     m_pendingRequests.clear();
     m_releasePromises.clear();

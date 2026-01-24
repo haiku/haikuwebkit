@@ -75,15 +75,6 @@ static Vector<DDModel::DDVertexLayout> toCpp(NSArray<DDBridgeVertexLayout *> *la
     return result;
 }
 
-static Vector<DDModel::DDFloat4x4> toCpp(DDBridgeChainedFloat4x4 *input)
-{
-    Vector<DDModel::DDFloat4x4> result;
-    for ( ; input; input = input.next)
-        result.append(input.transform);
-
-    return result;
-}
-
 static DDModel::DDMeshPart toCpp(DDBridgeMeshPart *part)
 {
     return DDModel::DDMeshPart {
@@ -134,6 +125,73 @@ static Vector<String> toCpp(NSArray<NSString *> *stringVector)
     return result;
 }
 
+template<typename T>
+static Vector<T> toCpp(NSData *data)
+{
+    return Vector<T> { unsafeMakeSpan(static_cast<const T*>(data.bytes), data.length / sizeof(T)) };
+}
+
+template<typename T>
+static Vector<Vector<T>> toCpp(NSArray<NSData *> *dataVector)
+{
+    Vector<Vector<T>> result;
+    for (NSData *d in dataVector)
+        result.append(toCpp<T>(d));
+
+    return result;
+}
+
+static std::optional<WebCore::DDModel::DDSkinningData> toCpp(DDBridgeSkinningData* data)
+{
+    if (!data)
+        return std::nullopt;
+
+    return WebCore::DDModel::DDSkinningData {
+        .influencePerVertexCount = data.influencePerVertexCount,
+        .jointTransforms = toCpp<DDModel::DDFloat4x4>(data.jointTransformsData),
+        .inverseBindPoses = toCpp<DDModel::DDFloat4x4>(data.inverseBindPosesData),
+        .influenceJointIndices = toCpp<uint32_t>(data.influenceJointIndicesData),
+        .influenceWeights = toCpp<float>(data.influenceWeightsData),
+        .geometryBindTransform = data.geometryBindTransform
+    };
+}
+
+static std::optional<WebCore::DDModel::DDBlendShapeData> toCpp(DDBridgeBlendShapeData* data)
+{
+    if (!data)
+        return std::nullopt;
+
+    return WebCore::DDModel::DDBlendShapeData {
+        .weights = toCpp<float>(data.weights),
+        .positionOffsets = toCpp<DDModel::DDFloat3>(data.positionOffsets),
+        .normalOffsets = toCpp<DDModel::DDFloat3>(data.normalOffsets)
+    };
+}
+
+static std::optional<WebCore::DDModel::DDRenormalizationData> toCpp(DDBridgeRenormalizationData* data)
+{
+    if (!data)
+        return std::nullopt;
+
+    return WebCore::DDModel::DDRenormalizationData {
+        .vertexIndicesPerTriangle = toCpp<uint32_t>(data.vertexIndicesPerTriangle),
+        .vertexAdjacencies = toCpp<uint32_t>(data.vertexAdjacencies),
+        .vertexAdjacencyEndIndices = toCpp<uint32_t>(data.vertexAdjacencyEndIndices)
+    };
+}
+
+static std::optional<WebCore::DDModel::DDDeformationData> toCpp(DDBridgeDeformationData* data)
+{
+    if (!data)
+        return std::nullopt;
+
+    return WebCore::DDModel::DDDeformationData {
+        .skinningData = toCpp(data.skinningData),
+        .blendShapeData = toCpp(data.blendShapeData),
+        .renormalizationData = toCpp(data.renormalizationData)
+    };
+}
+
 static WebCore::DDModel::DDUpdateMeshDescriptor toCpp(DDBridgeUpdateMesh *update)
 {
     return WebCore::DDModel::DDUpdateMeshDescriptor {
@@ -143,8 +201,9 @@ static WebCore::DDModel::DDUpdateMeshDescriptor toCpp(DDBridgeUpdateMesh *update
         .parts = toCpp(update.parts),
         .indexData = makeVector(update.indexData),
         .vertexData = toCpp(update.vertexData),
-        .instanceTransforms = toCpp(update.instanceTransforms),
-        .materialPrims = toCpp(update.materialPrims)
+        .instanceTransforms = toCpp<DDModel::DDFloat4x4>(update.instanceTransformsData),
+        .materialPrims = toCpp(update.materialPrims),
+        .deformationData = toCpp(update.deformationData)
     };
 }
 

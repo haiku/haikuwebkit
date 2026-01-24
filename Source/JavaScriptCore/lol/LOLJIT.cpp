@@ -717,6 +717,9 @@ void LOLJIT::privateCompileSlowCases()
         DEFINE_SLOWCASE_SLOW_OP(to_property_key, OpToPropertyKey)
         DEFINE_SLOWCASE_SLOW_OP(to_property_key_or_number, OpToPropertyKeyOrNumber)
         DEFINE_SLOWCASE_SLOW_OP(typeof_is_function, OpTypeofIsFunction)
+
+        REPLAY_ALLOCATION_FOR_OP(op_mov, OpMov)
+
         default:
             RELEASE_ASSERT_NOT_REACHED();
         }
@@ -754,8 +757,6 @@ void LOLJIT::privateCompileSlowCases()
 #endif
 }
 
-// Comparison bytecodes
-
 template<typename Op>
     requires (LOLJIT::isImplemented(Op::opcodeID))
 void LOLJIT::emitCommonSlowPathSlowCaseCall(const JSInstruction* currentInstruction, Vector<SlowCaseEntry>::iterator& iter, SlowPathFunction stub)
@@ -778,6 +779,21 @@ void LOLJIT::emitCommonSlowPathSlowCaseCall(const JSInstruction*, Vector<SlowCas
 {
     UNREACHABLE_FOR_PLATFORM();
 }
+
+void LOLJIT::emit_op_mov(const JSInstruction* currentInstruction)
+{
+    auto bytecode = currentInstruction->as<OpMov>();
+    auto allocations = m_fastAllocator.allocate(*this, bytecode, m_bytecodeIndex);
+    auto [ sourceRegs ] = allocations.uses;
+    auto [ destRegs ] = allocations.defs;
+
+    moveValueRegs(sourceRegs, destRegs);
+
+    m_fastAllocator.releaseScratches(allocations);
+}
+
+// Comparison bytecodes
+
 
 void LOLJIT::emit_op_eq(const JSInstruction* currentInstruction)
 {

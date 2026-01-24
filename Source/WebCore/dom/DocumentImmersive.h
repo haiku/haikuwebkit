@@ -48,12 +48,12 @@ public:
     // Document+Immersive.idl methods.
     static bool immersiveEnabled(Document&);
     static Element* immersiveElement(Document&);
-    static void exitImmersive(Document&, RefPtr<DeferredPromise>&&);
+    static void exitImmersive(Document&, Ref<DeferredPromise>&&);
 
     // Helpers.
-    Document& document() { return m_document.get(); }
-    const Document& document() const { return m_document.get(); }
-    Ref<Document> protectedDocument() const { return m_document.get(); }
+    Document& document() { return m_document; }
+    const Document& document() const { return m_document; }
+    Ref<Document> protectedDocument() const { return m_document; }
 
     HTMLModelElement* immersiveElement() const;
     RefPtr<HTMLModelElement> protectedImmersiveElement() const { return immersiveElement(); }
@@ -77,6 +77,7 @@ private:
     WeakRef<Document, WeakPtrImplWithEventTargetData> m_document;
     WeakPtr<HTMLModelElement, WeakPtrImplWithEventTargetData> m_immersiveElement;
     void updateElementIsImmersive(HTMLModelElement*, bool);
+    void dismissClientImmersivePresentation(HTMLModelElement*, CompletionHandler<void()>&&);
 
     Deque<std::pair<EventType, GCReachableRef<Element>>> m_pendingEvents;
 };

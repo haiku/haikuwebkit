@@ -902,6 +902,13 @@ public:
         return isWatchingGlobalObjectWatchpoint(globalObject, set, LinkerIR::Type::ArrayIteratorProtocolWatchpointSet);
     }
 
+    bool isWatchingSetIteratorProtocolWatchpoint(Node* node)
+    {
+        JSGlobalObject* globalObject = globalObjectFor(node->origin.semantic);
+        InlineWatchpointSet& set = globalObject->setIteratorProtocolWatchpointSet();
+        return isWatchingGlobalObjectWatchpoint(globalObject, set, LinkerIR::Type::SetIteratorProtocolWatchpointSet);
+    }
+
     bool isWatchingNumberToStringWatchpoint(Node* node)
     {
         JSGlobalObject* globalObject = globalObjectFor(node->origin.semantic);

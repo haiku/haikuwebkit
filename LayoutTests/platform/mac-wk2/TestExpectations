@@ -1355,7 +1355,6 @@ webkit.org/b/240821 webgl/max-active-contexts-webglcontextlost-prevent-default.h
 webkit.org/b/241265 [ Debug ] imported/w3c/web-platform-tests/html/rendering/replaced-elements/svg-embedded-sizing/svg-in-object-percentage.html [ Pass Crash ]
 
 http/tests/workers/service/shownotification-allowed-document.html [ Pass ]
-http/tests/workers/service/shownotification-allowed.html [ Pass ]
 http/tests/workers/service/shownotification-invalid-data.html [ Pass ]
 http/wpt/push-api/pushEvent.any.serviceworker.html [ Pass ]
 imported/w3c/web-platform-tests/notifications/idlharness.https.any.html [ Pass ]
@@ -1430,7 +1429,6 @@ webkit.org/b/256217 [ Debug ] imported/w3c/web-platform-tests/background-fetch/p
 [ Debug ] imported/w3c/web-platform-tests/webcodecs/videoFrame-construction.crossOriginSource.sub.html [ Pass Failure ]
 imported/w3c/web-platform-tests/css/css-sizing/aspect-ratio/replaced-element-035.html [ Pass ImageOnlyFailure ]
 fast/forms/file/entries-api/image-no-transcode-open-panel.html [ Pass Crash ]
-[ Debug arm64 ] media/track/track-css-visible-stroke.html [ Pass Crash ]
 media/track/video-track-addition-and-frame-removal.html [ Pass Crash ]
 media/track/track-cue-left-align.html [ Pass Crash ]
 http/tests/media/modern-media-controls/skip-back-support/skip-back-support-live-broadcast.html [ Pass Crash ]
@@ -1500,8 +1498,6 @@ webkit.org/b/260113 [ arm64 ] http/wpt/webauthn/ctap-hid-failure.https.html [ Pa
 
 # rdar://108846032 (REGRESSION (263506@main): [ Sonoma wk2 ] fast/layoutformattingcontext/horizontal-sizing-with-trailing-letter-spacing.html: WebCore::Layout::Line::TrimmableTrailingContent::remove)
 [ Sonoma+ ] fast/layoutformattingcontext/horizontal-sizing-with-trailing-letter-spacing.html [ Skip ]
-
-webkit.org/b/239627 [ arm64 ] fast/scrolling/mac/adjust-scroll-snap-during-gesture.html [ Pass Failure ]
 
 # Enable Sonoma only test added in rdar://110488738.
 [ Sonoma+ ] accessibility/mac/attributed-string/attributed-string-has-completion-annotation.html [ Pass ]
@@ -2133,9 +2129,6 @@ webkit.org/b/293761 http/tests/navigation/keyboard-events-during-provisional-nav
 [ Debug ] fast/scrolling/mac/scrollbars/overflow-overlay-scrollbar-reveal.html [ Pass Crash ]
 [ Debug ] fast/scrolling/mac/scrollbars/overlay-scrollbar-reveal.html [ Pass Crash ]
 
-# It fails only on debug build with '0.01%' difference
-[ Debug ] imported/w3c/web-platform-tests/css/css-fill-stroke/paint-order-001.html [ ImageOnlyFailure ]
-
 webkit.org/b/295076 imported/w3c/web-platform-tests/css/css-pseudo/highlight-custom-properties-dynamic-001.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/295226 http/wpt/mediarecorder/MediaRecorder-audio-samplingrate-change.html [ Pass Failure ]
@@ -2163,7 +2156,7 @@ webkit.org/b/295743 [ Debug ] media/video-display-aspect-ratio.html [ Pass Failu
 # Digital Credentials tests timeout.
 [ Sequoia ] imported/w3c/web-platform-tests/digital-credentials/allow-attribute-with-get.https.html [ Skip ]
 [ Sequoia ] imported/w3c/web-platform-tests/digital-credentials/get.tentative.https.html [ Skip ]
-[ Sequoia ] imported/w3c/web-platform-tests/digital-credentials/user-activation.https.html [ Skip ]
+[ Sequoia ] imported/w3c/web-platform-tests/digital-credentials/user-activation-get.https.html [ Skip ]
 
 # FIXME: Needs bug.
 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-unfiltered-link-decoration-before-short-deletion.html [ Failure ]
@@ -2179,15 +2172,6 @@ webkit.org/b/295913 [ Sequoia Release arm64 ] media/video-seek-pause.html [ Pass
 webkit.org/b/295923 [ Release ] tiled-drawing/scrolling/scroll-with-top-left-content-inset.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/295938 scrollingcoordinator/mac/latching/horizontal-overflow-back-swipe-overscroll-behavior.html [ Pass Timeout ]
-
-# webkit.org/b/296008 [macOS Debug] http/tests/media/hls and platform/mac/media/encrypted-media tests are timing out on some EWS bots
-[ Sequoia Debug arm64 ] http/tests/media/hls/hls-audio-tracks-language.html [ Timeout ]
-[ Sequoia Debug arm64 ] http/tests/media/hls/hls-webvtt-default.html [ Timeout ]
-[ Sequoia Debug arm64 ] http/tests/media/hls/hls-webvtt-style.html [ Timeout ]
-[ Sequoia Debug arm64 ] http/tests/media/hls/range-request-cross-origin.html [ Timeout ]
-[ Sequoia Debug arm64 ] http/tests/media/hls/track-in-band-multiple-cues.html [ Timeout ]
-[ Sequoia Debug arm64 ] http/tests/media/hls/track-webvtt-multitracks.html [ Timeout ]
-[ Sequoia Debug arm64 ] platform/mac/media/encrypted-media/fps-generateRequest.html [ Timeout ]
 
 webkit.org/b/296017 [ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-021.html [ Pass ImageOnlyFailure ]
 
@@ -2387,22 +2371,12 @@ webkit.org/b/301566 [ Debug ] imported/w3c/web-platform-tests/custom-elements/re
 [ Release x86_64 ] imported/w3c/web-platform-tests/css/css-backgrounds/background-repeat-space-6.html [ ImageOnlyFailure ]
 [ Release x86_64 ] imported/w3c/web-platform-tests/css/css-backgrounds/background-repeat-space-7.html [ ImageOnlyFailure ]
 
-# webkit.org/b/301589 [Tahoe wk2 Debug arm64] 6 tests in http/tests/media/hls are timing out
-[ Tahoe Debug arm64 ] http/tests/media/hls/hls-audio-tracks-language.html [ Timeout ]
-[ Tahoe Debug arm64 ] http/tests/media/hls/hls-webvtt-default.html [ Timeout ]
-[ Tahoe Debug arm64 ] http/tests/media/hls/hls-webvtt-style.html [ Timeout ]
-[ Tahoe Debug arm64 ] http/tests/media/hls/range-request-cross-origin.html [ Timeout ]
-[ Tahoe Debug arm64 ] http/tests/media/hls/track-in-band-multiple-cues.html [ Timeout ]
-[ Tahoe Debug arm64 ] http/tests/media/hls/track-webvtt-multitracks.html [ Timeout ]
-
 # webkit.org/b/301951 3x fast/events/popup tests (layout-tests) are constantly timing out 
 fast/events/popup-blocking-timers1.html [ Timeout ]
 fast/events/popup-blocked-from-fake-user-gesture.html [ Timeout ]
 fast/events/popup-allowed-from-gesture-initiated-event.html [ Timeout ]
 
 webkit.org/b/302172 [ Debug ] imported/w3c/web-platform-tests/css/css-view-transitions/backdrop-filter-animated.html [ ImageOnlyFailure ]
-
-webkit.org/b/302174 [ Tahoe Debug arm64 ] platform/mac/media/encrypted-media/fps-generateRequest.html [ Timeout ]
 
 # webkit.org/b/302674 fast/webgpu/nocrash/fuzz-279542.html appears to cause other tests to timeout
 [ Tahoe Debug arm64 ] fast/webgpu/nocrash/ [ Skip ]
@@ -2441,8 +2415,37 @@ webkit.org/b/304851 imported/w3c/web-platform-tests/workers/worker-performance.w
 
 webkit.org/b/304995 [ Release ] imported/w3c/web-platform-tests/largest-contentful-paint/video-poster.html [ Pass Failure ]
 
-# webkit.org/b/305026 REGRESSION (305166@main): [ macOS ] http/tests/lazyload/lazy-image-load-in-iframes-scripting-disabled.html is a flaky crash
-http/tests/lazyload/lazy-image-load-in-iframes-scripting-disabled.html [ Pass Crash ]
-http/tests/lists/list-new-parent-no-sibling-append.html [ Pass Crash ]
-
 webkit.org/b/305086 [ arm64 ] imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-without-codecs-parameter.html [ Pass Failure ]
+
+webkit.org/b/305403 [ Sequoia ] http/tests/performance/performance-resource-timing-redirection-cross-origin-media.html [ Failure ]
+
+# webkit.org/b/296008 [macOS Debug] http/tests/media/hls and platform/mac/media/encrypted-media tests are timing out on some EWS bots
+[ Sequoia+ arm64 ] http/tests/media/hls/hls-audio-tracks-language.html [ Timeout ]
+[ Sequoia+ arm64 ] http/tests/media/hls/hls-webvtt-default.html [ Timeout ]
+[ Sequoia+ arm64 ] http/tests/media/hls/hls-webvtt-style.html [ Timeout ]
+[ Sequoia+ arm64 ] http/tests/media/hls/range-request-cross-origin.html [ Timeout ]
+[ Sequoia+ arm64 ] http/tests/media/hls/track-in-band-multiple-cues.html [ Timeout ]
+[ Sequoia+ arm64 ] http/tests/media/hls/track-webvtt-multitracks.html [ Timeout ]
+[ Sequoia+ arm64 ] platform/mac/media/encrypted-media/fps-generateRequest.html [ Timeout ]
+
+webkit.org/b/305508 http/tests/resourceLoadStatistics/log-cross-site-load-with-link-decoration.html [ Pass Failure ]
+
+webkit.org/b/305581 http/tests/workers/service/shownotification-allowed.html [ Pass Failure ]
+
+webkit.org/b/303348 http/tests/site-isolation/remote-frame-loaded-while-hidden.html [ ImageOnlyFailure ]
+
+webkit.org/b/305660 [ Debug ] http/tests/cache-storage/cache-clearing-all.https.html [ Pass Failure ]
+
+webkit.org/b/305671 fast/animation/css-animation-throttling.html [ Pass Failure ]
+
+webkit.org/b/305673 [ Debug ] inspector/idl-extensions/CanvasRenderingContext2D/setPath.html [ Timeout ]
+
+webkit.org/b/305675 fast/animation/request-animation-frame-throttle-subframe-zero-size.html [ Pass Failure ]
+
+webkit.org/b/305947 compositing/visibility/frameset-visibility-hidden.html [ ImageOnlyFailure Pass ]
+
+webkit.org/b/305958 imported/w3c/web-platform-tests/media-source/mediasource-changetype-play.html [ Pass Failure ]
+
+webkit.org/b/305959 fast/text/FontFaceSet-status-after-style-update.html [ Pass Failure ]
+
+webkit.org/b/306047 accessibility/mac/replaced-element-text-selection.html [ Pass Failure ]

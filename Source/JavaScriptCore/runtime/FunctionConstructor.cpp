@@ -200,7 +200,7 @@ JSObject* constructFunction(JSGlobalObject* globalObject, const ArgList& args, c
 
     if (!globalObject->evalEnabled()) [[unlikely]] {
         if (globalObject->trustedTypesEnforcement() != TrustedTypesEnforcement::EnforcedWithEvalEnabled) {
-            scope.clearException();
+            TRY_CLEAR_EXCEPTION(scope, nullptr);
             globalObject->globalObjectMethodTable()->reportViolationForUnsafeEval(globalObject, !code.isNull() ? WTF::move(code) : nullString());
             throwException(globalObject, scope, createEvalError(globalObject, globalObject->evalDisabledErrorMessage()));
             return nullptr;

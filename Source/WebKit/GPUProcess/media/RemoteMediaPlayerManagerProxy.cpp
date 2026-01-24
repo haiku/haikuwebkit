@@ -203,30 +203,6 @@ WTFLogChannel& RemoteMediaPlayerManagerProxy::logChannel() const
 }
 #endif
 
-std::optional<ShareableBitmap::Handle> RemoteMediaPlayerManagerProxy::bitmapImageForCurrentTime(WebCore::MediaPlayerIdentifier identifier)
-{
-    auto player = mediaPlayer(identifier);
-    if (!player)
-        return { };
-
-    auto image = player->nativeImageForCurrentTime();
-    if (!image)
-        return { };
-
-    auto imageSize = image->size();
-    auto bitmap = ShareableBitmap::create({ imageSize, player->colorSpace() });
-    if (!bitmap)
-        return { };
-
-    auto context = bitmap->createGraphicsContext();
-    if (!context)
-        return { };
-
-    context->drawNativeImage(*image, FloatRect { { }, imageSize }, FloatRect { { }, imageSize });
-
-    return bitmap->createHandle();
-}
-
 #if ENABLE(MEDIA_SOURCE)
 void RemoteMediaPlayerManagerProxy::registerMediaSource(RemoteMediaSourceIdentifier identifier, RemoteMediaSourceProxy& mediaSource)
 {

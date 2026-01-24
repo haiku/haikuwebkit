@@ -46,7 +46,7 @@ public:
     void receiveBytes(std::span<const uint8_t>, bool, std::optional<WebCore::Exception>&&);
     void receiveError(JSDOMGlobalObject&, JSC::JSValue error);
     void setStream(ReadableStream& stream) { m_stream = stream; }
-    RefPtr<ReadableStream> stream() const { return m_stream.get(); };
+    RefPtr<ReadableStream> stream() const { return m_stream; };
 
 private:
     WebTransportReceiveStreamSource();

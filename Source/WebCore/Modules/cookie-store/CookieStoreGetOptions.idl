@@ -27,7 +27,7 @@
 
 [
     JSGenerateToJSObject,
-    JSGenerateToNativeObject
+    JSGenerateToNativeObject,
 ] dictionary CookieStoreGetOptions {
     USVString name;
     USVString url;

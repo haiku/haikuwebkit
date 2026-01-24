@@ -51,7 +51,10 @@ class PlaybackSessionInterfaceIOS;
 
 - (void)setAllowsPictureInPicture:(BOOL)allowsPictureInPicture;
 
+#if !__has_feature(modules)
 @property (retain) AVPlayerController *playerControllerProxy;
+#endif
+
 @property (assign, nullable /*weak*/) WebCore::PlaybackSessionModel* delegate;
 @property (assign, nullable /*weak*/) WebCore::PlaybackSessionInterfaceIOS* playbackSessionInterface;
 

@@ -338,7 +338,7 @@ void TextTrack::removeAllCues()
     m_cues->clear();
 }
 
-TextTrackCueList* TextTrack::activeCues() const
+TextTrackCueList* TextTrack::activeCues() const LIFETIME_BOUND
 {
     // 4.8.10.12.5 If the text track mode ... is not the text track disabled mode,
     // then the activeCues attribute must return a live TextTrackCueList object ...

@@ -448,12 +448,10 @@ Vector<Ref<ApplePayError>> ApplePayPaymentHandler::computeErrors(String&& error,
 
     computePayerErrors(WTF::move(payerErrors), errors);
 
-    auto scope = DECLARE_CATCH_SCOPE(protectedScriptExecutionContext()->protectedVM().get());
+    auto scope = DECLARE_THROW_SCOPE(protectedScriptExecutionContext()->protectedVM().get());
     auto exception = computePaymentMethodErrors(paymentMethodErrors, errors);
-    if (exception.hasException()) {
-        ASSERT(scope.exception());
-        scope.clearException();
-    }
+    if (exception.hasException())
+        TRY_CLEAR_EXCEPTION(scope, errors);
 
     return errors;
 }
@@ -462,12 +460,10 @@ Vector<Ref<ApplePayError>> ApplePayPaymentHandler::computeErrors(JSC::JSObject* 
 {
     Vector<Ref<ApplePayError>> errors;
 
-    auto scope = DECLARE_CATCH_SCOPE(protectedScriptExecutionContext()->protectedVM().get());
+    auto scope = DECLARE_THROW_SCOPE(protectedScriptExecutionContext()->protectedVM().get());
     auto exception = computePaymentMethodErrors(paymentMethodErrors, errors);
-    if (exception.hasException()) {
-        ASSERT(scope.exception());
-        scope.clearException();
-    }
+    if (exception.hasException())
+        TRY_CLEAR_EXCEPTION(scope, errors);
 
     return errors;
 }

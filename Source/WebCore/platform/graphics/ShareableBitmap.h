@@ -47,6 +47,8 @@ class GraphicsContext;
 class Image;
 class NativeImage;
 
+inline constexpr auto defaultCopyOnWrite = SharedMemory::CopyOnWrite::No;
+
 class ShareableBitmapConfiguration {
 public:
     ShareableBitmapConfiguration() = default;
@@ -151,7 +153,7 @@ public:
     WEBCORE_EXPORT static RefPtr<ShareableBitmap> createFromImageDraw(NativeImage&, const DestinationColorSpace&, const IntSize& destinationSize, const IntSize& sourceSize);
 
     // Create a shareable bitmap from a handle.
-    WEBCORE_EXPORT static RefPtr<ShareableBitmap> create(Handle&&, SharedMemory::Protection = SharedMemory::Protection::ReadWrite);
+    WEBCORE_EXPORT static RefPtr<ShareableBitmap> create(Handle&&, SharedMemory::Protection = SharedMemory::Protection::ReadWrite, SharedMemory::CopyOnWrite = defaultCopyOnWrite);
 
     // Create a shareable bitmap from a ReadOnly handle.
     WEBCORE_EXPORT static std::optional<Ref<ShareableBitmap>> createReadOnly(std::optional<Handle>&&);

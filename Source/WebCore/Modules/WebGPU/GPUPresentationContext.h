@@ -49,7 +49,7 @@ public:
         return adoptRef(*new GPUPresentationContext(WTF::move(backing)));
     }
 
-    WARN_UNUSED_RETURN bool configure(const GPUCanvasConfiguration&, GPUIntegerCoordinate, GPUIntegerCoordinate, bool);
+    [[nodiscard]] bool configure(const GPUCanvasConfiguration&, GPUIntegerCoordinate, GPUIntegerCoordinate, bool);
     void unconfigure();
 
     RefPtr<GPUTexture> getCurrentTexture(uint32_t);

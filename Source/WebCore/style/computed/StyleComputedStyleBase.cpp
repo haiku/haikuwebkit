@@ -65,7 +65,6 @@ static_assert(!(static_cast<unsigned>(maxTextTransformValue) >> TextTransformBit
 // Value zero is used to indicate no pseudo-element.
 static_assert(!((enumToUnderlyingType(PseudoElementType::HighestEnumValue) + 1) >> PseudoElementTypeBits));
 
-DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(PseudoStyleCache);
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(ComputedStyleBase);
 
 ComputedStyleBase::~ComputedStyleBase()
@@ -103,10 +102,7 @@ std::optional<PseudoElementIdentifier> ComputedStyleBase::pseudoElementIdentifie
 
 RenderStyle* ComputedStyleBase::getCachedPseudoStyle(const PseudoElementIdentifier& pseudoElementIdentifier) const
 {
-    if (!m_cachedPseudoStyles)
-        return nullptr;
-
-    return m_cachedPseudoStyles->styles.get(pseudoElementIdentifier);
+    return m_cachedPseudoStyles.get(pseudoElementIdentifier);
 }
 
 RenderStyle* ComputedStyleBase::addCachedPseudoStyle(std::unique_ptr<RenderStyle> pseudo)
@@ -117,12 +113,7 @@ RenderStyle* ComputedStyleBase::addCachedPseudoStyle(std::unique_ptr<RenderStyle
     ASSERT(pseudo->pseudoElementType());
 
     auto* result = pseudo.get();
-
-    if (!m_cachedPseudoStyles)
-        m_cachedPseudoStyles = makeUnique<PseudoStyleCache>();
-
-    m_cachedPseudoStyles->styles.add(*result->pseudoElementIdentifier(), WTF::move(pseudo));
-
+    m_cachedPseudoStyles.add(*result->pseudoElementIdentifier(), WTF::move(pseudo));
     return result;
 }
 
@@ -130,7 +121,7 @@ RenderStyle* ComputedStyleBase::addCachedPseudoStyle(std::unique_ptr<RenderStyle
 
 const CustomProperty* ComputedStyleBase::customPropertyValue(const AtomString& name) const
 {
-    for (auto* map : { &nonInheritedCustomProperties(), &inheritedCustomProperties() }) {
+    for (RefPtr map : { &nonInheritedCustomProperties(), &inheritedCustomProperties() }) {
         if (auto* value = map->get(name))
             return value;
     }
@@ -141,10 +132,10 @@ void ComputedStyleBase::setCustomPropertyValue(Ref<const CustomProperty>&& value
 {
     auto& name = value->name();
     if (isInherited) {
-        if (auto* existingValue = m_inheritedRareData->customProperties->get(name); !existingValue || *existingValue != value.get())
+        if (RefPtr existingValue = m_inheritedRareData->customProperties->get(name); !existingValue || *existingValue != value.get())
             m_inheritedRareData.access().customProperties.access().set(name, WTF::move(value));
     } else {
-        if (auto* existingValue = m_nonInheritedData->rareData->customProperties->get(name); !existingValue || *existingValue != value.get())
+        if (RefPtr existingValue = m_nonInheritedData->rareData->customProperties->get(name); !existingValue || *existingValue != value.get())
             m_nonInheritedData.access().rareData.access().customProperties.access().set(name, WTF::move(value));
     }
 }
@@ -154,8 +145,8 @@ bool ComputedStyleBase::customPropertyValueEqual(const ComputedStyleBase& other,
     if (&nonInheritedCustomProperties() == &other.nonInheritedCustomProperties() && &inheritedCustomProperties() == &other.inheritedCustomProperties())
         return true;
 
-    auto* value = customPropertyValue(name);
-    auto* otherValue = other.customPropertyValue(name);
+    RefPtr value = customPropertyValue(name);
+    RefPtr otherValue = other.customPropertyValue(name);
     if (value == otherValue)
         return true;
     if (!value || !otherValue)
@@ -187,8 +178,8 @@ void ComputedStyleBase::deduplicateCustomProperties(const ComputedStyleBase& oth
 
 void ComputedStyleBase::addCustomPaintWatchProperty(const AtomString& name)
 {
-    auto& data = m_nonInheritedData.access().rareData.access();
-    data.customPaintWatchedProperties.add(name);
+    Ref data = m_nonInheritedData.access().rareData.access();
+    data->customPaintWatchedProperties.add(name);
 }
 
 // MARK: - FontCascade support.

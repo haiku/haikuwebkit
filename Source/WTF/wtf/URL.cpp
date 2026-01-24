@@ -94,7 +94,7 @@ URL URL::isolatedCopy() &&
     return result;
 }
 
-StringView URL::lastPathComponent() const
+StringView URL::lastPathComponent() const LIFETIME_BOUND
 {
     if (!hasPath())
         return { };
@@ -157,7 +157,7 @@ unsigned URL::pathStart() const
     return start;
 }
 
-StringView URL::protocol() const
+StringView URL::protocol() const LIFETIME_BOUND
 {
     if (!m_isValid)
         return { };
@@ -165,7 +165,7 @@ StringView URL::protocol() const
     return StringView(m_string).left(m_schemeEnd);
 }
 
-StringView URL::host() const
+StringView URL::host() const LIFETIME_BOUND
 {
     if (!m_isValid)
         return { };
@@ -244,12 +244,12 @@ String URL::password() const
     return decodeEscapeSequencesFromParsedURL(encodedPassword());
 }
 
-StringView URL::encodedUser() const
+StringView URL::encodedUser() const LIFETIME_BOUND
 {
     return StringView(m_string).substring(m_userStart, m_userEnd - m_userStart);
 }
 
-StringView URL::encodedPassword() const
+StringView URL::encodedPassword() const LIFETIME_BOUND
 {
     if (m_passwordEnd == m_userEnd)
         return { };
@@ -257,7 +257,7 @@ StringView URL::encodedPassword() const
     return StringView(m_string).substring(m_userEnd + 1, m_passwordEnd - m_userEnd - 1);
 }
 
-StringView URL::fragmentIdentifier() const
+StringView URL::fragmentIdentifier() const LIFETIME_BOUND
 {
     if (!hasFragmentIdentifier())
         return { };
@@ -403,7 +403,7 @@ bool URL::protocolIs(StringView protocol) const
     return true;
 }
 
-StringView URL::query() const
+StringView URL::query() const LIFETIME_BOUND
 {
     if (m_queryEnd == m_pathEnd)
         return { };
@@ -411,7 +411,7 @@ StringView URL::query() const
     return StringView(m_string).substring(m_pathEnd + 1, m_queryEnd - (m_pathEnd + 1));
 }
 
-StringView URL::path() const
+StringView URL::path() const LIFETIME_BOUND
 {
     if (!m_isValid)
         return { };
@@ -775,7 +775,7 @@ void URL::setPath(StringView path)
     ));
 }
 
-StringView URL::viewWithoutQueryOrFragmentIdentifier() const
+StringView URL::viewWithoutQueryOrFragmentIdentifier() const LIFETIME_BOUND
 {
     if (!m_isValid)
         return m_string;
@@ -783,7 +783,7 @@ StringView URL::viewWithoutQueryOrFragmentIdentifier() const
     return StringView(m_string).left(pathEnd());
 }
 
-StringView URL::viewWithoutFragmentIdentifier() const
+StringView URL::viewWithoutFragmentIdentifier() const LIFETIME_BOUND
 {
     if (!m_isValid)
         return m_string;
@@ -1144,7 +1144,7 @@ URL URL::fileURLWithFileSystemPath(StringView path)
     ));
 }
 
-StringView URL::queryWithLeadingQuestionMark() const
+StringView URL::queryWithLeadingQuestionMark() const LIFETIME_BOUND
 {
     if (m_queryEnd <= m_pathEnd)
         return { };
@@ -1152,7 +1152,7 @@ StringView URL::queryWithLeadingQuestionMark() const
     return StringView(m_string).substring(m_pathEnd, m_queryEnd - m_pathEnd);
 }
 
-StringView URL::fragmentIdentifierWithLeadingNumberSign() const
+StringView URL::fragmentIdentifierWithLeadingNumberSign() const LIFETIME_BOUND
 {
     if (!m_isValid || m_string.length() <= m_queryEnd)
         return { };

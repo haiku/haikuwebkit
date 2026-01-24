@@ -394,6 +394,13 @@ TemporalPlainDate::toYearMonth(JSGlobalObject* globalObject, JSObject* temporalD
             return { };
         }
 
+        // See step 9(c)(iv) of PrepareCalendarFields
+        // https://tc39.es/proposal-temporal/#sec-temporal-preparecalendarfields
+        if (doubleMonth <= 0) {
+            throwRangeError(globalObject, scope, "month property must be a positive integer"_s);
+            return { };
+        }
+
         if (!isInBounds<int32_t>(doubleMonth)) [[unlikely]] {
             // Later checks will report error
             month = ISO8601::outOfRangeYear;

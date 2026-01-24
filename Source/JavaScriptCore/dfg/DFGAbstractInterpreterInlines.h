@@ -57,6 +57,7 @@
 #include "RegExpPrototype.h"
 #include "SetPrivateBrandStatus.h"
 #include "StringObject.h"
+#include "StringPrototypeInlines.h"
 #include "StructureCache.h"
 #include "StructureRareDataInlines.h"
 #include "WasmTypeDefinitionInlines.h"
@@ -2594,28 +2595,24 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         break;
     }
         
-    case StringCodePointAt:
-        setNonCellTypeForNode(node, SpecInt32Only);
-        break;
-
     case StringIndexOf:
         setNonCellTypeForNode(node, SpecInt32Only);
         break;
 
-    case StringFromCharCode:
-        switch (node->child1().useKind()) {
-        case Int32Use:
-        case KnownInt32Use:
-            break;
-        case UntypedUse:
+    case StringFromCharCode: {
+        if (node->child1().useKind() == Int32Use || node->child1().useKind() == KnownInt32Use) {
+            if (node->child1()->isInt32Constant() && node->child1()->asUInt32() <= maxSingleCharacterString) {
+                JSString* string = m_vm.smallStrings.singleCharacterString(static_cast<unsigned char>(node->child1()->asUInt32()));
+                setConstant(node, *m_graph.freeze(string));
+                break;
+            }
+        } else if (node->child1().useKind() == UntypedUse)
             clobberWorld();
-            break;
-        default:
+        else
             DFG_CRASH(m_graph, node, "Bad use kind");
-            break;
-        }
         setTypeForNode(node, SpecStringResolved);
         break;
+    }
 
     case StringCharAt: {
         auto& value = forNode(node->child1());
@@ -2631,12 +2628,16 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         break;
     }
 
-    case StringCharCodeAt: {
+    case StringCharCodeAt:
+    case StringCodePointAt: {
         if (auto string = node->child1()->tryGetString(m_graph); !string.isNull()) {
             if (node->child2()->isInt32Constant()) {
                 int32_t index = node->child2()->asInt32();
                 if (index >= 0 && static_cast<unsigned>(index) < string.length()) {
-                    setConstant(node, jsNumber(string.characterAt(static_cast<unsigned>(index))));
+                    if (node->op() == StringCharCodeAt)
+                        setConstant(node, jsNumber(string.characterAt(static_cast<unsigned>(index))));
+                    else
+                        setConstant(node, jsNumber(codePointAt(string, static_cast<unsigned>(index), string.length())));
                     break;
                 }
             }
@@ -3668,9 +3669,13 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         case PhantomCreateRest:
             break;
         default:
-            if (!m_graph.canDoFastSpread(node, forNode(node->child1())))
-                clobberWorld();
-            else
+            if (!m_graph.canDoFastSpread(node, forNode(node->child1()))) {
+                // SetObjectUse has no side effects since we iterate directly over internal storage.
+                if (node->child1().useKind() == SetObjectUse)
+                    didFoldClobberWorld();
+                else
+                    clobberWorld();
+            } else
                 didFoldClobberWorld();
             break;
         }

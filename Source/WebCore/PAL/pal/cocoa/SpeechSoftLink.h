@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 #include <wtf/Platform.h>
 
 #if HAVE(SPEECHRECOGNIZER)
@@ -42,3 +45,5 @@ SOFT_LINK_CLASS_FOR_HEADER(PAL, SFTranscriptionSegment);
 SOFT_LINK_CLASS_FOR_HEADER(PAL, SFTranscription);
 
 #endif
+
+#endif // !__has_feature(modules)

@@ -40,16 +40,32 @@ public:
     NonCompositedFrameRenderer(WebPage&);
     ~NonCompositedFrameRenderer();
 
+    void setNeedsDisplayInRect(const WebCore::IntRect&);
+
     void display();
+
+#if ENABLE(DAMAGE_TRACKING)
+    void resetDamageHistoryForTesting();
+    void foreachRegionInDamageHistoryForTesting(Function<void(const WebCore::Region&)>&&);
+#endif
 
 private:
     bool initialize();
+
+#if ENABLE(DAMAGE_TRACKING)
+    void resetFrameDamage();
+#endif
 
     WeakRef<WebPage> m_webPage;
     Ref<AcceleratedSurface> m_surface;
     std::unique_ptr<WebCore::GLContext> m_context;
     bool m_canRenderNextFrame { true };
     bool m_shouldRenderFollowupFrame { false };
+#if ENABLE(DAMAGE_TRACKING)
+    std::optional<WebCore::Damage> m_frameDamage;
+    Lock m_frameDamageHistoryForTestingLock;
+    std::optional<Vector<WebCore::Region>> m_frameDamageHistoryForTesting WTF_GUARDED_BY_LOCK(m_frameDamageHistoryForTestingLock);
+#endif
 };
 
 } // namespace WebKit

@@ -70,6 +70,8 @@ private:
     DDMeshImpl& operator=(const DDMeshImpl&) = delete;
     DDMeshImpl& operator=(DDMeshImpl&&) = delete;
 
+    bool isDDMeshImpl() const final { return true; }
+
     void setLabelInternal(const String&) final;
     void update(const DDUpdateMeshDescriptor&) final;
     void updateTexture(const DDUpdateTextureDescriptor&) final;
@@ -78,6 +80,7 @@ private:
     std::optional<DDFloat4x4> entityTransform() const final;
     void setCameraDistance(float) final;
     void play(bool) final;
+    void setEnvironmentMap(const WebCore::DDModel::DDImageAsset&) final;
 
     void render() final;
 
@@ -90,5 +93,9 @@ private:
 };
 
 }
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::DDModel::DDMeshImpl)
+    static bool isType(const WebCore::DDModel::DDMesh& mesh) { return mesh.isDDMeshImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

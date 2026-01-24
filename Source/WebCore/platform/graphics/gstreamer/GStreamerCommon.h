@@ -85,7 +85,7 @@ inline bool gst_check_version(guint major, guint minor, guint micro)
 #define GST_AUDIO_CAPS_TYPE_PREFIX  "audio/"_s
 #define GST_TEXT_CAPS_TYPE_PREFIX   "text/"_s
 
-WARN_UNUSED_RETURN GstPad* webkitGstGhostPadFromStaticTemplate(GstStaticPadTemplate*, CStringView name, GstPad* target);
+[[nodiscard]] GstPad* webkitGstGhostPadFromStaticTemplate(GstStaticPadTemplate*, CStringView name, GstPad* target);
 #if ENABLE(VIDEO)
 bool getVideoSizeAndFormatFromCaps(const GstCaps*, WebCore::IntSize&, GstVideoFormat&, int& pixelAspectRatioNumerator, int& pixelAspectRatioDenominator, int& stride, double& frameRate, PlatformVideoColorSpace&);
 std::optional<FloatSize> getVideoResolutionFromCaps(const GstCaps*);
@@ -329,7 +329,7 @@ void configureVideoDecoderForHarnessing(const GRefPtr<GstElement>&);
 
 void configureMediaStreamAudioDecoder(GstElement*);
 
-void configureMediaStreamVideoDecoder(GstElement*);
+String configureMediaStreamVideoDecoder(GstElement*);
 void configureVideoRTPDepayloader(GstElement*);
 
 bool gstObjectHasProperty(GstObject*, ASCIILiteral name);
@@ -376,7 +376,7 @@ String gstIdToString(GstId);
 void gstStructureFilterAndMapInPlace(GstStructure*, Function<bool(GstId, GValue*)>&&);
 
 #if USE(GBM)
-WARN_UNUSED_RETURN GRefPtr<GstCaps> buildDMABufCaps();
+[[nodiscard]] GRefPtr<GstCaps> buildDMABufCaps();
 #endif
 
 #if USE(GSTREAMER_GL)

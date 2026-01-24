@@ -77,8 +77,10 @@ declare_args() {
   # Currently only supported in Android framework
   skia_android_framework_use_perfetto = false
   skia_use_piex = !is_win && !is_wasm
+  skia_use_rust_icc = false
   skia_use_rust_png_decode = false
   skia_use_rust_png_encode = false
+  skia_use_rust_bmp_decode = false
   skia_use_sfml = false
   skia_use_webgl = is_wasm
   skia_use_webgpu = is_wasm
@@ -160,6 +162,11 @@ declare_args() {
 
   # libgrapheme sources
   skia_libgrapheme_third_party_dir = "//third_party/libgrapheme"
+}
+
+declare_args() {
+  # Deprecated. TODO(kjlubick, egdaniel) Remove after updating graphite/Android
+  skia_use_backup_vma = skia_use_vma && skia_use_vulkan
 }
 
 assert(!skia_use_dawn || skia_enable_graphite)  # Dawn is Graphite-only

@@ -72,6 +72,8 @@ typedef struct WGPUDDCreateMeshDescriptor {
     unsigned width;
     unsigned height;
     Vector<RetainPtr<IOSurfaceRef>> ioSurfaces;
+    id diffuseTexture;
+    id specularTexture;
 } WGPUDDCreateMeshDescriptor;
 
 const int WGPUTextureSampleType_ExternalTexture = WGPUTextureSampleType_Force32 - 1;
@@ -106,6 +108,7 @@ WGPU_EXPORT void wgpuDDMeshRender(WGPUDDMesh mesh);
 WGPU_EXPORT void wgpuDDMeshSetTransform(WGPUDDMesh mesh, const simd_float4x4& transform);
 WGPU_EXPORT void wgpuDDMeshSetCameraDistance(WGPUDDMesh mesh, float distance);
 WGPU_EXPORT void wgpuDDMeshPlay(WGPUDDMesh mesh, bool autoplay);
+WGPU_EXPORT void wgpuDDMeshSetEnvironmentMap(WGPUDDMesh mesh, id);
 
 WGPU_EXPORT void wgpuRenderBundleSetLabel(WGPURenderBundle renderBundle, char const * label);
 

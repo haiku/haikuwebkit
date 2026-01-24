@@ -125,7 +125,7 @@ AudioBus& AudioNodeOutput::pull(AudioBus* inPlaceBus, size_t framesToProcess)
     return bus();
 }
 
-AudioBus& AudioNodeOutput::bus() const
+AudioBus& AudioNodeOutput::bus() const LIFETIME_BOUND
 {
     ASSERT(const_cast<AudioNodeOutput*>(this)->context().isAudioThread());
     return m_inPlaceBus ? *m_inPlaceBus : m_internalBus.get();

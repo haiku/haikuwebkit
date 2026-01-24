@@ -54,7 +54,7 @@ void WebTransportDatagramDuplexStream::attachTo(WebTransport& transport)
     m_transport = transport;
 }
 
-ExceptionOr<Ref<WritableStream>> WebTransportDatagramDuplexStream::createWritable(ScriptExecutionContext& context, WebTransportSendOptions&& options)
+ExceptionOr<Ref<WebTransportDatagramsWritable>> WebTransportDatagramDuplexStream::createWritable(ScriptExecutionContext& context, WebTransportSendOptions&& options)
 {
     return WebTransportDatagramsWritable::create(context, m_transport.get(), WTF::move(options));
 }

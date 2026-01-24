@@ -88,6 +88,13 @@ svg/W3C-SVG-1.1/painting-marker-03-f.svg [ Failure ]
 
 webkit.org/b/131347 svg/custom/hidpi-masking-clipping.svg [ Pass ImageOnlyFailure ]
 
+fast/forms/input-text-max-length-emojis.html [ Failure ]
+
+webkit.org/b/188509 fast/dom/Window/window-resize-update-scrollbars.html [ Timeout ]
+
+# Doesn't support removeViewFromWindow()
+media/no-fullscreen-when-hidden.html [ Skip ]
+
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End of Triaged Expectations
 #//////////////////////////////////////////////////////////////////////////////////////////

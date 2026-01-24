@@ -36,7 +36,7 @@
 namespace WebKit {
 
 FrameProcess::FrameProcess(WebProcessProxy& process, BrowsingContextGroup& group, const std::optional<WebCore::Site>& site, const WebCore::Site& mainFrameSite,
-    const WebPreferences& preferences, LoadedWebArchive loadedWebArchive, InjectBrowsingContextIntoProcess injectBrowsingContextIntoProcess)
+    const WebPreferences& preferences, LoadedWebArchive loadedWebArchive, BrowsingContextGroupUpdate browsingContextGroupUpdate)
     : m_process(process)
     , m_browsingContextGroup(group)
     , m_site(site)
@@ -48,8 +48,10 @@ FrameProcess::FrameProcess(WebProcessProxy& process, BrowsingContextGroup& group
         return;
     }
 
-    if (injectBrowsingContextIntoProcess == InjectBrowsingContextIntoProcess::Yes)
+    if (browsingContextGroupUpdate == BrowsingContextGroupUpdate::AddProcessAndInjectBrowsingContext)
         group.addFrameProcess(*this);
+    else if (browsingContextGroupUpdate == BrowsingContextGroupUpdate::AddProcess)
+        group.addFrameProcessWithoutInjectingPageContext(*this);
 
     if (!m_isArchiveProcess)
         process.didStartUsingProcessForSiteIsolation(site, mainFrameSite);

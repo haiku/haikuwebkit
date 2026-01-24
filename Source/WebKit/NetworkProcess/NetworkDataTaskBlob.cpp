@@ -74,7 +74,7 @@ static RefPtr<BlobData> blobDataFrom(NetworkSession& session, const WebCore::Res
     return session.blobRegistry().blobDataFromURL(request.url(), topOriginData);
 }
 
-NetworkDataTaskBlob::NetworkDataTaskBlob(NetworkSession& session, NetworkDataTaskClient& client, const ResourceRequest& request, const Vector<RefPtr<WebCore::BlobDataFileReference>>& fileReferences, const RefPtr<SecurityOrigin>& topOrigin)
+NetworkDataTaskBlob::NetworkDataTaskBlob(NetworkSession& session, NetworkDataTaskClient& client, const ResourceRequest& request, const Vector<Ref<WebCore::BlobDataFileReference>>& fileReferences, const RefPtr<SecurityOrigin>& topOrigin)
     : NetworkDataTask(session, client, request, StoredCredentialsPolicy::DoNotUse, false, false, false)
     , BlobResourceHandleBase(true /* async */, blobDataFrom(session, request, topOrigin.get()))
     , m_fileReferences(fileReferences)

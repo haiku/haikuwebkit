@@ -359,11 +359,6 @@ public:
         return m_genericSmallArena.deallocate(p);
     }
 
-    void alignedFree(void* p)
-    {
-        return free(p);
-    }
-
     void* realloc(void* p, size_t newSize)
     {
         ASSERT(m_alive);

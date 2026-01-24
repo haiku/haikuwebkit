@@ -60,8 +60,8 @@ public:
     SMILTimeContainer* timeContainer() { return m_timeContainer.get(); }
     RefPtr<SMILTimeContainer> protectedTimeContainer() const;
 
-    SVGElement* targetElement() const { return m_targetElement.get(); }
-    RefPtr<SVGElement> protectedTargetElement() const { return m_targetElement.get(); }
+    SVGElement* targetElement() const { return m_targetElement; }
+    RefPtr<SVGElement> protectedTargetElement() const { return m_targetElement; }
     const QualifiedName& attributeName() const { return m_attributeName; }
 
     void beginByLinkActivation();

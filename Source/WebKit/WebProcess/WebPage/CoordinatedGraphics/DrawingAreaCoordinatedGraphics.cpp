@@ -100,18 +100,20 @@ void DrawingAreaCoordinatedGraphics::setNeedsDisplayInRect(const IntRect& rect)
 #endif
         return;
     }
-#if PLATFORM(WPE)
-    else if (m_nonCompositedFrameRenderer) {
-        ASSERT(m_dirtyRegion.isEmpty());
-        scheduleDisplay();
-        return;
-    }
-#endif
 
     IntRect dirtyRect = rect;
     dirtyRect.intersect(m_webPage->bounds());
     if (dirtyRect.isEmpty())
         return;
+
+#if PLATFORM(WPE)
+    if (m_nonCompositedFrameRenderer) {
+        ASSERT(m_dirtyRegion.isEmpty());
+        m_nonCompositedFrameRenderer->setNeedsDisplayInRect(dirtyRect);
+        scheduleDisplay();
+        return;
+    }
+#endif
 
     m_dirtyRegion.unite(dirtyRect);
     scheduleDisplay();
@@ -179,6 +181,7 @@ void DrawingAreaCoordinatedGraphics::updateRenderingWithForcedRepaint()
     if (!m_layerTreeHost) {
 #if PLATFORM(WPE)
         if (m_nonCompositedFrameRenderer) {
+            m_nonCompositedFrameRenderer->setNeedsDisplayInRect(m_webPage->bounds());
             display();
             return;
         }
@@ -395,8 +398,10 @@ void DrawingAreaCoordinatedGraphics::updateGeometry(const IntSize& size, Complet
     if (m_layerTreeHost)
         m_layerTreeHost->sizeDidChange();
 #if PLATFORM(WPE)
-    else if (m_nonCompositedFrameRenderer)
+    else if (m_nonCompositedFrameRenderer) {
+        m_nonCompositedFrameRenderer->setNeedsDisplayInRect({ { }, size });
         m_nonCompositedFrameRenderer->display();
+    }
 #endif
     else {
         m_dirtyRegion = IntRect(IntPoint(), size);
@@ -442,7 +447,9 @@ void DrawingAreaCoordinatedGraphics::dispatchAfterEnsuringDrawing(IPC::AsyncRepl
     } else {
         if (!m_isPaintingSuspended) {
 #if PLATFORM(WPE)
-            if (!m_nonCompositedFrameRenderer)
+            if (m_nonCompositedFrameRenderer)
+                m_nonCompositedFrameRenderer->setNeedsDisplayInRect(m_webPage->bounds());
+            else
 #endif
             m_dirtyRegion = m_webPage->bounds();
             scheduleDisplay();
@@ -821,7 +828,9 @@ void DrawingAreaCoordinatedGraphics::forceUpdate()
         return;
 
 #if PLATFORM(WPE)
-    if (!m_nonCompositedFrameRenderer)
+    if (m_nonCompositedFrameRenderer)
+        m_nonCompositedFrameRenderer->setNeedsDisplayInRect(m_webPage->bounds());
+    else
 #endif
     m_dirtyRegion = m_webPage->bounds();
     display();
@@ -846,12 +855,20 @@ void DrawingAreaCoordinatedGraphics::resetDamageHistoryForTesting()
 {
     if (m_layerTreeHost)
         m_layerTreeHost->resetDamageHistoryForTesting();
+#if PLATFORM(WPE)
+    else if (m_nonCompositedFrameRenderer)
+        m_nonCompositedFrameRenderer->resetDamageHistoryForTesting();
+#endif
 }
 
 void DrawingAreaCoordinatedGraphics::foreachRegionInDamageHistoryForTesting(Function<void(const Region&)>&& callback) const
 {
     if (m_layerTreeHost)
         m_layerTreeHost->foreachRegionInDamageHistoryForTesting(WTF::move(callback));
+#if PLATFORM(WPE)
+    else if (m_nonCompositedFrameRenderer)
+        m_nonCompositedFrameRenderer->foreachRegionInDamageHistoryForTesting(WTF::move(callback));
+#endif
 }
 #endif
 

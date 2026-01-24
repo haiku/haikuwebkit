@@ -230,7 +230,8 @@ GRefPtr<GstElement> GStreamerIncomingTrackProcessor::incomingTrackProcessor()
         if (!classifiers.contains("Decoder"_s) || !classifiers.contains("Video"_s))
             return;
 
-        configureMediaStreamVideoDecoder(element);
+        auto self = reinterpret_cast<GStreamerIncomingTrackProcessor*>(userData);
+        self->m_videoDecoderName = configureMediaStreamVideoDecoder(element);
         webkitGstTraceProcessingTimeForElement(element);
 
         auto sinkPad = adoptGRef(gst_element_get_static_pad(element, "sink"));
@@ -392,6 +393,8 @@ const GstStructure* GStreamerIncomingTrackProcessor::stats()
 
     if (m_totalVideoDecodeTime.isValid())
         gst_structure_set(m_stats.get(), "total-decode-time", G_TYPE_DOUBLE, m_totalVideoDecodeTime.toDouble(), nullptr);
+
+    gst_structure_set(m_stats.get(), "decoder-implementation", G_TYPE_STRING, m_videoDecoderName.utf8().data(), nullptr);
 
     return m_stats.get();
 }

@@ -126,12 +126,12 @@ void GStreamerRtpSenderBackend::stopSource()
 {
     GST_DEBUG_OBJECT(m_rtcSender.get(), "Stopping source");
     switchOn(m_source, [&](Ref<RealtimeOutgoingAudioSourceGStreamer>& source) {
-        source->stop([&] {
-            clearSource();
+        source->stop([self = RefPtr { this }] {
+            self->clearSource();
         });
     }, [&](Ref<RealtimeOutgoingVideoSourceGStreamer>& source) {
-        source->stop([&] {
-            clearSource();
+        source->stop([self = RefPtr { this }] {
+            self->clearSource();
         });
     }, [&](std::nullptr_t&) {
     });

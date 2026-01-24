@@ -31,7 +31,7 @@ namespace WebCore {
 template<typename T>
 inline void AXTreeStore<T>::set(AXID axID, const AXTreeWeakPtr& tree)
 {
-    ASSERT(isMainThread());
+    AX_ASSERT(isMainThread());
 
     switchOn(tree,
         [&] (const WeakPtr<AXObjectCache>& typedTree) {
@@ -49,7 +49,7 @@ inline void AXTreeStore<T>::set(AXID axID, const AXTreeWeakPtr& tree)
 template<typename T>
 inline void AXTreeStore<T>::add(AXID axID, const AXTreeWeakPtr& tree)
 {
-    ASSERT(isMainThread());
+    AX_ASSERT(isMainThread());
 
     switchOn(tree,
         [&] (const WeakPtr<AXObjectCache>& typedTree) {
@@ -109,7 +109,7 @@ inline RefPtr<AXIsolatedTree> AXTreeStore<T>::isolatedTreeForID(std::optional<AX
 template<typename T>
 inline HashMap<AXID, WeakPtr<AXObjectCache>>& AXTreeStore<T>::liveTreeMap()
 {
-    ASSERT(isMainThread());
+    AX_ASSERT(isMainThread());
 
     static NeverDestroyed<HashMap<AXID, WeakPtr<AXObjectCache>>> map;
     return map;

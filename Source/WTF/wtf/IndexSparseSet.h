@@ -235,13 +235,13 @@ void IndexSparseSet<EntryType, EntryTypeTraits, OverflowHandler>::validate()
 }
 
 template<typename EntryType, typename EntryTypeTraits, typename OverflowHandler>
-auto IndexSparseSet<EntryType, EntryTypeTraits, OverflowHandler>::begin() const -> const_iterator
+auto IndexSparseSet<EntryType, EntryTypeTraits, OverflowHandler>::begin() const LIFETIME_BOUND -> const_iterator
 {
     return m_values.begin();
 }
 
 template<typename EntryType, typename EntryTypeTraits, typename OverflowHandler>
-auto IndexSparseSet<EntryType, EntryTypeTraits, OverflowHandler>::end() const -> const_iterator
+auto IndexSparseSet<EntryType, EntryTypeTraits, OverflowHandler>::end() const LIFETIME_BOUND -> const_iterator
 {
     return m_values.end();
 }

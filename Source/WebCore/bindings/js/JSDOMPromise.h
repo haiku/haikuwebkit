@@ -45,7 +45,13 @@ public:
     }
 
     enum class IsCallbackRegistered : bool { No, Yes };
-    WEBCORE_EXPORT IsCallbackRegistered whenSettled(Function<void()>&&);
+    IsCallbackRegistered whenSettled(Function<void()>&& callback)
+    {
+        return whenSettledWithResult([callback = WTF::move(callback)](JSDOMGlobalObject*, bool, JSC::JSValue) {
+            callback();
+        });
+    }
+    WEBCORE_EXPORT IsCallbackRegistered whenSettledWithResult(Function<void(JSDOMGlobalObject*, bool, JSC::JSValue)>&&);
     JSC::JSValue result() const;
 
     void markAsHandled();
@@ -53,7 +59,7 @@ public:
     enum class Status { Pending, Fulfilled, Rejected };
     Status status() const;
 
-    static IsCallbackRegistered whenPromiseIsSettled(JSDOMGlobalObject*, JSC::JSPromise*, Function<void()>&&);
+    static IsCallbackRegistered whenPromiseIsSettled(JSDOMGlobalObject*, JSC::JSPromise*, Function<void(JSDOMGlobalObject*, bool, JSC::JSValue)>&&);
 
 private:
     DOMPromise(JSDOMGlobalObject& globalObject, JSC::JSPromise& promise)

@@ -153,7 +153,7 @@ inline void StringBuilder::swap(StringBuilder& other)
     std::swap(m_shouldCrashOnOverflow, other.m_shouldCrashOnOverflow);
 }
 
-inline StringBuilder::operator StringView() const
+inline StringBuilder::operator StringView() const LIFETIME_BOUND
 {
     if (is8Bit())
         return span<Latin1Character>();
@@ -232,7 +232,7 @@ inline void StringBuilder::appendSubstring(const String& string, unsigned offset
     append(StringView { string }.substring(offset, length));
 }
 
-inline const String& StringBuilder::toString()
+inline const String& StringBuilder::toString() LIFETIME_BOUND
 {
     if (m_string.isNull()) {
         shrinkToFit();
@@ -241,7 +241,7 @@ inline const String& StringBuilder::toString()
     return m_string;
 }
 
-inline const String& StringBuilder::toStringPreserveCapacity() const
+inline const String& StringBuilder::toStringPreserveCapacity() const LIFETIME_BOUND
 {
     if (m_string.isNull())
         reifyString();
@@ -304,7 +304,7 @@ inline bool StringBuilder::is8Bit() const
     return m_buffer ? m_buffer->is8Bit() : m_string.is8Bit();
 }
 
-template<typename CharacterType> inline std::span<const CharacterType> StringBuilder::span() const
+template<typename CharacterType> inline std::span<const CharacterType> StringBuilder::span() const LIFETIME_BOUND
 {
     if (!m_length || hasOverflowed())
         return { };

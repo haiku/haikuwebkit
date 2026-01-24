@@ -89,42 +89,6 @@ void GPUImpl::requestAdapter(const RequestAdapterOptions& options, CompletionHan
     wgpuInstanceRequestAdapter(m_backing.get(), &backingOptions, &requestAdapterCallback, Block_copy(blockPtr.get())); // Block_copy is matched with Block_release above in requestAdapterCallback().
 }
 
-static Vector<UniqueRef<WebCore::IOSurface>> createIOSurfaces(unsigned width, unsigned height)
-{
-    const auto colorFormat = IOSurface::Format::BGRA;
-    const auto colorSpace = DestinationColorSpace::SRGB();
-
-    Vector<UniqueRef<WebCore::IOSurface>> ioSurfaces;
-
-    if (auto buffer = WebCore::IOSurface::create(nullptr, WebCore::IntSize(width, height), colorSpace, IOSurface::Name::WebGPU, colorFormat))
-        ioSurfaces.append(makeUniqueRefFromNonNullUniquePtr(WTF::move(buffer)));
-    if (auto buffer = WebCore::IOSurface::create(nullptr, WebCore::IntSize(width, height), colorSpace, IOSurface::Name::WebGPU, colorFormat))
-        ioSurfaces.append(makeUniqueRefFromNonNullUniquePtr(WTF::move(buffer)));
-    if (auto buffer = WebCore::IOSurface::create(nullptr, WebCore::IntSize(width, height), colorSpace, IOSurface::Name::WebGPU, colorFormat))
-        ioSurfaces.append(makeUniqueRefFromNonNullUniquePtr(WTF::move(buffer)));
-
-    return ioSurfaces;
-}
-
-RefPtr<DDModel::DDMesh> GPUImpl::createModelBacking(unsigned width, unsigned height, CompletionHandler<void(Vector<MachSendRight>&&)>&& callback)
-{
-    auto ioSurfaceVector = createIOSurfaces(width, height);
-    Vector<RetainPtr<IOSurfaceRef>> ioSurfaces;
-    for (UniqueRef<WebCore::IOSurface>& ioSurface : ioSurfaceVector)
-        ioSurfaces.append(ioSurface->surface());
-
-    WGPUDDCreateMeshDescriptor backingDescriptor {
-        .width = width,
-        .height = height,
-        .ioSurfaces = WTF::move(ioSurfaces)
-    };
-
-    Ref convertToBackingContext = m_modelConvertToBackingContext;
-    auto mesh = DDModel::DDMeshImpl::create(adoptWebGPU(wgpuDDMeshCreate(m_backing.get(), &backingDescriptor)), WTF::move(ioSurfaceVector), convertToBackingContext);
-    callback(mesh->ioSurfaceHandles());
-    return mesh;
-}
-
 static WTF::Function<void(CompletionHandler<void()>&&)> convert(WGPUOnSubmittedWorkScheduledCallback&& onSubmittedWorkScheduledCallback)
 {
     return [onSubmittedWorkScheduledCallback = makeBlockPtr(WTF::move(onSubmittedWorkScheduledCallback))](CompletionHandler<void()>&& completionHandler) {

@@ -33,6 +33,7 @@
 #include "SQLiteDatabaseTracker.h"
 #include "SQLiteFileSystem.h"
 #include "SQLiteStatement.h"
+#include <bmalloc/BPlatform.h>
 #include <mutex>
 #include <sqlite3.h>
 #include <thread>
@@ -44,10 +45,7 @@
 #include <wtf/text/CString.h>
 #include <wtf/text/MakeString.h>
 
-#if !USE(SYSTEM_MALLOC)
-#include <bmalloc/BPlatform.h>
 #define ENABLE_SQLITE_FAST_MALLOC (BENABLE(MALLOC_SIZE) && BENABLE(MALLOC_GOOD_SIZE))
-#endif
 
 namespace WebCore {
 

@@ -842,7 +842,7 @@ private:
     bool m_memorySamplerEnabled { false };
     double m_memorySamplerInterval { 1400.0 };
 
-    using WebContextSupplementMap = HashMap<ASCIILiteral, RefPtr<WebContextSupplement>>;
+    using WebContextSupplementMap = HashMap<ASCIILiteral, Ref<WebContextSupplement>>;
     WebContextSupplementMap m_supplements;
 
 #if USE(SOUP)
@@ -945,7 +945,7 @@ private:
     const UniqueRef<WebBackForwardCache> m_backForwardCache;
 
     const UniqueRef<WebProcessCache> m_webProcessCache;
-    HashMap<WebCore::RegistrableDomain, RefPtr<WebProcessProxy>> m_swappedProcessesPerRegistrableDomain;
+    HashMap<WebCore::RegistrableDomain, Ref<WebProcessProxy>> m_swappedProcessesPerRegistrableDomain;
 
     HashMap<WebCore::RegistrableDomain, std::unique_ptr<WebCore::PrewarmInformation>> m_prewarmInformationPerRegistrableDomain;
 

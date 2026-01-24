@@ -87,8 +87,6 @@ public:
 
     RefPtr<WebCore::MediaPlayer> mediaPlayer(std::optional<WebCore::MediaPlayerIdentifier>);
 
-    std::optional<WebCore::ShareableBitmap::Handle> bitmapImageForCurrentTime(WebCore::MediaPlayerIdentifier);
-
 #if ENABLE(MEDIA_SOURCE)
     RefPtr<RemoteMediaSourceProxy> pendingMediaSource(RemoteMediaSourceIdentifier);
     void registerMediaSource(RemoteMediaSourceIdentifier, RemoteMediaSourceProxy&);

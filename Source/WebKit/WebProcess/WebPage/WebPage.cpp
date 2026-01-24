@@ -419,15 +419,12 @@
 #endif
 
 #if ENABLE(WEB_AUTHN)
+#include "DigitalCredentialsCoordinator.h"
 #include "WebAuthenticatorCoordinator.h"
 #include <WebCore/AuthenticatorCoordinator.h>
-
-#if HAVE(DIGITAL_CREDENTIALS_UI)
-#include "DigitalCredentialsCoordinator.h"
 #include <WebCore/DigitalCredentialsRequestData.h>
 #include <WebCore/DigitalCredentialsResponseData.h>
 #include <WebCore/ExceptionData.h>
-#endif // HAVE(DIGITAL_CREDENTIALS_UI)
 #endif // ENABLE(WEB_AUTHN)
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
@@ -809,7 +806,7 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
         makeUniqueRef<WebChromeClient>(*this),
         makeUniqueRef<WebCryptoClient>(this->identifier()),
         makeUniqueRef<WebDocumentSyncClient>(*this)
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
         , DigitalCredentialsCoordinator::create(*this)
 #endif
     );
@@ -2027,6 +2024,9 @@ void WebPage::close()
     if (RefPtr localFrame = m_mainFrame->coreLocalFrame())
         localFrame->loader().detachFromParent();
 
+    if (RefPtr provisionalFrame = m_mainFrame->provisionalFrame())
+        provisionalFrame->loader().detachFromParent();
+
 #if ENABLE(SCROLLING_THREAD)
     if (m_useAsyncScrolling)
         protectedDrawingArea()->unregisterScrollingTree();
@@ -2394,6 +2394,8 @@ void WebPage::goToBackForwardItem(GoToBackForwardItemParameters&& parameters)
     {
         auto ignoreHistoryItemChangesForScope = m_historyItemClient->ignoreChangesForScope();
         item = toHistoryItem(m_historyItemClient, parameters.frameState);
+        if (RefPtr localMainFrame = protectedCorePage()->localMainFrame(); localMainFrame && item)
+            localMainFrame->loader().setNavigationUpgradeToHTTPSBehavior(item->url().protocolIs("http"_s) ? NavigationUpgradeToHTTPSBehavior::Disabled : NavigationUpgradeToHTTPSBehavior::BasedOnPolicy);
     }
 
     LOG(Loading, "In WebProcess pid %i, WebPage %" PRIu64 " is navigating to back/forward URL %s", getCurrentProcessID(), m_identifier.toUInt64(), item->url().string().utf8().data());
@@ -3685,13 +3687,13 @@ void WebPage::mouseEvent(FrameIdentifier frameID, const WebMouseEvent& mouseEven
 #endif
 }
 
-void WebPage::setLastKnownMousePosition(WebCore::FrameIdentifier frameID, IntPoint eventPoint, IntPoint globalPoint)
+void WebPage::setLastKnownMousePosition(WebCore::FrameIdentifier frameID, const DoublePoint& eventPoint, const DoublePoint& globalPoint, std::optional<WebCore::LastKnownMousePositionSource>&& source)
 {
     RefPtr frame = WebProcess::singleton().webFrame(frameID);
     if (!frame || !frame->coreLocalFrame() || !frame->coreLocalFrame()->view())
         return;
 
-    frame->coreLocalFrame()->eventHandler().setLastKnownMousePosition(eventPoint, globalPoint);
+    frame->coreLocalFrame()->eventHandler().setLastKnownMousePosition(eventPoint, globalPoint, WTF::move(source));
 }
 
 void WebPage::startDeferringResizeEvents()
@@ -5132,8 +5134,6 @@ void WebPage::releaseMemory(Critical)
 
 void WebPage::willDestroyDecodedDataForAllImages()
 {
-    if (RefPtr drawingArea = m_drawingArea)
-        drawingArea->setNextRenderingUpdateRequiresSynchronousImageDecoding();
 }
 
 unsigned WebPage::remoteImagesCountForTesting() const
@@ -5611,24 +5611,36 @@ void WebPage::removeWebEditCommand(WebUndoStepID stepID)
         undoStep->didRemoveFromUndoManager();
 }
 
-void WebPage::unapplyEditCommand(WebUndoStepID stepID)
+void WebPage::unapplyEditCommand(uint32_t undoVersion, WebUndoStepID stepID, CompletionHandler<void()>&& completionHandler)
 {
+    if (undoVersion < m_currentUndoVersion)
+        return completionHandler();
+
+    m_currentUndoVersion = undoVersion;
+
     RefPtr step = webUndoStep(stepID);
     if (!step)
-        return;
+        return completionHandler();
 
     step->protectedStep()->unapply();
+    completionHandler();
 }
 
-void WebPage::reapplyEditCommand(WebUndoStepID stepID)
+void WebPage::reapplyEditCommand(uint32_t undoVersion, WebUndoStepID stepID, CompletionHandler<void()>&& completionHandler)
 {
+    if (undoVersion < m_currentUndoVersion)
+        return completionHandler();
+
+    m_currentUndoVersion = undoVersion;
+
     RefPtr step = webUndoStep(stepID);
     if (!step)
-        return;
+        return completionHandler();
 
     setIsInRedo(true);
     step->protectedStep()->reapply();
     setIsInRedo(false);
+    completionHandler();
 }
 
 void WebPage::didRemoveEditCommand(WebUndoStepID commandID)
@@ -6164,7 +6176,7 @@ void WebPage::sendSetWindowFrame(const FloatRect& windowFrame)
 
 #if PLATFORM(COCOA)
 
-void WebPage::windowAndViewFramesChanged(const ViewWindowCoordinates& coordinates)
+void WebPage::windowAndViewFramesChanged(const ViewWindowCoordinates& coordinates, CompletionHandler<void()>&& completionHandler)
 {
     m_windowFrameInScreenCoordinates = coordinates.windowFrameInScreenCoordinates;
     m_windowFrameInUnflippedScreenCoordinates = coordinates.windowFrameInUnflippedScreenCoordinates;
@@ -6176,6 +6188,19 @@ void WebPage::windowAndViewFramesChanged(const ViewWindowCoordinates& coordinate
 #endif
 
     m_hasCachedWindowFrame = !m_windowFrameInUnflippedScreenCoordinates.isEmpty();
+
+    if (completionHandler)
+        completionHandler();
+}
+
+void WebPage::updateMouseEventTargetAfterWindowAndViewFramesChanged(const DoublePoint& mousePositionInView, const DoublePoint& currentMouseGlobalPosition)
+{
+    RefPtr localMainFrame = m_mainFrame->coreLocalFrame();
+    if (!localMainFrame)
+        return;
+
+    setLastKnownMousePosition(localMainFrame->frameID(), mousePositionInView, currentMouseGlobalPosition);
+    localMainFrame->eventHandler().updateMouseEventTargetAfterLayoutIfNeeded();
 }
 
 #endif
@@ -8259,7 +8284,7 @@ void WebPage::registerURLSchemeHandler(WebURLSchemeHandlerIdentifier handlerIden
     WebCore::LegacySchemeRegistry::registerURLSchemeAsHandledBySchemeHandler(scheme);
     WebCore::LegacySchemeRegistry::registerURLSchemeAsCORSEnabled(scheme);
     auto schemeResult = m_schemeToURLSchemeHandlerProxyMap.add(scheme, WebURLSchemeHandlerProxy::create(*this, handlerIdentifier));
-    m_identifierToURLSchemeHandlerProxyMap.add(handlerIdentifier, Ref { *schemeResult.iterator->value }.get());
+    m_identifierToURLSchemeHandlerProxyMap.add(handlerIdentifier, Ref { schemeResult.iterator->value }.get());
 }
 
 void WebPage::urlSchemeTaskWillPerformRedirection(WebURLSchemeHandlerIdentifier handlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, ResourceResponse&& response, ResourceRequest&& request, CompletionHandler<void(WebCore::ResourceRequest&&)>&& completionHandler)
@@ -8341,7 +8366,8 @@ void WebPage::requestStorageAccess(RegistrableDomain&& subFrameDomain, Registrab
         if (result.wasGranted == StorageAccessWasGranted::Yes) {
             switch (result.scope) {
             case StorageAccessScope::PerFrame:
-                frame->protectedLocalFrameLoaderClient()->setHasFrameSpecificStorageAccess({ frameID, pageID });
+                if (RefPtr localFrameLoaderClient = frame->localFrameLoaderClient())
+                    localFrameLoaderClient->setHasFrameSpecificStorageAccess({ frameID, pageID });
                 break;
             case StorageAccessScope::PerPage:
                 addDomainWithPageLevelStorageAccess(result.topFrameDomain, result.subFrameDomain);
@@ -8441,7 +8467,7 @@ void WebPage::showContactPicker(WebCore::ContactsRequestData&& requestData, Comp
     sendWithAsyncReply(Messages::WebPageProxy::ShowContactPicker(WTF::move(requestData)), WTF::move(callback));
 }
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 void WebPage::showDigitalCredentialsPicker(const WebCore::DigitalCredentialsRequestData& requestData, CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&& completionHandler)
 {
     sendWithAsyncReply(Messages::WebPageProxy::ShowDigitalCredentialsPicker(requestData), WTF::move(completionHandler));
@@ -8916,8 +8942,6 @@ void WebPage::synchronizeCORSDisablingPatternsWithNetworkProcess()
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
 void WebPage::isAnyAnimationAllowedToPlayDidChange(bool anyAnimationCanPlay)
 {
-    if (!m_page->settings().imageAnimationControlEnabled())
-        return;
     send(Messages::WebPageProxy::IsAnyAnimationAllowedToPlayDidChange(anyAnimationCanPlay));
 }
 #endif
@@ -9367,10 +9391,6 @@ void WebPage::scrollToEdge(WebCore::RectEdges<bool> edges, WebCore::ScrollIsAnim
 #if ENABLE(IMAGE_ANALYSIS) && ENABLE(VIDEO)
 void WebPage::beginTextRecognitionForVideoInElementFullScreen(const HTMLVideoElement& element)
 {
-    auto mediaPlayerIdentifier = element.playerIdentifier();
-    if (!mediaPlayerIdentifier)
-        return;
-
     CheckedPtr renderer = element.renderer();
     if (!renderer)
         return;
@@ -9379,7 +9399,11 @@ void WebPage::beginTextRecognitionForVideoInElementFullScreen(const HTMLVideoEle
     if (rectInRootView.isEmpty())
         return;
 
-    send(Messages::WebPageProxy::BeginTextRecognitionForVideoInElementFullScreen(*mediaPlayerIdentifier, rectInRootView));
+    RefPtr image = element.bitmapImageForCurrentTime();
+    if (!image)
+        return;
+    if (auto handle = image->createHandle())
+        send(Messages::WebPageProxy::BeginTextRecognitionForVideoInElementFullScreen(WTF::move(*handle), rectInRootView));
 }
 
 void WebPage::cancelTextRecognitionForVideoInElementFullScreen()

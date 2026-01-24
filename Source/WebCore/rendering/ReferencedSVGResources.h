@@ -50,7 +50,7 @@ class StyleImage;
 class TreeScope;
 
 namespace Style {
-class ReferenceFilterOperation;
+struct FilterReference;
 struct ReferencePath;
 struct URL;
 }
@@ -69,7 +69,7 @@ public:
 
     // Legacy: Clipping needs a renderer, filters use an element.
     static LegacyRenderSVGResourceClipper* referencedClipperRenderer(TreeScope&, const Style::ReferencePath&);
-    static RefPtr<SVGFilterElement> referencedFilterElement(TreeScope&, const Style::ReferenceFilterOperation&);
+    static RefPtr<SVGFilterElement> referencedFilterElement(TreeScope&, const Style::FilterReference&);
 
     static LegacyRenderSVGResourceContainer* referencedRenderResource(TreeScope&, const AtomString& fragment);
 

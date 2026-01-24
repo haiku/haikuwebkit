@@ -61,7 +61,6 @@ void appendPlatformProperties(AXPropertyVector& properties, OptionSet<AXProperty
 
     setProperty(AXProperty::HasApplePDFAnnotationAttribute, object->hasApplePDFAnnotationAttribute());
     setProperty(AXProperty::SpeakAs, object->speakAs());
-#if ENABLE(AX_THREAD_TEXT_APIS)
     if (object->isStaticText()) {
         auto style = object->stylesForAttributedString();
         // Font and TextColor are handled in initializeBasePlatformProperties, since ignored objects could be "containers" where those styles are set.
@@ -78,41 +77,6 @@ void appendPlatformProperties(AXPropertyVector& properties, OptionSet<AXProperty
 
     if (object->shouldCacheStringValue())
         setProperty(AXProperty::StringValue, object->stringValue().isolatedCopy());
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
-
-#if !ENABLE(AX_THREAD_TEXT_APIS)
-    // Do not cache AXProperty::AttributedText or AXProperty::TextContent when ENABLE(AX_THREAD_TEXT_APIS).
-    // We should instead be synthesizing these on-the-fly using AXProperty::TextRuns.
-
-    RetainPtr<NSAttributedString> attributedText;
-    // FIXME: Don't eagerly cache textarea/contenteditable values longer than 12500 characters as rangeForCharacterRange is very expensive.
-    // This should be cached once rangeForCharacterRange is more performant for large text control values.
-    unsigned textControlLength = isTextControl() ? object->text().length() : 0;
-    if (textControlLength < 12500) {
-        if (object->hasAttributedText()) {
-            std::optional<SimpleRange> range;
-            if (isTextControl())
-                range = rangeForCharacterRange({ 0, textControlLength });
-            else
-                range = object->simpleRange();
-            if (range) {
-                if ((attributedText = object->attributedStringForRange(*range, SpellCheck::Yes)))
-                    setProperty(AXProperty::AttributedText, attributedText);
-            }
-        }
-
-        // Cache the TextContent only if it is not empty and differs from the AttributedText.
-        if (auto text = object->textContent()) {
-            if (!attributedText || (text->length() && *text != String([attributedText string])))
-                setProperty(AXProperty::TextContent, text->isolatedCopy());
-        }
-    }
-
-    // Cache the StringValue only if it differs from the AttributedText.
-    auto value = object->stringValue();
-    if (!attributedText || value != String([attributedText string]))
-        setProperty(AXProperty::StringValue, value.isolatedCopy());
-#endif // !ENABLE(AX_THREAD_TEXT_APIS)
 
     setProperty(AXProperty::RemoteFramePlatformElement, object->remoteFramePlatformElement());
 
@@ -221,7 +185,7 @@ AXCoreObject::AccessibilityChildrenVector AXIsolatedObject::allSortedNonRootWebA
 
 std::optional<NSRange> AXIsolatedObject::visibleCharacterRange() const
 {
-    ASSERT(!isMainThread());
+    AX_ASSERT(!isMainThread());
 
     RefPtr tree = this->tree();
     if (!tree)
@@ -304,15 +268,8 @@ std::optional<NSRange> AXIsolatedObject::visibleCharacterRange() const
 
 std::optional<String> AXIsolatedObject::textContent() const
 {
-#if ENABLE(AX_THREAD_TEXT_APIS)
     if (AXObjectCache::useAXThreadTextApis())
         return textMarkerRange().toString();
-#else
-    if (std::optional textContent = optionalAttributeValue<String>(AXProperty::TextContent))
-        return *textContent;
-    if (auto attributedText = propertyValue<RetainPtr<NSAttributedString>>(AXProperty::AttributedText))
-        return String { [attributedText string] };
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
     return { };
 }
 
@@ -323,12 +280,6 @@ AXTextMarkerRange AXIsolatedObject::textMarkerRange() const
         return { };
     }
 
-#if !ENABLE(AX_THREAD_TEXT_APIS)
-    if (auto text = textContent())
-        return { tree()->treeID(), objectID(), 0, text->length() };
-#endif // !ENABLE(AX_THREAD_TEXT_APIS)
-
-#if ENABLE(AX_THREAD_TEXT_APIS)
     if (AXObjectCache::useAXThreadTextApis()) {
         // This object doesn't have text content of its own. Create a range pointing to the first and last
         // text positions of our descendants. We can do this by stopping text marker traversal when we try
@@ -359,7 +310,6 @@ AXTextMarkerRange AXIsolatedObject::textMarkerRange() const
         }
         return range;
     }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
 
     return Accessibility::retrieveValueFromMainThread<AXTextMarkerRange>([context = mainThreadContext()] () {
         RefPtr axObject = context.axObjectOnMainThread();
@@ -379,7 +329,6 @@ AXTextMarkerRange AXIsolatedObject::textMarkerRangeForNSRange(const NSRange& ran
             return { tree()->treeID(), objectID(), start, end };
     }
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
     if (AXObjectCache::useAXThreadTextApis()) {
         if (std::optional markerRange = Accessibility::markerRangeFrom(range, *this)) {
             if (range.length > markerRange->toString().length())
@@ -388,7 +337,6 @@ AXTextMarkerRange AXIsolatedObject::textMarkerRangeForNSRange(const NSRange& ran
         }
         return { };
     }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
 
     return Accessibility::retrieveValueFromMainThread<AXTextMarkerRange>([&range, context = mainThreadContext()] () -> AXTextMarkerRange {
         RefPtr axObject = context.axObjectOnMainThread();
@@ -398,27 +346,17 @@ AXTextMarkerRange AXIsolatedObject::textMarkerRangeForNSRange(const NSRange& ran
 
 std::optional<String> AXIsolatedObject::platformStringValue() const
 {
-#if ENABLE(AX_THREAD_TEXT_APIS)
     if (AXObjectCache::useAXThreadTextApis())
         return textMarkerRange().toString();
-#else
-    if (auto attributedText = propertyValue<RetainPtr<NSAttributedString>>(AXProperty::AttributedText))
-        return [attributedText string];
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
     return { };
 }
 
 unsigned AXIsolatedObject::textLength() const
 {
-    ASSERT(isTextControl());
+    AX_ASSERT(isTextControl());
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
     if (AXObjectCache::useAXThreadTextApis())
         return textMarkerRange().toString().length();
-#else
-    if (auto attributedText = propertyValue<RetainPtr<NSAttributedString>>(AXProperty::AttributedText))
-        return [attributedText length];
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
     return 0;
 }
 
@@ -432,10 +370,8 @@ RetainPtr<NSAttributedString> AXIsolatedObject::attributedStringForTextMarkerRan
     if (!markerRange)
         return nil;
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
     if (AXObjectCache::useAXThreadTextApis())
         return markerRange.toAttributedString(spellCheck).autorelease();
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
 
     // At the moment we are only handling ranges that are confined to a single object, and for which we cached the AttributeString.
     // FIXME: Extend to cases where the range expands multiple objects.
@@ -448,56 +384,17 @@ RetainPtr<NSAttributedString> AXIsolatedObject::attributedStringForTextMarkerRan
             return object->attributedStringForTextMarkerRange(WTF::move(markerRange), spellCheck);
     }
 
-    RetainPtr<NSAttributedString> attributedText = nil;
-#if !ENABLE(AX_THREAD_TEXT_APIS)
-    attributedText = propertyValue<RetainPtr<NSAttributedString>>(AXProperty::AttributedText);
-#endif // !ENABLE(AX_THREAD_TEXT_APIS)
-    if (!isConfined || !attributedText) {
-        return Accessibility::retrieveValueFromMainThread<RetainPtr<NSAttributedString>>([markerRange = WTF::move(markerRange), &spellCheck, context = mainThreadContext()] () mutable -> RetainPtr<NSAttributedString> {
-            if (RefPtr axObject = context.axObjectOnMainThread())
-                return axObject->attributedStringForTextMarkerRange(WTF::move(markerRange), spellCheck);
-            return { };
-        });
-    }
-
-    auto nsRange = markerRange.nsRange();
-    if (!nsRange)
-        return nil;
-
-    // If the range spans the beginning of the node, account for the length of the list marker prefix, if any.
-    if (!nsRange->location)
-        nsRange->length += textContentPrefixFromListMarker().length();
-
-    if (!attributedStringContainsRange(attributedText.get(), *nsRange))
-        return nil;
-
-    RetainPtr result = adoptNS([[NSMutableAttributedString alloc] initWithAttributedString:[attributedText attributedSubstringFromRange:*nsRange]]);
-    if (!result.get().length)
-        return result;
-
-    auto resultRange = NSMakeRange(0, result.get().length);
-    // The AttributedString is cached with spelling info. If the caller does not request spelling info, we have to remove it before returning.
-    if (spellCheck == SpellCheck::No) {
-        [result removeAttribute:NSAccessibilityDidSpellCheckAttribute range:resultRange];
-        [result removeAttribute:NSAccessibilityMisspelledTextAttribute range:resultRange];
-        [result removeAttribute:NSAccessibilityMarkedMisspelledTextAttribute range:resultRange];
-    } else if (AXObjectCache::shouldSpellCheck()) {
-        // For ITM, we should only ever eagerly spellcheck for testing purposes.
-        ASSERT(_AXGetClientForCurrentRequestUntrusted() == kAXClientTypeWebKitTesting);
-        // We're going to spellcheck, so remove AXDidSpellCheck: NO.
-        [result removeAttribute:NSAccessibilityDidSpellCheckAttribute range:resultRange];
-        performFunctionOnMainThreadAndWait([result = RetainPtr { result }, &resultRange] (AccessibilityObject* axObject) {
-            if (auto* node = axObject->node())
-                attributedStringSetSpelling(result.get(), *node, String { [result string] }, resultRange);
-        });
-    }
-    return result;
+    return Accessibility::retrieveValueFromMainThread<RetainPtr<NSAttributedString>>([markerRange = WTF::move(markerRange), &spellCheck, context = mainThreadContext()] () mutable -> RetainPtr<NSAttributedString> {
+        if (RefPtr axObject = context.axObjectOnMainThread())
+            return axObject->attributedStringForTextMarkerRange(WTF::move(markerRange), spellCheck);
+        return { };
+    });
 }
 
 void AXIsolatedObject::setPreventKeyboardDOMEventDispatch(bool value)
 {
-    ASSERT(!isMainThread());
-    ASSERT(isWebArea());
+    AX_ASSERT(!isMainThread());
+    AX_ASSERT(isWebArea());
 
     setProperty(AXProperty::PreventKeyboardDOMEventDispatch, value);
     performFunctionOnMainThread([value] (auto* object) {
@@ -507,8 +404,8 @@ void AXIsolatedObject::setPreventKeyboardDOMEventDispatch(bool value)
 
 void AXIsolatedObject::setCaretBrowsingEnabled(bool value)
 {
-    ASSERT(!isMainThread());
-    ASSERT(isWebArea());
+    AX_ASSERT(!isMainThread());
+    AX_ASSERT(isWebArea());
 
     setProperty(AXProperty::CaretBrowsingEnabled, value);
     performFunctionOnMainThread([value] (auto* object) {
@@ -520,7 +417,7 @@ void AXIsolatedObject::setCaretBrowsingEnabled(bool value)
 // and not cached because we don't expect AX clients to ever request them.
 IntPoint AXIsolatedObject::clickPoint()
 {
-    ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
+    AX_ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<IntPoint>([context = mainThreadContext()] () -> IntPoint {
         if (RefPtr object = context.axObjectOnMainThread())
@@ -531,7 +428,7 @@ IntPoint AXIsolatedObject::clickPoint()
 
 bool AXIsolatedObject::pressedIsPresent() const
 {
-    ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
+    AX_ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<bool>([context = mainThreadContext()] () -> bool {
         if (RefPtr object = context.axObjectOnMainThread())
@@ -542,7 +439,7 @@ bool AXIsolatedObject::pressedIsPresent() const
 
 Vector<String> AXIsolatedObject::determineDropEffects() const
 {
-    ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
+    AX_ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<Vector<String>>([context = mainThreadContext()] () -> Vector<String> {
         if (RefPtr object = context.axObjectOnMainThread())
@@ -553,7 +450,7 @@ Vector<String> AXIsolatedObject::determineDropEffects() const
 
 int AXIsolatedObject::layoutCount() const
 {
-    ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
+    AX_ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<int>([context = mainThreadContext()] () -> int {
         if (RefPtr object = context.axObjectOnMainThread())
@@ -564,7 +461,7 @@ int AXIsolatedObject::layoutCount() const
 
 Vector<String> AXIsolatedObject::classList() const
 {
-    ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
+    AX_ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<Vector<String>>([context = mainThreadContext()] () -> Vector<String> {
         if (RefPtr object = context.axObjectOnMainThread())
@@ -575,7 +472,7 @@ Vector<String> AXIsolatedObject::classList() const
 
 String AXIsolatedObject::computedRoleString() const
 {
-    ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
+    AX_ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<String>([context = mainThreadContext()] () -> String {
         if (RefPtr object = context.axObjectOnMainThread())

@@ -539,11 +539,21 @@ class Git(Scm):
     def source_remotes(self, cached=True, personal=False):
         security_levels = {}
         config = self.config(cached=cached)
+
+        all_remotes = {
+            c[7:-4]
+            for c in config
+            if c.count('.') == 2
+            and c.startswith('remote.')
+            and c.endswith('.url')
+            and c != 'remote..url'
+        }
+
         for candidate in config.keys():
             if not candidate.startswith('webkitscmpy.remotes') or not candidate.endswith('url'):
                 continue
             candidate = candidate.split('.')[-2]
-            if config.get('remote.{}.url'.format(candidate)):
+            if candidate in all_remotes:
                 security_levels[candidate] = int(config.get('webkitscmpy.remotes.{}.security-level'.format(candidate), '0'))
         candidates = [self.default_remote] if security_levels.get(self.default_remote, 0) == 0 else []
         for _, candidate in sorted([(v, k) for k, v in security_levels.items()]):
@@ -552,7 +562,6 @@ class Git(Scm):
 
         personal_remotes = []
         if personal:
-            all_remotes = list(self.branches_for(remote=None))
             for candidate in ['fork'] + ['{}-fork'.format(og) for og in candidates]:
                 if candidate in all_remotes:
                     personal_remotes.append(candidate)

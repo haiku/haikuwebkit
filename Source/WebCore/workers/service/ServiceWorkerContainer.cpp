@@ -26,6 +26,7 @@
 #include "config.h"
 #include "ServiceWorkerContainer.h"
 
+#include "AddEventListenerOptionsInlines.h"
 #include "ContentSecurityPolicy.h"
 #include "ContextDestructionObserverInlines.h"
 #include "CookieChangeSubscription.h"
@@ -36,7 +37,6 @@
 #include "Event.h"
 #include "EventLoop.h"
 #include "EventNames.h"
-#include "AddEventListenerOptionsInlines.h"
 #include "Exception.h"
 #include "FrameLoader.h"
 #include "IDLTypes.h"
@@ -274,7 +274,7 @@ void ServiceWorkerContainer::unregisterRegistration(ServiceWorkerRegistrationIde
     });
 }
 
-void ServiceWorkerContainer::updateRegistration(const URL& scopeURL, const URL& scriptURL, WorkerType workerType, RefPtr<DeferredPromise>&& promise)
+void ServiceWorkerContainer::updateRegistration(const URL& scopeURL, const URL& scriptURL, WorkerType workerType, Ref<DeferredPromise>&& promise)
 {
     ASSERT(!m_isStopped);
 
@@ -283,8 +283,7 @@ void ServiceWorkerContainer::updateRegistration(const URL& scopeURL, const URL& 
     RefPtr swConnection = m_swConnection;
     if (!swConnection) {
         ASSERT_NOT_REACHED();
-        if (promise)
-            promise->reject(Exception(ExceptionCode::InvalidStateError));
+        promise->reject(Exception(ExceptionCode::InvalidStateError));
         return;
     }
 
@@ -405,7 +404,6 @@ void ServiceWorkerContainer::startMessages()
 void ServiceWorkerContainer::jobFailedWithException(ServiceWorkerJob& job, const Exception& exception)
 {
     ASSERT(m_creationThread.ptr() == &Thread::currentSingleton());
-    ASSERT_WITH_MESSAGE(job.hasPromise() || job.data().type == ServiceWorkerJobType::Update, "Only soft updates have no promise");
 
     auto guard = makeScopeExit([this, protectedThis = Ref { *this }, job = Ref { job }] {
         destroyJob(job);
@@ -416,11 +414,7 @@ void ServiceWorkerContainer::jobFailedWithException(ServiceWorkerJob& job, const
     if (job.data().type == ServiceWorkerJobType::Register)
         willSettleRegistrationPromise(false);
 
-    auto promise = job.takePromise();
-    if (!promise)
-        return;
-
-    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = WTF::move(promise), exception](auto&) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = job.takePromise(), exception](auto&) mutable {
         promise->reject(exception);
     });
 }
@@ -436,7 +430,6 @@ void ServiceWorkerContainer::queueTaskToFireUpdateFoundEvent(ServiceWorkerRegist
 void ServiceWorkerContainer::jobResolvedWithRegistration(ServiceWorkerJob& job, ServiceWorkerRegistrationData&& data, ShouldNotifyWhenResolved shouldNotifyWhenResolved)
 {
     ASSERT(m_creationThread.ptr() == &Thread::currentSingleton());
-    ASSERT_WITH_MESSAGE(job.hasPromise() || job.data().type == ServiceWorkerJobType::Update, "Only soft updates have no promise");
 
     if (job.data().type == ServiceWorkerJobType::Register) {
         CONTAINER_RELEASE_LOG("jobResolvedWithRegistration: Registration job %" PRIu64 " succeeded", job.identifier().toUInt64());
@@ -458,11 +451,7 @@ void ServiceWorkerContainer::jobResolvedWithRegistration(ServiceWorkerJob& job, 
     if (isStopped())
         return;
 
-    auto promise = job.takePromise();
-    if (!promise)
-        return;
-
-    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = WTF::move(promise), jobIdentifier = job.identifier(), data = WTF::move(data), shouldNotifyWhenResolved, notifyIfExitEarly = WTF::move(notifyIfExitEarly)](ServiceWorkerContainer& container) mutable {
+    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = job.takePromise(), jobIdentifier = job.identifier(), data = WTF::move(data), shouldNotifyWhenResolved, notifyIfExitEarly = WTF::move(notifyIfExitEarly)](ServiceWorkerContainer& container) mutable {
         notifyIfExitEarly.release();
 
         Ref registration = ServiceWorkerRegistration::getOrCreate(*container.protectedScriptExecutionContext(), container, WTF::move(data));
@@ -497,7 +486,7 @@ void ServiceWorkerContainer::postMessage(MessageWithMessagePorts&& message, Serv
         return;
 
     auto& vm = globalObject->vm();
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     MessageEventSource source = RefPtr<ServiceWorker> { ServiceWorker::getOrCreate(context.get(), WTF::move(sourceData)) };
 
@@ -526,7 +515,6 @@ void ServiceWorkerContainer::notifyRegistrationIsSettled(const ServiceWorkerRegi
 void ServiceWorkerContainer::jobResolvedWithUnregistrationResult(ServiceWorkerJob& job, bool unregistrationResult)
 {
     ASSERT(m_creationThread.ptr() == &Thread::currentSingleton());
-    ASSERT(job.hasPromise());
 
     auto guard = makeScopeExit([this, protectedThis = Ref { *this }, job = Ref { job }] {
         destroyJob(job);
@@ -573,18 +561,15 @@ void ServiceWorkerContainer::jobFinishedLoadingScript(ServiceWorkerJob& job, Wor
 void ServiceWorkerContainer::jobFailedLoadingScript(ServiceWorkerJob& job, const ResourceError& error, Exception&& exception)
 {
     ASSERT(m_creationThread.ptr() == &Thread::currentSingleton());
-    ASSERT_WITH_MESSAGE(job.hasPromise() || job.data().type == ServiceWorkerJobType::Update, "Only soft updates have no promise");
 
     CONTAINER_RELEASE_LOG_ERROR("jobFinishedLoadingScript: Failed to fetch script for job %" PRIu64 ", error: %s", job.identifier().toUInt64(), error.localizedDescription().utf8().data());
 
     if (job.data().type == ServiceWorkerJobType::Register)
         willSettleRegistrationPromise(false);
 
-    if (auto promise = job.takePromise()) {
-        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = WTF::move(promise), exception = WTF::move(exception)](auto&) mutable {
-            promise->reject(WTF::move(exception));
-        });
-    }
+    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = job.takePromise(), exception = WTF::move(exception)](auto&) mutable {
+        promise->reject(WTF::move(exception));
+    });
 
     notifyFailedFetchingScript(job, error);
     destroyJob(job);

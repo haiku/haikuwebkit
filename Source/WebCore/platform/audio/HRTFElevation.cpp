@@ -60,9 +60,9 @@ constexpr size_t ResponseFrameSize = 256;
 constexpr float ResponseSampleRate = 44100;
 
 static Lock audioBusMapLock;
-static HashMap<String, RefPtr<AudioBus>>& concatenatedImpulseResponsesMap() WTF_REQUIRES_LOCK(audioBusMapLock)
+static HashMap<String, Ref<AudioBus>>& concatenatedImpulseResponsesMap() WTF_REQUIRES_LOCK(audioBusMapLock)
 {
-    static NeverDestroyed<HashMap<String, RefPtr<AudioBus>>> audioBusMap;
+    static NeverDestroyed<HashMap<String, Ref<AudioBus>>> audioBusMap;
     return audioBusMap;
 }
 
@@ -80,7 +80,7 @@ static RefPtr<AudioBus> getConcatenatedImpulseResponsesForSubject(const String& 
             ASSERT(bus);
             if (!bus)
                 return nullptr;
-            cache.add(subjectName.isolatedCopy(), bus.copyRef());
+            cache.add(subjectName.isolatedCopy(), *bus);
         }
     }
 

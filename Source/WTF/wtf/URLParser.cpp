@@ -1059,7 +1059,7 @@ bool URLParser::isLocalhost(StringView view)
     return isAtLocalhost<char16_t>(view.span16());
 }
 
-ALWAYS_INLINE StringView URLParser::parsedDataView(size_t start, size_t length)
+ALWAYS_INLINE StringView URLParser::parsedDataView(size_t start, size_t length) LIFETIME_BOUND
 {
     if (m_didSeeSyntaxViolation) [[unlikely]] {
         ASSERT(start + length <= m_asciiBuffer.size());

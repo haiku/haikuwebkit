@@ -126,7 +126,7 @@ std::optional<String> TransferString::release(size_t maxCopySizeInBytes) && // N
     );
 }
 
-TransferString::IPCData TransferString::toIPCData() const
+TransferString::IPCData TransferString::toIPCData() const LIFETIME_BOUND
 {
     return WTF::switchOn(m_storage,
         [](const String& string) {

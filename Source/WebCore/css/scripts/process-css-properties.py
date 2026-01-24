@@ -3826,17 +3826,17 @@ class GenerateCSSPropertyNames:
         to.newline()
 
     def _generate_css_property_settings_hasher(self, *, to):
-        first, *middle, last = (f'{"(uint64_t) " if i >= 32 else ""}settings.{flag} << {i}' for (i, flag) in enumerate(self.properties_and_descriptors.settings_flags))
+        first, *middle, last = [f"settings.{flag}" for flag in self.properties_and_descriptors.settings_flags]
 
         to.write(f"void add(Hasher& hasher, const CSSPropertySettings& settings)")
         to.write(f"{{")
         with to.indent():
-            to.write(f"uint64_t bits = {first}")
+            to.write(f"add(hasher, WTF::packBools(")
             with to.indent():
-                to.write_lines((f"| {expression}" for expression in middle))
-                to.write(f"| {last};")
-
-            to.write(f"add(hasher, bits);")
+                to.write(f"{first},")
+                to.write_lines((f"{expression}," for expression in middle))
+                to.write(f"{last}")
+            to.write(f"));")
         to.write(f"}}")
         to.newline()
 

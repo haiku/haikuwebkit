@@ -73,8 +73,6 @@ private:
     Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) const final;
     SerializedNode serializeNode(CloningOperation) const final;
 
-    bool isAttributeNode() const final { return true; }
-
     void parentOrShadowHostNode() const = delete; // Call parentNode() instead.
 
     // Attr wraps either an element/name, or a name/value pair (when it's a standalone Node.)
@@ -89,5 +87,5 @@ private:
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::Attr)
-    static bool isType(const WebCore::Node& node) { return node.isAttributeNode(); }
+    static bool isType(const WebCore::Node& node) { return node.nodeType() == WebCore::Node::ATTRIBUTE_NODE; }
 SPECIALIZE_TYPE_TRAITS_END()

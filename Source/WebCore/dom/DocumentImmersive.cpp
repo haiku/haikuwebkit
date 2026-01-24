@@ -64,16 +64,14 @@ HTMLModelElement* DocumentImmersive::immersiveElement() const
     return m_immersiveElement.get();
 }
 
-void DocumentImmersive::exitImmersive(Document& document, RefPtr<DeferredPromise>&& promise)
+void DocumentImmersive::exitImmersive(Document& document, Ref<DeferredPromise>&& promise)
 {
-    RefPtr protectedImmersive = document.immersiveIfExists();
-    if (!document.isFullyActive() || !protectedImmersive) {
+    RefPtr immersive = document.immersiveIfExists();
+    if (!document.isFullyActive() || !immersive) {
         promise->reject(Exception { ExceptionCode::TypeError, "Not in immersive"_s });
         return;
     }
-    protectedImmersive->exitImmersive([promise = WTF::move(promise)] (auto result) {
-        if (!promise)
-            return;
+    immersive->exitImmersive([promise = WTF::move(promise)](auto result) {
         if (result.hasException())
             promise->reject(result.releaseException());
         else
@@ -158,22 +156,10 @@ void DocumentImmersive::requestImmersive(HTMLModelElement* element, CompletionHa
 void DocumentImmersive::exitImmersive(CompletionHandler<void(ExceptionOr<void>)>&& completionHandler)
 {
     RefPtr exitingImmersiveElement = immersiveElement();
-    if (!exitingImmersiveElement) {
-        completionHandler(Exception { ExceptionCode::TypeError, "Not in immersive"_s });
-        return;
-    }
+    if (!exitingImmersiveElement)
+        return completionHandler(Exception { ExceptionCode::TypeError, "Not in immersive"_s });
 
-    m_immersiveElement = nullptr;
-
-    RefPtr protectedPage = document().page();
-    if (!protectedPage) {
-        exitingImmersiveElement->exitImmersivePresentation([] { });
-        updateElementIsImmersive(exitingImmersiveElement.get(), false);
-        completionHandler(Exception { ExceptionCode::TypeError });
-        return;
-    }
-
-    protectedPage->chrome().client().dismissImmersiveElement(*exitingImmersiveElement, [weakElement = WeakPtr { *exitingImmersiveElement }, weakThis = WeakPtr { *this }, completionHandler = WTF::move(completionHandler)]() mutable {
+    dismissClientImmersivePresentation(exitingImmersiveElement.get(), [weakElement = WeakPtr { *exitingImmersiveElement }, weakThis = WeakPtr { *this }, completionHandler = WTF::move(completionHandler)]() mutable {
         RefPtr protectedElement = weakElement.get();
         if (!protectedElement)
             return completionHandler(Exception { ExceptionCode::TypeError });
@@ -185,6 +171,7 @@ void DocumentImmersive::exitImmersive(CompletionHandler<void(ExceptionOr<void>)>
                 return completionHandler(Exception { ExceptionCode::TypeError });
 
             protectedThis->updateElementIsImmersive(protectedElement.get(), false);
+            protectedThis->m_immersiveElement = nullptr;
             completionHandler({ });
         });
     });
@@ -225,6 +212,15 @@ void DocumentImmersive::updateElementIsImmersive(HTMLModelElement* element, bool
     Style::PseudoClassChangeInvalidation styleInvalidation(*element, { { CSSSelector::PseudoClass::Immersive, isImmersive } });
     queueImmersiveEventForElement(DocumentImmersive::EventType::Change, *element);
     document().scheduleRenderingUpdate(RenderingUpdateStep::Immersive);
+}
+
+void DocumentImmersive::dismissClientImmersivePresentation(HTMLModelElement* exitingImmersiveElement, CompletionHandler<void()>&& completionHandler)
+{
+    RefPtr protectedPage = document().page();
+    if (!protectedPage)
+        return completionHandler();
+
+    protectedPage->chrome().client().dismissImmersiveElement(*exitingImmersiveElement, WTF::move(completionHandler));
 }
 
 void DocumentImmersive::dispatchPendingEvents()

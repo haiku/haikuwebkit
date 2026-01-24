@@ -220,8 +220,8 @@ MediaPlayerPrivateRemote::~MediaPlayerPrivateRemote()
     // Shutdown any stale MediaResources.
     // This condition can happen if the MediaPlayer gets reloaded half-way.
     ensureOnMainThread([resources = std::exchange(m_mediaResources, { })] {
-        for (auto&& resource : resources)
-            RefPtr { resource.value }->shutdown();
+        for (Ref resource : resources.values())
+            resource->shutdown();
     });
 }
 
@@ -1667,7 +1667,7 @@ void MediaPlayerPrivateRemote::requestResource(RemoteMediaResourceIdentifier rem
     }
     // PlatformMediaResource owns the PlatformMediaResourceClient
     resource->setClient(adoptRef(*new RemoteMediaResourceProxy(connection(), *resource, remoteMediaResourceIdentifier)));
-    m_mediaResources.add(remoteMediaResourceIdentifier, WTF::move(resource));
+    m_mediaResources.add(remoteMediaResourceIdentifier, resource.releaseNonNull());
 }
 
 void MediaPlayerPrivateRemote::sendH2Ping(const URL& url, CompletionHandler<void(Expected<WTF::Seconds, WebCore::ResourceError>&&)>&& completionHandler)
@@ -1906,7 +1906,7 @@ void MediaPlayerPrivateRemote::gpuProcessConnectionDidClose()
     assertIsMainRunLoop();
 
     for (auto&& resource : std::exchange(m_mediaResources, { }))
-        RefPtr { resource.value }->shutdown();
+        Ref { resource.value }->shutdown();
 }
 
 } // namespace WebKit

@@ -32,11 +32,8 @@
 #include "CryptoDigestAlgorithm.h"
 #include "CryptoKeyEC.h"
 #include "ExceptionOr.h"
-#include <wtf/StdLibExtras.h>
-
-#if HAVE(SWIFT_CPP_INTEROP)
 #include <pal/PALSwift.h>
-#endif
+#include <wtf/StdLibExtras.h>
 
 namespace WebCore {
 

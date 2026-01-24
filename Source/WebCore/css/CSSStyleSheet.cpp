@@ -245,7 +245,7 @@ void CSSStyleSheet::didMutateRules(RuleMutationType mutationType, ContentsCloned
         }
 
         if (mutationType == KeyframesRuleMutation) {
-            if (auto* ownerDocument = this->ownerDocument())
+            if (CheckedPtr ownerDocument = this->ownerDocument())
                 ownerDocument->keyframesRuleDidChange(modifiedKeyframesRuleName);
         }
 
@@ -266,11 +266,11 @@ void CSSStyleSheet::didMutate()
 
 void CSSStyleSheet::forEachStyleScope(NOESCAPE const Function<void(Style::Scope&)>& apply)
 {
-    if (auto* scope = styleScope()) {
+    if (CheckedPtr scope = styleScope()) {
         apply(*scope);
         return;
     }
-    for (auto& treeScope : m_adoptingTreeScopes)
+    for (CheckedRef treeScope : m_adoptingTreeScopes)
         apply(styleScopeFor(treeScope));
 }
 
@@ -339,7 +339,7 @@ bool CSSStyleSheet::canAccessRules() const
     if (baseURL.isEmpty())
         return true;
 
-    Document* document = ownerDocument();
+    CheckedPtr document = ownerDocument();
     if (!document)
         return false;
 

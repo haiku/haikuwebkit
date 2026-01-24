@@ -44,12 +44,6 @@ class RealtimeMediaSourceGStreamer;
 class RealtimeOutgoingAudioSourceGStreamer;
 class RealtimeOutgoingVideoSourceGStreamer;
 
-struct GStreamerIceCandidate {
-    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(GStreamerIceCandidate);
-    unsigned sdpMLineIndex;
-    String candidate;
-};
-
 class GStreamerPeerConnectionBackend final : public PeerConnectionBackend {
     WTF_MAKE_TZONE_ALLOCATED(GStreamerPeerConnectionBackend);
 public:

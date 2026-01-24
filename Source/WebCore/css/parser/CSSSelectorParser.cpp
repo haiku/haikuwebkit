@@ -504,6 +504,8 @@ static bool isPseudoClassValidAfterPseudoElement(CSSSelector::PseudoClass pseudo
     switch (compoundPseudoElement) {
     case CSSSelector::PseudoElement::Part:
         return !isTreeStructuralPseudoClass(pseudoClass);
+    case CSSSelector::PseudoElement::Picker:
+        return !isTreeStructuralPseudoClass(pseudoClass);
     case CSSSelector::PseudoElement::Slotted:
         return false;
     case CSSSelector::PseudoElement::WebKitResizer:
@@ -961,6 +963,19 @@ std::unique_ptr<MutableCSSSelector> CSSSelectorParser::consumePseudo(CSSParserTo
             if (ident.type() != IdentToken || !block.atEnd())
                 return nullptr;
             selector->setArgumentList({ { ident.value().toAtomString() } });
+            return selector;
+        }
+
+        case CSSSelector::PseudoElement::Picker: {
+            auto& ident = block.consumeIncludingWhitespace();
+            if (ident.type() != IdentToken || !block.atEnd())
+                return nullptr;
+
+            auto argument = ident.value().toAtomString();
+            if (argument != "select"_s)
+                return nullptr;
+
+            selector->setArgumentList({ { argument } });
             return selector;
         }
 

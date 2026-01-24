@@ -2325,6 +2325,36 @@ std::optional<SharedPreferencesForWebProcess> NetworkStorageManager::sharedPrefe
     return iter->value;
 }
 
+void NetworkStorageManager::queryCacheStorage(WebCore::ClientOrigin&& origin, WebCore::RetrieveRecordsOptions&& options, String&& cacheName, CompletionHandler<void(std::optional<WebCore::DOMCacheEngine::Record>&&)>&& callback)
+{
+    auto mainThreadCallback = [callback = WTF::move(callback)](std::optional<WebCore::DOMCacheEngine::CrossThreadRecord>&& result) mutable {
+        callOnMainRunLoop([callback = WTF::move(callback), result = crossThreadCopy(WTF::move(result))]() mutable {
+            if (!result) {
+                callback({ });
+                return;
+            }
+            callback(WebCore::DOMCacheEngine::fromCrossThreadRecord(WTF::move(*result)));
+        });
+    };
+    workQueue().dispatch([weakThis = ThreadSafeWeakPtr { *this }, origin = WTF::move(origin).isolatedCopy(), options = WTF::move(options).isolatedCopy(), cacheName = WTF::move(cacheName).isolatedCopy(), callback = WTF::move(mainThreadCallback)]() mutable {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis) {
+            callback({ });
+            return;
+        }
+
+        assertIsCurrent(protectedThis->workQueue());
+
+        RefPtr cacheStorageManager = protectedThis->checkedOriginStorageManager(origin)->existingCacheStorageManager();
+        if (!cacheStorageManager) {
+            callback({ });
+            return;
+        }
+
+        cacheStorageManager->query(WTF::move(options), WTF::move(cacheName), WTF::move(callback));
+    });
+}
+
 } // namespace WebKit
 
 #undef MESSAGE_CHECK_COMPLETION

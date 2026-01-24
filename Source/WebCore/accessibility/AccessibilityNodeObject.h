@@ -239,7 +239,7 @@ public:
     bool isLabelContainingOnlyStaticText() const;
     bool isNativeLabel() const override;
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     TextEmissionBehavior textEmissionBehavior() const final;
 #endif
 

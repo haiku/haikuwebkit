@@ -34,7 +34,11 @@
 #include <wtf/text/WTFString.h>
 
 #if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
+// FIXME: Properly support using WKA in modules.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnon-modular-include-in-module"
 #include <WebKitAdditions/PlatformTouchEventIOS.h>
+#pragma clang diagnostic pop
 #endif
 
 #if ENABLE(TOUCH_EVENTS) && (PLATFORM(WPE) || PLATFORM(GTK))
@@ -133,8 +137,6 @@ public:
 
     void receivedTarget() final;
 
-    bool isPointerEvent() const final { return true; }
-
     // https://w3c.github.io/pointerevents/#attributes-and-default-actions
     // Many user agents expose non-standard attributes fromElement and toElement in MouseEvents to
     // support legacy content. In those user agents, the values of those (inherited) attributes in
@@ -227,4 +229,5 @@ inline bool PointerEvent::typeRequiresResolvedButton(const AtomString& type)
 
 } // namespace WebCore
 
+// Technically a polymorphic Event class because of SimulatedPointerEvent, but that uses the same type.
 SPECIALIZE_TYPE_TRAITS_EVENT(PointerEvent)

@@ -2312,10 +2312,11 @@ void WebProcess::resetMockMediaDevices()
 void WebProcess::grantUserMediaDeviceSandboxExtensions(MediaDeviceSandboxExtensions&& extensions)
 {
     for (size_t i = 0; i < extensions.size(); i++) {
-        const auto& extension = extensions[i];
-        RefPtr { extension.second }->consume();
-        WEBPROCESS_RELEASE_LOG(WebRTC, "grantUserMediaDeviceSandboxExtensions: granted extension %s", extension.first.utf8().data());
-        m_mediaCaptureSandboxExtensions.add(extension.first, extension.second.copyRef());
+        auto extensionID = extensions[i].first;
+        Ref sandboxExtension = extensions[i].second;
+        sandboxExtension->consume();
+        WEBPROCESS_RELEASE_LOG(WebRTC, "grantUserMediaDeviceSandboxExtensions: granted extension %s", extensionID.utf8().data());
+        m_mediaCaptureSandboxExtensions.add(extensionID, WTF::move(sandboxExtension));
     }
     m_machBootstrapExtension = extensions.machBootstrapExtension();
     if (RefPtr machBootstrapExtension = m_machBootstrapExtension)

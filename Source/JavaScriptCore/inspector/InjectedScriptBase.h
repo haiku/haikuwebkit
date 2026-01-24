@@ -66,7 +66,7 @@ protected:
     InjectedScriptBase(const String& name);
     InjectedScriptBase(const String& name, JSC::JSGlobalObject*, JSC::JSObject*, InspectorEnvironment*);
 
-    InspectorEnvironment& inspectorEnvironment() const { return *m_environment.get(); }
+    InspectorEnvironment& inspectorEnvironment() const { return *m_environment; }
     CheckedRef<InspectorEnvironment> checkedInspectorEnvironment() const { return inspectorEnvironment(); }
 
     bool hasAccessToInspectedScriptState() const;

@@ -2184,6 +2184,11 @@ class WebCore::LayoutRect {
     WebCore::LayoutSize m_size;
 };
 
+struct WebCore::RemoteFrameLayoutInfo {
+    std::optional<WebCore::LayoutRect> visibleRectInParent;
+    float usedZoom;
+};
+
 header: <WebCore/VP9Utilities.h>
 [CustomHeader] struct WebCore::ScreenDataOverrides {
     double width;
@@ -2584,6 +2589,16 @@ header: <wtf/MachSendRight.h>
     [Validator='!!m_handle && *m_handle'] Win32Handle m_handle;
 #endif
     uint64_t m_size;
+};
+
+header: <WebCore/SharedMemory.h>
+[CustomHeader] enum class WebCore::MemoryLedger : uint8_t {
+    None,
+    Default,
+    Network,
+    Media,
+    Graphics,
+    Neural
 };
 
 header: <WebCore/TextIndicator.h>
@@ -4167,6 +4182,7 @@ header: <WebCore/DataDetectorType.h>
     TrackingNumber,
     FlightNumber,
     LookupSuggestion,
+    Money,
 };
 #endif
 
@@ -5290,13 +5306,15 @@ struct WebCore::RouterSourceDict {
 enum class WebCore::RouterSourceEnum : uint8_t {
     Cache,
     FetchEvent,
-    Network
+    Network,
+    RaceNetworkAndFetchHandler
 };
 
 enum class WebCore::RunningStatus : bool
 
 header: <WebCore/ServiceWorkerRoute.h>
 [CustomHeader] struct WebCore::ServiceWorkerRoutePattern {
+    bool shouldIgnoreCase;
     String protocol;
     String username;
     String password;
@@ -5918,6 +5936,12 @@ enum class WebCore::ShouldOpenExternalURLsPolicy : uint8_t {
     ShouldAllow,
 };
 
+enum class WebCore::NavigationUpgradeToHTTPSBehavior : uint8_t {
+    Disabled,
+    HTTPFallback,
+    BasedOnPolicy
+};
+
 header: <WebCore/NavigationScheduler.h>
 enum class WebCore::ScheduleLocationChangeResult : uint8_t {
     Stopped,
@@ -6157,6 +6181,7 @@ struct WebCore::ServiceWorkerContextData {
     MemoryCompactRobinHoodHashMap<URL, WebCore::ServiceWorkerImportedScript> scriptResourceMap;
     std::optional<WebCore::ScriptExecutionContextIdentifier> serviceWorkerPageIdentifier;
     WebCore::NavigationPreloadState navigationPreloadState;
+    Vector<WebCore::ServiceWorkerRoute> routes;
 };
 
 #if HAVE(SCREEN_CAPTURE_KIT)
@@ -6338,9 +6363,6 @@ struct WebCore::MockWebAuthenticationConfiguration {
     std::optional<WebCore::MockWebAuthenticationConfiguration::CcidConfiguration> ccid;
 };
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
-
-
 header: <WebCore/ISO18013.h>
 [Nested] struct WebCore::ISO18013ElementInfo {
     bool isRetaining;
@@ -6384,8 +6406,6 @@ struct WebCore::DigitalCredentialsResponseData {
 [Nested] enum class WebCore::IdentityCredentialProtocol : uint8_t {
     OrgIsoMdoc
 };
-
-#endif // HAVE(DIGITAL_CREDENTIALS_UI)
 
 #endif // ENABLE(WEB_AUTHN)
 
@@ -6820,6 +6840,9 @@ header: <WebCore/TextExtractionTypes.h>
     bool includeEventListeners;
     bool includeAccessibilityAttributes;
     bool includeTextInAutoFilledControls;
+#if ENABLE(DATA_DETECTION)
+    OptionSet<WebCore::DataDetectorType> dataDetectorTypes;
+#endif
 };
 
 header: <WebCore/TextExtractionTypes.h>
@@ -6930,6 +6953,7 @@ header: <WebCore/TextExtractionTypes.h>
     Vector<WebCore::TextExtraction::Item> children;
     String nodeName;
     std::optional<WebCore::NodeIdentifier> nodeIdentifier;
+    std::optional<WebCore::FrameIdentifier> frameIdentifier;
     OptionSet<WebCore::TextExtraction::EventListenerCategory> eventListeners;
     HashMap<String, String> ariaAttributes;
     String accessibilityRole;
@@ -7464,6 +7488,11 @@ class WebCore::NetworkLoadMetrics {
     MonotonicTime responseStart;
     MonotonicTime responseEnd;
     MonotonicTime workerStart;
+    [NotSerialized] MonotonicTime workerRouterEvaluationStart;
+    [NotSerialized] MonotonicTime workerCacheLookupStart;
+    [NotSerialized] String workerMatchedRouterSource;
+    [NotSerialized] String workerFinalRouterSource;
+
     MonotonicTime firstInterimResponseStart;
 
     String protocol;
@@ -7957,14 +7986,14 @@ headers: <JavaScriptCore/WasmModule.h> <WebCore/ImageBitmap.h> <WebCore/MessageP
     Vector<std::unique_ptr<WebCore::DetachedRTCDataChannel>> detachedRTCDataChannels;
 #endif
 #if ENABLE(WEB_CODECS)
-    Vector<RefPtr<WebCore::WebCodecsEncodedVideoChunkStorage>> serializedVideoChunks;
-    Vector<RefPtr<WebCore::WebCodecsEncodedAudioChunkStorage>> serializedAudioChunks;
+    Vector<Ref<WebCore::WebCodecsEncodedVideoChunkStorage>> serializedVideoChunks;
+    Vector<Ref<WebCore::WebCodecsEncodedAudioChunkStorage>> serializedAudioChunks;
     [NotSerialized] Vector<WebCore::WebCodecsVideoFrameData> serializedVideoFrames;
     [NotSerialized] Vector<WebCore::WebCodecsAudioInternalData> serializedAudioData;
 #endif
 #if ENABLE(WEB_RTC)
-    [NotSerialized] Vector<RefPtr<WebCore::RTCRtpTransformableFrame>> serializedRTCEncodedAudioFrames;
-    [NotSerialized] Vector<RefPtr<WebCore::RTCRtpTransformableFrame>> serializedRTCEncodedVideoFrames;
+    [NotSerialized] Vector<Ref<WebCore::RTCRtpTransformableFrame>> serializedRTCEncodedAudioFrames;
+    [NotSerialized] Vector<Ref<WebCore::RTCRtpTransformableFrame>> serializedRTCEncodedVideoFrames;
 #endif
 #if ENABLE(MEDIA_SOURCE_IN_WORKERS)
     [NotSerialized] Vector<RefPtr<WebCore::DetachedMediaSourceHandle>> detachedMediaSourceHandles;
@@ -7976,11 +8005,11 @@ headers: <JavaScriptCore/WasmModule.h> <WebCore/ImageBitmap.h> <WebCore/MessageP
     [NotSerialized] Vector<std::optional<WebCore::DetachedImageBitmap>> detachedImageBitmaps;
 #if ENABLE(OFFSCREEN_CANVAS_IN_WORKERS)
     [NotSerialized] Vector<std::unique_ptr<WebCore::DetachedOffscreenCanvas>> detachedOffscreenCanvases;
-    [NotSerialized] Vector<RefPtr<WebCore::OffscreenCanvas>> inMemoryOffscreenCanvases;
+    [NotSerialized] Vector<Ref<WebCore::OffscreenCanvas>> inMemoryOffscreenCanvases;
 #endif
     [NotSerialized] Vector<Ref<WebCore::MessagePort>> inMemoryMessagePorts;
 #if ENABLE(WEBASSEMBLY)
-    [NotSerialized] std::unique_ptr<Vector<RefPtr<JSC::Wasm::Module>>> wasmModulesArray;
+    [NotSerialized] std::unique_ptr<Vector<Ref<JSC::Wasm::Module>>> wasmModulesArray;
     [NotSerialized] std::unique_ptr<Vector<RefPtr<JSC::SharedArrayBufferContents>>> wasmMemoryHandlesArray;
 #endif
     [NotSerialized] Vector<WebCore::URLKeepingBlobAlive> blobHandles;
@@ -8018,9 +8047,9 @@ header: <WebCore/SharedBuffer.h>
     float stdDeviation();
 };
 [CustomHeader, RefCounted] class WebCore::DropShadowFilterOperation {
+    WebCore::Color color();
     WebCore::IntPoint location();
     int stdDeviation();
-    WebCore::Color color();
 };
 [CustomHeader, RefCounted] class WebCore::DefaultFilterOperation {
     WebCore::FilterOperation::Type representedType();
@@ -8500,13 +8529,11 @@ enum class WebCore::EdgeModeType : uint8_t {
 
 header: <WebCore/FilterOperation.h>
 [Nested] enum class WebCore::FilterOperation::Type : uint8_t {
-    Reference,
     Grayscale,
     Sepia,
     Saturate,
     HueRotate,
     Invert,
-    AppleInvertLightness,
     Opacity,
     Brightness,
     Contrast,
@@ -9106,6 +9133,7 @@ header: <WebCore/AXObjectCache.h>
     bool isAccessibilityThreadInitialized;
     String liveTree;
     String isolatedTree;
+    Vector<String> warnings;
     uint64_t remoteTokenHash;
     uint64_t webProcessLocalTokenHash;
 };
@@ -9222,4 +9250,11 @@ header: <WebCore/ResolvedCaptionDisplaySettingsOptions.h>
     std::optional<WebCore::FloatRect> anchorBounds;
     std::optional<WebCore::ResolvedCaptionDisplaySettingsOptionsXPositionArea> xPositionArea;
     std::optional<WebCore::ResolvedCaptionDisplaySettingsOptionsYPositionArea> yPositionArea;
+};
+
+header: <WebCore/EventHandler.h>
+[CustomHeader] enum class WebCore::LastKnownMousePositionSource : uint8_t {
+    Mouse,
+    Wheel,
+    Touch
 };

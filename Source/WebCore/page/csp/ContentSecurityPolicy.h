@@ -264,7 +264,7 @@ private:
     bool allPoliciesWithDispositionAllow(Disposition, ViolatedDirectiveCallback&&, Predicate&&, Args&&...) const;
 
     template<typename Predicate, typename... Args>
-    WARN_UNUSED_RETURN bool allPoliciesAllow(NOESCAPE const ViolatedDirectiveCallback&, Predicate&&, Args&&...) const;
+    [[nodiscard]] bool allPoliciesAllow(NOESCAPE const ViolatedDirectiveCallback&, Predicate&&, Args&&...) const;
     bool shouldPerformEarlyCSPCheck() const;
     
     using ResourcePredicate = const ContentSecurityPolicyDirective *(ContentSecurityPolicyDirectiveList::*)(const URL &, bool) const;

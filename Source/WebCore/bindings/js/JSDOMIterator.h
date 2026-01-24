@@ -183,7 +183,7 @@ template<typename IteratorValue, typename T> inline EnableIfSet<T, JSC::JSValue>
     ASSERT(value);
 
     auto globalObject = this->globalObject();
-    auto result = toJS<typename Traits::ValueType>(lexicalGlobalObject, *globalObject, value);
+    auto result = toJS<IDLNullable<typename Traits::ValueType>>(lexicalGlobalObject, *globalObject, value);
 
     switch (m_kind) {
     case IterationKind::Keys:
@@ -207,7 +207,7 @@ template<typename JSIterator, typename IteratorValue> EnableIfMap<typename JSIte
 template<typename JSIterator, typename IteratorValue> EnableIfSet<typename JSIterator::Traits> appendForEachArguments(JSC::JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, JSC::MarkedArgumentBuffer& arguments, IteratorValue& value)
 {
     ASSERT(value);
-    auto argument = toJS<typename JSIterator::Traits::ValueType>(lexicalGlobalObject, globalObject, value);
+    auto argument = toJS<IDLNullable<typename JSIterator::Traits::ValueType>>(lexicalGlobalObject, globalObject, value);
     arguments.append(argument);
     arguments.append(argument);
 }
@@ -242,7 +242,8 @@ template<typename JSIterator> JSC::JSValue iteratorForEach(JSC::JSGlobalObject& 
 template<typename JSWrapper, typename IteratorTraits>
 void JSDOMIteratorBase<JSWrapper, IteratorTraits>::destroy(JSCell* cell)
 {
-    JSDOMIteratorBase<JSWrapper, IteratorTraits>* thisObject = static_cast<JSDOMIteratorBase<JSWrapper, IteratorTraits>*>(cell);
+    // We cannot rely on jsCast() during JSObject destruction.
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* thisObject = static_cast<JSDOMIteratorBase<JSWrapper, IteratorTraits>*>(cell);
     thisObject->JSDOMIteratorBase<JSWrapper, IteratorTraits>::~JSDOMIteratorBase();
 }
 

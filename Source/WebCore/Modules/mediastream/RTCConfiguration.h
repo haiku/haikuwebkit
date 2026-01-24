@@ -48,6 +48,8 @@ struct RTCConfiguration {
     RTCPMuxPolicy rtcpMuxPolicy;
     unsigned short iceCandidatePoolSize;
     Vector<Ref<RTCCertificate>> certificates;
+    enum class TargetLatency { Lowest, None };
+    TargetLatency targetLatency { TargetLatency::Lowest };
 };
 
 } // namespace WebCore

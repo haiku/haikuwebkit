@@ -134,15 +134,21 @@ Vector<Cookie> NetworkStorageSession::getCookies(const URL& url)
 void NetworkStorageSession::hasCookies(const RegistrableDomain& domain, CompletionHandler<void(bool)>&& completionHandler) const
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
+
+    bool hasCookieForDomain = false;
     
     for (NSHTTPCookie *nsCookie in [nsCookieStorage() cookies]) {
         if (RegistrableDomain::uncheckedCreateFromHost(nsCookie.domain) == domain) {
-            completionHandler(true);
-            return;
+            hasCookieForDomain = true;
+            break;
         }
     }
 
-    completionHandler(false);
+    // FIXME: rdar://168454473 (Remove workaround in CookieStorageObserver once CFNetwork bug is resolved)
+    if (m_cookieStorageObserver && cookieStorage().get())
+        checkedCookieStorageObserver()->registerInternalsForNotifications(true);
+
+    completionHandler(hasCookieForDomain);
 }
 
 void NetworkStorageSession::setAllCookiesToSameSiteStrict(const RegistrableDomain& domain, CompletionHandler<void()>&& completionHandler)

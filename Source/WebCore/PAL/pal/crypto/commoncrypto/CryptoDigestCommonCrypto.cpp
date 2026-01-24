@@ -32,6 +32,13 @@
 #include <span>
 #include <wtf/TZoneMallocInlines.h>
 
+#if !defined(CLANG_WEBKIT_BRANCH)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#include "PALSwift-Generated.h"
+#pragma clang diagnostic pop
+#endif // !defined(CLANG_WEBKIT_BRANCH)
+
 namespace PAL {
 
 struct CryptoDigestContext {
@@ -39,7 +46,7 @@ struct CryptoDigestContext {
 
     using CCContext = Variant<
 #if !defined(CLANG_WEBKIT_BRANCH)
-        std::unique_ptr<PAL::Digest>,
+        std::unique_ptr<pal::Digest>,
 #endif
         std::unique_ptr<CC_SHA1_CTX>,
         std::unique_ptr<CC_SHA256_CTX>,
@@ -88,16 +95,16 @@ static CryptoDigestContext::CCContext createCryptoDigest(CryptoDigest::Algorithm
 {
     switch (algorithm) {
     case CryptoDigest::Algorithm::SHA_1: {
-        return WTF::makeUniqueWithoutFastMallocCheck<PAL::Digest>(PAL::Digest::sha1Init());
+        return WTF::makeUniqueWithoutFastMallocCheck<pal::Digest>(pal::Digest::sha1Init());
     }
     case CryptoDigest::Algorithm::SHA_256: {
-        return WTF::makeUniqueWithoutFastMallocCheck<PAL::Digest>(PAL::Digest::sha256Init());
+        return WTF::makeUniqueWithoutFastMallocCheck<pal::Digest>(pal::Digest::sha256Init());
     }
     case CryptoDigest::Algorithm::SHA_384: {
-        return WTF::makeUniqueWithoutFastMallocCheck<PAL::Digest>(PAL::Digest::sha384Init());
+        return WTF::makeUniqueWithoutFastMallocCheck<pal::Digest>(pal::Digest::sha384Init());
     }
     case CryptoDigest::Algorithm::SHA_512: {
-        return WTF::makeUniqueWithoutFastMallocCheck<PAL::Digest>(PAL::Digest::sha512Init());
+        return WTF::makeUniqueWithoutFastMallocCheck<pal::Digest>(pal::Digest::sha512Init());
     }
     case CryptoDigest::Algorithm::DEPRECATED_SHA_224: {
         RELEASE_ASSERT_NOT_REACHED_WITH_MESSAGE("SHA224 is not supported.");
@@ -134,7 +141,7 @@ void CryptoDigest::addBytes(std::span<const uint8_t> input)
     case CryptoDigest::Algorithm::SHA_256:
     case CryptoDigest::Algorithm::SHA_384:
     case CryptoDigest::Algorithm::SHA_512:
-        std::get<std::unique_ptr<PAL::Digest>>(m_context->ccContext)->update(input);
+        std::get<std::unique_ptr<pal::Digest>>(m_context->ccContext)->update(input);
         return;
     case CryptoDigest::Algorithm::DEPRECATED_SHA_224:
         RELEASE_ASSERT_NOT_REACHED_WITH_MESSAGE("SHA224 is not supported.");
@@ -158,7 +165,7 @@ Vector<uint8_t> CryptoDigest::computeHash()
     case CryptoDigest::Algorithm::SHA_256:
     case CryptoDigest::Algorithm::SHA_384:
     case CryptoDigest::Algorithm::SHA_512:
-        return std::get<std::unique_ptr<PAL::Digest>>(m_context->ccContext)->finalize();
+        return std::get<std::unique_ptr<pal::Digest>>(m_context->ccContext)->finalize();
     case CryptoDigest::Algorithm::DEPRECATED_SHA_224:
         RELEASE_ASSERT_NOT_REACHED_WITH_MESSAGE("SHA224 is not supported.");
         break;

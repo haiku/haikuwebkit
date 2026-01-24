@@ -273,23 +273,6 @@ SkPathIter SkPath::iter() const {
     return { this->points(), this->verbs(), this->conicWeights() };
 }
 
-bool SkPath::isZeroLengthSincePoint(int startPtIndex) const {
-    SkSpan<const SkPoint> span = this->points();
-
-    int count = (int)span.size() - startPtIndex;
-    if (count < 2) {
-        return true;
-    }
-    const SkPoint* pts = span.data() + startPtIndex;
-    const SkPoint& first = *pts;
-    for (int index = 1; index < count; ++index) {
-        if (first != pts[index]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 SkPath::Iter::Iter() {
@@ -802,10 +785,6 @@ bool SkPathPriv::PerspectiveClip(const SkPath& path, const SkMatrix& matrix, SkP
     // clipped out (or failed)
     *clippedPath = SkPath();
     return true;
-}
-
-bool SkPathPriv::IsAxisAligned(const SkPath& path) {
-    return IsAxisAligned(path.points());
 }
 
 std::optional<SkPathRectInfo> SkPathPriv::IsSimpleRect(const SkPath& path, bool isSimpleFill) {

@@ -20,7 +20,6 @@
 
 #include "config.h"
 #include "GStreamerQuirks.h"
-#include <optional>
 
 #if USE(GSTREAMER)
 
@@ -36,6 +35,7 @@
 #include "GStreamerQuirkRealtek.h"
 #include "GStreamerQuirkRialto.h"
 #include "GStreamerQuirkWesteros.h"
+#include <optional>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/OptionSet.h>
 #include <wtf/RuntimeApplicationChecks.h>
@@ -118,7 +118,27 @@ GStreamerQuirksManager::GStreamerQuirksManager(bool isForTesting, bool loadQuirk
             }
             m_quirks.append(WTF::move(quirk));
         }
+    } else {
+        GST_DEBUG("WEBKIT_GST_QUIRKS was not set, now performing automatic quirks detection.");
+#define ADD_QUIRK(name) m_quirks.append(WTF::makeUnique<GStreamerQuirk##name>())
+        ADD_QUIRK(AmLogic);
+        ADD_QUIRK(Broadcom);
+        ADD_QUIRK(BcmNexus);
+        ADD_QUIRK(OpenMAX);
+        ADD_QUIRK(Realtek);
+        ADD_QUIRK(Rialto);
+        ADD_QUIRK(Westeros);
+#undef ADD_QUIRK
+
+        m_quirks.removeAllMatching([](auto& quirk) -> bool {
+            bool isPlatformSupported = quirk->isPlatformSupported();
+            if (isPlatformSupported)
+                GST_INFO("Enabling quirk %s", quirk->identifier().characters());
+            return !isPlatformSupported;
+        });
     }
+
+    GST_DEBUG("%zu quirks enabled", m_quirks.size());
 
     auto identifierString = CStringView::unsafeFromUTF8(g_getenv("WEBKIT_GST_HOLE_PUNCH_QUIRK"));
     GST_DEBUG("Attempting to parse requested hole-punch quirk: %s", GST_STR_NULL(identifierString.utf8()));
@@ -208,6 +228,8 @@ bool GStreamerQuirksManager::sinksRequireClockSynchronization() const
 
 void GStreamerQuirksManager::configureElement(GstElement* element, OptionSet<ElementRuntimeCharacteristics>&& characteristics)
 {
+    if (m_quirks.isEmpty())
+        return;
     GST_DEBUG("Configuring element %" GST_PTR_FORMAT, element);
     for (const auto& quirk : m_quirks)
         quirk->configureElement(element, characteristics);

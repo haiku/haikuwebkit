@@ -100,12 +100,12 @@ static std::optional<DetectedItem> detectItem(const VisiblePosition& position, c
     RetainPtr results = adoptCF(DDScannerCopyResultsWithOptions(scanner.get(), DDScannerCopyResultsOptionsNoOverlap));
 
     // Find the DDResultRef that intersects the hitTestResult's VisiblePosition.
-    DDResultRef mainResult = nullptr;
+    RetainPtr<DDResultRef> mainResult;
     std::optional<SimpleRange> mainResultRange;
     CFIndex resultCount = CFArrayGetCount(results.get());
     for (CFIndex i = 0; i < resultCount; i++) {
-        auto result = checked_cf_cast<DDResultRef>(CFArrayGetValueAtIndex(results.get(), i));
-        CFRange resultRangeInContext = DDResultGetRange(result);
+        RetainPtr result = checked_cf_cast<DDResultRef>(CFArrayGetValueAtIndex(results.get(), i));
+        CFRange resultRangeInContext = DDResultGetRange(result.get());
         if (hitLocation >= resultRangeInContext.location && (hitLocation - resultRangeInContext.location) < resultRangeInContext.length) {
             mainResult = result;
             mainResultRange = resolveCharacterRange(contextRange, resultRangeInContext);
@@ -122,8 +122,8 @@ static std::optional<DetectedItem> detectItem(const VisiblePosition& position, c
 
     RetainPtr actionContext = adoptNS([PAL::allocWKDDActionContextInstance() init]);
 
-    [actionContext setAllResults:@[ (__bridge id)mainResult ]];
-    [actionContext setMainResult:mainResult];
+    [actionContext setAllResults:@[ (__bridge id)mainResult.get() ]];
+    [actionContext setMainResult:mainResult.get()];
 
     return { {
         WTF::move(actionContext),
@@ -176,6 +176,22 @@ std::optional<DetectedItem> DataDetection::detectItemAroundHitTestResult(const H
 }
 
 #endif // PLATFORM(MAC)
+
+static BOOL resultIsURL(DDResultRef result)
+{
+    if (!result)
+        return NO;
+
+    static NeverDestroyed<RetainPtr<NSSet>> urlTypes = [NSSet setWithObjects:
+        bridge_cast(retainPtr(PAL::get_DataDetectorsCore_DDBinderHttpURLKey()).get()),
+        bridge_cast(retainPtr(PAL::get_DataDetectorsCore_DDBinderWebURLKey()).get()),
+        bridge_cast(retainPtr(PAL::get_DataDetectorsCore_DDBinderMailURLKey()).get()),
+        bridge_cast(retainPtr(PAL::get_DataDetectorsCore_DDBinderGenericURLKey()).get()),
+        bridge_cast(retainPtr(PAL::get_DataDetectorsCore_DDBinderEmailKey()).get()),
+        nil];
+    RetainPtr type = PAL::softLink_DataDetectorsCore_DDResultGetType(result);
+    return [urlTypes.get() containsObject:bridge_cast(type.get())];
+}
 
 #if PLATFORM(IOS_FAMILY)
 
@@ -233,20 +249,6 @@ bool DataDetection::canPresentDataDetectorsUIForElement(Element& element)
     return PAL::softLink_DataDetectorsCore_DDShouldImmediatelyShowActionSheetForResult(result);
 }
 
-static BOOL resultIsURL(DDResultRef result)
-{
-    if (!result)
-        return NO;
-    
-    static NeverDestroyed<RetainPtr<NSSet>> urlTypes = [NSSet setWithObjects:
-        bridge_cast(PAL::get_DataDetectorsCore_DDBinderHttpURLKey()),
-        bridge_cast(PAL::get_DataDetectorsCore_DDBinderWebURLKey()),
-        bridge_cast(PAL::get_DataDetectorsCore_DDBinderMailURLKey()),
-        bridge_cast(PAL::get_DataDetectorsCore_DDBinderGenericURLKey()),
-        bridge_cast(PAL::get_DataDetectorsCore_DDBinderEmailKey()), nil];
-    return [urlTypes.get() containsObject:bridge_cast(PAL::softLink_DataDetectorsCore_DDResultGetType(result))];
-}
-
 static NSString *constructURLStringForResult(DDResultRef currentResult, NSString *resultIdentifier, NSDate *referenceDate, NSTimeZone *referenceTimeZone, OptionSet<DataDetectorType> detectionTypes)
 {
     if (!PAL::softLink_DataDetectorsCore_DDResultHasProperties(currentResult, DDResultPropertyPassiveDisplay))
@@ -261,7 +263,8 @@ static NSString *constructURLStringForResult(DDResultRef currentResult, NSString
         || (detectionTypes.contains(DataDetectorType::FlightNumber) && CFEqual(PAL::get_DataDetectorsCore_DDBinderFlightInformationKey(), type))
         || (detectionTypes.contains(DataDetectorType::LookupSuggestion) && CFEqual(PAL::get_DataDetectorsCore_DDBinderParsecSourceKey(), type))
         || (detectionTypes.contains(DataDetectorType::PhoneNumber) && DDResultCategoryPhoneNumber == category)
-        || (detectionTypes.contains(DataDetectorType::Link) && resultIsURL(currentResult))) {
+        || (detectionTypes.contains(DataDetectorType::Link) && resultIsURL(currentResult))
+        || (detectionTypes.contains(DataDetectorType::Money) && DDResultCategoryMoney == category)) {
         return PAL::softLink_DataDetectorsCore_DDURLStringForResult(currentResult, resultIdentifier, phoneTypes, referenceDate, referenceTimeZone);
     }
     if (detectionTypes.contains(DataDetectorType::CalendarEvent) && DDResultCategoryCalendarEvent == category) {
@@ -846,6 +849,72 @@ std::optional<std::pair<Ref<HTMLElement>, IntRect>> DataDetection::findDataDetec
     }
 
     return std::nullopt;
+}
+
+static std::optional<DataDetectorType> typeForResult(DDResultRef result)
+{
+    switch (PAL::softLink_DataDetectorsCore_DDResultGetCategory(result)) {
+    case DDResultCategoryAddress:
+        return DataDetectorType::Address;
+    case DDResultCategoryPhoneNumber:
+        return DataDetectorType::PhoneNumber;
+    case DDResultCategoryMoney:
+        return DataDetectorType::Money;
+    case DDResultCategoryCalendarEvent:
+        return DataDetectorType::CalendarEvent;
+    default:
+        break;
+    }
+
+    RetainPtr type = PAL::softLink_DataDetectorsCore_DDResultGetType(result);
+    if (CFEqual(type.get(), PAL::get_DataDetectorsCore_DDBinderTrackingNumberKey()))
+        return DataDetectorType::TrackingNumber;
+
+    if (CFEqual(type.get(), PAL::get_DataDetectorsCore_DDBinderFlightInformationKey()))
+        return DataDetectorType::FlightNumber;
+
+    if (CFEqual(type.get(), PAL::get_DataDetectorsCore_DDBinderParsecSourceKey()))
+        return DataDetectorType::LookupSuggestion;
+
+    if (resultIsURL(result))
+        return DataDetectorType::Link;
+
+    return { };
+}
+
+Vector<SimpleRange> DataDetection::detectRanges(const SimpleRange& contextRange, OptionSet<DataDetectorType> types, unsigned maximumResultCount)
+{
+    if (types.isEmpty())
+        return { };
+
+    Vector<SimpleRange> ranges;
+
+    auto fullPlainTextString = plainText(contextRange);
+    fullPlainTextString = makeStringByReplacingAll(fullPlainTextString, '\n', " "_s);
+
+    RetainPtr scanner = adoptCF(PAL::softLink_DataDetectorsCore_DDScannerCreate(DDScannerTypeStandard, 0, nullptr));
+    RetainPtr scanQuery = adoptCF(PAL::softLink_DataDetectorsCore_DDScanQueryCreateFromString(kCFAllocatorDefault, fullPlainTextString.createCFString().get(), CFRangeMake(0, fullPlainTextString.length())));
+
+    if (!PAL::softLink_DataDetectorsCore_DDScannerScanQuery(scanner.get(), scanQuery.get()))
+        return ranges;
+
+    RetainPtr results = adoptCF(PAL::softLink_DataDetectorsCore_DDScannerCopyResultsWithOptions(scanner.get(), DDScannerCopyResultsOptionsNoOverlap));
+    for (id resultObject in static_cast<NSArray *>(results.get())) {
+        RetainPtr ddResult = static_cast<DDResultRef>(resultObject);
+        auto dataType = typeForResult(ddResult.get());
+        if (!dataType)
+            continue;
+
+        if (!types.contains(*dataType))
+            continue;
+
+        auto matchRange = CharacterRange { PAL::softLink_DataDetectorsCore_DDResultGetRange(ddResult.get()) };
+        ranges.append(resolveCharacterRange(contextRange, matchRange));
+        if (ranges.size() >= maximumResultCount)
+            break;
+    }
+
+    return ranges;
 }
 
 #if ENABLE(IMAGE_ANALYSIS)

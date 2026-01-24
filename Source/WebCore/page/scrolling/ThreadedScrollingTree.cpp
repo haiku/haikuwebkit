@@ -268,7 +268,7 @@ void ThreadedScrollingTree::scrollingTreeNodeDidScroll(ScrollingTreeScrollingNod
 
     auto deferrer = ScrollingTreeWheelEventTestMonitorCompletionDeferrer { *this, node.scrollingNodeID(), WheelEventTestMonitor::DeferReason::ScrollingThreadSyncNeeded };
     RunLoop::mainSingleton().dispatch([protectedThis = Ref { *this }, deferrer = WTF::move(deferrer)] {
-        if (RefPtr scrollingCoordinator = protectedThis->m_scrollingCoordinator.get())
+        if (RefPtr scrollingCoordinator = protectedThis->m_scrollingCoordinator)
             scrollingCoordinator->scrollingThreadAddedPendingUpdate();
     });
 }
@@ -291,7 +291,7 @@ void ThreadedScrollingTree::scrollingTreeNodeScrollUpdated(ScrollingTreeScrollin
     addPendingScrollUpdate(WTF::move(scrollUpdate));
 
     RunLoop::mainSingleton().dispatch([protectedThis = Ref { *this }] {
-        if (RefPtr scrollingCoordinator = protectedThis->m_scrollingCoordinator.get())
+        if (RefPtr scrollingCoordinator = protectedThis->m_scrollingCoordinator)
             scrollingCoordinator->scrollingThreadAddedPendingUpdate();
     });
 }

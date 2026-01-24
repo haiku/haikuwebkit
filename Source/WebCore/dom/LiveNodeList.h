@@ -110,3 +110,7 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::LiveNodeList)
+    static bool isType(const WebCore::NodeList& nodeList) { return nodeList.isLiveNodeList(); }
+SPECIALIZE_TYPE_TRAITS_END()

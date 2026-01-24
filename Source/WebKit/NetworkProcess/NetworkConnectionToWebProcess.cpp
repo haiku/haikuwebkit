@@ -521,7 +521,7 @@ void NetworkConnectionToWebProcess::didClose(IPC::Connection& connection)
 
 void NetworkConnectionToWebProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName messageName, const Vector<uint32_t>&)
 {
-    RELEASE_LOG_FAULT(IPC, "Received an invalid message '%" PUBLIC_LOG_STRING "' from WebContent process %" PRIu64 ", requesting for it to be terminated.", description(messageName).characters(), m_webProcessIdentifier.toUInt64());
+    RELEASE_LOG_FAULT_WITH_PAYLOAD(IPC, makeString("Received an invalid message '"_s, description(messageName), "' from WebContent process "_s, m_webProcessIdentifier.toUInt64(), ", requesting for it to be terminated."_s).utf8().data());
     m_networkProcess->protectedParentProcessConnection()->send(Messages::NetworkProcessProxy::TerminateWebProcess(m_webProcessIdentifier), 0);
 }
 
@@ -545,7 +545,7 @@ NetworkSession* NetworkConnectionToWebProcess::networkSession()
     return m_networkProcess->networkSession(m_sessionID);
 }
 
-Vector<RefPtr<WebCore::BlobDataFileReference>> NetworkConnectionToWebProcess::resolveBlobReferences(const NetworkResourceLoadParameters& loadParameters)
+Vector<Ref<WebCore::BlobDataFileReference>> NetworkConnectionToWebProcess::resolveBlobReferences(const NetworkResourceLoadParameters& loadParameters)
 {
     CONNECTION_RELEASE_LOG(Loading, "resolveBlobReferences: (parentPID=%d, pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ")", loadParameters.parentPID, loadParameters.webPageProxyID.toUInt64(), loadParameters.webPageID.toUInt64(), loadParameters.webFrameID.toUInt64(), loadParameters.identifier ? loadParameters.identifier->toUInt64() : 0);
 
@@ -555,7 +555,7 @@ Vector<RefPtr<WebCore::BlobDataFileReference>> NetworkConnectionToWebProcess::re
 
     auto& blobRegistry = session->blobRegistry();
 
-    Vector<RefPtr<WebCore::BlobDataFileReference>> files;
+    Vector<Ref<WebCore::BlobDataFileReference>> files;
     if (auto body = loadParameters.request.httpBody()) {
         for (auto& element : body->elements()) {
             if (auto* blobData = std::get_if<FormDataElement::EncodedBlobData>(&element.data))
@@ -1232,7 +1232,7 @@ void NetworkConnectionToWebProcess::writeBlobsToTemporaryFilesForIndexedDB(const
 
     MESSAGE_CHECK_COMPLETION(!session->sessionID().isEphemeral(), completionHandler({ }));
 
-    Vector<RefPtr<BlobDataFileReference>> fileReferences;
+    Vector<Ref<BlobDataFileReference>> fileReferences;
     for (auto& url : blobURLs)
         fileReferences.appendVector(session->blobRegistry().filesInBlob({ { }, url }));
 
@@ -1720,12 +1720,14 @@ void NetworkConnectionToWebProcess::prioritizeResourceLoads(const Vector<WebCore
     if (!session)
         return;
 
-    Vector<RefPtr<NetworkLoad>> loads;
+    Vector<Ref<NetworkLoad>> loads;
     for (auto identifier : loadIdentifiers) {
         RefPtr loader = m_networkResourceLoaders.get(identifier);
-        if (!loader || !loader->networkLoad())
+        if (!loader)
             continue;
-        loads.append(loader->networkLoad());
+
+        if (RefPtr networkLoad = loader->networkLoad())
+            loads.append(networkLoad.releaseNonNull());
     }
 
     session->protectedNetworkLoadScheduler()->prioritizeLoads(loads);

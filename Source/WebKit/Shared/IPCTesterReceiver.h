@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if ENABLE(IPC_TESTING_API)
+#if ENABLE(IPC_TESTING_API) && !ENABLE(IPC_TESTING_SWIFT)
 
 #include "MessageReceiver.h"
 

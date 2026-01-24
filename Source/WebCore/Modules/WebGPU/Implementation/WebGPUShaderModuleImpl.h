@@ -57,6 +57,7 @@ private:
     ShaderModuleImpl& operator=(ShaderModuleImpl&&) = delete;
 
     WGPUShaderModule backing() const { return m_backing.get(); }
+    bool isShaderModuleImpl() const final { return true; }
 
     void compilationInfo(CompletionHandler<void(Ref<CompilationInfo>&&)>&&) final;
 
@@ -67,5 +68,9 @@ private:
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::ShaderModuleImpl)
+    static bool isType(const WebCore::WebGPU::ShaderModule& module) { return module.isShaderModuleImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

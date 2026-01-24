@@ -59,10 +59,8 @@ PingLoad::PingLoad(NetworkConnectionToWebProcess& connection, NetworkResourceLoa
     , m_networkLoadChecker(NetworkLoadChecker::create(connection.networkProcess(), nullptr,  &connection.schemeRegistry(), FetchOptions { m_parameters.options }, m_sessionID, m_parameters.webPageProxyID, WTF::move(m_parameters.originalRequestHeaders), URL { m_parameters.request.url() }, URL { m_parameters.documentURL }, m_parameters.sourceOrigin.copyRef(), m_parameters.topOrigin.copyRef(), m_parameters.parentOrigin(), m_parameters.preflightPolicy, m_parameters.request.httpReferrer(), m_parameters.allowPrivacyProxy, m_parameters.advancedPrivacyProtections))
     , m_blobFiles(connection.resolveBlobReferences(m_parameters))
 {
-    for (auto& file : m_blobFiles) {
-        if (file)
-            file->prepareForFileAccess();
-    }
+    for (auto& file : m_blobFiles)
+        file->prepareForFileAccess();
 
     initialize(Ref { connection.networkProcess() });
 }
@@ -108,10 +106,8 @@ PingLoad::~PingLoad()
         task->clearClient();
         task->cancel();
     }
-    for (auto& file : m_blobFiles) {
-        if (file)
-            file->revokeFileAccess();
-    }
+    for (auto& file : m_blobFiles)
+        file->revokeFileAccess();
 }
 
 void PingLoad::didFinish(const ResourceError& error, const ResourceResponse& response)

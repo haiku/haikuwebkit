@@ -101,35 +101,29 @@ void ReadableStreamDefaultReader::read(JSDOMGlobalObject& globalObject, Ref<Read
             return;
 
         Ref domPromise = DOMPromise::create(globalObject, *promise);
-        domPromise->whenSettled([domPromise, readRequest = WTF::move(readRequest)] {
-            switch (domPromise->status()) {
-            case DOMPromise::Status::Fulfilled: {
-                auto* globalObject = domPromise->globalObject();
-                if (!globalObject)
-                    return;
+        domPromise->whenSettledWithResult([domPromise, readRequest = WTF::move(readRequest)](auto* globalObject, bool isFulfilled, auto promiseResult) {
+            if (!isFulfilled) {
+                readRequest->runErrorSteps(promiseResult);
+                return;
+            }
 
-                Ref vm = globalObject->vm();
-                auto scope = DECLARE_CATCH_SCOPE(vm);
-                auto resultOrException = convertDictionary<ReadableStreamReadResult>(*globalObject, domPromise->result());
-                ASSERT(!resultOrException.hasException(scope));
-                if (resultOrException.hasException(scope)) {
-                    scope.clearException();
-                    return;
-                }
-                auto result = resultOrException.releaseReturnValue();
-                if (result.done) {
-                    readRequest->runCloseSteps();
-                    return;
-                }
-                readRequest->runChunkSteps(result.value);
+            if (!globalObject)
+                return;
+
+            Ref vm = globalObject->vm();
+            auto scope = DECLARE_THROW_SCOPE(vm);
+            auto resultOrException = convertDictionary<ReadableStreamReadResult>(*globalObject, promiseResult);
+            ASSERT(!resultOrException.hasException(scope));
+            if (resultOrException.hasException(scope)) {
+                TRY_CLEAR_EXCEPTION(scope, void());
+                return;
             }
-                break;
-            case DOMPromise::Status::Rejected:
-                readRequest->runErrorSteps(domPromise->result());
-                break;
-            case DOMPromise::Status::Pending:
-                ASSERT_NOT_REACHED();
+            auto result = resultOrException.releaseReturnValue();
+            if (result.done) {
+                readRequest->runCloseSteps();
+                return;
             }
+            readRequest->runChunkSteps(result.value);
         });
         return;
     }

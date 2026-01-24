@@ -829,7 +829,7 @@ std::tuple<RefPtr<HTMLElement>, RefPtr<JSCustomElementInterface>, RefPtr<CustomE
     Ref ownerDocument = treeScope->documentScope();
     bool insideTemplateElement = m_openElements.containsTemplateElement();
     RefPtr element = HTMLElementFactory::createKnownElement(token.tagName(), ownerDocument, insideTemplateElement ? nullptr : form(), true);
-    RefPtr<CustomElementRegistry> registry = m_openElements.stackDepth() > 1 ? registryForCurrentNode(currentNode(), treeScope) : m_registry;
+    RefPtr<CustomElementRegistry> registry = m_openElements.stackDepth() > 1 ? RefPtr { registryForCurrentNode(currentNode(), treeScope) } : m_registry;
     if (!element) [[unlikely]] {
         auto* elementInterface = registry ? registry->findInterface(token.name()) : nullptr;
         if (elementInterface) [[unlikely]] {

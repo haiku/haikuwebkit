@@ -68,7 +68,7 @@ private:
 };
 
 
-template<typename ExitFunction> WARN_UNUSED_RETURN ScopeExit<ExitFunction> makeScopeExit(ExitFunction&&);
+template<typename ExitFunction> [[nodiscard]] ScopeExit<ExitFunction> makeScopeExit(ExitFunction&&);
 template<typename ExitFunction>
 ScopeExit<ExitFunction> makeScopeExit(ExitFunction&& exitFunction)
 {

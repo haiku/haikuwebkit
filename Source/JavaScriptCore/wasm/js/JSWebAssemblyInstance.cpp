@@ -158,9 +158,6 @@ void JSWebAssemblyInstance::finishCreation(VM& vm)
 
     // Now, JSWebAssemblyInstance is fully initialized. Expose it to the concurrent compiler.
     m_anchor = m_module->registerAnchor(this);
-
-    if (Options::enableWasmDebugger()) [[unlikely]]
-        Wasm::DebugServer::singleton().trackInstance(this);
 }
 
 JSWebAssemblyInstance::~JSWebAssemblyInstance()
@@ -181,9 +178,6 @@ JSWebAssemblyInstance::~JSWebAssemblyInstance()
         m_anchor->tearDown();
         m_anchor = nullptr;
     }
-
-    if (Options::enableWasmDebugger()) [[unlikely]]
-        Wasm::DebugServer::singleton().untrackInstance(this);
 }
 
 void JSWebAssemblyInstance::destroy(JSCell* cell)
@@ -384,7 +378,12 @@ JSWebAssemblyInstance* JSWebAssemblyInstance::tryCreate(VM& vm, Structure* insta
         jsInstance->setDummyMemory(vm, jsMemory);
         RETURN_IF_EXCEPTION(throwScope, nullptr);
     }
-    
+
+
+    // Register with debugger after memory and anchor are fully initialized.
+    if (Options::enableWasmDebugger()) [[unlikely]]
+        Wasm::DebugServer::singleton().trackInstance(jsInstance);
+
     return jsInstance;
 }
 

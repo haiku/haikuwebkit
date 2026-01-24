@@ -45,7 +45,11 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDataChannel-send-close-string.window.js
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDataChannel-send.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDataChannel-worker-GC.html
+/LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDataChannel-worker-shim.js
+/LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDataChannel-worker.js
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDataChannelEvent-constructor.html
+/LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDataChannelInit-maxPacketLifeTime-enforce-range.html
+/LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDataChannelInit-maxRetransmits-enforce-range.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDtlsTransport-getRemoteCertificates.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCDtlsTransport-state.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCError.html
@@ -96,6 +100,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-relay-canvas.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-remote-track-currentTime.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-remote-track-mute.https.html
+/LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-remote-track-properties.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-removeTrack.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-restartIce-onnegotiationneeded.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-restartIce.https.html

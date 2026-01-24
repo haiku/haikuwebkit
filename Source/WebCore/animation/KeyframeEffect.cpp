@@ -46,6 +46,7 @@
 #include "DocumentQuirks.h"
 #include "DocumentView.h"
 #include "Element.h"
+#include "ElementRareData.h"
 #include "EventLoop.h"
 #include "EventTargetInlines.h"
 #include "FontCascade.h"
@@ -905,8 +906,8 @@ auto KeyframeEffect::getKeyframes() -> Vector<ComputedKeyframe>
     }
 
     RefPtr target = m_target;
-    auto* lastStyleChangeEventStyle = targetStyleable()->lastStyleChangeEventStyle();
-    auto& elementStyle = lastStyleChangeEventStyle ? *lastStyleChangeEventStyle : currentStyle();
+    CheckedPtr lastStyleChangeEventStyle = targetStyleable()->lastStyleChangeEventStyle();
+    CheckedRef elementStyle = lastStyleChangeEventStyle ? *lastStyleChangeEventStyle : currentStyle();
 
     Style::Extractor computedStyleExtractor { target.get(), false, m_pseudoElementIdentifier };
 
@@ -925,7 +926,7 @@ auto KeyframeEffect::getKeyframes() -> Vector<ComputedKeyframe>
             return { };
 
         auto& backingStyleAnimation = cssAnimation->backingStyleAnimation();
-        auto* styleScope = Style::Scope::forOrdinal(*m_target, backingStyleAnimation.name().tryKeyframesName()->scopeOrdinal);
+        CheckedPtr styleScope = Style::Scope::forOrdinal(*m_target, backingStyleAnimation.name().tryKeyframesName()->scopeOrdinal);
         if (!styleScope)
             return { };
 
@@ -933,7 +934,7 @@ auto KeyframeEffect::getKeyframes() -> Vector<ComputedKeyframe>
     }();
 
     auto matchingStyleRuleKeyframe = [&](const BlendingKeyframe& keyframe) -> StyleRuleKeyframe* {
-        auto* cssAnimation = dynamicDowncast<CSSAnimation>(animation());
+        CheckedPtr cssAnimation = dynamicDowncast<CSSAnimation>(animation());
         if (!cssAnimation)
             return nullptr;
 
@@ -995,7 +996,7 @@ auto KeyframeEffect::getKeyframes() -> Vector<ComputedKeyframe>
     Vector<ComputedKeyframe> computedKeyframesWithDoubleOffset;
 
     for (auto& keyframe : computedBlendingKeyframes) {
-        auto& style = *keyframe.style();
+        CheckedRef style = *keyframe.style();
         RefPtr keyframeRule = matchingStyleRuleKeyframe(keyframe);
 
         ComputedKeyframe computedKeyframe;
@@ -1045,7 +1046,7 @@ auto KeyframeEffect::getKeyframes() -> Vector<ComputedKeyframe>
                 }
             }
             if (styleString.isEmpty()) {
-                if (RefPtr cssValue = style.customPropertyValue(customProperty))
+                if (RefPtr cssValue = style->customPropertyValue(customProperty))
                     styleString = cssValue->propertyValueSerialization(CSS::defaultSerializationContext(), style);
             }
             computedKeyframe.customStyleStrings.set(customProperty, styleString);
@@ -1302,7 +1303,7 @@ bool KeyframeEffect::forceLayoutIfNeeded()
     if (!m_needsForcedLayout || !m_target)
         return false;
 
-    auto* renderer = this->renderer();
+    CheckedPtr renderer = this->renderer();
     if (!renderer || !renderer->parent())
         return false;
 
@@ -1427,7 +1428,7 @@ void KeyframeEffect::computeCSSAnimationBlendingKeyframes(const RenderStyle& una
 
         // Ensure resource loads for all the frames.
         for (auto& keyframe : blendingKeyframes) {
-            if (auto* style = const_cast<RenderStyle*>(keyframe.style()))
+            if (CheckedPtr style = const_cast<RenderStyle*>(keyframe.style()))
                 Style::loadPendingResources(*style, *document(), m_target.get());
         }
     }
@@ -1792,7 +1793,7 @@ void KeyframeEffect::getAnimatedStyle(std::unique_ptr<RenderStyle>& animatedStyl
         return;
 
     if (!animatedStyle) {
-        if (auto* style = targetStyleable()->lastStyleChangeEventStyle())
+        if (CheckedPtr style = targetStyleable()->lastStyleChangeEventStyle())
             animatedStyle = RenderStyle::clonePtr(*style);
         else
             animatedStyle = RenderStyle::clonePtr(renderer()->style());
@@ -2012,7 +2013,7 @@ void KeyframeEffect::updateAcceleratedActions()
         return;
 #endif
 
-    auto* renderer = this->renderer();
+    CheckedPtr renderer = this->renderer();
     if (!renderer || !renderer->isComposited())
         return;
 
@@ -2334,7 +2335,7 @@ void KeyframeEffect::applyPendingAcceleratedActions()
     if (m_pendingAcceleratedActions.isEmpty())
         return;
 
-    auto* renderer = this->renderer();
+    CheckedPtr renderer = this->renderer();
     if (!renderer || !renderer->isComposited()) {
         // The renderer may no longer be composited because the accelerated animation ended before we had a chance to update it,
         // in which case if we asked for the animation to stop, we can discard the current set of accelerated actions.
@@ -2376,7 +2377,7 @@ void KeyframeEffect::applyPendingAcceleratedActions()
         // We need to resolve all animations up to this point to ensure any forward-filling
         // effect is accounted for when computing the "from" value for the accelerated animation.
         auto underlyingStyle = [&]() {
-            if (auto* lastStyleChangeEventStyle = m_target->lastStyleChangeEventStyle(m_pseudoElementIdentifier))
+            if (CheckedPtr lastStyleChangeEventStyle = m_target->lastStyleChangeEventStyle(m_pseudoElementIdentifier))
                 return RenderStyle::clonePtr(*lastStyleChangeEventStyle);
             return RenderStyle::clonePtr(renderer->style());
         }();
@@ -2507,7 +2508,7 @@ bool KeyframeEffect::computeExtentOfTransformAnimation(LayoutRect& bounds) const
 {
     ASSERT(animatablePropertiesContainTransformRelatedProperty(m_blendingKeyframes.properties()));
 
-    auto* box = dynamicDowncast<RenderBox>(renderer());
+    CheckedPtr box = dynamicDowncast<RenderBox>(renderer());
     if (!box)
         return true; // Non-boxes don't get transformed;
 
@@ -2519,7 +2520,7 @@ bool KeyframeEffect::computeExtentOfTransformAnimation(LayoutRect& bounds) const
     TransformOperationData transformOperationData(rendererBox, renderer());
     LayoutRect cumulativeBounds;
 
-    auto* unanimatedStyle = [&]() {
+    CheckedPtr unanimatedStyle = [&]() {
         if (auto target = targetStyleable()) {
             if (auto* lastStyleChangeEventStyle = target->lastStyleChangeEventStyle())
                 return lastStyleChangeEventStyle;
@@ -2557,15 +2558,23 @@ bool KeyframeEffect::computeExtentOfTransformAnimation(LayoutRect& bounds) const
         return true;
     };
 
+    bool computedBoundsForFromKeyframe = false;
+    bool computedBoundsForToKeyframe = false;
     for (const auto& keyframe : m_blendingKeyframes) {
         if (!animatablePropertiesContainTransformRelatedProperty(keyframe.properties()))
             continue;
+
+        auto offset = keyframe.offset();
+        if (!offset)
+            computedBoundsForFromKeyframe = true;
+        if (offset == 1.0)
+            computedBoundsForToKeyframe = true;
 
         auto blendedStyleForKeyframe = RenderStyle::clonePtr(*unanimatedStyle);
 
         ComputedEffectTiming computedTiming;
         computedTiming.currentIteration = 0;
-        computedTiming.progress = keyframe.offset();
+        computedTiming.progress = offset;
 
         setAnimatedPropertiesInStyle(*blendedStyleForKeyframe, computedTiming);
 
@@ -2573,7 +2582,7 @@ bool KeyframeEffect::computeExtentOfTransformAnimation(LayoutRect& bounds) const
             return false;
     }
 
-    if (m_blendingKeyframes.hasImplicitKeyframes()) {
+    if (!computedBoundsForFromKeyframe || !computedBoundsForToKeyframe) {
         if (!addStyleToCumulativeBounds(*unanimatedStyle))
             return false;
     }
@@ -2877,14 +2886,14 @@ void KeyframeEffect::computeHasReferenceFilter()
         };
 
         if (auto target = targetStyleable()) {
-            if (auto* style = target->lastStyleChangeEventStyle()) {
+            if (CheckedPtr style = target->lastStyleChangeEventStyle()) {
                 if (m_blendingKeyframes.hasImplicitKeyframes() && styleContainsFilter(*style))
                     return true;
             }
         }
 
         for (auto& keyframe : m_blendingKeyframes) {
-            if (auto* style = keyframe.style()) {
+            if (CheckedPtr style = keyframe.style()) {
                 if (styleContainsFilter(*style))
                     return true;
             }

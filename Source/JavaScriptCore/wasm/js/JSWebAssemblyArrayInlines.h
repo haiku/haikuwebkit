@@ -49,7 +49,7 @@ WebAssemblyGCStructure* JSWebAssemblyArray::createStructure(VM& vm, JSGlobalObje
 }
 
 template<typename T>
-std::span<T> JSWebAssemblyArray::span()
+std::span<T> JSWebAssemblyArray::span() LIFETIME_BOUND
 {
     ASSERT(sizeof(T) == elementType().type.elementSize());
     uint8_t* data = this->data();
@@ -61,7 +61,7 @@ std::span<T> JSWebAssemblyArray::span()
     return { std::bit_cast<T*>(data), size() };
 }
 
-std::span<uint64_t> JSWebAssemblyArray::refTypeSpan()
+std::span<uint64_t> JSWebAssemblyArray::refTypeSpan() LIFETIME_BOUND
 {
     ASSERT(elementsAreRefTypes());
     return span<uint64_t>();

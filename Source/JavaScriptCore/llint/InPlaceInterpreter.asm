@@ -192,6 +192,14 @@ const NumberOfWasmArgumentFPRs = 8
 
 macro ipintOp(name, impl)
     instructionLabel(name)
+
+    if TRACING
+        move cfr, a1
+        move PC, a2
+        move MC, a3
+        operationCall(macro() cCall4(_ipint_extern_trace) end)
+    end
+
     impl()
 end
 

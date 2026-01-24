@@ -45,6 +45,7 @@ public:
     }
 
     virtual bool isRemoteSamplerProxy() const { return false; }
+    virtual bool isSamplerImpl() const { return false; }
 
 protected:
     Sampler() = default;

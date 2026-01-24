@@ -728,71 +728,6 @@ void WebPageProxy::exitExternalPlayback()
 }
 #endif
 
-#if ENABLE(VIDEO_PRESENTATION_MODE)
-
-void WebPageProxy::didChangePlaybackRate(PlaybackSessionContextIdentifier identifier)
-{
-    if (internals().currentFullscreenVideoSessionIdentifier == identifier)
-        updateFullscreenVideoTextRecognition();
-}
-
-void WebPageProxy::didChangeCurrentTime(PlaybackSessionContextIdentifier identifier)
-{
-    if (internals().currentFullscreenVideoSessionIdentifier == identifier)
-        updateFullscreenVideoTextRecognition();
-}
-
-void WebPageProxy::updateFullscreenVideoTextRecognition()
-{
-    RefPtr pageClient = this->pageClient();
-    if (!pageClient || !pageClient->isTextRecognitionInFullscreenVideoEnabled())
-        return;
-
-    RefPtr playbackSessionManager = m_playbackSessionManager;
-    if (internals().currentFullscreenVideoSessionIdentifier && playbackSessionManager && playbackSessionManager->isPaused(*internals().currentFullscreenVideoSessionIdentifier)) {
-        internals().fullscreenVideoTextRecognitionTimer.startOneShot(250_ms);
-        return;
-    }
-
-    internals().fullscreenVideoTextRecognitionTimer.stop();
-
-    if (!internals().currentFullscreenVideoSessionIdentifier)
-        return;
-
-#if PLATFORM(IOS_FAMILY)
-    if (RetainPtr controller = m_videoPresentationManager->playerViewController(*internals().currentFullscreenVideoSessionIdentifier))
-        pageClient->cancelTextRecognitionForFullscreenVideo(controller.get());
-#endif
-}
-
-void WebPageProxy::fullscreenVideoTextRecognitionTimerFired()
-{
-    if (!internals().currentFullscreenVideoSessionIdentifier || !m_videoPresentationManager)
-        return;
-
-    auto identifier = *internals().currentFullscreenVideoSessionIdentifier;
-    RefPtr { m_videoPresentationManager }->requestBitmapImageForCurrentTime(identifier, [identifier, weakThis = WeakPtr { *this }](std::optional<ShareableBitmap::Handle>&& imageHandle) {
-        RefPtr protectedThis = weakThis.get();
-        if (!protectedThis || protectedThis->internals().currentFullscreenVideoSessionIdentifier != identifier)
-            return;
-
-        RefPtr presentationManager = protectedThis->m_videoPresentationManager;
-        if (!presentationManager)
-            return;
-        if (!imageHandle)
-            return;
-
-#if PLATFORM(IOS_FAMILY)
-        RetainPtr controller = presentationManager->playerViewController(identifier);
-        if (!controller)
-            return;
-        if (RefPtr pageClient = protectedThis->pageClient())
-            pageClient->beginTextRecognitionForFullscreenVideo(WTF::move(*imageHandle), controller.get());
-#endif
-    });
-}
-#endif // ENABLE(VIDEO_PRESENTATION_MODE)
-
 #if ENABLE(ATTACHMENT_ELEMENT) && PLATFORM(MAC)
 
 bool WebPageProxy::updateIconForDirectory(NSFileWrapper *fileWrapper, const String& identifier)
@@ -1408,7 +1343,7 @@ void WebPageProxy::addTextAnimationForAnimationIDWithCompletionHandler(IPC::Conn
     else
         MESSAGE_CHECK(uuid.isValid(), connection);
 
-    internals().textIndicatorDataForAnimationID.add(uuid, textIndicator);
+    internals().textIndicatorForAnimationID.add(uuid, textIndicator);
 
     if (completionHandler)
         internals().completionHandlerForAnimationID.add(uuid, WTF::move(completionHandler));
@@ -1417,7 +1352,7 @@ void WebPageProxy::addTextAnimationForAnimationIDWithCompletionHandler(IPC::Conn
     // The shape of the iOS API requires us to have stored this completionHandler when we call into the WebProcess
     // to replace the text and generate the text indicator of the replacement text.
     if (auto destinationAnimationCompletionHandler = internals().completionHandlerForDestinationTextIndicatorForSourceID.take(uuid))
-        destinationAnimationCompletionHandler(textIndicator->data());
+        destinationAnimationCompletionHandler(textIndicator);
 
     // Storing and sending information for the different shaped SPI on iOS.
     if (styleData.runMode == WebCore::TextAnimationRunMode::RunAnimation) {
@@ -1427,7 +1362,7 @@ void WebPageProxy::addTextAnimationForAnimationIDWithCompletionHandler(IPC::Conn
         if (styleData.style == WebCore::TextAnimationType::Final) {
             if (auto sourceAnimationID = internals().sourceAnimationIDtoDestinationAnimationID.take(uuid)) {
                 if (auto completionHandler = internals().completionHandlerForDestinationTextIndicatorForSourceID.take(sourceAnimationID))
-                    completionHandler(textIndicator->data());
+                    completionHandler(textIndicator);
             }
         }
     }
@@ -1447,7 +1382,7 @@ void WebPageProxy::callCompletionHandlerForAnimationID(const WTF::UUID& uuid, We
 }
 
 #if PLATFORM(IOS_FAMILY)
-void WebPageProxy::storeDestinationCompletionHandlerForAnimationID(const WTF::UUID& destinationAnimationUUID, CompletionHandler<void(std::optional<WebCore::TextIndicatorData>)>&& completionHandler)
+void WebPageProxy::storeDestinationCompletionHandlerForAnimationID(const WTF::UUID& destinationAnimationUUID, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&& completionHandler)
 {
     internals().completionHandlerForDestinationTextIndicatorForSourceID.add(destinationAnimationUUID, WTF::move(completionHandler));
 }
@@ -1460,7 +1395,7 @@ void WebPageProxy::getTextIndicatorForID(const WTF::UUID& uuid, CompletionHandle
         return;
     }
 
-    RefPtr textIndicator = internals().textIndicatorDataForAnimationID.get(uuid);
+    RefPtr textIndicator = internals().textIndicatorForAnimationID.get(uuid);
 
     if (textIndicator) {
         completionHandler(WTF::move(textIndicator));
@@ -1817,6 +1752,7 @@ NSDictionary *WebPageProxy::getAccessibilityWebProcessDebugInfo()
         @"axIsThreadInitialized": [NSNumber numberWithBool:result.isAccessibilityThreadInitialized],
         @"axLiveTree": result.liveTree.createNSString().get(),
         @"axIsolatedTree": result.isolatedTree.createNSString().get(),
+        @"warnings": createNSArray(result.warnings).get(),
         @"axWebProcessRemoteHash": [NSNumber numberWithUnsignedInteger:result.remoteTokenHash],
         @"axWebProcessLocalHash": [NSNumber numberWithUnsignedInteger:result.webProcessLocalTokenHash]
     };

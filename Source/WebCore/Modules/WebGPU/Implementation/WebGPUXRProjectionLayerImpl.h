@@ -50,6 +50,7 @@ public:
 
     virtual ~XRProjectionLayerImpl();
     WGPUXRProjectionLayer backing() const { return m_backing.get(); }
+    bool isXRProjectionLayerImpl() const final { return true; }
 
 private:
     friend class DowncastConvertToBackingContext;
@@ -85,5 +86,9 @@ private:
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::XRProjectionLayerImpl)
+    static bool isType(const WebCore::WebGPU::XRProjectionLayer& xrProjectionLayer) { return xrProjectionLayer.isXRProjectionLayerImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

@@ -994,11 +994,7 @@ void WebProcess::platformInitializeProcess(const AuxiliaryProcessInitializationP
 #if USE(APPKIT)
 void WebProcess::stopRunLoop()
 {
-#if PLATFORM(MAC) && ENABLE(WEBPROCESS_NSRUNLOOP)
     AuxiliaryProcess::stopNSRunLoop();
-#else
-    AuxiliaryProcess::stopNSAppRunLoop();
-#endif
 }
 #endif
 

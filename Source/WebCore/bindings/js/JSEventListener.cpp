@@ -136,7 +136,7 @@ void JSEventListener::handleEvent(ScriptExecutionContext& scriptExecutionContext
 
     VM& vm = scriptExecutionContext.vm();
     JSLockHolder lock(vm);
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     // See https://dom.spec.whatwg.org/#dispatching-events spec on calling handleEvent.
     // "If this throws an exception, report the exception." It should not propagate the
@@ -219,14 +219,21 @@ void JSEventListener::handleEvent(ScriptExecutionContext& scriptExecutionContext
     }
 
     MarkedArgumentBuffer args;
-    args.append(toJS(lexicalGlobalObject, globalObject, &event));
+    args.append(toJS(lexicalGlobalObject, globalObject, event));
     ASSERT(!args.hasOverflowed());
 
     VMEntryScope entryScope(vm, vm.entryScope ? vm.entryScope->globalObject() : lexicalGlobalObject);
 
     JSExecState::instrumentFunction(&scriptExecutionContext, callData);
 
-    JSValue thisValue = handleEventFunction == jsFunction ? toJS(lexicalGlobalObject, globalObject, event.protectedCurrentTarget().get()) : jsFunction;
+    auto thisValue = [&] -> JSValue {
+        if (handleEventFunction != jsFunction)
+            return jsFunction;
+        if (RefPtr currentTarget = event.currentTarget())
+            return toJS(lexicalGlobalObject, globalObject, currentTarget.releaseNonNull());
+        return jsNull();
+    }();
+
     NakedPtr<JSC::Exception> uncaughtException;
     JSValue retval = JSExecState::profiledCall(lexicalGlobalObject, JSC::ProfilingReason::Other, handleEventFunction, callData, thisValue, args, uncaughtException);
 

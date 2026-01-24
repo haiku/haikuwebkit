@@ -159,6 +159,9 @@ template<typename, size_t = 0, typename = CrashOnOverflow, size_t = 16, typename
 template<typename, typename WeakPtrImpl = DefaultWeakPtrImpl, typename = RawPtrTraits<WeakPtrImpl>> class WeakPtr;
 template<typename, typename = DefaultWeakPtrImpl> class WeakRef;
 template<typename T> class InlineWeakPtr;
+template<typename T> struct NoTaggingTraits;
+template<typename T, typename = NoTaggingTraits<T>> class ThreadSafeWeakPtr;
+template<typename T, typename = NoTaggingTraits<T>> class ThreadSafeWeakRef;
 
 template <typename T>
 using SaSegmentedVector = SegmentedVector<T, 8, SequesteredArenaMalloc>;

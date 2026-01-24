@@ -43,8 +43,7 @@
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringBuilder.h>
 
-namespace WebCore {
-namespace XPath {
+namespace WebCore::XPath {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(Function);
 
@@ -374,7 +373,7 @@ Value FunId::evaluate() const
         // In WebKit, getElementById behaves so, too, although its behavior in this case is formally undefined.
         RefPtr node = contextScope->getElementById(StringView(idList).substring(startPos, endPos - startPos));
         if (node && resultSet.add(*node).isNewEntry)
-            result.append(WTF::move(node));
+            result.append(node.releaseNonNull());
         
         startPos = endPos;
     }
@@ -449,7 +448,7 @@ Value FunCount::evaluate() const
 Value FunString::evaluate() const
 {
     if (!argumentCount())
-        return Value(Expression::evaluationContext().node.get()).toString();
+        return Value(NodeSet(*Expression::evaluationContext().node)).toString();
     return argument(0).evaluate().toString();
 }
 
@@ -602,7 +601,7 @@ Value FunSubstring::evaluate() const
 Value FunStringLength::evaluate() const
 {
     if (!argumentCount())
-        return Value(Expression::evaluationContext().node.get()).toString().length();
+        return Value(NodeSet(*Expression::evaluationContext().node)).toString().length();
     return argument(0).evaluate().toString().length();
 }
 
@@ -610,7 +609,7 @@ Value FunNormalizeSpace::evaluate() const
 {
     // https://www.w3.org/TR/1999/REC-xpath-19991116/#function-normalize-space
     if (!argumentCount()) {
-        String s = Value(Expression::evaluationContext().node.get()).toString();
+        String s = Value(NodeSet(*Expression::evaluationContext().node)).toString();
         return s.simplifyWhiteSpace(isASCIIWhitespaceWithoutFF<char16_t>);
     }
     String s = argument(0).evaluate().toString();
@@ -705,7 +704,7 @@ Value FunFalse::evaluate() const
 Value FunNumber::evaluate() const
 {
     if (!argumentCount())
-        return Value(Expression::evaluationContext().node.get()).toNumber();
+        return Value(NodeSet(*Expression::evaluationContext().node)).toNumber();
     return argument(0).evaluate().toNumber();
 }
 
@@ -827,5 +826,4 @@ std::unique_ptr<Function> Function::create(const String& name, Vector<std::uniqu
     return function;
 }
 
-} // namespace XPath
-} // namespace WebCore
+} // namespace WebCore::XPath

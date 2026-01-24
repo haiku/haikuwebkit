@@ -125,11 +125,11 @@ static bool canOptimizeSingleAttributeExactMatch(const CSSSelector& selector)
 SelectorDataList::SelectorDataList(const CSSSelectorList& selectorList)
 {
     m_selectors = FixedVector<SelectorData>::map(selectorList, [](auto& selector) {
-        return SelectorData { &selector };
+        return SelectorData { selector };
     });
 
     if (m_selectors.size() == 1) {
-        const CSSSelector& selector = *m_selectors.first().selector;
+        const CSSSelector& selector = m_selectors.first().selector;
         if (selector.isFirstInComplexSelector()) {
             switch (selector.match()) {
             case CSSSelector::Match::Tag:
@@ -178,7 +178,7 @@ inline bool SelectorDataList::selectorMatches(const SelectorData& selectorData, 
     // Providing SelectorMatchingState allows cross-element optimizations like caching for :has() matches.
     selectorCheckingContext.selectorMatchingState = selectorMatchingState;
 
-    return selectorChecker.match(*selectorData.selector, element, selectorCheckingContext);
+    return selectorChecker.match(selectorData.selector, element, selectorCheckingContext);
 }
 
 inline Element* SelectorDataList::selectorClosest(const SelectorData& selectorData, Element& element, const ContainerNode& rootNode, Style::SelectorMatchingState* selectorMatchingState) const
@@ -189,7 +189,7 @@ inline Element* SelectorDataList::selectorClosest(const SelectorData& selectorDa
     // Providing SelectorMatchingState allows cross-element optimizations like caching for :has() matches.
     selectorCheckingContext.selectorMatchingState = selectorMatchingState;
 
-    if (!selectorChecker.match(*selectorData.selector, element, selectorCheckingContext))
+    if (!selectorChecker.match(selectorData.selector, element, selectorCheckingContext))
         return nullptr;
     return &element;
 }
@@ -367,11 +367,11 @@ template<typename OutputType>
 ALWAYS_INLINE void SelectorDataList::executeSingleTagNameSelectorData(const ContainerNode& rootNode, const SelectorData& selectorData, OutputType& output) const
 {
     ASSERT(m_selectors.size() == 1);
-    ASSERT(isSingleTagNameSelector(*selectorData.selector));
+    ASSERT(isSingleTagNameSelector(selectorData.selector));
 
-    const QualifiedName& tagQualifiedName = selectorData.selector->tagQName();
+    const QualifiedName& tagQualifiedName = selectorData.selector.tagQName();
     const AtomString& selectorLocalName = tagQualifiedName.localName();
-    const AtomString& selectorLowercaseLocalName = selectorData.selector->tagLowercaseLocalName();
+    const AtomString& selectorLowercaseLocalName = selectorData.selector.tagLowercaseLocalName();
     const AtomString& selectorNamespaceURI = tagQualifiedName.namespaceURI();
 
     if (selectorNamespaceURI == starAtom()) {
@@ -398,9 +398,9 @@ template<typename OutputType>
 ALWAYS_INLINE void SelectorDataList::executeSingleClassNameSelectorData(const ContainerNode& rootNode, const SelectorData& selectorData, OutputType& output) const
 {
     ASSERT(m_selectors.size() == 1);
-    ASSERT(isSingleClassNameSelector(*selectorData.selector));
+    ASSERT(isSingleClassNameSelector(selectorData.selector));
 
-    const AtomString& className = selectorData.selector->value();
+    const AtomString& className = selectorData.selector.value();
     for (Ref element : descendantsOfType<Element>(const_cast<ContainerNode&>(rootNode))) {
         if (element->hasClassName(className)) {
             appendOutputForElement(output, element);
@@ -415,19 +415,19 @@ AtomString SelectorDataList::classNameToMatch() const
     if (m_matchType != MatchType::ClassNameMatch)
         return nullAtom();
     ASSERT(m_selectors.size() == 1);
-    ASSERT(isSingleClassNameSelector(*m_selectors.first().selector));
-    return m_selectors.first().selector->value();
+    ASSERT(isSingleClassNameSelector(m_selectors.first().selector));
+    return m_selectors.first().selector.value();
 }
 
 template<typename OutputType>
 ALWAYS_INLINE void SelectorDataList::executeSingleAttributeExactSelectorData(const ContainerNode& rootNode, const SelectorData& selectorData, OutputType& output) const
 {
     ASSERT(m_selectors.size() == 1);
-    ASSERT(isSingleAttributeExactSelector(*selectorData.selector));
-    ASSERT(canOptimizeSingleAttributeExactMatch(*selectorData.selector));
+    ASSERT(isSingleAttributeExactSelector(selectorData.selector));
+    ASSERT(canOptimizeSingleAttributeExactMatch(selectorData.selector));
 
-    const auto& selectorAttribute = selectorData.selector->attribute();
-    const auto& selectorValue = selectorData.selector->value();
+    const auto& selectorAttribute = selectorData.selector.attribute();
+    const auto& selectorValue = selectorData.selector.value();
     const auto& localNameLowercase = selectorAttribute.localNameLowercase();
     const auto& localName = selectorAttribute.localName();
     const auto& prefix = selectorAttribute.prefix();
@@ -578,7 +578,7 @@ ALWAYS_INLINE void SelectorDataList::execute(ContainerNode& rootNode, OutputType
     case RightMostWithIdMatch:
         {
         const SelectorData& selectorData = m_selectors.first();
-        if (const CSSSelector* idSelector = selectorForIdLookup(*searchRootNode, *selectorData.selector)) {
+        if (const CSSSelector* idSelector = selectorForIdLookup(*searchRootNode, selectorData.selector)) {
             executeFastPathForIdSelector(*searchRootNode, m_selectors.first(), idSelector, output);
             break;
         }
@@ -620,7 +620,7 @@ ALWAYS_INLINE void SelectorDataList::execute(ContainerNode& rootNode, OutputType
 #if ENABLE(CSS_SELECTOR_JIT)
     case CompiledSingleWithRootFilter:
         CompiledSingleWithRootFilterCase:
-        searchRootNode = filterRootById(*searchRootNode, *m_selectors.first().selector);
+        searchRootNode = filterRootById(*searchRootNode, m_selectors.first().selector);
         [[fallthrough]];
     case CompiledSingle:
         {
@@ -649,7 +649,7 @@ ALWAYS_INLINE void SelectorDataList::execute(ContainerNode& rootNode, OutputType
 
     case SingleSelectorWithRootFilter:
         SingleSelectorWithRootFilterCase:
-        searchRootNode = filterRootById(*searchRootNode, *m_selectors.first().selector);
+        searchRootNode = filterRootById(*searchRootNode, m_selectors.first().selector);
         [[fallthrough]];
     case SingleSelector:
         SingleSelectorCase:

@@ -37,6 +37,7 @@
 #include "DocumentView.h"
 #include "Editing.h"
 #include "Editor.h"
+#include "ElementAncestorIteratorInlines.h"
 #include "ElementInlines.h"
 #include "EventHandler.h"
 #include "EventListenerMap.h"
@@ -78,6 +79,7 @@
 #include "RenderView.h"
 #include "RunJavaScriptParameters.h"
 #include "ScriptController.h"
+#include "Settings.h"
 #include "SimpleRange.h"
 #include "StaticRange.h"
 #include "StringEntropyHelpers.h"
@@ -99,6 +101,10 @@
 #include <wtf/Scope.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringBuilder.h>
+
+#if ENABLE(DATA_DETECTION)
+#include "DataDetection.h"
+#endif
 
 namespace WebCore {
 namespace TextExtraction {
@@ -124,7 +130,7 @@ enum class IncludeTextInAutoFilledControls : bool { No, Yes };
 
 using TextNodesAndText = Vector<std::pair<Ref<Text>, String>>;
 using TextAndSelectedRange = std::pair<String, std::optional<CharacterRange>>;
-using TextAndSelectedRangeMap = HashMap<RefPtr<Text>, TextAndSelectedRange>;
+using TextAndSelectedRangeMap = HashMap<Ref<Text>, TextAndSelectedRange>;
 
 static bool hasEnclosingAutoFilledInput(Node& node)
 {
@@ -195,6 +201,7 @@ struct TraversalContext {
     const TextAndSelectedRangeMap visibleText;
     const WeakHashSet<Node, WeakPtrImplWithEventTargetData> nodesToSkip;
     const std::optional<FloatRect> rectInRootView;
+    const FrameIdentifier frameIdentifier;
     Vector<WeakPtr<Node, WeakPtrImplWithEventTargetData>> enclosingBlocks;
     WeakHashMap<Node, unsigned, WeakPtrImplWithEventTargetData> enclosingBlockNumberMap;
     unsigned onlyCollectTextAndLinksCount { 0 };
@@ -267,12 +274,12 @@ static inline TextAndSelectedRangeMap collectText(Node& node, IncludeTextInAutoF
 
     TextAndSelectedRangeMap result;
     for (auto& [node, text] : textBeforeRangedSelection)
-        result.add(node.ptr(), TextAndSelectedRange { text, { } });
+        result.add(node, TextAndSelectedRange { text, { } });
 
     bool isFirstSelectedNode = true;
     for (auto& [node, text] : textInRangedSelection) {
         if (std::exchange(isFirstSelectedNode, false)) {
-            if (auto entry = result.find(node.ptr()); entry != result.end() && entry->key == node.ptr()) {
+            if (auto entry = result.find(node.ptr()); entry != result.end() && entry->key.ptr() == node.ptr()) {
                 entry->value = std::make_pair(
                     makeString(entry->value.first, text),
                     CharacterRange { entry->value.first.length(), text.length() }
@@ -280,18 +287,18 @@ static inline TextAndSelectedRangeMap collectText(Node& node, IncludeTextInAutoF
                 continue;
             }
         }
-        result.add(node.ptr(), TextAndSelectedRange { text, CharacterRange { 0, text.length() } });
+        result.add(node, TextAndSelectedRange { text, CharacterRange { 0, text.length() } });
     }
 
     bool isFirstNodeAfterSelection = true;
     for (auto& [node, text] : textAfterRangedSelection) {
         if (std::exchange(isFirstNodeAfterSelection, false)) {
-            if (auto entry = result.find(node.ptr()); entry != result.end() && entry->key == node.ptr()) {
+            if (auto entry = result.find(node.ptr()); entry != result.end() && entry->key.ptr() == node.ptr()) {
                 entry->value.first = makeString(entry->value.first, text);
                 continue;
             }
         }
-        result.add(node.ptr(), TextAndSelectedRange { text, std::nullopt });
+        result.add(node, TextAndSelectedRange { text, std::nullopt });
     }
 
     return result;
@@ -411,7 +418,7 @@ static inline Variant<SkipExtraction, ItemData, URL, Editable> extractItemData(N
         if (shouldTreatAsPasswordField(textNode->shadowHost()))
             return { SkipExtraction::Self };
 
-        if (auto iterator = context.visibleText.find(textNode); iterator != context.visibleText.end()) {
+        if (auto iterator = context.visibleText.find(*textNode); iterator != context.visibleText.end()) {
             auto& [textContent, selectedRange] = iterator->value;
             return { TextItemData { { }, selectedRange, textContent, { } } };
         }
@@ -814,6 +821,7 @@ static inline void extractRecursive(Node& node, Item& parentItem, TraversalConte
                 { },
                 node.nodeName(),
                 WTF::move(nodeIdentifier),
+                { context.frameIdentifier },
                 eventListeners,
                 WTF::move(ariaAttributes),
                 WTF::move(role),
@@ -835,6 +843,7 @@ static inline void extractRecursive(Node& node, Item& parentItem, TraversalConte
                 { },
                 { },
                 { },
+                { context.frameIdentifier },
                 eventListeners,
                 WTF::move(ariaAttributes),
                 WTF::move(role),
@@ -949,9 +958,63 @@ static Node* nodeFromJSHandle(JSHandleIdentifier identifier)
     return nullptr;
 }
 
+#if ENABLE(DATA_DETECTION)
+
+static RefPtr<ContainerNode> findContainerNodeForDataDetectorResults(Node& rootNode, OptionSet<DataDetectorType> types)
+{
+    struct RangeAndArea {
+        SimpleRange range;
+        double area;
+    };
+
+    std::optional<RangeAndArea> largestRange;
+    for (auto range : DataDetection::detectRanges(makeRangeSelectingNodeContents(rootNode), types)) {
+        double areaAboveMaximumYOffset = 0;
+        for (auto rect : RenderObject::absoluteTextRects(range)) {
+            static constexpr auto maximumYOffset = 3000;
+            if (rect.y() < maximumYOffset)
+                areaAboveMaximumYOffset += FloatRect { rect }.area();
+        }
+
+        if (areaAboveMaximumYOffset <= 0)
+            continue;
+
+        if (!largestRange || largestRange->area < areaAboveMaximumYOffset)
+            largestRange = { range, areaAboveMaximumYOffset };
+    }
+
+    if (!largestRange)
+        return { };
+
+    RefPtr commonAncestor = commonInclusiveAncestor<ComposedTree>(largestRange->range);
+    if (!commonAncestor)
+        return { };
+
+    // FIXME: Consider making this size threshold client-configurable in the future.
+    static constexpr FloatSize minimumSize { 280, 300 };
+    for (CheckedPtr renderer = commonAncestor->renderer(); renderer; renderer = renderer->parent()) {
+        bool wasFixed = false;
+        auto bounds = renderer->absoluteBoundingBoxRect(true, &wasFixed);
+        if ((bounds.width() < minimumSize.width() || bounds.height() < minimumSize.height()) && !wasFixed)
+            continue;
+
+        RefPtr node = renderer->node();
+        if (RefPtr containerNode = dynamicDowncast<ContainerNode>(node))
+            return containerNode;
+
+        if (&rootNode == node)
+            break;
+    }
+
+    return { };
+}
+
+#endif // ENABLE(DATA_DETECTION)
+
 Item extractItem(Request&& request, LocalFrame& frame)
 {
-    Item root { ContainerType::Root, { }, { }, { }, { }, { }, { }, { }, { }, { }, 0 };
+    auto frameID = frame.frameID();
+    Item root { ContainerType::Root, { }, { }, { }, { }, frameID, { }, { }, { }, { }, { }, 0 };
     RefPtr document = frame.document();
     if (!document)
         return root;
@@ -968,6 +1031,17 @@ Item extractItem(Request&& request, LocalFrame& frame)
 
         return nodeFromJSHandle(*request.targetNodeHandleIdentifier);
     }();
+
+#if ENABLE(DATA_DETECTION)
+    if (request.dataDetectorTypes && extractionRootNode)
+        extractionRootNode = findContainerNodeForDataDetectorResults(*extractionRootNode, request.dataDetectorTypes);
+#endif
+
+    if (frame.settings().textExtractionDebugUIEnabled() && extractionRootNode) {
+        RefPtr elementAncestor = lineageOfType<HTMLElement>(*extractionRootNode).first();
+        if (elementAncestor && elementAncestor != bodyElement)
+            elementAncestor->setInlineStyleProperty(CSSPropertyBoxShadow, "0 0 10px #0088FF"_s, IsImportant::Yes);
+    }
 
     if (!extractionRootNode)
         return root;
@@ -1008,6 +1082,7 @@ Item extractItem(Request&& request, LocalFrame& frame)
             .visibleText = collectText(*extractionRootNode, includeTextInAutoFilledControls),
             .nodesToSkip = WTF::move(nodesToSkip),
             .rectInRootView = request.collectionRectInRootView,
+            .frameIdentifier = WTF::move(frameID),
             .enclosingBlocks = { },
             .enclosingBlockNumberMap = { },
             .onlyCollectTextAndLinksCount = 0,
@@ -1890,7 +1965,8 @@ RefPtr<Element> elementForExtractedText(const LocalFrame& frame, ExtractedText&&
     if (!node)
         return { };
 
-    return dynamicDowncast<Element>(node) ?: node->parentElementInComposedTree();
+    RefPtr element = dynamicDowncast<Element>(node);
+    return element ? element : RefPtr { node->parentElementInComposedTree() };
 }
 
 std::optional<SimpleRange> rangeForExtractedText(const LocalFrame& frame, ExtractedText&& extractedText)

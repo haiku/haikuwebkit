@@ -117,7 +117,7 @@ ContextMenuController::~ContextMenuController()
 
 Page& ContextMenuController::page()
 {
-    return m_page.get();
+    return m_page;
 }
 
 void ContextMenuController::clearContextMenu()
@@ -191,9 +191,9 @@ static void prepareContextForQRCode(ContextMenuContext& context)
         return;
 
     RefPtr<Element> element;
-    for (auto& lineage : lineageOfType<Element>(*nodeElement)) {
+    for (Ref lineage : lineageOfType<Element>(*nodeElement)) {
         if (is<HTMLTableElement>(lineage) || is<HTMLCanvasElement>(lineage) || is<HTMLImageElement>(lineage) || is<SVGSVGElement>(lineage)) {
-            element = lineage;
+            element = lineage.ptr();
             break;
         }
     }
@@ -745,7 +745,7 @@ void ContextMenuController::createAndAppendFontSubMenu(ContextMenuItem& fontMenu
 }
 
 
-#if !PLATFORM(GTK)
+#if !PLATFORM(GTK) && !PLATFORM(WPE)
 
 void ContextMenuController::createAndAppendSpellingAndGrammarSubMenu(ContextMenuItem& spellingAndGrammarMenuItem)
 {
@@ -778,59 +778,6 @@ void ContextMenuController::createAndAppendSpellingAndGrammarSubMenu(ContextMenu
     spellingAndGrammarMenuItem.setSubMenu(&spellingAndGrammarMenu);
 }
 
-#endif // !PLATFORM(GTK)
-
-
-#if PLATFORM(COCOA)
-
-void ContextMenuController::createAndAppendSpeechSubMenu(ContextMenuItem& speechMenuItem)
-{
-    ContextMenu speechMenu;
-
-    ContextMenuItem start(ContextMenuItemType::Action, ContextMenuItemTagStartSpeaking, contextMenuItemTagStartSpeaking());
-    ContextMenuItem stop(ContextMenuItemType::Action, ContextMenuItemTagStopSpeaking, contextMenuItemTagStopSpeaking());
-
-    appendItem(start, &speechMenu);
-    appendItem(stop, &speechMenu);
-
-    speechMenuItem.setSubMenu(&speechMenu);
-}
-
-#endif
- 
-#if PLATFORM(GTK)
-
-void ContextMenuController::createAndAppendUnicodeSubMenu(ContextMenuItem& unicodeMenuItem)
-{
-    ContextMenu unicodeMenu;
-
-    ContextMenuItem leftToRightMarkMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertLRMMark, contextMenuItemTagUnicodeInsertLRMMark());
-    ContextMenuItem rightToLeftMarkMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertRLMMark, contextMenuItemTagUnicodeInsertRLMMark());
-    ContextMenuItem leftToRightEmbedMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertLREMark, contextMenuItemTagUnicodeInsertLREMark());
-    ContextMenuItem rightToLeftEmbedMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertRLEMark, contextMenuItemTagUnicodeInsertRLEMark());
-    ContextMenuItem leftToRightOverrideMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertLROMark, contextMenuItemTagUnicodeInsertLROMark());
-    ContextMenuItem rightToLeftOverrideMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertRLOMark, contextMenuItemTagUnicodeInsertRLOMark());
-    ContextMenuItem popDirectionalFormattingMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertPDFMark, contextMenuItemTagUnicodeInsertPDFMark());
-    ContextMenuItem zeroWidthSpaceMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertZWSMark, contextMenuItemTagUnicodeInsertZWSMark());
-    ContextMenuItem zeroWidthJoinerMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertZWJMark, contextMenuItemTagUnicodeInsertZWJMark());
-    ContextMenuItem zeroWidthNonJoinerMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertZWNJMark, contextMenuItemTagUnicodeInsertZWNJMark());
-
-    appendItem(leftToRightMarkMenuItem, &unicodeMenu);
-    appendItem(rightToLeftMarkMenuItem, &unicodeMenu);
-    appendItem(leftToRightEmbedMenuItem, &unicodeMenu);
-    appendItem(rightToLeftEmbedMenuItem, &unicodeMenu);
-    appendItem(leftToRightOverrideMenuItem, &unicodeMenu);
-    appendItem(rightToLeftOverrideMenuItem, &unicodeMenu);
-    appendItem(popDirectionalFormattingMenuItem, &unicodeMenu);
-    appendItem(zeroWidthSpaceMenuItem, &unicodeMenu);
-    appendItem(zeroWidthJoinerMenuItem, &unicodeMenu);
-    appendItem(zeroWidthNonJoinerMenuItem, &unicodeMenu);
-
-    unicodeMenuItem.setSubMenu(&unicodeMenu);
-}
-
-#else
-
 void ContextMenuController::createAndAppendWritingDirectionSubMenu(ContextMenuItem& writingDirectionMenuItem)
 {
     ContextMenu writingDirectionMenu;
@@ -862,9 +809,23 @@ void ContextMenuController::createAndAppendTextDirectionSubMenu(ContextMenuItem&
     textDirectionMenuItem.setSubMenu(&textDirectionMenu);
 }
 
-#endif
+#endif // !PLATFORM(GTK) && !PLATFORM(WPE)
+
 
 #if PLATFORM(COCOA)
+
+void ContextMenuController::createAndAppendSpeechSubMenu(ContextMenuItem& speechMenuItem)
+{
+    ContextMenu speechMenu;
+
+    ContextMenuItem start(ContextMenuItemType::Action, ContextMenuItemTagStartSpeaking, contextMenuItemTagStartSpeaking());
+    ContextMenuItem stop(ContextMenuItemType::Action, ContextMenuItemTagStopSpeaking, contextMenuItemTagStopSpeaking());
+
+    appendItem(start, &speechMenu);
+    appendItem(stop, &speechMenu);
+
+    speechMenuItem.setSubMenu(&speechMenu);
+}
 
 void ContextMenuController::createAndAppendSubstitutionsSubMenu(ContextMenuItem& substitutionsMenuItem)
 {
@@ -908,7 +869,40 @@ void ContextMenuController::createAndAppendTransformationsSubMenu(ContextMenuIte
     transformationsMenuItem.setSubMenu(&transformationsMenu);
 }
 
-#endif
+#endif // PLATFORM(COCOA)
+
+#if PLATFORM(GTK)
+
+void ContextMenuController::createAndAppendUnicodeSubMenu(ContextMenuItem& unicodeMenuItem)
+{
+    ContextMenu unicodeMenu;
+
+    ContextMenuItem leftToRightMarkMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertLRMMark, contextMenuItemTagUnicodeInsertLRMMark());
+    ContextMenuItem rightToLeftMarkMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertRLMMark, contextMenuItemTagUnicodeInsertRLMMark());
+    ContextMenuItem leftToRightEmbedMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertLREMark, contextMenuItemTagUnicodeInsertLREMark());
+    ContextMenuItem rightToLeftEmbedMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertRLEMark, contextMenuItemTagUnicodeInsertRLEMark());
+    ContextMenuItem leftToRightOverrideMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertLROMark, contextMenuItemTagUnicodeInsertLROMark());
+    ContextMenuItem rightToLeftOverrideMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertRLOMark, contextMenuItemTagUnicodeInsertRLOMark());
+    ContextMenuItem popDirectionalFormattingMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertPDFMark, contextMenuItemTagUnicodeInsertPDFMark());
+    ContextMenuItem zeroWidthSpaceMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertZWSMark, contextMenuItemTagUnicodeInsertZWSMark());
+    ContextMenuItem zeroWidthJoinerMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertZWJMark, contextMenuItemTagUnicodeInsertZWJMark());
+    ContextMenuItem zeroWidthNonJoinerMenuItem(ContextMenuItemType::Action, ContextMenuItemTagUnicodeInsertZWNJMark, contextMenuItemTagUnicodeInsertZWNJMark());
+
+    appendItem(leftToRightMarkMenuItem, &unicodeMenu);
+    appendItem(rightToLeftMarkMenuItem, &unicodeMenu);
+    appendItem(leftToRightEmbedMenuItem, &unicodeMenu);
+    appendItem(rightToLeftEmbedMenuItem, &unicodeMenu);
+    appendItem(leftToRightOverrideMenuItem, &unicodeMenu);
+    appendItem(rightToLeftOverrideMenuItem, &unicodeMenu);
+    appendItem(popDirectionalFormattingMenuItem, &unicodeMenu);
+    appendItem(zeroWidthSpaceMenuItem, &unicodeMenu);
+    appendItem(zeroWidthJoinerMenuItem, &unicodeMenu);
+    appendItem(zeroWidthNonJoinerMenuItem, &unicodeMenu);
+
+    unicodeMenuItem.setSubMenu(&unicodeMenu);
+}
+
+#endif // PLATFORM(GTK)
 
 #if PLATFORM(COCOA)
 #define SUPPORTS_TOGGLE_VIDEO_FULLSCREEN 1
@@ -992,7 +986,7 @@ void ContextMenuController::populate()
     ContextMenuItem AddHighlightToNewQuickNoteItem(ContextMenuItemType::Action, ContextMenuItemTagAddHighlightToNewQuickNote, contextMenuItemTagAddHighlightToNewQuickNote());
 #endif
     ContextMenuItem CopyLinkWithHighlightItem(ContextMenuItemType::Action, ContextMenuItemTagCopyLinkWithHighlight, contextMenuItemTagCopyLinkWithHighlight());
-#if !PLATFORM(GTK)
+#if !PLATFORM(GTK) && !PLATFORM(WPE)
     ContextMenuItem SearchWebItem(ContextMenuItemType::Action, ContextMenuItemTagSearchWeb, contextMenuItemTagSearchWeb());
 #endif
     ContextMenuItem CopyItem(ContextMenuItemType::Action, ContextMenuItemTagCopy, contextMenuItemTagCopy());
@@ -1022,7 +1016,7 @@ void ContextMenuController::populate()
     ContextMenuItem LookUpImageItem(ContextMenuItemType::Action, ContextMenuItemTagLookUpImage, contextMenuItemTagLookUpImage());
 #endif
 
-#if PLATFORM(GTK) || PLATFORM(WIN)
+#if PLATFORM(GTK) || PLATFORM(WIN) || PLATFORM(WPE)
     ContextMenuItem ShareMenuItem;
 #else
     ContextMenuItem ShareMenuItem(ContextMenuItemType::Action, ContextMenuItemTagShareMenu, emptyString());
@@ -1035,7 +1029,7 @@ void ContextMenuController::populate()
     RefPtr node = m_context.hitTestResult().innerNonSharedNode();
     if (!node)
         return;
-#if PLATFORM(GTK)
+#if PLATFORM(GTK) || PLATFORM(WPE)
     if (!m_context.hitTestResult().isContentEditable() && is<HTMLFormControlElement>(*node))
         return;
 #endif
@@ -1067,7 +1061,7 @@ void ContextMenuController::populate()
         appendItem(*separatorItem(), m_contextMenu.get());
 #endif
 
-#if !PLATFORM(GTK)
+#if !PLATFORM(GTK) && !PLATFORM(WPE)
         appendItem(SearchWebItem, m_contextMenu.get());
         appendItem(*separatorItem(), m_contextMenu.get());
 #endif
@@ -1075,7 +1069,7 @@ void ContextMenuController::populate()
 
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
     auto canAddAnimationControls = [&] () -> bool {
-        if (!frame->page() || !frame->page()->settings().imageAnimationControlEnabled())
+        if (!frame->page())
             return false;
 
         return Image::systemAllowsAnimationControls() || frame->page()->settings().allowAnimationControlsOverride();
@@ -1228,8 +1222,8 @@ void ContextMenuController::populate()
             } else {
                 if (!(page && (page->inspectorController().inspectionLevel() > 0 || page->inspectorController().hasRemoteFrontend()))) {
 
-                // In GTK+ unavailable items are not hidden but insensitive.
-#if PLATFORM(GTK)
+                // In GTK and WPE unavailable items are not hidden but insensitive.
+#if PLATFORM(GTK) || PLATFORM(WPE)
                 appendItem(BackItem, m_contextMenu.get());
                 appendItem(ForwardItem, m_contextMenu.get());
                 appendItem(StopItem, m_contextMenu.get());
@@ -1394,7 +1388,7 @@ void ContextMenuController::populate()
 #endif
 #endif
 
-#if !PLATFORM(GTK)
+#if !PLATFORM(GTK) && !PLATFORM(WPE)
 #if !ENABLE(WRITING_TOOLS)
             appendItem(*separatorItem(), m_contextMenu.get());
 #endif
@@ -1413,7 +1407,7 @@ void ContextMenuController::populate()
             createAndAppendTransformationsSubMenu(transformationsMenuItem);
             appendItem(transformationsMenuItem, m_contextMenu.get());
 #endif
-#if PLATFORM(GTK)
+#if PLATFORM(GTK) || PLATFORM(WPE)
             bool shouldShowFontMenu = frame->editor().canEditRichly();
 #else
             bool shouldShowFontMenu = true;
@@ -1437,7 +1431,7 @@ void ContextMenuController::populate()
                 appendItem(*separatorItem(), m_contextMenu.get());
                 appendItem(UnicodeMenuItem, m_contextMenu.get());
             }
-#else
+#elif !PLATFORM(WPE)
             ContextMenuItem WritingDirectionMenuItem(ContextMenuItemType::Submenu, ContextMenuItemTagWritingDirectionMenu,
                 contextMenuItemTagWritingDirectionMenu());
             createAndAppendWritingDirectionSubMenu(WritingDirectionMenuItem);
@@ -1703,7 +1697,7 @@ void ContextMenuController::checkOrEnableIfNeeded(ContextMenuItem& item) const
         case ContextMenuItemTagStopSpeaking:
             break;
 #endif
-#if PLATFORM(GTK)
+#if PLATFORM(GTK) || PLATFORM(WPE)
         case ContextMenuItemTagGoBack:
             shouldEnable = frame->page() && frame->page()->checkedBackForward()->canGoBackOrForward(-1);
             break;

@@ -111,7 +111,10 @@
 #include "RenderTableCell.h"
 #include "RenderView.h"
 #include "RuleFeature.h"
+#include "SVGAElement.h"
 #include "SVGElement.h"
+#include "SVGElementTypeHelpers.h"
+#include "SVGTitleElement.h"
 #include "ShadowRoot.h"
 #include "StyleListStyleType.h"
 #include "StyleResolver.h"
@@ -121,6 +124,7 @@
 #include "TypedElementDescendantIteratorInlines.h"
 #include "UserGestureIndicator.h"
 #include "VisibleUnits.h"
+#include "XLinkNames.h"
 #include <numeric>
 #include <wtf/Scope.h>
 #include <wtf/SetForScope.h>
@@ -148,13 +152,13 @@ Ref<AccessibilityNodeObject> AccessibilityNodeObject::create(AXID axID, Node* no
 
 AccessibilityNodeObject::~AccessibilityNodeObject()
 {
-    ASSERT(isDetached());
+    AX_ASSERT(isDetached());
 }
 
 void AccessibilityNodeObject::init()
 {
 #ifndef NDEBUG
-    ASSERT(!m_initialized);
+    AX_ASSERT(!m_initialized);
     m_initialized = true;
 #endif
     m_ariaRole = determineAriaRoleAttribute();
@@ -177,7 +181,7 @@ AccessibilityObject* AccessibilityNodeObject::firstChild() const
     if (!currentChild)
         return nullptr;
 
-    auto* cache = axObjectCache();
+    CheckedPtr cache = axObjectCache();
     if (!cache)
         return nullptr;
 
@@ -198,7 +202,7 @@ AccessibilityObject* AccessibilityNodeObject::lastChild() const
     if (!lastChild)
         return nullptr;
 
-    auto objectCache = axObjectCache();
+    CheckedPtr objectCache = axObjectCache();
     return objectCache ? objectCache->getOrCreate(*lastChild) : nullptr;
 }
 
@@ -211,7 +215,7 @@ AccessibilityObject* AccessibilityNodeObject::previousSibling() const
     if (!previousSibling)
         return nullptr;
 
-    auto objectCache = axObjectCache();
+    CheckedPtr objectCache = axObjectCache();
     return objectCache ? objectCache->getOrCreate(*previousSibling) : nullptr;
 }
 
@@ -224,14 +228,14 @@ AccessibilityObject* AccessibilityNodeObject::nextSibling() const
     if (!nextSibling)
         return nullptr;
 
-    auto objectCache = axObjectCache();
+    CheckedPtr objectCache = axObjectCache();
     return objectCache ? objectCache->getOrCreate(*nextSibling) : nullptr;
 }
 
 AccessibilityObject* AccessibilityNodeObject::ownerParentObject() const
 {
     auto owners = this->owners();
-    AX_DEBUG_ASSERT(owners.size() <= 1);
+    AX_ASSERT(owners.size() <= 1);
     return owners.size() ? dynamicDowncast<AccessibilityObject>(owners.first().get()) : nullptr;
 }
 
@@ -289,7 +293,7 @@ LayoutRect AccessibilityNodeObject::checkboxOrRadioRect() const
     if (labels.isEmpty())
         return boundingBoxRect();
 
-    auto* cache = axObjectCache();
+    CheckedPtr cache = axObjectCache();
     if (!cache)
         return boundingBoxRect();
 
@@ -383,7 +387,7 @@ AccessibilityRole AccessibilityNodeObject::determineListRoleWithCleanChildren()
     if (!isAccessibilityList())
         return AccessibilityRole::Unknown;
 
-    ASSERT(!needsToUpdateChildren() && childrenInitialized());
+    AX_ASSERT(!needsToUpdateChildren() && childrenInitialized());
 
     // Directory is mapped to list for now, but does not adhere to the same heuristics.
     if (ariaRoleAttribute() == AccessibilityRole::Directory)
@@ -685,7 +689,7 @@ AccessibilityRole AccessibilityNodeObject::determineAccessibilityRoleFromNode(Tr
 AccessibilityRole AccessibilityNodeObject::roleFromInputElement(const HTMLInputElement& input) const
 {
     AXTRACE("AccessibilityNodeObject::roleFromInputElement"_s);
-    ASSERT(dynamicDowncast<HTMLInputElement>(node()) == &input);
+    AX_ASSERT(dynamicDowncast<HTMLInputElement>(node()) == &input);
 
     if (input.isTextButton())
         return buttonRoleType();
@@ -788,7 +792,7 @@ void AccessibilityNodeObject::addChildren()
 {
     // If the need to add more children in addition to existing children arises,
     // childrenChanged should have been called, leaving the object with no children.
-    ASSERT(!m_childrenInitialized);
+    AX_ASSERT(!m_childrenInitialized);
     m_childrenInitialized = true;
 
     auto clearDirtySubtree = makeScopeExit([&] {
@@ -944,7 +948,7 @@ bool AccessibilityNodeObject::computeIsIgnored() const
 #ifndef NDEBUG
     // Double-check that an AccessibilityObject is never accessed before
     // it's been initialized.
-    ASSERT(m_initialized);
+    AX_ASSERT(m_initialized);
 #endif
     if (isTree())
         return isIgnoredByDefault();
@@ -1392,7 +1396,7 @@ AccessibilityButtonState AccessibilityNodeObject::checkboxOrRadioValue() const
     return AccessibilityObject::checkboxOrRadioValue();
 }
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 TextEmissionBehavior AccessibilityNodeObject::textEmissionBehavior() const
 {
     RefPtr node = this->node();
@@ -1429,7 +1433,7 @@ TextEmissionBehavior AccessibilityNodeObject::textEmissionBehavior() const
     }
     return TextEmissionBehavior::None;
 }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
 Element* AccessibilityNodeObject::anchorElement() const
 {
@@ -1440,7 +1444,7 @@ Element* AccessibilityNodeObject::anchorElement() const
     if (RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(*node))
         return areaElement.unsafeGet();
 
-    AXObjectCache* cache = axObjectCache();
+    CheckedPtr cache = axObjectCache();
     if (!cache)
         return nullptr;
 
@@ -1635,7 +1639,7 @@ bool AccessibilityNodeObject::showsCursorOnHover() const
         return false;
     }
 
-    auto* box = dynamicDowncast<RenderBox>(*renderer);
+    CheckedPtr box = dynamicDowncast<RenderBox>(*renderer);
     if (box && (box->hasScrollableOverflowX() || box->hasScrollableOverflowY())) {
         // This heuristic is not valid for scrollable boxes.
         return false;
@@ -1827,7 +1831,7 @@ void AccessibilityNodeObject::setNodeValue(StepAction stepAction, float value)
     bool didSet = setValue(String::number(value));
 
     if (didSet) {
-        if (auto* cache = axObjectCache())
+        if (CheckedPtr cache = axObjectCache())
             cache->postNotification(this, document(), AXNotification::ValueChanged);
     } else
         postKeyboardKeysForValueChange(stepAction);
@@ -1949,7 +1953,7 @@ VisiblePositionRange AccessibilityNodeObject::visiblePositionRangeForLine(unsign
         return { };
 
     RefPtr document = this->document();
-    auto* renderView = document ? document->renderView() : nullptr;
+    CheckedPtr renderView = document ? document->renderView() : nullptr;
     if (!renderView)
         return { };
 
@@ -2250,7 +2254,7 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityNodeObject::visibleRows()
 void AccessibilityNodeObject::addTableChildrenAndCellSlots()
 {
     // isExposableTable() should've been checked before this method was even called.
-    ASSERT(isExposableTable());
+    AX_ASSERT(isExposableTable());
 
     if (!isExposableTable()) [[unlikely]]
         return;
@@ -3136,7 +3140,7 @@ AccessibilityObject* AccessibilityNodeObject::captionForFigure() const
     if (!isFigureElement())
         return nullptr;
 
-    AXObjectCache* cache = axObjectCache();
+    CheckedPtr cache = axObjectCache();
     if (!cache)
         return nullptr;
 
@@ -3245,7 +3249,7 @@ String AccessibilityNodeObject::textForLabelElements(Vector<Ref<HTMLElement>>&& 
             appendNameToStringBuilder(result, axLabel->textAsLabelFor(*this));
 #endif
         else
-            appendNameToStringBuilder(result, accessibleNameForNode(labelElement.get()));
+            appendNameToStringBuilder(result, accessibleNameForNode(labelElement.get(), /* labelledByNode */ node()));
     }
 
     return result.toString();
@@ -3345,7 +3349,7 @@ void AccessibilityNodeObject::alternativeText(Vector<AccessibilityText>& textOrd
     if (!node)
         return;
 
-    auto objectCache = axObjectCache();
+    CheckedPtr objectCache = axObjectCache();
     // The fieldset element derives its alternative text from the first associated legend element if one is available.
     if (RefPtr fieldset = dynamicDowncast<HTMLFieldSetElement>(*node); fieldset && objectCache) {
         RefPtr object = objectCache->getOrCreate(fieldset->legend());
@@ -3476,12 +3480,10 @@ void AccessibilityNodeObject::helpText(Vector<AccessibilityText>& textOrder) con
 
     // The title attribute should be used as help text unless it is already being used as descriptive text.
     // However, when the title attribute is the only text alternative provided, it may be exposed as the
-    // descriptive text. This is problematic in the case of meters because the HTML spec suggests authors
-    // can expose units through this attribute. Therefore, if the element is a meter, change its source
-    // type to AccessibilityTextSource::Help.
+    // descriptive text.
     const AtomString& title = getAttribute(titleAttr);
     if (!title.isEmpty()) {
-        if (!isMeter() && !roleIgnoresTitle())
+        if (!roleIgnoresTitle())
             textOrder.append(AccessibilityText(title, AccessibilityTextSource::TitleTag));
         else
             textOrder.append(AccessibilityText(title, AccessibilityTextSource::Help));
@@ -3645,7 +3647,7 @@ String AccessibilityNodeObject::helpText() const
                 return title;
         }
 
-        auto* cache = axObjectCache();
+        CheckedPtr cache = axObjectCache();
         if (!cache)
             return { };
 
@@ -3814,8 +3816,8 @@ String AccessibilityNodeObject::textUnderElement(TextUnderElementMode mode) cons
     if (auto* text = dynamicDowncast<Text>(node.get()))
         return !mode.isHidden() ? text->data() : emptyString();
 
-    const auto* style = this->style();
-    mode.inHiddenSubtree = WebCore::isRenderHidden(style);
+    CheckedPtr style = this->style();
+    mode.inHiddenSubtree = WebCore::isRenderHidden(style.get());
     // The Accname specification states that if the current node is hidden, and not directly
     // referenced by aria-labelledby or aria-describedby, and is not a host language text
     // alternative, the empty string should be returned.
@@ -3989,8 +3991,8 @@ Vector<AXStitchGroup> AccessibilityNodeObject::stitchGroups() const
 
             // FIXME: We should also be able to stitch ellipsis-type boxes.
             if (box->isText() || box->isLineBreak()) {
-                const auto& renderer = box->renderer();
-                RefPtr object = cache->getOrCreate(const_cast<RenderObject&>(renderer));
+                const CheckedRef renderer = box->renderer();
+                RefPtr object = cache->getOrCreate(const_cast<RenderObject&>(renderer.get()));
                 if (!object)
                     continue;
                 AXID axID = object->objectID();
@@ -4007,7 +4009,7 @@ Vector<AXStitchGroup> AccessibilityNodeObject::stitchGroups() const
 
                     // Avoid doing the wrong thing when !renderText->hasRenderedText() is only true
                     // because it has dirty layout. We should not run this function when layout is dirty.
-                    ASSERT(!renderText || !renderText->needsLayout() || !renderText->text().length());
+                    AX_ASSERT(!renderText || !renderText->needsLayout() || !renderText->text().length());
 
                     if (!renderText || !renderText->hasRenderedText())
                         continue;
@@ -4085,7 +4087,7 @@ String AccessibilityNodeObject::stringValue() const
             if (RefPtr object = cache->objectForID(axID)) {
                 // The only objects preceeding the group representative in the accessibility tree are renderer-only
                 // objects like list markers and CSS generated content.
-                ASSERT(!object->node());
+                AX_ASSERT(!object->node());
                 if (CheckedPtr renderListMarker = dynamicDowncast<RenderListMarker>(object->renderer()))
                     builder.append(renderListMarker->textWithSuffix());
             }
@@ -4177,9 +4179,15 @@ static String accessibleNameForNode(Node& node, Node* labelledbyNode)
     if (!alt.isEmpty())
         return alt;
 
+    if (RefPtr svgElement = dynamicDowncast<SVGElement>(element)) {
+        // For SVG elements, check for SVG-specific labeling mechanisms per SVG-AAM spec.
+        if (String title = svgElement->title(); !title.isEmpty())
+            return title;
+    }
+
     // If the node can be turned into an AX object, we can use standard name computation rules.
     // If however, the node cannot (because there's no renderer e.g.) fallback to using the basic text underneath.
-    auto* cache = node.document().axObjectCache();
+    CheckedPtr cache = node.document().axObjectCache();
     RefPtr axObject = cache ? cache->getOrCreate(node) : nullptr;
     if (axObject) {
         String valueDescription = axObject->valueDescription();
@@ -4210,18 +4218,52 @@ static String accessibleNameForNode(Node& node, Node* labelledbyNode)
     }
 
     if (RefPtr input = dynamicDowncast<HTMLInputElement>(element)) {
-        String inputValue = input->value();
-        if (input->isPasswordField()) {
-            StringBuilder passwordValue;
-            passwordValue.reserveCapacity(inputValue.length());
-            for (size_t i = 0; i < inputValue.length(); i++)
-                passwordValue.append(String::fromUTF8("•"));
-            return passwordValue.toString();
+        // Checkboxes and radio buttons derive their accessible name from labels, not their value attribute.
+        if (input->isCheckbox() || input->isRadioButton()) {
+            auto labels = Accessibility::labelsForElement(element);
+            if (!labels.isEmpty()) {
+                StringBuilder builder;
+                for (auto& label : labels)
+                    appendNameToStringBuilder(builder, accessibleNameForNode(label.get()));
+                String labelText = builder.toString();
+                if (!labelText.isEmpty())
+                    return labelText;
+            }
+            // Fall through to other name computation methods.
+        } else {
+            String inputValue = input->value();
+            if (input->isPasswordField()) {
+                StringBuilder passwordValue;
+                passwordValue.reserveCapacity(inputValue.length());
+                for (size_t i = 0; i < inputValue.length(); i++)
+                    passwordValue.append(String::fromUTF8("•"));
+                return passwordValue.toString();
+            }
+            return inputValue;
         }
-        return inputValue;
     }
     if (RefPtr option = dynamicDowncast<HTMLOptionElement>(element))
         return option->value();
+
+    if (auto* slotElement = dynamicDowncast<HTMLSlotElement>(node); slotElement && labelledbyNode) {
+        // Compute the accessible name for a slot's assigned nodes only if it's being used to label
+        // another node. If no assigned nodes exist, or all assigned nodes are hidden, fall through to
+        // textUnderElement, which will return the slot's fallback content.
+        if (auto* assignedNodes = slotElement->assignedNodes()) {
+            StringBuilder builder;
+            for (const auto& assignedNode : *assignedNodes) {
+                // Skip hidden assigned nodes, e.g. those with display:none.
+                RefPtr assignedElement = dynamicDowncast<Element>(assignedNode.get());
+                if (assignedElement && isRenderHidden(safeStyleFrom(*assignedElement)))
+                    continue;
+                appendNameToStringBuilder(builder, accessibleNameForNode(*assignedNode));
+            }
+
+            auto assignedNodesText = builder.toString();
+            if (!assignedNodesText.isEmpty())
+                return assignedNodesText;
+        }
+    }
 
     String text;
     if (axObject) {
@@ -4237,16 +4279,20 @@ static String accessibleNameForNode(Node& node, Node* labelledbyNode)
     if (!title.isEmpty())
         return title;
 
-    auto* slotElement = dynamicDowncast<HTMLSlotElement>(node);
-    // Compute the accessible name for a slot's contents only if it's being used to label another node.
-    if (auto* assignedNodes = (slotElement && labelledbyNode) ? slotElement->assignedNodes() : nullptr) {
-        StringBuilder builder;
-        for (const auto& assignedNode : *assignedNodes)
-            appendNameToStringBuilder(builder, accessibleNameForNode(*assignedNode));
+    if (element && element->hasDisplayContents()) {
+        // For display:contents elements with shadow roots, the element doesn't have a renderer,
+        // so textUnderElement() won't find any children via the render tree. We need to explicitly
+        // traverse the shadow root content to compute the accessible name.
+        // https://bugs.webkit.org/show_bug.cgi?id=275222
+        if (RefPtr shadowRoot = shadowRootIgnoringUserAgentShadow(node)) {
+            StringBuilder builder;
+            for (RefPtr child = shadowRoot->firstChild(); child; child = child->nextSibling())
+                appendNameToStringBuilder(builder, accessibleNameForNode(*child));
 
-        auto assignedNodesText = builder.toString();
-        if (!assignedNodesText.isEmpty())
-            return assignedNodesText;
+            String shadowText = builder.toString();
+            if (!shadowText.isEmpty())
+                return shadowText;
+        }
     }
 
     return { };
@@ -4258,7 +4304,7 @@ String AccessibilityNodeObject::accessibilityDescriptionForChildren() const
     if (!node)
         return String();
 
-    AXObjectCache* cache = axObjectCache();
+    CheckedPtr cache = axObjectCache();
     if (!cache)
         return String();
 
@@ -4388,7 +4434,7 @@ void AccessibilityNodeObject::setFocused(bool on)
         document->setFocusedElement(nullptr);
 
     // If we return from setFocusedElement and our element has been removed from a tree, axObjectCache() may be null.
-    if (auto* cache = axObjectCache()) {
+    if (CheckedPtr cache = axObjectCache()) {
         cache->setIsSynchronizingSelection(true);
         downcast<Element>(*m_node).focus();
         cache->setIsSynchronizingSelection(false);
@@ -4625,7 +4671,7 @@ static bool childrenContainOnlyStaticText(const AccessibilityObject::Accessibili
 
 bool AccessibilityNodeObject::isLabelContainingOnlyStaticText() const
 {
-    ASSERT(isNativeLabel());
+    AX_ASSERT(isNativeLabel());
 
     // m_containsOnlyStaticTextDirty is set (if necessary) by addChildren(), so update our children before checking the flag.
     const_cast<AccessibilityNodeObject*>(this)->updateChildrenIfNecessary();

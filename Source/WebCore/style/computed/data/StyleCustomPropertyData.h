@@ -37,7 +37,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(CustomPropertyData);
 class CustomPropertyData : public RefCounted<CustomPropertyData> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(CustomPropertyData, CustomPropertyData);
 private:
-    using CustomPropertyValueMap = HashMap<AtomString, RefPtr<const CustomProperty>>;
+    using CustomPropertyValueMap = HashMap<AtomString, Ref<const CustomProperty>>;
 
 public:
     static Ref<CustomPropertyData> create() { return adoptRef(*new CustomPropertyData); }
@@ -55,7 +55,7 @@ public:
     unsigned size() const { return m_size; }
     bool mayHaveAnimatableProperties() const { return m_mayHaveAnimatableProperties; }
 
-    void forEach(NOESCAPE const Function<IterationStatus(const KeyValuePair<AtomString, RefPtr<const CustomProperty>>&)>&) const;
+    void forEach(NOESCAPE const Function<IterationStatus(const KeyValuePair<AtomString, Ref<const CustomProperty>>&)>&) const;
     AtomString findKeyAtIndex(unsigned) const;
 
 private:
@@ -64,7 +64,7 @@ private:
 
     template<typename Callback> void forEachInternal(Callback&&) const;
 
-    RefPtr<const CustomPropertyData> m_parentValues;
+    const RefPtr<const CustomPropertyData> m_parentValues;
     CustomPropertyValueMap m_ownValues;
     unsigned m_size { 0 };
     unsigned m_ancestorCount { 0 };

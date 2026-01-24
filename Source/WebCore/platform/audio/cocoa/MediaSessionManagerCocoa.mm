@@ -104,6 +104,7 @@ void MediaSessionManagerCocoa::updateSessionState()
     int audioCount = 0;
     int webAudioCount = 0;
     int audioMediaStreamTrackCount = 0;
+    int domMediaSessionCount = 0;
     int captureCount = countActiveAudioCaptureSources();
 
     bool hasAudibleAudioOrVideoMediaType = false;
@@ -113,6 +114,9 @@ void MediaSessionManagerCocoa::updateSessionState()
         auto type = session.mediaType();
         switch (type) {
         case PlatformMediaSession::MediaType::None:
+            break;
+        case PlatformMediaSession::MediaType::DOMMediaSession:
+            ++domMediaSessionCount;
             break;
         case PlatformMediaSession::MediaType::Video:
             ++videoCount;
@@ -148,7 +152,7 @@ void MediaSessionManagerCocoa::updateSessionState()
         }
     });
 
-    MEDIASESSIONMANAGER_RELEASE_LOG(UPDATESESSIONSTATE, captureCount, audioMediaStreamTrackCount, videoCount, audioCount, videoAudioCount, webAudioCount);
+    MEDIASESSIONMANAGER_RELEASE_LOG(UPDATESESSIONSTATE, captureCount, audioMediaStreamTrackCount, videoCount, audioCount, videoAudioCount, webAudioCount, domMediaSessionCount);
 
     Ref sharedSession = AudioSession::singleton();
     if (!m_defaultBufferSize)

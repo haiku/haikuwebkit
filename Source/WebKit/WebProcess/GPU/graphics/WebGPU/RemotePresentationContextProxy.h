@@ -76,7 +76,7 @@ private:
     RefPtr<WebCore::NativeImage> getMetalTextureAsNativeImage(uint32_t, bool& isIOSurfaceSupportedFormat) final;
 
     template<typename T>
-    WARN_UNUSED_RETURN IPC::Error send(T&& message)
+    [[nodiscard]] IPC::Error send(T&& message)
     {
         return root().protectedStreamClientConnection()->send(WTF::move(message), backing());
     }

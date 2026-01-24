@@ -315,14 +315,16 @@ static void appendBlobResolved(BlobRegistryImpl* blobRegistry, FormData& formDat
     }
 
     for (const auto& blobItem : blobData->items()) {
-        if (blobItem.type() == BlobDataItem::Type::Data) {
-            ASSERT(blobItem.data());
+        switch (blobItem.type()) {
+        case BlobDataItem::Type::Data:
             formData.appendData(blobItem.protectedData()->span().subspan(blobItem.offset(), blobItem.length()));
-        } else if (blobItem.type() == BlobDataItem::Type::File) {
-            RefPtr file = blobItem.file();
+            break;
+        case BlobDataItem::Type::File: {
+            Ref file = blobItem.file();
             formData.appendFileRange(file->path(), blobItem.offset(), blobItem.length(), file->expectedModificationTime());
-        } else
-            ASSERT_NOT_REACHED();
+            break;
+        }
+        }
     }
 }
 

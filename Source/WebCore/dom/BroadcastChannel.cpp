@@ -254,7 +254,7 @@ void BroadcastChannel::dispatchMessage(Ref<SerializedScriptValue>&& message)
             return;
 
         auto& vm = globalObject->vm();
-        auto scope = DECLARE_CATCH_SCOPE(vm);
+        auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
         auto event = MessageEvent::create(*globalObject, WTF::move(message), channel.scriptExecutionContext()->securityOrigin());
         if (scope.exception()) [[unlikely]] {
             // Currently, we assume that the only way we can get here is if we have a termination.

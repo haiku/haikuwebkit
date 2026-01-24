@@ -111,7 +111,7 @@ private:
     }
     void setLastRevealAttemptTimedOut(bool newValue)
     {
-        ASSERT(!isMainThread());
+        AX_ASSERT(!isMainThread());
         m_lastRevealAttemptTimedOut = newValue;
     }
 

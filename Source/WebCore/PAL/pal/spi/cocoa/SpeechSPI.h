@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 #include <wtf/Compiler.h>
 #include <wtf/Platform.h>
 
@@ -53,3 +56,5 @@ NS_ASSUME_NONNULL_END
 #endif // USE(APPLE_INTERNAL_SDK)
 
 #endif // HAVE(SPEECHRECOGNIZER)
+
+#endif // !__has_feature(modules)

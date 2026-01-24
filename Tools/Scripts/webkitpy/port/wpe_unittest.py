@@ -85,11 +85,16 @@ class WPEPortTest(port_testcase.PortTestCase):
 
     def test_default_upload_configuration(self):
         port = self.make_port()
+        port.host.filesystem.write_text_file(
+            '/mock-checkout/Source/cmake/OptionsWPE.cmake',
+            'SET_PROJECT_VERSION(2 51 4)\n'
+        )
         configuration = port.configuration_for_upload()
         self.assertEqual(configuration['architecture'], port.architecture())
         self.assertEqual(configuration['is_simulator'], False)
         self.assertEqual(configuration['platform'], 'WPE')
         self.assertEqual(configuration['style'], 'release')
+        self.assertEqual(configuration['version'], '2.51')
 
     def test_browser_name_default_wihout_cog_built(self):
         port = self.make_port()

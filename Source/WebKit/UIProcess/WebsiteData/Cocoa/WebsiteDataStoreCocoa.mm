@@ -55,6 +55,7 @@
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/cf/StringConcatenateCF.h>
+#import <NetworkProcess/cocoa/NetworkSoftLink.h>
 
 #if ENABLE(GPU_PROCESS)
 #import "GPUProcessProxy.h"
@@ -255,28 +256,18 @@ std::optional<bool> WebsiteDataStore::useNetworkLoader()
 #if HAVE(NWSETTINGS_UNIFIED_HTTP) && defined(NW_SETTINGS_HAS_UNIFIED_HTTP)
     if (isRunningTest(applicationBundleIdentifier()))
         return true;
-    if (nw_settings_get_unified_http_enabled())
-        return isSafari;
+    if (nw_settings_get_unified_http_enabled() && isSafari)
+        return true;
+#endif // HAVE(NWSETTINGS_UNIFIED_HTTP) && defined(NW_SETTINGS_HAS_UNIFIED_HTTP)
+
+#if HAVE(NWSETTINGS_UNIFIED_HTTP_WEBKIT)
+    if (canLoad_Network_nw_settings_get_unified_http_enabled_webkit())
+        return softLink_Network_nw_settings_get_unified_http_enabled_webkit();
 #endif
     return std::nullopt;
 
 #endif // NETWORK_LOADER
 }
-
-#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
-bool WebsiteDataStore::isOptInCookiePartitioningEnabled() const
-{
-#if defined(CFN_COOKIE_ACCEPTS_POLICY_PARTITION) && CFN_COOKIE_ACCEPTS_POLICY_PARTITION
-    return std::ranges::any_of(m_processes, [](auto& process) {
-        return std::ranges::any_of(process.pages(), [](auto& page) {
-            return page->preferences().optInPartitionedCookiesEnabled();
-        });
-    });
-#else
-    return false;
-#endif
-}
-#endif
 
 void WebsiteDataStore::platformInitialize()
 {

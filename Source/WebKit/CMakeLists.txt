@@ -526,6 +526,7 @@ set(WebKit_SERIALIZATION_IN_FILES
     Shared/ScriptTrackingPrivacyFilter.serialization.in
     Shared/ScrollingAccelerationCurve.serialization.in
     Shared/SerializedNode.serialization.in
+    Shared/ServiceWorkerTimingInfo.serialization.in
     Shared/SessionState.serialization.in
     Shared/SyntheticEditingCommandType.serialization.in
     Shared/TextFlags.serialization.in
@@ -751,10 +752,8 @@ set(WebKit_FRAMEWORKS
     PAL
     WTF
     WebCore
+    bmalloc
 )
-if (NOT USE_SYSTEM_MALLOC)
-    list(APPEND WebKit_FRAMEWORKS bmalloc)
-endif ()
 
 set(WebProcess_LIBRARIES WebKit)
 set(NetworkProcess_LIBRARIES WebKit)

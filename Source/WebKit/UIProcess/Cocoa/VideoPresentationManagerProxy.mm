@@ -839,35 +839,6 @@ void VideoPresentationManagerProxy::forEachSession(Function<void(VideoPresentati
     }
 }
 
-void VideoPresentationManagerProxy::requestBitmapImageForCurrentTime(PlaybackSessionContextIdentifier identifier, CompletionHandler<void(std::optional<ShareableBitmap::Handle>&&)>&& completionHandler)
-{
-    RefPtr page = m_page.get();
-    if (!page) {
-        completionHandler(std::nullopt);
-        return;
-    }
-
-    RefPtr gpuProcess = GPUProcessProxy::singletonIfCreated();
-    if (!gpuProcess) {
-        completionHandler(std::nullopt);
-        return;
-    }
-
-    RefPtr interface = findInterface(identifier);
-    if (!interface) {
-        completionHandler(std::nullopt);
-        return;
-    }
-
-    auto playerIdentifier = interface->playerIdentifier();
-    if (!playerIdentifier) {
-        completionHandler(std::nullopt);
-        return;
-    }
-
-    gpuProcess->requestBitmapImageForCurrentTime(page->protectedLegacyMainFrameProcess()->coreProcessIdentifier(), *playerIdentifier, WTF::move(completionHandler));
-}
-
 void VideoPresentationManagerProxy::addVideoInPictureInPictureDidChangeObserver(const VideoInPictureInPictureDidChangeObserver& observer)
 {
     ASSERT(!m_pipChangeObservers.contains(observer));

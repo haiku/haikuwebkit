@@ -38,7 +38,7 @@ public:
     explicit RenderStyle(CreateDefaultStyleTag);
     RenderStyle(const RenderStyle&, CloneTag);
 
-    WARN_UNUSED_RETURN RenderStyle replace(RenderStyle&&);
+    [[nodiscard]] RenderStyle replace(RenderStyle&&);
 
     static RenderStyle& defaultStyleSingleton();
 

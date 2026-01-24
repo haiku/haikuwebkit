@@ -55,7 +55,7 @@ ResourceLoadNotifier::ResourceLoadNotifier(LocalFrame& frame)
 
 Ref<LocalFrame> ResourceLoadNotifier::protectedFrame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 void ResourceLoadNotifier::didReceiveAuthenticationChallenge(ResourceLoaderIdentifier identifier, DocumentLoader* loader, const AuthenticationChallenge& currentWebChallenge)

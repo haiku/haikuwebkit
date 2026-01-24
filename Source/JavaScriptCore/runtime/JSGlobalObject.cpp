@@ -57,7 +57,6 @@
 #include "BooleanObjectInlines.h"
 #include "BooleanPrototypeInlines.h"
 #include "BuiltinNames.h"
-#include "CatchScope.h"
 #include "ChainedWatchpoint.h"
 #include "ClonedArguments.h"
 #include "CodeBlock.h"
@@ -172,8 +171,11 @@
 #include "JSNativeStdFunctionInlines.h"
 #include "JSONObjectInlines.h"
 #include "JSPromise.h"
+#include "JSPromiseCombinatorsContextInlines.h"
+#include "JSPromiseCombinatorsGlobalContext.h"
 #include "JSPromiseConstructor.h"
 #include "JSPromisePrototype.h"
+#include "JSPromiseReaction.h"
 #include "JSRawJSONObject.h"
 #include "JSRegExpStringIteratorInlines.h"
 #include "JSRemoteFunctionInlines.h"
@@ -203,9 +205,6 @@
 #include "JSWebAssemblyTag.h"
 #include "JSWithScope.h"
 #include "JSWrapForValidIteratorInlines.h"
-#include "JSPromiseCombinatorsContextInlines.h"
-#include "JSPromiseCombinatorsGlobalContext.h"
-#include "JSPromiseReaction.h"
 #include "LazyClassStructureInlines.h"
 #include "LazyPropertyInlines.h"
 #include "LinkTimeConstant.h"
@@ -278,6 +277,7 @@
 #include "TemporalPlainYearMonthPrototype.h"
 #include "TemporalTimeZone.h"
 #include "TemporalTimeZonePrototype.h"
+#include "TopExceptionScope.h"
 #include "VMTrapsInlines.h"
 #include "WaiterListManager.h"
 #include "WasmCapabilities.h"
@@ -954,7 +954,7 @@ static ObjectPropertyCondition setupAdaptiveWatchpoint(JSGlobalObject* globalObj
     // Performing these gets should not throw.
     VM& vm = globalObject->vm();
     DeferTerminationForAWhile deferScope(vm);
-    auto catchScope = DECLARE_CATCH_SCOPE(vm);
+    auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
     PropertySlot slot(base, PropertySlot::InternalMethodType::VMInquiry, &vm);
     bool result = base->getOwnPropertySlot(base, globalObject, ident, slot);
     ASSERT_UNUSED(result, result);
@@ -978,7 +978,7 @@ static ObjectPropertyCondition setupAbsenceAdaptiveWatchpoint(JSGlobalObject* gl
     // Performing these gets should not throw.
     VM& vm = globalObject->vm();
     DeferTerminationForAWhile deferScope(vm);
-    auto catchScope = DECLARE_CATCH_SCOPE(vm);
+    auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
     PropertySlot slot(base, PropertySlot::InternalMethodType::VMInquiry, &vm);
     bool result = base->getOwnPropertySlot(base, globalObject, propertyName, slot);
     RELEASE_ASSERT(!result);
@@ -1034,7 +1034,7 @@ void JSGlobalObject::init(VM& vm)
 {
     ASSERT(vm.traps().isDeferringTermination());
     ASSERT(vm.currentThreadIsHoldingAPILock());
-    auto catchScope = DECLARE_CATCH_SCOPE(vm);
+    auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     convertToDictionary(vm);
 
@@ -1731,7 +1731,7 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
 
     m_moduleLoader.initLater(
         [] (const Initializer<JSModuleLoader>& init) {
-            auto catchScope = DECLARE_CATCH_SCOPE(init.vm);
+            auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(init.vm);
             init.set(JSModuleLoader::create(init.owner, init.vm, JSModuleLoader::createStructure(init.vm, init.owner, jsNull())));
             catchScope.releaseAssertNoException();
         });
@@ -3338,7 +3338,7 @@ void JSGlobalObject::installTypedArrayIteratorProtocolWatchpoint(JSObject* base,
     VM& vm = this->vm();
 
     DeferTerminationForAWhile deferScope(vm);
-    auto catchScope = DECLARE_CATCH_SCOPE(vm);
+    auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     auto absenceCondition = [&](PropertyName propertyName) {
         PropertySlot slot(base, PropertySlot::InternalMethodType::VMInquiry, &vm);
@@ -3423,7 +3423,7 @@ void JSGlobalObject::tryInstallPropertyDescriptorFastPathWatchpoint()
     VM& vm = this->vm();
 
     DeferTerminationForAWhile deferScope(vm);
-    auto catchScope = DECLARE_CATCH_SCOPE(vm);
+    auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     auto invalidate = [&]() {
         m_propertyDescriptorFastPathWatchpointSet.invalidate(vm, StringFireDetail("Was not able to set up property descriptor related names watchpoint set."));

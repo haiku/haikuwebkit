@@ -127,34 +127,30 @@ JSValue iteratorStepWithCachedCall(JSGlobalObject* globalObject, IterationRecord
 void iteratorClose(JSGlobalObject* globalObject, JSValue iterator)
 {
     VM& vm = globalObject->vm();
-    auto throwScope = DECLARE_THROW_SCOPE(vm);
-    auto catchScope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_THROW_SCOPE(vm);
 
-    Exception* exception = nullptr;
-    if (catchScope.exception()) [[unlikely]] {
-        exception = catchScope.exception();
-        catchScope.clearException();
-    }
+    Exception* exception = scope.exception();
+    TRY_CLEAR_EXCEPTION(scope, void());
 
     JSValue returnFunction = iterator.get(globalObject, vm.propertyNames->returnKeyword);
-    if (throwScope.exception()) [[unlikely]] {
+    if (scope.exception()) [[unlikely]] {
         if (exception)
-            throwException(globalObject, throwScope, exception);
+            throwException(globalObject, scope, exception);
         return;
     }
 
     if (returnFunction.isUndefinedOrNull()) {
         if (exception)
-            throwException(globalObject, throwScope, exception);
+            throwException(globalObject, scope, exception);
         return;
     }
 
     auto returnFunctionCallData = JSC::getCallDataInline(returnFunction);
     if (returnFunctionCallData.type == CallData::Type::None) {
         if (exception)
-            throwException(globalObject, throwScope, exception);
+            throwException(globalObject, scope, exception);
         else
-            throwTypeError(globalObject, throwScope);
+            throwTypeError(globalObject, scope);
         return;
     }
 
@@ -163,14 +159,14 @@ void iteratorClose(JSGlobalObject* globalObject, JSValue iterator)
     JSValue innerResult = call(globalObject, returnFunction, returnFunctionCallData, iterator, returnFunctionArguments);
 
     if (exception) {
-        throwException(globalObject, throwScope, exception);
+        throwException(globalObject, scope, exception);
         return;
     }
 
-    RETURN_IF_EXCEPTION(throwScope, void());
+    RETURN_IF_EXCEPTION(scope, void());
 
     if (!innerResult.isObject()) {
-        throwTypeError(globalObject, throwScope, "Iterator result interface is not an object."_s);
+        throwTypeError(globalObject, scope, "Iterator result interface is not an object."_s);
         return;
     }
 }

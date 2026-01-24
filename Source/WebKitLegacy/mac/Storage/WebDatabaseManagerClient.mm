@@ -103,7 +103,7 @@ public:
     {
         auto context = makeUnique<DidModifyOriginData>(client, origin);
         callOnMainThread([context = WTF::move(context)] {
-            context->client.dispatchDidModifyOrigin(context->origin);
+            Ref { context->client.get() }->dispatchDidModifyOrigin(context->origin);
         });
     }
 
@@ -114,7 +114,7 @@ public:
     }
 
 private:
-    WebDatabaseManagerClient& client;
+    WeakRef<WebDatabaseManagerClient> client;
     SecurityOriginData origin;
 };
 

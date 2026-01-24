@@ -54,7 +54,7 @@
 
 namespace WebCore {
 
-using BlobURLOriginMap = HashMap<String, RefPtr<SecurityOrigin>>;
+using BlobURLOriginMap = HashMap<String, Ref<SecurityOrigin>>;
 
 static BlobURLOriginMap& originMap()
 {
@@ -83,7 +83,7 @@ static void addToOriginMapIfNecessary(const URL& url, RefPtr<SecurityOrigin>&& o
         return;
 
     auto urlWithoutFragment = url.stringWithoutFragmentIdentifier();
-    originMap().add(urlWithoutFragment, WTF::move(origin));
+    originMap().add(urlWithoutFragment, origin.releaseNonNull());
     blobURLReferencesMap().add(urlWithoutFragment);
 };
 

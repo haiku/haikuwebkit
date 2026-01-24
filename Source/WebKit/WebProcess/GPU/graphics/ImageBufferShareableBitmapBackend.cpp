@@ -92,7 +92,7 @@ std::unique_ptr<ImageBufferShareableBitmapBackend> ImageBufferShareableBitmapBac
 
 std::unique_ptr<ImageBufferShareableBitmapBackend> ImageBufferShareableBitmapBackend::create(const Parameters& parameters, ShareableBitmap::Handle handle)
 {
-    auto bitmap = ShareableBitmap::create(WTF::move(handle));
+    auto bitmap = ShareableBitmap::create(WTF::move(handle), SharedMemory::Protection::ReadWrite, SharedMemory::CopyOnWrite::No);
     if (!bitmap)
         return nullptr;
 

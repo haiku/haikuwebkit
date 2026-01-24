@@ -129,6 +129,7 @@ Tests/WebKitCocoa/FindInPageUtilities.mm @nonARC
 Tests/WebKitCocoa/FindInPageAPI.mm @nonARC
 Tests/WebKitCocoa/FirstVisuallyNonEmptyMilestone.mm @nonARC
 Tests/WebKitCocoa/FixedLayoutSize.mm @nonARC
+Tests/WebKitCocoa/FocusWebView.mm @nonARC
 Tests/WebKitCocoa/FontAttributes.mm @nonARC
 Tests/WebKitCocoa/FormValidation.mm @nonARC
 Tests/WebKitCocoa/FullscreenAlert.mm @nonARC

@@ -36,7 +36,6 @@
 #include "HostWindow.h"
 #include "ImageBuffer.h"
 #include "NullGraphicsContext.h"
-#include "ReferenceFilterOperation.h"
 #include "RenderElement.h"
 #include "RenderObjectInlines.h"
 #include "Settings.h"
@@ -110,9 +109,12 @@ void StyleFilterImage::load(CachedResourceLoader& cachedResourceLoader, const Re
     }
 
     for (auto& value : m_filter) {
-        Ref operation = value.value;
-        if (RefPtr referenceFilterOperation = dynamicDowncast<Style::ReferenceFilterOperation>(operation))
-            referenceFilterOperation->loadExternalDocumentIfNeeded(cachedResourceLoader, options);
+        WTF::switchOn(value,
+            [&](Style::FilterReference& filterReference) {
+                filterReference.loadExternalDocumentIfNeeded(cachedResourceLoader, options);
+            },
+            []<CSSValueID C, typename T>(FunctionNotation<C, T>&) { }
+        );
     }
 
     m_inputImageIsReady = true;

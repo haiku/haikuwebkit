@@ -86,15 +86,12 @@ static gboolean wpeDisplayMockConnect(WPEDisplay* display, GError** error)
 
 static WPEView* wpeDisplayMockCreateView(WPEDisplay* display)
 {
-    auto* view = WPE_VIEW(g_object_new(WPE_TYPE_VIEW_MOCK, "display", display, nullptr));
+    return WPE_VIEW(g_object_new(WPE_TYPE_VIEW_MOCK, "display", display, nullptr));
+}
 
-    if (wpe_settings_get_boolean(wpe_display_get_settings(display), WPE_SETTING_CREATE_VIEWS_WITH_A_TOPLEVEL, nullptr)) {
-        WPEToplevel* toplevel = wpeToplevelMockNew(WPE_DISPLAY_MOCK(display), 1);
-        wpe_view_set_toplevel(view, toplevel);
-        g_object_unref(toplevel);
-    }
-
-    return view;
+static WPEToplevel* wpeDisplayMockCreateToplevel(WPEDisplay* display, guint maxViews)
+{
+    return WPE_TOPLEVEL(g_object_new(WPE_TYPE_TOPLEVEL_MOCK, "display", display, "max-views", maxViews, nullptr));
 }
 
 static WPEInputMethodContext* wpeDisplayMockCreateInputMethodContext(WPEDisplay* display, WPEView*)
@@ -177,6 +174,7 @@ static void wpe_display_mock_class_init(WPEDisplayMockClass* displayMockClass)
     WPEDisplayClass* displayClass = WPE_DISPLAY_CLASS(displayMockClass);
     displayClass->connect = wpeDisplayMockConnect;
     displayClass->create_view = wpeDisplayMockCreateView;
+    displayClass->create_toplevel = wpeDisplayMockCreateToplevel;
     displayClass->create_input_method_context = wpeDisplayMockCreateInputMethodContext;
     displayClass->get_egl_display = wpeDisplayMockGetEGLDisplay;
     displayClass->get_keymap = wpeDisplayMockGetKeymap;

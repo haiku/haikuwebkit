@@ -30,6 +30,7 @@
 
 [
     ExportMacro=WEBCORE_EXPORT,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary DOMPointInit {
     unrestricted double x = 0;
     unrestricted double y = 0;

@@ -210,6 +210,11 @@ inline Node& Node::rootNode() const
     return traverseToRootNode();
 }
 
+inline Ref<Node> Node::protectedRootNode() const
+{
+    return rootNode();
+}
+
 inline void Node::setParentNode(ContainerNode* parent)
 {
     ASSERT(isMainThread());

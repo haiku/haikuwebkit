@@ -124,7 +124,7 @@ TemporalInstant* TemporalInstant::tryCreateIfValid(JSGlobalObject* globalObject,
     if (bigIntTooLong || !exactTime.isValid()) {
         String argAsString = bigint->toString(globalObject, 10);
         if (scope.exception()) {
-            scope.clearException();
+            TRY_CLEAR_EXCEPTION(scope, nullptr);
             argAsString = "The given number of"_s;
         }
 

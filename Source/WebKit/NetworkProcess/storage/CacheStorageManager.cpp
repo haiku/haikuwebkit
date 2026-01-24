@@ -543,4 +543,60 @@ String CacheStorageManager::representationString()
     return builder.toString();
 }
 
+static void queryCaches(Vector<Ref<CacheStorageCache>>&& caches, size_t index, WebCore::RetrieveRecordsOptions&& options, bool shouldIterate, CompletionHandler<void(std::optional<WebCore::DOMCacheEngine::CrossThreadRecord>&&)>&& callback)
+{
+    if (index >= caches.size()) {
+        callback({ });
+        return;
+    }
+
+    Ref cache = caches[index];
+    cache->open([caches = WTF::move(caches), index, options = WTF::move(options), shouldIterate, callback = WTF::move(callback)](auto&& openResult) mutable {
+        if (!openResult.has_value()) {
+            if (!shouldIterate) {
+                callback({ });
+                return;
+            }
+
+            queryCaches(WTF::move(caches), index + 1, WTF::move(options), shouldIterate, WTF::move(callback));
+            return;
+        }
+
+        Ref cache = caches[index];
+        auto matches = cache->findRecords(options);
+        if (!matches.isEmpty()) {
+            cache->retrieveRecords({ WTF::move(matches[0]) }, WTF::move(options), [callback = WTF::move(callback)](auto&& result) mutable {
+                if (!result.has_value()) {
+                    callback({ });
+                    return;
+                }
+                callback(WTF::move(result.value()[0]));
+            });
+            return;
+        }
+        queryCaches(WTF::move(caches), index + 1, WTF::move(options), shouldIterate, WTF::move(callback));
+    });
+}
+
+void CacheStorageManager::query(WebCore::RetrieveRecordsOptions&& options, String&& cacheName, CompletionHandler<void(std::optional<WebCore::DOMCacheEngine::CrossThreadRecord>&&)>&& callback)
+{
+    if (!initializeCaches()) {
+        callback({ });
+        return;
+    }
+
+    size_t index = 0;
+    if (!cacheName.isEmpty()) {
+        index = m_caches.findIf([&](auto& cache) {
+            return cache->name() == cacheName;
+        });
+        if (index == notFound) {
+            callback({ });
+            return;
+        }
+    }
+
+    queryCaches(Vector<Ref<CacheStorageCache>> { m_caches }, index, WTF::move(options), cacheName.isEmpty(), WTF::move(callback));
+}
+
 } // namespace WebKit

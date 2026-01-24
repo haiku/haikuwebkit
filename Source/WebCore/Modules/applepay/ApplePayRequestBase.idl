@@ -25,6 +25,7 @@
 
 [
     Conditional=APPLE_PAY,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary ApplePayRequestBase {
     sequence<ApplePayFeature> features;
 

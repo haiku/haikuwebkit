@@ -143,6 +143,7 @@ set(WTF_PUBLIC_HEADERS
     Int128.h
     InterferenceGraph.h
     IntervalSet.h
+    IsIncreasing.h
     IterationStatus.h
     IteratorRange.h
     JSONValues.h
@@ -247,6 +248,7 @@ set(WTF_PUBLIC_HEADERS
     PrintStream.h
     PriorityQueue.h
     ProcessID.h
+    ProcessMemoryStatus.h
     ProcessPrivilege.h
     PtrTag.h
     RAMSize.h
@@ -783,9 +785,7 @@ set(WTF_LIBRARIES
     ICU::uc
 )
 
-if (NOT USE_SYSTEM_MALLOC)
-    set(WTF_FRAMEWORKS bmalloc)
-endif ()
+set(WTF_FRAMEWORKS bmalloc)
 
 if (ATOMICS_REQUIRE_LIBATOMIC)
     list(APPEND WTF_LIBRARIES atomic)

@@ -68,19 +68,18 @@ ExceptionOr<void> ExtendableEvent::waitUntil(Ref<DOMPromise>&& promise)
 
 void ExtendableEvent::addExtendLifetimePromise(Ref<DOMPromise>&& promise)
 {
-    promise->whenSettled([this, protectedThis = Ref { *this }, settledPromise = promise.copyRef()] () mutable {
-        auto& globalObject = *settledPromise->globalObject();
-        RefPtr context = globalObject.scriptExecutionContext();
+    promise->whenSettledWithResult([this, protectedThis = Ref { *this }](auto* globalObject, auto, auto) mutable {
+        RefPtr context = globalObject ? globalObject->scriptExecutionContext() : nullptr;
         if (!context)
             return;
-        context->checkedEventLoop()->queueMicrotask([this, protectedThis = WTF::move(protectedThis), settledPromise = WTF::move(settledPromise)]() mutable {
+        context->checkedEventLoop()->queueMicrotask([this, protectedThis = WTF::move(protectedThis), weakContext = WeakPtr { *context }]() mutable {
             --m_pendingPromiseCount;
 
             // FIXME: Let registration be the context object's relevant global object's associated service worker's containing service worker registration.
             // FIXME: If registration's uninstalling flag is set, invoke Try Clear Registration with registration.
             // FIXME: If registration is not null, invoke Try Activate with registration.
 
-            RefPtr context = settledPromise->globalObject()->scriptExecutionContext();
+            RefPtr context = weakContext.get();
             if (!context)
                 return;
             context->postTask([this, protectedThis = WTF::move(protectedThis)] (ScriptExecutionContext&) mutable {

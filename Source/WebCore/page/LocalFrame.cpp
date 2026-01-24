@@ -1121,29 +1121,12 @@ void LocalFrame::setPageAndTextZoomFactors(float pageZoomFactor, float textZoomF
     }
 }
 
-float LocalFrame::frameScaleFactor() const
+float LocalFrame::usedZoomForChild(const Frame& child) const
 {
-    RefPtr page = this->page();
+    if (CheckedPtr ownerRenderer = child.ownerRenderer())
+        return ownerRenderer->style().usedZoom();
 
-    if (!page)
-        return 1;
-
-    // https://github.com/w3c/csswg-drafts/issues/9644
-    // Check if this frame's owner element (iframe) has CSS zoom applied.
-    if (!isMainFrame()) {
-        auto rootZoom = rootFrame().pageZoomFactor();
-        if (RefPtr ownerElement = this->ownerElement()) {
-            if (auto* ownerRenderer = ownerElement->renderer())
-                return ownerRenderer->style().usedZoom() / rootZoom;
-        }
-        return rootZoom;
-    }
-
-    // Main frame is scaled with respect to the container.
-    if (page->delegatesScaling())
-        return 1;
-
-    return page->pageScaleFactor();
+    return 1.0;
 }
 
 void LocalFrame::suspendActiveDOMObjectsAndAnimations()

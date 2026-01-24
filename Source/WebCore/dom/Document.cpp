@@ -1262,8 +1262,8 @@ void Document::buildAccessKeyCache()
 {
     m_accessKeyCache = [this] {
         HashMap<String, WeakPtr<Element, WeakPtrImplWithEventTargetData>, ASCIICaseInsensitiveHash> map;
-        for (auto& node : composedTreeDescendants(*this)) {
-            auto element = dynamicDowncast<Element>(node);
+        for (CheckedRef node : composedTreeDescendants(*this)) {
+            CheckedPtr element = dynamicDowncast<Element>(node);
             if (!element)
                 continue;
             auto& key = element->attributeWithoutSynchronization(accesskeyAttr);
@@ -1533,7 +1533,7 @@ void Document::childrenChanged(const ChildChange& change)
         return;
     m_documentElement = WTF::move(newDocumentElement);
     setDocumentElementLanguage(m_documentElement ? m_documentElement->langFromAttribute() : nullAtom());
-    auto* htmlDocumentElement = dynamicDowncast<HTMLElement>(m_documentElement.get());
+    CheckedPtr htmlDocumentElement = dynamicDowncast<HTMLElement>(m_documentElement.get());
     setDocumentElementTextDirection(htmlDocumentElement && htmlDocumentElement->usesEffectiveTextDirection()
         ? htmlDocumentElement->effectiveTextDirection() : TextDirection::LTR);
     // The root style used for media query matching depends on the document element.
@@ -2364,7 +2364,7 @@ std::optional<BoundaryPoint> Document::caretPositionFromPoint(const LayoutPoint&
     if (!renderer)
         return std::nullopt;
 
-    if (auto* renderBox = dynamicDowncast<RenderBox>(*renderer); renderBox && isSkippedContentRoot(*renderBox))
+    if (CheckedPtr renderBox = dynamicDowncast<RenderBox>(*renderer); renderBox && isSkippedContentRoot(*renderBox))
         return { { *node, 0 } };
 
     auto rangeCompliantPosition = renderer->positionForPoint(localPoint, source).parentAnchoredEquivalent();
@@ -2395,7 +2395,7 @@ RefPtr<CaretPosition> Document::caretPositionFromPoint(double x, double y, Caret
     if (!renderer)
         return nullptr;
 
-    if (auto* renderBox = dynamicDowncast<RenderBox>(*renderer); renderBox && isSkippedContentRoot(*renderBox))
+    if (CheckedPtr renderBox = dynamicDowncast<RenderBox>(*renderer); renderBox && isSkippedContentRoot(*renderBox))
         return CaretPosition::create(WTF::move(node), 0);
 
     auto position = renderer->positionForPoint(localPoint, HitTestSource::Script);
@@ -2403,8 +2403,8 @@ RefPtr<CaretPosition> Document::caretPositionFromPoint(double x, double y, Caret
         return nullptr;
 
     RefPtr anchorNode = position.anchorNode();
-    if (auto* textFormControl = dynamicDowncast<HTMLTextFormControlElement>(anchorNode->shadowHost())) {
-        anchorNode = textFormControl;
+    if (CheckedPtr textFormControl = dynamicDowncast<HTMLTextFormControlElement>(anchorNode->shadowHost())) {
+        anchorNode = textFormControl.get();
         if ((!anchorNode->isInShadowTree() && !options.shadowRoots.size()) || (anchorNode->isInShadowTree() && options.shadowRoots.contains(Ref(anchorNode->treeScope().rootNode()))))
             return CaretPosition::create(WTF::move(anchorNode), position.offsetInContainerNode());
     }
@@ -2601,9 +2601,9 @@ template<typename TitleElement> Element* selectNewTitleElement(Document& documen
     // Optimized common case: We have no title element yet.
     // We can figure out which title element should be used without searching.
     bool isEligible = Traits::isInEligibleLocation(*changingTitleElement);
-    auto* newTitleElement = isEligible ? changingTitleElement : nullptr;
+    CheckedPtr newTitleElement = isEligible ? changingTitleElement : nullptr;
     ASSERT(newTitleElement == Traits::findTitleElement(document));
-    return newTitleElement;
+    return newTitleElement.unsafeGet();
 }
 
 inline RefPtr<Element> Document::protectedTitleElement() const
@@ -3134,7 +3134,7 @@ auto Document::updateLayout(OptionSet<LayoutOptions> layoutOptions, const Elemen
 
         if (frameView && renderView()) {
 
-            auto& layoutContext = frameView->layoutContext();
+            CheckedRef layoutContext = frameView->layoutContext();
             auto runForcedLayoutOnSkippedContentIfNeeded = [&] {
                 if (!layoutOptions.containsAny({ LayoutOptions::TreatContentVisibilityHiddenAsVisible, LayoutOptions::TreatContentVisibilityAutoAsVisible, LayoutOptions::TreatRevealedWhenFoundAsVisible }))
                     return false;
@@ -3142,7 +3142,7 @@ auto Document::updateLayout(OptionSet<LayoutOptions> layoutOptions, const Elemen
                 if (context && (!context->renderer() || !context->renderer()->style().isSkippedRootOrSkippedContent()))
                     return false;
 
-                auto* rootForLayout = rootForSkippedLayout(context ? *context->renderer() : *renderView());
+                CheckedPtr rootForLayout = rootForSkippedLayout(context ? *context->renderer() : *renderView());
                 if (!rootForLayout) {
                     ASSERT_NOT_REACHED();
                     return false;
@@ -3158,16 +3158,16 @@ auto Document::updateLayout(OptionSet<LayoutOptions> layoutOptions, const Elemen
 
                 auto isSkippedContentStale = markRendererDirtyIfNeeded(*rootForLayout);
                 if (layoutOptions.contains(LayoutOptions::TreatContentVisibilityHiddenAsVisible)) {
-                    for (auto& descendant : descendantsOfType<RenderObject>(*rootForLayout))
-                        isSkippedContentStale |= markRendererDirtyIfNeeded(descendant);
+                    for (CheckedRef descendant : descendantsOfType<RenderObject>(*rootForLayout))
+                        isSkippedContentStale |= markRendererDirtyIfNeeded(descendant.get());
                 } else if (layoutOptions.contains(LayoutOptions::TreatContentVisibilityAutoAsVisible) || layoutOptions.contains(LayoutOptions::TreatRevealedWhenFoundAsVisible)) {
-                    for (auto& descendant : descendantsOfType<RenderObject>(*rootForLayout)) {
+                    for (CheckedRef descendant : descendantsOfType<RenderObject>(*rootForLayout)) {
                         // FIXME: While 'c-v: auto' is used 'hidden' inside 'c-v: hidden' we could entirly skip hidden subtrees here.
-                        auto shouldLayoutSkippedContent = (layoutOptions.contains(LayoutOptions::TreatContentVisibilityAutoAsVisible) && descendant.style().usedContentVisibility() == ContentVisibility::Auto)
-                            || (layoutOptions.contains(LayoutOptions::TreatRevealedWhenFoundAsVisible) && descendant.style().autoRevealsWhenFound());
+                        auto shouldLayoutSkippedContent = (layoutOptions.contains(LayoutOptions::TreatContentVisibilityAutoAsVisible) && descendant->style().usedContentVisibility() == ContentVisibility::Auto)
+                            || (layoutOptions.contains(LayoutOptions::TreatRevealedWhenFoundAsVisible) && descendant->style().autoRevealsWhenFound());
 
                         if (shouldLayoutSkippedContent)
-                            isSkippedContentStale |= markRendererDirtyIfNeeded(descendant);
+                            isSkippedContentStale |= markRendererDirtyIfNeeded(descendant.get());
                     }
                 }
 
@@ -3186,19 +3186,19 @@ auto Document::updateLayout(OptionSet<LayoutOptions> layoutOptions, const Elemen
                     return types;
                 };
                 auto contentVisibilityOverrideScope = ContentVisibilityOverrideScope { layoutContext, overrideTypes() };
-                layoutContext.layout(layoutOptions.contains(LayoutOptions::CanDeferUpdateLayerPositions));
+                layoutContext->layout(layoutOptions.contains(LayoutOptions::CanDeferUpdateLayerPositions));
                 return true;
             };
 
             auto didRunLayout = runForcedLayoutOnSkippedContentIfNeeded();
-            if (!didRunLayout && layoutContext.needsLayout(layoutOptions)) {
-                layoutContext.layout(layoutOptions.contains(LayoutOptions::CanDeferUpdateLayerPositions));
+            if (!didRunLayout && layoutContext->needsLayout(layoutOptions)) {
+                layoutContext->layout(layoutOptions.contains(LayoutOptions::CanDeferUpdateLayerPositions));
                 didRunLayout = true;
             }
 
             result = didRunLayout ? UpdateLayoutResult::ChangesDone : result;
 
-            if (layoutOptions.contains(LayoutOptions::UpdateCompositingLayers) && layoutContext.updateCompositingLayersAfterLayoutIfNeeded())
+            if (layoutOptions.contains(LayoutOptions::UpdateCompositingLayers) && layoutContext->updateCompositingLayersAfterLayoutIfNeeded())
                 result = UpdateLayoutResult::ChangesDone;
         }
     }
@@ -3215,14 +3215,15 @@ auto Document::updateLayout(OptionSet<LayoutOptions> layoutOptions, const Elemen
     return result;
 }
 
-std::unique_ptr<RenderStyle> Document::styleForElementIgnoringPendingStylesheets(Element& element, const RenderStyle* parentStyle, const std::optional<Style::PseudoElementIdentifier>& pseudoElementIdentifier)
+std::unique_ptr<RenderStyle> Document::styleForElementIgnoringPendingStylesheets(Element& element, const RenderStyle* parentStyleArg, const std::optional<Style::PseudoElementIdentifier>& pseudoElementIdentifier)
 {
     ASSERT(&element.document() == this);
     ASSERT(!element.isPseudoElement() || !pseudoElementIdentifier);
-    ASSERT(!pseudoElementIdentifier || parentStyle);
+    ASSERT(!pseudoElementIdentifier || parentStyleArg);
     ASSERT(Style::postResolutionCallbacksAreSuspended());
 
     std::optional<RenderStyle> updatedDocumentStyle;
+    CheckedPtr parentStyle = parentStyleArg;
     if (!parentStyle && m_needsFullStyleRebuild && hasLivingRenderTree()) {
         updatedDocumentStyle.emplace(Style::resolveForDocument(*this));
         parentStyle = &*updatedDocumentStyle;
@@ -3231,13 +3232,13 @@ std::unique_ptr<RenderStyle> Document::styleForElementIgnoringPendingStylesheets
     SetForScope change(m_ignorePendingStylesheets, true);
     Ref resolver = element.styleResolver();
 
-    auto elementStyle = resolver->styleForElement(element, { parentStyle });
+    auto elementStyle = resolver->styleForElement(element, { parentStyle.get() });
     if (pseudoElementIdentifier) {
         auto type = pseudoElementIdentifier->type;
         if ((type == PseudoElementType::FirstLetter || type == PseudoElementType::FirstLine) && elementStyle.style && !Style::supportsFirstLineAndLetterPseudoElement(*elementStyle.style))
             return { };
 
-        auto style = resolver->styleForPseudoElement(element, { *pseudoElementIdentifier }, { parentStyle });
+        auto style = resolver->styleForPseudoElement(element, { *pseudoElementIdentifier }, { parentStyle.get() });
         if (!style)
             return nullptr;
         return WTF::move(style->style);
@@ -3573,7 +3574,7 @@ void Document::attachToCachedFrame(CachedFrameBase& cachedFrame)
     RELEASE_ASSERT(cachedFrame.document() == this);
     ASSERT(cachedFrame.view());
     ASSERT(m_backForwardCacheState == Document::InBackForwardCache);
-    if (auto* localFrameView = dynamicDowncast<LocalFrameView>(cachedFrame.view()))
+    if (CheckedPtr localFrameView = dynamicDowncast<LocalFrameView>(cachedFrame.view()))
         observeFrame(localFrameView->protectedFrame().ptr());
 }
 
@@ -4241,10 +4242,10 @@ HTMLBodyElement* Document::body() const
 HTMLElement* Document::bodyOrFrameset() const
 {
     // Return the first body or frameset child of the html element.
-    auto* element = documentElement();
+    SUPPRESS_UNCHECKED_LOCAL auto* element = documentElement();
     if (!is<HTMLHtmlElement>(element))
         return nullptr;
-    for (auto& child : childrenOfType<HTMLElement>(*element)) {
+    for (SUPPRESS_UNCHECKED_LOCAL auto& child : childrenOfType<HTMLElement>(*element)) {
         if (is<HTMLBodyElement>(child) || is<HTMLFrameSetElement>(child))
             return &child;
     }
@@ -4410,7 +4411,6 @@ void Document::implicitClose()
 
     m_processingLoadEvent = false;
 
-    // FIXME: This needs to notify all FontFaceSet objects, not just the one owned by the CSSFontSelector: webkit.org/b/304381.
     if (RefPtr fontSelector = fontSelectorIfExists()) {
         if (RefPtr fontFaceSet = fontSelector->fontFaceSetIfExists())
             fontFaceSet->documentDidFinishLoading();
@@ -4981,12 +4981,12 @@ void Document::processBaseElement()
     AtomString target;
     RefPtr<HTMLBaseElement> baseElement;
     auto baseDescendants = descendantsOfType<HTMLBaseElement>(*this);
-    for (auto& base : baseDescendants) {
+    for (CheckedRef base : baseDescendants) {
         if (!baseElement)
-            baseElement = base;
+            baseElement = base.get();
 
         if (href.isNull()) {
-            auto& value = base.attributeWithoutSynchronization(hrefAttr);
+            auto& value = base->attributeWithoutSynchronization(hrefAttr);
             if (!value.isNull()) {
                 href = value;
                 if (!target.isNull())
@@ -4994,7 +4994,7 @@ void Document::processBaseElement()
             }
         }
         if (target.isNull()) {
-            auto& value = base.attributeWithoutSynchronization(targetAttr);
+            auto& value = base->attributeWithoutSynchronization(targetAttr);
             if (!value.isNull()) {
                 target = value;
                 if (!href.isNull())
@@ -5501,9 +5501,9 @@ WeakPtr<HTMLMetaElement, WeakPtrImplWithEventTargetData> Document::determineActi
 {
     if (!m_metaThemeColorElements) {
         Vector<WeakPtr<HTMLMetaElement, WeakPtrImplWithEventTargetData>> metaThemeColorElements;
-        for (auto& metaElement : descendantsOfType<HTMLMetaElement>(*this)) {
-            if (equalLettersIgnoringASCIICase(metaElement.name(), "theme-color"_s) && metaElement.contentColor().isValid())
-                metaThemeColorElements.append(metaElement);
+        for (CheckedRef metaElement : descendantsOfType<HTMLMetaElement>(*this)) {
+            if (equalLettersIgnoringASCIICase(metaElement->name(), "theme-color"_s) && metaElement->contentColor().isValid())
+                metaThemeColorElements.append(metaElement.get());
         }
         m_metaThemeColorElements = WTF::move(metaThemeColorElements);
     }
@@ -5585,14 +5585,14 @@ void Document::metaElementColorSchemeChanged()
     auto& context = this->cssParserContext();
 
     auto parseColorScheme = [&](const auto& metaElement) -> std::optional<CSS::ColorScheme> {
-        const AtomString& nameValue = metaElement.attributeWithoutSynchronization(nameAttr);
+        const AtomString& nameValue = metaElement->attributeWithoutSynchronization(nameAttr);
         if (!equalLettersIgnoringASCIICase(nameValue, "color-scheme"_s) && !equalLettersIgnoringASCIICase(nameValue, "supported-color-schemes"_s))
             return { };
-        return CSSPropertyParserHelpers::parseUnresolvedColorScheme(metaElement.attributeWithoutSynchronization(contentAttr), context);
+        return CSSPropertyParserHelpers::parseUnresolvedColorScheme(metaElement->attributeWithoutSynchronization(contentAttr), context);
     };
 
     auto colorSchemeString = emptyString();
-    for (auto& metaElement : descendantsOfType<HTMLMetaElement>(rootNode())) {
+    for (CheckedRef metaElement : descendantsOfType<HTMLMetaElement>(rootNode())) {
         if (auto colorScheme = parseColorScheme(metaElement)) {
             colorSchemeString = CSS::serializationForCSS(CSS::defaultSerializationContext(), *colorScheme);
             break;
@@ -5761,7 +5761,7 @@ bool Document::canAcceptChild(const Node& newChild, const Node* refChild, Accept
         break;
     }
     case ELEMENT_NODE: {
-        auto* existingElementChild = firstElementChild();
+        CheckedPtr existingElementChild = firstElementChild();
         if (operation == AcceptChildOperation::Replace) {
             if (existingElementChild && existingElementChild != refChild)
                 return false;
@@ -5997,12 +5997,12 @@ void Document::runScrollSteps()
         bool scrollAnimationsInProgress = serviceScrollAnimationForScrollableArea(frameView.get(), now);
         HashSet<CheckedPtr<ScrollableArea>> scrollableAreasToUpdate;
         if (auto userScrollableAreas = frameView->scrollableAreas()) {
-            for (auto& area : *userScrollableAreas)
+            for (CheckedRef area : *userScrollableAreas)
                 scrollableAreasToUpdate.add(CheckedPtr<ScrollableArea>(area));
         }
 
         if (auto nonUserScrollableAreas = frameView->scrollableAreasForAnimatedScroll()) {
-            for (auto& area : *nonUserScrollableAreas)
+            for (CheckedRef area : *nonUserScrollableAreas)
                 scrollableAreasToUpdate.add(CheckedPtr<ScrollableArea>(area));
         }
         for (auto& scrollableArea : scrollableAreasToUpdate) {
@@ -6448,7 +6448,7 @@ void Document::flushAutofocusCandidates()
         m_autofocusCandidates.removeFirst();
 
         bool hasAncestorWithCSSTarget = [&] {
-            for (auto* document = &element->document(); document && document != this; document = document->parentDocument()) {
+            for (CheckedPtr document = &element->document(); document && document != this; document = document->parentDocument()) {
                 if (document->cssTarget())
                     return true;
             }
@@ -6538,7 +6538,7 @@ void Document::invalidateEventRegionsForFrame(HTMLFrameOwnerElement& element)
     CheckedPtr renderer = element.renderer();
     if (!renderer)
         return;
-    if (auto* layer = renderer->enclosingLayer()) {
+    if (CheckedPtr layer = renderer->enclosingLayer()) {
         if (layer->invalidateEventRegion(RenderLayer::EventRegionInvalidationReason::NonCompositedFrame))
             return;
     }
@@ -6554,7 +6554,7 @@ void Document::invalidateEventListenerRegions()
     // We don't track style validity for Document and full rebuild is too big of a hammer.
     // Instead just mutate the style directly and trigger a minimal style update.
     CheckedPtr renderView = this->renderView();
-    auto& rootStyle = renderView->mutableStyle();
+    CheckedRef rootStyle = renderView->mutableStyle();
     auto changed = Style::Adjuster::adjustEventListenerRegionTypesForRootStyle(rootStyle, *this);
 
     if (changed)
@@ -8179,7 +8179,7 @@ RefPtr<Document> Document::sameOriginTopLevelTraversable() const
     if (!m_frame)
         return nullptr;
 
-    RefPtr<Frame> topLevelAncestorFrame = m_frame.get();
+    RefPtr<Frame> topLevelAncestorFrame = m_frame;
     for (Frame* parent = topLevelAncestorFrame->tree().parent(); parent; parent = parent->tree().parent())
         topLevelAncestorFrame = parent;
 
@@ -9611,7 +9611,7 @@ void Document::didAddOrRemoveMouseEventHandler(Node& node)
 LayoutRect Document::absoluteEventHandlerBounds(bool& includesFixedPositionElements)
 {
     includesFixedPositionElements = false;
-    if (RenderView* renderView = this->renderView())
+    if (CheckedPtr renderView = this->renderView())
         return renderView->documentRect();
 
     return LayoutRect();
@@ -9781,16 +9781,16 @@ Element* eventTargetElementForDocument(Document* document)
     if (RefPtr documentFullscreen = document->fullscreenIfExists(); documentFullscreen && documentFullscreen->isFullscreen() && is<HTMLVideoElement>(documentFullscreen->fullscreenElement()))
         return documentFullscreen->fullscreenElement();
 #endif
-    Element* element = document->focusedElement();
+    CheckedPtr element = document->focusedElement();
     if (!element) {
-        if (auto* pluginDocument = dynamicDowncast<PluginDocument>(*document))
+        if (CheckedPtr pluginDocument = dynamicDowncast<PluginDocument>(*document))
             element = pluginDocument->pluginElement();
     }
     if (!element && document->isHTMLDocument())
         element = document->bodyOrFrameset();
     if (!element)
         element = document->documentElement();
-    return element;
+    return element.unsafeGet();
 }
 
 // get(Bounding)ClientRect APIs now returns scaled (=zoomed) rect.
@@ -9902,10 +9902,10 @@ static Element* findNearestCommonComposedAncestor(Element* elementA, Element* el
         return elementA;
 
     HashSet<Ref<Element>> ancestorChain;
-    for (auto* element = elementA; element; element = element->parentElementInComposedTree())
+    for (SUPPRESS_UNCHECKED_LOCAL auto* element = elementA; element; element = element->parentElementInComposedTree())
         ancestorChain.add(*element);
 
-    for (auto* element = elementB; element; element = element->parentElementInComposedTree()) {
+    for (SUPPRESS_UNCHECKED_LOCAL auto* element = elementB; element; element = element->parentElementInComposedTree()) {
         if (ancestorChain.contains(*element))
             return element;
     }
@@ -9977,8 +9977,8 @@ void Document::updateHoverActiveState(const HitTestRequest& request, Element* in
     RefPtr commonAncestor = findNearestCommonComposedAncestor(oldHoveredElement.get(), newHoveredElement.get());
 
     if (oldHoveredElement != newHoveredElement) {
-        for (auto* element = oldHoveredElement.get(); element; element = element->parentElementInComposedTree()) {
-            if (element == commonAncestor)
+        for (CheckedPtr element = oldHoveredElement.get(); element; element = element->parentElementInComposedTree()) {
+            if (element.get() == commonAncestor.get())
                 break;
             if (mustBeInActiveChain && !element->isInActiveChain())
                 continue;
@@ -10684,7 +10684,7 @@ void Document::updateResizeObservations(Page& page)
 
 const AtomString& Document::dir() const
 {
-    auto* documentElement = dynamicDowncast<HTMLHtmlElement>(this->documentElement());
+    CheckedPtr documentElement = dynamicDowncast<HTMLHtmlElement>(this->documentElement());
     return documentElement ? documentElement->dir() : nullAtom();
 }
 
@@ -11072,7 +11072,7 @@ Vector<Ref<WebAnimation>> Document::matchingAnimations(NOESCAPE const Function<b
 void Document::keyframesRuleDidChange(const String& name)
 {
     for (auto& animation : WebAnimation::instances()) {
-        auto cssAnimation = dynamicDowncast<CSSAnimation>(animation.get());
+        CheckedPtr cssAnimation = dynamicDowncast<CSSAnimation>(animation.get());
         if (!cssAnimation || !cssAnimation->isRelevant())
             continue;
 
@@ -11097,7 +11097,7 @@ void Document::addTopLayerElement(Element& element)
         if (candidatePopover->hasFullscreenFlag())
             return;
 #endif
-        auto* dialogElement = dynamicDowncast<HTMLDialogElement>(*candidatePopover);
+        CheckedPtr dialogElement = dynamicDowncast<HTMLDialogElement>(*candidatePopover);
         if (dialogElement && dialogElement->isModal())
             return;
 #if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)

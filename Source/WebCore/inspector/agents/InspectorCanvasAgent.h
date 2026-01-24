@@ -126,7 +126,7 @@ protected:
 
     const UniqueRef<Inspector::CanvasFrontendDispatcher> m_frontendDispatcher;
 
-    MemoryCompactRobinHoodHashMap<String, RefPtr<InspectorCanvas>> m_identifierToInspectorCanvas;
+    MemoryCompactRobinHoodHashMap<String, Ref<InspectorCanvas>> m_identifierToInspectorCanvas;
 
 private:
     struct RecordingOptions {
@@ -157,7 +157,7 @@ private:
     Timer m_canvasDestroyedTimer;
 
 #if ENABLE(WEBGL)
-    MemoryCompactRobinHoodHashMap<String, RefPtr<InspectorShaderProgram>> m_identifierToInspectorProgram;
+    MemoryCompactRobinHoodHashMap<String, Ref<InspectorShaderProgram>> m_identifierToInspectorProgram;
     Vector<String> m_removedProgramIdentifiers;
     Timer m_programDestroyedTimer;
 #endif // ENABLE(WEBGL)

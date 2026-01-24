@@ -28,6 +28,7 @@
 #include "JSDOMBinding.h"
 #include "JSDOMConstructor.h"
 #include "JSDOMConvertInterface.h"
+#include "JSDOMConvertOptional.h"
 #include "JSDOMExceptionHandling.h"
 #include "JSDOMGlobalObject.h"
 #include "JSDOMGlobalObjectInlines.h"
@@ -43,13 +44,25 @@
 #include <JavaScriptCore/ObjectConstructor.h>
 #include <JavaScriptCore/SlotVisitorMacros.h>
 #include <JavaScriptCore/SubspaceInlines.h>
+#include <type_traits>
 #include <wtf/GetPtr.h>
+#include <wtf/IsIncreasing.h>
 #include <wtf/PointerPreparations.h>
 #include <wtf/URL.h>
 #include <wtf/text/MakeString.h>
 
 namespace WebCore {
 using namespace JSC;
+
+IGNORE_WARNINGS_BEGIN("invalid-offsetof")
+
+static_assert(std::is_aggregate_v<ExposedToWorkerAndWindow::Dict>);
+static_assert(IsIncreasing<
+      0
+    , offsetof(ExposedToWorkerAndWindow::Dict, obj)
+>);
+
+IGNORE_WARNINGS_END
 
 template<> ConversionResult<IDLDictionary<ExposedToWorkerAndWindow::Dict>> convertDictionary<ExposedToWorkerAndWindow::Dict>(JSGlobalObject& lexicalGlobalObject, JSValue value)
 {
@@ -61,7 +74,6 @@ template<> ConversionResult<IDLDictionary<ExposedToWorkerAndWindow::Dict>> conve
         throwTypeError(&lexicalGlobalObject, throwScope);
         return ConversionResultException { };
     }
-    ExposedToWorkerAndWindow::Dict result;
     JSValue objValue;
     if (isNullOrUndefined)
         objValue = jsUndefined();
@@ -69,13 +81,12 @@ template<> ConversionResult<IDLDictionary<ExposedToWorkerAndWindow::Dict>> conve
         objValue = object->get(&lexicalGlobalObject, Identifier::fromString(vm, "obj"_s));
         RETURN_IF_EXCEPTION(throwScope, ConversionResultException { });
     }
-    if (!objValue.isUndefined()) {
-        auto objConversionResult = convert<IDLInterface<TestObj>>(lexicalGlobalObject, objValue);
-        if (objConversionResult.hasException(throwScope)) [[unlikely]]
-            return ConversionResultException { };
-        result.obj = objConversionResult.releaseReturnValue();
-    }
-    return result;
+    auto objConversionResult = convert<IDLOptional<IDLInterface<TestObj>>>(lexicalGlobalObject, objValue);
+    if (objConversionResult.hasException(throwScope)) [[unlikely]]
+        return ConversionResultException { };
+    return ExposedToWorkerAndWindow::Dict {
+        objConversionResult.releaseReturnValue(),
+    };
 }
 
 JSC::JSObject* convertDictionaryToJS(JSC::JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, const ExposedToWorkerAndWindow::Dict& dictionary)

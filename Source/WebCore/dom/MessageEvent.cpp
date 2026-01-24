@@ -71,7 +71,7 @@ auto MessageEvent::create(JSC::JSGlobalObject& globalObject, Ref<SerializedScrip
 {
     auto& vm = globalObject.vm();
     Locker<JSC::JSLock> locker(vm.apiLock());
-    auto catchScope = DECLARE_CATCH_SCOPE(vm);
+    auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     bool didFail = false;
 

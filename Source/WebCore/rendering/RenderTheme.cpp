@@ -1254,7 +1254,7 @@ bool RenderTheme::isFocused(const RenderElement& renderer) const
         delegate = sliderThumb->hostInput();
 
     Ref document = delegate->document();
-    auto* frame = document->frame();
+    RefPtr frame = document->frame();
     return delegate == document->focusedElement() && frame && frame->checkedSelection()->isFocusedAndActive();
 }
 
@@ -2222,7 +2222,7 @@ void RenderTheme::paintSystemPreviewBadge(Image& image, const PaintInfo& paintIn
         return;
 
     auto markerRect = FloatRect {rect.x() + rect.width() - 24, rect.y() + 8, 16, 16 };
-    auto roundedMarkerRect = FloatRoundedRect { markerRect, FloatRoundedRect::Radii { 8 } };
+    auto roundedMarkerRect = FloatRoundedRect { markerRect, CornerRadii { 8 } };
     context.fillRoundedRect(roundedMarkerRect, Color::red);
 }
 #endif

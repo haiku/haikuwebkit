@@ -47,7 +47,6 @@
 #include "src/core/SkBlendModePriv.h"
 #include "src/core/SkBlenderBase.h"
 #include "src/core/SkImageFilterTypes.h"  // IWYU pragma: keep
-#include "src/core/SkImagePriv.h"
 #include "src/core/SkPaintPriv.h"
 #include "src/core/SkPathPriv.h"
 #include "src/core/SkRRectPriv.h"
@@ -324,13 +323,6 @@ bool is_simple_shape(const Shape& shape, const Transform& localToDevice, SkStrok
     return false;
 }
 
-bool use_compute_atlas_when_available(std::optional<PathRendererStrategy> strategy) {
-    return !strategy.has_value() ||
-           strategy == PathRendererStrategy::kComputeAnalyticAA ||
-           strategy == PathRendererStrategy::kComputeMSAA16 ||
-           strategy == PathRendererStrategy::kComputeMSAA8;
-}
-
 class ScopedDrawBuilder {
 public:
     explicit ScopedDrawBuilder(Recorder* recorder)
@@ -435,7 +427,7 @@ sk_sp<Device> Device::Make(Recorder* recorder,
 
     return Make(recorder,
                 TextureProxy::Make(caps, recorder->priv().resourceProvider(),
-                                   backingDimensions, textureInfo, std::move(label), budgeted),
+                                   backingDimensions, textureInfo, label, budgeted),
                 ii.dimensions(),
                 ii.colorInfo(),
                 props,
@@ -450,8 +442,30 @@ sk_sp<Device> Device::Make(Recorder* recorder,
                            const SkSurfaceProps& props,
                            LoadOp initialLoadOp,
                            bool registerWithRecorder) {
-    if (!recorder) {
+    if (!recorder || !target) {
         return nullptr;
+    }
+
+    // DrawContext::Make ensures `target` can be rendered into, but if the path strategy might
+    // require MSAA, then we need to make sure a multisampled attachment can also be created later.
+    // - This would also apply for compute renderers that have to write directly to `target`, but
+    //   the current versions of compute render into separate compute-compatible textures instead.
+    const Caps* caps = recorder->priv().caps();
+    switch (recorder->priv().rendererProvider()->pathRendererStrategy()) {
+        case PathRendererStrategy::kTessellationAndSmallAtlas:
+            [[fallthrough]];
+        case PathRendererStrategy::kTessellation:
+            if (caps->getCompatibleMSAASampleCount(target->textureInfo()) <= SampleCount::k1) {
+                return nullptr;
+            }
+            break;
+
+        case PathRendererStrategy::kRasterAtlas:
+        case PathRendererStrategy::kComputeAnalyticAA:
+        case PathRendererStrategy::kComputeMSAA16:
+        case PathRendererStrategy::kComputeMSAA8:
+            // No additional support required
+            break;
     }
 
     sk_sp<DrawContext> dc = DrawContext::Make(recorder->priv().caps(),
@@ -505,20 +519,6 @@ Device::Device(Recorder* recorder, sk_sp<DrawContext> dc)
         , fSubRunControl(recorder->priv().caps()->getSubRunControl(
                 fDC->surfaceProps().isUseDeviceIndependentFonts())) {
     SkASSERT(SkToBool(fDC) && SkToBool(fRecorder));
-    if (fDC->target()->textureInfo().numSamples() > 1) {
-        // Target is inherently multisampled
-        fMSAASupported = true;
-    } else if (fRecorder->priv().caps()->defaultMSAASamplesCount() > 1) {
-        if (fRecorder->priv().caps()->msaaRenderToSingleSampledSupport()) {
-            // Backend-managed MSAA is supported
-            fMSAASupported = true;
-        } else {
-            // Graphite-managed MSAA is supported
-            fMSAASupported = fRecorder->priv().caps()->isSampleCountSupported(
-                    TextureInfoPriv::ViewFormat(fDC->target()->textureInfo()),
-                    fRecorder->priv().caps()->defaultMSAASamplesCount());
-        }
-    }
 }
 
 Device::~Device() {
@@ -1310,7 +1310,7 @@ void Device::drawEdgeAAImageSet(const SkCanvas::ImageSetEntry set[], int count,
         // Similarly, if it has an extra transform, those must be provided
         SkASSERT(set[i].fMatrixIndex < 0 || preViewMatrices);
 
-        // See SkModifyPaintAndDstForDrawImageRect, as this behavior is consistent but avoids
+        // See SkImageShader::MakeForDrawRect, as this behavior is consistent but avoids
         // allocating SkShader objects or having to modify the SkPaint.
         // Adjust `dst` such that it only samples from the portion of fSrcRect that overlaps with
         // the image bounds. This "decal" effect is applied geometrically to what is drawn so that
@@ -1544,7 +1544,6 @@ void Device::drawGeometry(const Transform& localToDevice,
     Clip clip = fClip.visitClipStackForDraw(localToDevice,
                                             &geometry,
                                             style,
-                                            fMSAASupported,
                                             &clipElements);
     if (clip.isClippedOut()) {
         // Clipped out, so don't record anything.
@@ -1559,8 +1558,7 @@ void Device::drawGeometry(const Transform& localToDevice,
     auto [renderer, pathAtlas] = this->chooseRenderer(localToDevice,
                                                       geometry,
                                                       style,
-                                                      clip.transformedShapeBounds(),
-                                                      /*requireMSAA=*/false);
+                                                      clip.transformedShapeBounds());
     if (!renderer && !pathAtlas) {
         SKGPU_LOG_W("Skipping draw with no supported renderer or PathAtlas.");
         return;
@@ -1783,9 +1781,7 @@ void Device::drawGeometry(const Transform& localToDevice,
         fDC->recordDraw(renderer, Transform::Translate(origin.fX, origin.fY), Geometry(mask), clip,
                         order, paintID, dstUsage, scopedDrawBuilder.gatherer(), nullptr);
     } else {
-        if (styleType == SkStrokeRec::kStroke_Style ||
-            styleType == SkStrokeRec::kHairline_Style ||
-            styleType == SkStrokeRec::kStrokeAndFill_Style) {
+        if (styleType != SkStrokeRec::kFill_Style) {
             // For stroke-and-fill, 'renderer' is used for the fill and we always use the
             // TessellatedStrokes renderer; for stroke and hairline, 'renderer' is used.
             StrokeStyle stroke(style.getWidth(), style.getMiter(), style.getJoin(), style.getCap());
@@ -1794,17 +1790,11 @@ void Device::drawGeometry(const Transform& localToDevice,
                                    : renderer,
                             localToDevice, geometry, clip, order, paintID, dstUsage,
                             scopedDrawBuilder.gatherer(), &stroke);
-        }
-        if (styleType == SkStrokeRec::kFill_Style ||
-            styleType == SkStrokeRec::kStrokeAndFill_Style) {
+        } else if (dstUsage == DstUsage::kNone && renderer->useNonAAInnerFill()){
             // Possibly record an additional draw using the non-AA bounds renderer to fill the
             // interior with a renderer that can disable blending entirely.
-            Rect innerFillBounds = renderer->useNonAAInnerFill() && dstUsage == DstUsage::kNone &&
-                styleType != SkStrokeRec::kStrokeAndFill_Style
-                            ? get_inner_bounds(geometry, localToDevice)
-                            : Rect::InfiniteInverted();
+            Rect innerFillBounds = get_inner_bounds(geometry, localToDevice);
             if (!innerFillBounds.isEmptyNegativeOrNaN()) {
-                SkASSERT(dstUsage == DstUsage::kNone && renderer->useNonAAInnerFill());
                 DrawOrder orderWithoutCoverage{order.depth()};
                 orderWithoutCoverage.dependsOnPaintersOrder(clipOrder);
                 // The regular draw has analytic coverage, so isn't being sorted front to back, but
@@ -1817,6 +1807,10 @@ void Device::drawGeometry(const Transform& localToDevice,
                 // early depth testing.
                 order.dependsOnPaintersOrder(orderWithoutCoverage.paintOrder());
             }
+        }
+
+        if (styleType == SkStrokeRec::kFill_Style ||
+            styleType == SkStrokeRec::kStrokeAndFill_Style) {
             fDC->recordDraw(renderer, localToDevice, geometry, clip, order, paintID, dstUsage,
                             scopedDrawBuilder.gatherer(), nullptr);
         }
@@ -1838,14 +1832,14 @@ void Device::drawClipShape(const Transform& localToDevice,
                            DrawOrder order) {
     ScopedDrawBuilder scopedDrawBuilder(fRecorder);
 
-    // A clip draw's state is almost fully defined by the ClipStack. The only thing we need
-    // to account for is selecting a Renderer and tracking the stencil buffer usage.
-    Geometry geometry{shape};
-    auto [renderer, pathAtlas] = this->chooseRenderer(localToDevice,
-                                                      geometry,
-                                                      DefaultFillStyle(),
-                                                      clip.transformedShapeBounds(),
-                                                      /*requireMSAA=*/true);
+    // A clip draw's state is almost fully defined by the ClipStack. The only thing we need to
+    // account for is selecting a Renderer and tracking the stencil buffer usage.
+    //
+    // While kRasterAtlas attempts to route clip elements to an atlas, this can fail, in which case
+    // the element may still be rendered into the depth buffer with tessellation (likely w/o AA).
+    auto renderer = this->chooseMSAARenderer(shape,
+                                             DefaultFillStyle(),
+                                             clip.transformedShapeBounds());
     if (!renderer) {
         SKGPU_LOG_W("Skipping clip with no supported path renderer.");
         return;
@@ -1862,17 +1856,16 @@ void Device::drawClipShape(const Transform& localToDevice,
     // Anti-aliased clipping requires the renderer to use MSAA to modify the depth per sample, so
     // analytic coverage renderers cannot be used.
     SkASSERT(renderer->coverage() == Coverage::kNone && renderer->requiresMSAA());
-    SkASSERT(pathAtlas == nullptr);
 
     // Clips draws are depth-only (invalid UniquePaintParamsID), and filled (null StrokeStyle).
     // The data gatherer must be reset so that the DrawList can use it for any RenderStep data.
     if (localToDevice.type() == Transform::Type::kPerspective) {
-        SkPath devicePath = geometry.shape().asPath().makeTransform(localToDevice.matrix().asM33());
+        SkPath devicePath = shape.asPath().makeTransform(localToDevice.matrix().asM33());
         fDC->recordDraw(renderer, Transform::Identity(), Geometry(Shape(devicePath)), clip, order,
                         UniquePaintParamsID::Invalid(), DstUsage::kNone,
                         scopedDrawBuilder.gatherer(), /*stroke=*/nullptr);
     } else {
-        fDC->recordDraw(renderer, localToDevice, geometry, clip, order,
+        fDC->recordDraw(renderer, localToDevice, Geometry(shape), clip, order,
                         UniquePaintParamsID::Invalid(), DstUsage::kNone,
                         scopedDrawBuilder.gatherer(), /*stroke=*/nullptr);
     }
@@ -1888,14 +1881,12 @@ void Device::drawClipShape(const Transform& localToDevice,
 std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& localToDevice,
                                                               const Geometry& geometry,
                                                               const SkStrokeRec& style,
-                                                              const Rect& drawBounds,
-                                                              bool requireMSAA) const {
+                                                              const Rect& drawBounds) const {
     const RendererProvider* renderers = fRecorder->priv().rendererProvider();
     SkASSERT(renderers);
     SkStrokeRec::Style type = style.getStyle();
 
     if (geometry.isSubRun()) {
-        SkASSERT(!requireMSAA);
         sktext::gpu::RendererData rendererData = geometry.subRunData().rendererData();
         if (!rendererData.isSDF) {
             return {renderers->bitmapText(rendererData.isLCD, rendererData.maskFormat), nullptr};
@@ -1914,7 +1905,7 @@ std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& l
         // to be rendered into the PathAtlas, in which case the 2nd return value is non-null.
         return {renderers->coverageMask(), nullptr};
     } else if (geometry.isEdgeAAQuad()) {
-        SkASSERT(!requireMSAA && style.isFillStyle());
+        SkASSERT(style.isFillStyle());
         // handled by specialized system, simplified from rects and round rects
         const EdgeAAQuad& quad = geometry.edgeAAQuad();
         if (quad.isRect() && (quad.edgeFlags() == EdgeAAQuad::Flags::kNone
@@ -1938,8 +1929,8 @@ std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& l
     }
 
     const Shape& shape = geometry.shape();
-    // We can't use this renderer if we require MSAA for an effect (i.e. clipping or stroke+fill).
-    if (!requireMSAA && is_simple_shape(shape, localToDevice, type)) {
+    if (is_simple_shape(shape, localToDevice, type)) {
+        SkASSERT(type != SkStrokeRec::kStrokeAndFill_Style); // stroke+fill is *not* simple
         // For pixel-aligned rects, use the the non-AA bounds renderer to avoid triggering any
         // dst-read requirement due to src blending.
         bool pixelAlignedRect = false;
@@ -1955,8 +1946,7 @@ std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& l
         }
     }
 
-    if (!requireMSAA &&
-        shape.isArc() &&
+    if (shape.isArc() &&
         std::abs(shape.arc().sweepAngle()) < 360.f &&
         localToDevice.type() <= Transform::Type::kAffine &&
         SkRRectPriv::IsRelativelyCircular(shape.arc().oval().width(), shape.arc().oval().height(),
@@ -1986,65 +1976,53 @@ std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& l
         }
     }
 
-    // Path rendering options. For now the strategy is very simple and not optimal:
-    // I. Use tessellation if MSAA is required for an effect.
-    // II: otherwise:
-    //    1. Always use compute AA if supported unless it was excluded by ContextOptions or the
-    //       compute renderer cannot render the shape efficiently yet (based on the result of
-    //       `isSuitableForAtlasing`).
-    //    2. Fall back to CPU raster AA if hardware MSAA is disabled or it was explicitly requested
-    //       via ContextOptions (including if the path is small enough).
-    //    3. Otherwise use tessellation.
-    std::optional<PathRendererStrategy> strategy;
-#if defined(GPU_TEST_UTILS)
-    strategy = fRecorder->priv().caps()->requestedPathRendererStrategy();
-#endif
-
-    PathAtlas* pathAtlas = nullptr;
     AtlasProvider* atlasProvider = fRecorder->priv().atlasProvider();
+    switch (renderers->pathRendererStrategy()) {
+        case PathRendererStrategy::kComputeAnalyticAA:
+        case PathRendererStrategy::kComputeMSAA16:
+        case PathRendererStrategy::kComputeMSAA8: {
+            PathAtlas* atlas = fDC->getComputePathAtlas(fRecorder);
+            SkASSERT(atlas);
 
-    // Prefer compute atlas draws if supported. This currently implicitly filters out clip draws as
-    // they require MSAA. Eventually we may want to route clip shapes to the atlas as well but not
-    // if hardware MSAA is required.
-    if (atlasProvider->isAvailable(AtlasProvider::PathAtlasFlags::kCompute) &&
-        use_compute_atlas_when_available(strategy)) {
-        PathAtlas* atlas = fDC->getComputePathAtlas(fRecorder);
-        SkASSERT(atlas);
+            // Don't use the compute renderer if it can't handle the shape efficiently.
+            if (atlas->isSuitableForAtlasing(drawBounds, fClip.conservativeBounds())) {
+                return {nullptr, atlas};
+            } // else falls back to tessellation
+        } break;
 
-        // Don't use the compute renderer if it can't handle the shape efficiently.
-        if (atlas->isSuitableForAtlasing(drawBounds, fClip.conservativeBounds())) {
-            pathAtlas = atlas;
-        }
-    }
+        case PathRendererStrategy::kTessellationAndSmallAtlas: {
+            static constexpr int kMaxSmallPathAtlasCount = 256;
+            const float minPathSizeForMSAA = fRecorder->priv().caps()->minPathSizeForMSAA();
+            if (fAtlasedPathCount < kMaxSmallPathAtlasCount &&
+                all(drawBounds.size() <= minPathSizeForMSAA)) {
+                // Small paths are rasterized on the CPU for higher quality
+                return {nullptr, atlasProvider->getRasterPathAtlas()};
+            } // else falls back to tessellation
+        } break;
 
-    // Fall back to CPU rendered paths when multisampling is disabled and the compute atlas is not
-    // available.
-    static constexpr int kMaxSmallPathAtlasCount = 256;
-    const float minPathSizeForMSAA = fRecorder->priv().caps()->minPathSizeForMSAA();
-    const bool useRasterAtlasByDefault = !fMSAASupported ||
-                                         (fAtlasedPathCount < kMaxSmallPathAtlasCount &&
-                                          all(drawBounds.size() <= minPathSizeForMSAA));
-    if (!pathAtlas && atlasProvider->isAvailable(AtlasProvider::PathAtlasFlags::kRaster) &&
-        (strategy == PathRendererStrategy::kRasterAA ||
-         (!strategy.has_value() && useRasterAtlasByDefault))) {
-        // NOTE: RasterPathAtlas doesn't implement `PathAtlas::isSuitableForAtlasing` as it doesn't
-        // reject paths (unlike ComputePathAtlas).
-        pathAtlas = atlasProvider->getRasterPathAtlas();
-    }
+        case PathRendererStrategy::kRasterAtlas:
+            // Everything is rasterized on the CPU and packed into the atlas
+            return {nullptr, atlasProvider->getRasterPathAtlas()};
 
-    if (!requireMSAA && pathAtlas) {
-        // If we got here it means that we should draw with an atlas renderer if we can and avoid
-        // resorting to one of the tessellating techniques.
-        return {nullptr, pathAtlas};
+        case PathRendererStrategy::kTessellation:
+            // Never uses an atlas for rendering, leave it null
+            break;
     }
 
     // If we got here, it requires tessellated path rendering or an MSAA technique applied to a
     // simple shape (so we interpret them as paths to reduce the number of pipelines we need).
+    return {this->chooseMSAARenderer(geometry.shape(), style, drawBounds), nullptr};
+}
 
+const Renderer* Device::chooseMSAARenderer(const Shape& shape,
+                                           const SkStrokeRec& style,
+                                           const Rect& drawBounds) const {
     // TODO: All shapes that select a tessellating path renderer need to be "pre-chopped" if they
     // are large enough to exceed the fixed count tessellation limits. Fills are pre-chopped to the
     // viewport bounds, strokes and stroke-and-fills are pre-chopped to the viewport bounds outset
     // by the stroke radius (hence taking the whole style and not just its type).
+    const RendererProvider* renderers = fRecorder->priv().rendererProvider();
+    SkStrokeRec::Style type = style.getStyle();
 
     if (type == SkStrokeRec::kStroke_Style ||
         type == SkStrokeRec::kHairline_Style) {
@@ -2055,7 +2033,7 @@ std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& l
         // stenciling first with the HW stroke tessellator and then covering their bounds, but
         // inverse-filled strokes are not well-specified in our public canvas behavior so we may be
         // able to remove it.
-        return {renderers->tessellatedStrokes(), nullptr};
+        return renderers->tessellatedStrokes();
     }
 
     // 'type' could be kStrokeAndFill, but in that case chooseRenderer() is meant to return the
@@ -2063,7 +2041,7 @@ std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& l
     if (shape.convex() && !shape.inverted()) {
         // TODO: Ganesh doesn't have a curve+middle-out triangles option for convex paths, but it
         // would be pretty trivial to spin up.
-        return {renderers->convexTessellatedWedges(), nullptr};
+        return renderers->convexTessellatedWedges();
     } else {
         const bool preferWedges =
                 // TODO: Combine this heuristic with what is used in PathStencilCoverOp to choose
@@ -2072,9 +2050,9 @@ std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& l
                 drawBounds.area() <= (256 * 256);
 
         if (preferWedges) {
-            return {renderers->stencilTessellatedWedges(shape.fillType()), nullptr};
+            return renderers->stencilTessellatedWedges(shape.fillType());
         } else {
-            return {renderers->stencilTessellatedCurvesAndTris(shape.fillType()), nullptr};
+            return renderers->stencilTessellatedCurvesAndTris(shape.fillType());
         }
     }
 }
@@ -2092,25 +2070,6 @@ void Device::flushPendingWork(DrawContext* drawContext) {
     SkASSERT(fRecorder);
     SkASSERT(fScopedRecordingID == 0 || fScopedRecordingID == fRecorder->priv().nextRecordingID());
 
-    // TODO(b/330864257):  flushPendingWork() can be recursively called if this Device
-    // recorded a picture shader draw and during a flush (triggered by snap or automatically from
-    // reaching limits), the picture shader will be rendered to a new device. If that picture drawn
-    // to the temporary device fills up an atlas it can trigger the global
-    // recorder->flushTrackedDevices(), which will then encounter this device that is already in
-    // the midst of flushing. To avoid crashing we only actually flush the first time this is called
-    // and set a bit to early-out on any recursive calls.
-    // This is not an ideal solution since the temporary Device's flush-the-world may have reset
-    // atlas entries that the current Device's flushed draws will reference. But at this stage it's
-    // not possible to split the already recorded draws into a before-list and an after-list that
-    // can reference the old and new contents of the atlas. While avoiding the crash, this may cause
-    // incorrect accesses to a shared atlas. Once paint data is extracted at draw time, picture
-    // shaders will be resolved outside of flushes and then this will be fixed automatically.
-    if (fIsFlushing) {
-        return;
-    } else {
-        fIsFlushing = true;
-    }
-
     // Ideally we would just check if `drawTask` was non-null and then call flushTrackedDevices()
     // before we appended `drawTask` afterwards. Unfortunately, internalFlush() is not 100% internal
     // because it can record atlas uploads to the DrawContext. If those uploads were moved to
@@ -2123,6 +2082,11 @@ void Device::flushPendingWork(DrawContext* drawContext) {
         fMustFlushDependencies = false;
         fRecorder->priv().flushTrackedDevices(this->target());
     }
+
+    // While unbounded recursion is gone, bounded re-entrant flushing is still possible during
+    // dependency resolution. We assert *after* the dependency flush to permit this valid re-entry.
+    SkASSERT(!fIsFlushing);
+    SkDEBUGCODE(fIsFlushing = true;)
 
     this->internalFlush();
     sk_sp<Task> drawTask = fDC->snapDrawTask();
@@ -2152,7 +2116,7 @@ void Device::flushPendingWork(DrawContext* drawContext) {
         }
     }
 
-    fIsFlushing = false;
+    SkDEBUGCODE(fIsFlushing = false;)
 }
 
 void Device::internalFlush() {

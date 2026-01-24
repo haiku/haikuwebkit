@@ -3900,7 +3900,6 @@ static CursorContext cursorContext(const HitTestResult& hitTestResult, const Int
 static void animationPositionInformation(WebPage& page, const InteractionInformationRequest& request, const HitTestResult& hitTestResult, InteractionInformationAtPosition& info)
 {
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
-    info.canShowAnimationControls = page.corePage() && page.corePage()->settings().imageAnimationControlEnabled();
     if (!request.gatherAnimations)
         return;
 
@@ -5353,7 +5352,7 @@ void WebPage::updateLayoutViewportHeightExpansionTimerFired()
         auto& hitTestedNodes = hitTestResult.listBasedTestResult();
         HashSet<Ref<Element>> elementsOutsideOfAnyLargeViewportConstrainedContainers;
         for (auto& node : hitTestedNodes) {
-            RefPtr firstParentOrSelf = dynamicDowncast<Element>(node) ?: node->parentElementInComposedTree();
+            RefPtr firstParentOrSelf = dynamicDowncast<Element>(node.get()) ?: node->parentElementInComposedTree();
             Vector<Ref<Element>> ancestorsForHitTestedNode;
             for (RefPtr parent = firstParentOrSelf; parent; parent = parent->parentElementInComposedTree()) {
                 if (largeViewportConstrainedElements.contains(*parent))

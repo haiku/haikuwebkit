@@ -145,6 +145,8 @@ template<Range nR = All, Range pR = nR, typename V = double> struct NumberOrPerc
     }
 
 private:
+    friend struct MarkableTraits<NumberOrPercentageResolvedToNumber>;
+
     NumberOrPercentageResolvedToNumber(PrimitiveDataEmptyToken token)
         : value { WTF::move(token) }
     {

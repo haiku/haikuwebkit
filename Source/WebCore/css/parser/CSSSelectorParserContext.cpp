@@ -39,10 +39,12 @@ CSSSelectorParserContext::CSSSelectorParserContext(const CSSParserContext& conte
     , imageControlsEnabled(context.imageControlsEnabled)
 #endif
     , popoverAttributeEnabled(context.popoverAttributeEnabled)
+    , htmlEnhancedSelectPseudoElementsEnabled(context.htmlEnhancedSelectPseudoElementsEnabled)
     , targetTextPseudoElementEnabled(context.targetTextPseudoElementEnabled)
     , thumbAndTrackPseudoElementsEnabled(context.thumbAndTrackPseudoElementsEnabled)
     , viewTransitionsEnabled(context.propertySettings.viewTransitionsEnabled)
     , webkitMediaTextTrackDisplayQuirkEnabled(context.webkitMediaTextTrackDisplayQuirkEnabled)
+    , openPseudoClassEnabled(context.openPseudoClassEnabled)
 {
 }
 
@@ -52,26 +54,30 @@ CSSSelectorParserContext::CSSSelectorParserContext(const Document& document)
     , imageControlsEnabled(document.settings().imageControlsEnabled())
 #endif
     , popoverAttributeEnabled(document.settings().popoverAttributeEnabled())
+    , htmlEnhancedSelectPseudoElementsEnabled(document.settings().htmlEnhancedSelectPseudoElementsEnabled())
     , targetTextPseudoElementEnabled(document.settings().targetTextPseudoElementEnabled())
     , thumbAndTrackPseudoElementsEnabled(document.settings().thumbAndTrackPseudoElementsEnabled())
     , viewTransitionsEnabled(document.settings().viewTransitionsEnabled())
     , webkitMediaTextTrackDisplayQuirkEnabled(document.quirks().needsWebKitMediaTextTrackDisplayQuirk())
+    , openPseudoClassEnabled(document.settings().openPseudoClassEnabled())
 {
 }
 
 void add(Hasher& hasher, const CSSSelectorParserContext& context)
 {
-    add(hasher,
-        context.mode,
+    auto bits = WTF::packBools(
 #if ENABLE(SERVICE_CONTROLS)
         context.imageControlsEnabled,
 #endif
         context.popoverAttributeEnabled,
+        context.htmlEnhancedSelectPseudoElementsEnabled,
         context.targetTextPseudoElementEnabled,
         context.thumbAndTrackPseudoElementsEnabled,
         context.viewTransitionsEnabled,
-        context.webkitMediaTextTrackDisplayQuirkEnabled
+        context.webkitMediaTextTrackDisplayQuirkEnabled,
+        context.openPseudoClassEnabled
     );
+    add(hasher, context.mode, bits);
 }
 
 } // namespace WebCore

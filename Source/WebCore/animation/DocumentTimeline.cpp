@@ -128,7 +128,7 @@ unsigned DocumentTimeline::numberOfActiveAnimationsForTesting() const
 
 std::optional<WebAnimationTime> DocumentTimeline::currentTime(UseCachedCurrentTime useCachedCurrentTime)
 {
-    if (auto* controller = this->controller()) {
+    if (CheckedPtr controller = this->controller()) {
         if (auto currentTime = controller->currentTime(useCachedCurrentTime))
             return *currentTime - m_originTime;
         return std::nullopt;
@@ -246,7 +246,7 @@ bool DocumentTimeline::animationCanBeRemoved(WebAnimation& animation)
         return false;
 
 IGNORE_GCC_WARNINGS_BEGIN("dangling-reference")
-    auto& style = [&]() -> const RenderStyle& {
+    CheckedRef style = [&]() -> const RenderStyle& {
         if (auto* renderer = target->renderer())
             return renderer->style();
         return RenderStyle::defaultStyleSingleton();
@@ -255,7 +255,7 @@ IGNORE_GCC_WARNINGS_END
 
     auto resolvedProperty = [&] (AnimatableCSSProperty property) -> AnimatableCSSProperty {
         if (std::holds_alternative<CSSPropertyID>(property))
-            return CSSProperty::resolveDirectionAwareProperty(std::get<CSSPropertyID>(property), style.writingMode());
+            return CSSProperty::resolveDirectionAwareProperty(std::get<CSSPropertyID>(property), style->writingMode());
         return property;
     };
 
@@ -362,7 +362,7 @@ void DocumentTimeline::scheduleNextTick()
 
     auto timeUntilNextTickForAnimationsWithFrameRate = [&](std::optional<FramesPerSecond> frameRate) -> std::optional<Seconds> {
         if (frameRate) {
-            if (auto* controller = this->controller())
+            if (CheckedPtr controller = this->controller())
                 return controller->timeUntilNextTickForAnimationsWithFrameRate(*frameRate);
         }
         return std::nullopt;

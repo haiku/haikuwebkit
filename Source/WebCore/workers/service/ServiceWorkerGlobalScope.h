@@ -148,7 +148,7 @@ private:
     Vector<Ref<ExtendableEvent>> m_extendedEvents;
 
     uint64_t m_lastRequestIdentifier { 0 };
-    HashMap<uint64_t, RefPtr<DeferredPromise>> m_pendingSkipWaitingPromises;
+    HashMap<uint64_t, Ref<DeferredPromise>> m_pendingSkipWaitingPromises;
     std::unique_ptr<NotificationClient> m_notificationClient;
     bool m_hasPendingSilentPushEvent { false };
     bool m_isProcessingUserGesture { false };

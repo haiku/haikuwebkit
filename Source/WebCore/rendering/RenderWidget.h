@@ -48,7 +48,7 @@ public:
     static void scheduleWidgetToMove(Widget&, LocalFrameView*);
 
 private:
-    using WidgetToParentMap = HashMap<RefPtr<Widget>, SingleThreadWeakPtr<LocalFrameView>>;
+    using WidgetToParentMap = HashMap<Ref<Widget>, SingleThreadWeakPtr<LocalFrameView>>;
     static WidgetToParentMap& widgetNewParentMap();
 
     WEBCORE_EXPORT void moveWidgets();
@@ -72,7 +72,7 @@ public:
     static RenderWidget* find(const Widget&);
 
     enum class ChildWidgetState { Valid, Destroyed };
-    WARN_UNUSED_RETURN ChildWidgetState updateWidgetPosition();
+    [[nodiscard]] ChildWidgetState updateWidgetPosition();
     WEBCORE_EXPORT IntRect windowClipRect() const;
 
     virtual bool requiresAcceleratedCompositing() const;

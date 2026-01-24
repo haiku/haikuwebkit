@@ -41,7 +41,6 @@ struct QuirksData {
     bool isGoogleDocs : 1 { false };
     bool isGoogleProperty : 1 { false };
     bool isGoogleMaps : 1 { false };
-    bool isGoogleAccounts : 1 { false };
     bool isNetflix : 1 { false };
     bool isOutlook : 1 { false };
     bool isSoundCloud : 1 { false };
@@ -190,6 +189,7 @@ struct QuirksData {
         ShouldHideCoarsePointerCharacteristicsQuirk,
         ShouldHideSoftTopScrollEdgeEffectDuringFocusQuirk,
         ShouldIgnoreAriaForFastPathContentObservationCheckQuirk,
+        ShouldIgnoreInputModeNone,
 #endif
         ShouldIgnorePlaysInlineRequirementQuirk,
 #if ENABLE(TEXT_AUTOSIZING)

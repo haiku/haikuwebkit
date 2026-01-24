@@ -359,11 +359,6 @@ class BaseTestCase:
             self.lldb_process = subprocess.Popen(
                 [
                     lldb_path,
-                    # FIXME: Should remove these two once Swift LLDB step over issue is fixed
-                    "-o",
-                    "settings set stop-line-count-before 0",  # FIXME: Disable showing lines before
-                    "-o",
-                    "settings set stop-line-count-after 0",  # FIXME: Disable showing lines after
                     "-o",
                     connect_cmd,
                 ],
@@ -494,7 +489,7 @@ class BaseTestCase:
             return result
 
     def send_lldb_command_or_raise(
-        self, command: str, patterns=None, mode=PatternMatchMode.ALL, timeout=30.0
+        self, command: str, patterns=None, mode=PatternMatchMode.ALL, timeout=60.0
     ):
         """Send LLDB command with patterns and raise exception on failure"""
         result = self.send_lldb_command_with_patterns(command, patterns, mode, timeout)

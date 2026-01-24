@@ -26,6 +26,7 @@
 #include "config.h"
 #include "AccessibilityScrollView.h"
 
+#include "AXLoggerBase.h"
 #include "AXObjectCacheInlines.h"
 #include "AXLocalFrame.h"
 #include "AXRemoteFrame.h"
@@ -54,7 +55,7 @@ AccessibilityScrollView::AccessibilityScrollView(AXID axID, ScrollView& view, AX
 
 AccessibilityScrollView::~AccessibilityScrollView()
 {
-    ASSERT(isDetached());
+    AX_ASSERT(isDetached());
 }
 
 bool AccessibilityScrollView::isRoot() const
@@ -380,7 +381,7 @@ void AccessibilityScrollView::addRemoteFrameChild()
 
 void AccessibilityScrollView::addChildren()
 {
-    ASSERT(!m_childrenInitialized);
+    AX_ASSERT(!m_childrenInitialized);
     m_childrenInitialized = true;
 
 #if ENABLE_ACCESSIBILITY_LOCAL_FRAME
@@ -414,7 +415,7 @@ AccessibilityObject* AccessibilityScrollView::webAreaObject() const
     return nullptr;
 }
 
-AccessibilityObject* AccessibilityScrollView::accessibilityHitTest(const IntPoint& point) const
+RefPtr<AXCoreObject> AccessibilityScrollView::accessibilityHitTest(const IntPoint& point) const
 {
     RefPtr webArea = webAreaObject();
     if (!webArea)

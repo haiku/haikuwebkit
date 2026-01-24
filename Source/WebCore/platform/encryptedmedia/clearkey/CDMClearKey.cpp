@@ -55,7 +55,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(CDMFactoryClearKey);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(CDMPrivateClearKey);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(CDMInstanceClearKey);
 
-static std::optional<Vector<RefPtr<KeyHandle>>> parseLicenseFormat(const JSON::Object& root)
+static std::optional<Vector<Ref<KeyHandle>>> parseLicenseFormat(const JSON::Object& root)
 {
     // If the 'keys' key is present in the root object, parse the JSON further
     // according to the specified 'license' format.
@@ -68,7 +68,7 @@ static std::optional<Vector<RefPtr<KeyHandle>>> parseLicenseFormat(const JSON::O
     if (!keysArray)
         return std::nullopt;
 
-    Vector<RefPtr<KeyHandle>> decodedKeys;
+    Vector<Ref<KeyHandle>> decodedKeys;
     bool validFormat = std::all_of(keysArray->begin(), keysArray->end(),
         [&decodedKeys] (const auto& value) {
             auto keyObject = value->asObject();
@@ -90,7 +90,7 @@ static std::optional<Vector<RefPtr<KeyHandle>>> parseLicenseFormat(const JSON::O
             auto keyIDData = base64URLDecode(keyID);
             if (!keyIDData)
                 return false;
-        
+
             auto keyHandleValueData = base64URLDecode(keyValue);
             if (!keyHandleValueData)
                 return false;

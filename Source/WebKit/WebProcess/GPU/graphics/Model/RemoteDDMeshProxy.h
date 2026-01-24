@@ -32,6 +32,7 @@
 #include <WebCore/DDFloat4x4.h>
 #include <WebCore/DDMesh.h>
 #include <WebCore/DDMeshDescriptor.h>
+#include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>
 
 #if PLATFORM(COCOA)
@@ -69,7 +70,7 @@ private:
     DDModelIdentifier backing() const { return m_backing; }
 
     template<typename T>
-    WARN_UNUSED_RETURN IPC::Error send(T&& message)
+    [[nodiscard]] IPC::Error send(T&& message)
     {
         return root().protectedStreamClientConnection()->send(WTF::move(message), backing());
     }
@@ -93,6 +94,7 @@ private:
 #if ENABLE(GPU_PROCESS_MODEL)
     void setRotation(float yaw, float pitch, float roll) final;
 #endif
+    void setEnvironmentMap(const WebCore::DDModel::DDImageAsset&) final;
 
     const DDModelIdentifier m_backing;
     const Ref<ConvertToBackingContext> m_convertToBackingContext;

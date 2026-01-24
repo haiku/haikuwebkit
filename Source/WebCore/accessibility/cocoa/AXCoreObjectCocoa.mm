@@ -26,6 +26,7 @@
 #import "config.h"
 #import "AXCoreObject.h"
 
+#import "AXLoggerBase.h"
 #import "AXObjectCache.h"
 #import "AXTreeStoreInlines.h"
 #import "AccessibilityObjectInlines.h"
@@ -292,8 +293,7 @@ RetainPtr<NSMutableAttributedString> AXCoreObject::createAttributedString(String
     // attributedStringSetCompositionAttributes(string.get(), node, textRange);
 
     if (spellCheck == AXCoreObject::SpellCheck::Yes) {
-        RefPtr node = this->node();
-        if (AXObjectCache::shouldSpellCheck() && node) {
+        if (RefPtr node = AXObjectCache::shouldSpellCheck() ? this->node() : nullptr) {
             // FIXME: This eagerly resolves misspellings, and since it requires a node, we will
             // never do this if `this` is an AXIsolatedObject`. We might need to figure out how
             // to spellcheck off the main-thread.
@@ -493,7 +493,7 @@ bool AXCoreObject::isEmptyGroup()
 
 AXCoreObject::AccessibilityChildrenVector AXCoreObject::crossFrameSortedDescendants(size_t limit, PreSortedObjectType type) const
 {
-    ASSERT(type == PreSortedObjectType::LiveRegion || type == PreSortedObjectType::WebArea);
+    AX_ASSERT(type == PreSortedObjectType::LiveRegion || type == PreSortedObjectType::WebArea);
     auto sortedObjects = type == PreSortedObjectType::LiveRegion ? allSortedLiveRegions() : allSortedNonRootWebAreas();
     AXCoreObject::AccessibilityChildrenVector results;
     for (const Ref<AXCoreObject>& object : sortedObjects) {
@@ -512,9 +512,9 @@ PlatformRoleMap createPlatformRoleMap()
 {
     struct RoleEntry {
         AccessibilityRole value;
-        NSString *string;
+        RetainPtr<NSString> string;
     };
-    static const auto roles = std::to_array<RoleEntry>({
+    static const NeverDestroyed roles = std::to_array<RoleEntry>({
         { AccessibilityRole::Unknown, NSAccessibilityUnknownRole },
         { AccessibilityRole::Button, NSAccessibilityButtonRole },
         { AccessibilityRole::RadioButton, NSAccessibilityRadioButtonRole },
@@ -647,12 +647,12 @@ PlatformRoleMap createPlatformRoleMap()
         { AccessibilityRole::FrameHost, NSAccessibilityGroupRole },
     });
     PlatformRoleMap roleMap;
-    for (auto& role : roles)
-        roleMap.add(static_cast<unsigned>(role.value), role.string);
+    for (auto& role : roles.get())
+        roleMap.add(static_cast<unsigned>(role.value), role.string.get());
     return roleMap;
 }
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 std::optional<AXTextMarkerRange> markerRangeFrom(NSRange range, const AXCoreObject& object)
 {
     std::optional stopAtID = object.idOfNextSiblingIncludingIgnoredOrParent();
@@ -665,7 +665,7 @@ std::optional<AXTextMarkerRange> markerRangeFrom(NSRange range, const AXCoreObje
         return std::nullopt;
     return std::optional(AXTextMarkerRange { WTF::move(markerToLocation), WTF::move(markerToRangeEnd) });
 }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
 } // namespace Accessibility
 

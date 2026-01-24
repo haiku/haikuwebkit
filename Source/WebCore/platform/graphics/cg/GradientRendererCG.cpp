@@ -148,7 +148,7 @@ GradientRendererCG::Strategy GradientRendererCG::makeGradient(ColorInterpolation
     Vector<CGFloat, 4 * reservedStops> colorComponents;
     colorComponents.reserveInitialCapacity(numberOfStops * 4);
 
-    auto cgColorSpace = [&] {
+    RetainPtr cgColorSpace = [&] {
         // FIXME: Now that we only ever use CGGradientCreateWithColorComponents, we should investigate
         // if there is any real benefit to using sRGB when all the stops are bounded vs just using
         // extended sRGB for all gradients.
@@ -204,7 +204,7 @@ GradientRendererCG::Strategy GradientRendererCG::makeGradient(ColorInterpolation
 
     apply139572277Workaround();
 
-    return Gradient { adoptCF(CGGradientCreateWithColorComponentsAndOptions(cgColorSpace, colorComponents.span().data(), locations.span().data(), numberOfStops, gradientOptionsDictionary(colorInterpolationMethod))), destinationColorSpace };
+    return Gradient { adoptCF(CGGradientCreateWithColorComponentsAndOptions(cgColorSpace.get(), colorComponents.span().data(), locations.span().data(), numberOfStops, gradientOptionsDictionary(colorInterpolationMethod))), destinationColorSpace };
 }
 
 // MARK: - Shading strategy.

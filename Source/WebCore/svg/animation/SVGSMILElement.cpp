@@ -767,34 +767,25 @@ void SVGSMILElement::addInstanceTime(BeginOrEnd beginOrEnd, SMILTime time, SMILT
         endListChanged(elapsed);
 }
 
-inline SMILTime extractTimeFromVector(const SMILTimeWithOrigin* position)
-{
-    return position->time();
-}
-
 SMILTime SVGSMILElement::findInstanceTime(BeginOrEnd beginOrEnd, SMILTime minimumTime, bool equalsMinimumOK) const
 {
-    const Vector<SMILTimeWithOrigin>& list = beginOrEnd == Begin ? m_beginTimes : m_endTimes;
-    int sizeOfList = list.size();
-
-    if (!sizeOfList)
+    std::span<const SMILTimeWithOrigin> list = beginOrEnd == Begin ? m_beginTimes : m_endTimes;
+    if (list.empty())
         return beginOrEnd == Begin ? SMILTime::unresolved() : SMILTime::indefinite();
 
-    const SMILTimeWithOrigin* result = approximateBinarySearch<const SMILTimeWithOrigin, SMILTime>(list, sizeOfList, minimumTime, extractTimeFromVector);
-    int indexOfResult = result - list.begin();
-    ASSERT_WITH_SECURITY_IMPLICATION(indexOfResult < sizeOfList);
+    auto result = std::lower_bound(list.begin(), list.end(), minimumTime, [](const SMILTimeWithOrigin& item, SMILTime time) {
+        return item.time() < time;
+    });
 
-    if (list[indexOfResult].time() < minimumTime && indexOfResult < sizeOfList - 1)
-        ++indexOfResult;
+    if (result == list.end())
+        return SMILTime::unresolved();
 
-    const SMILTime& currentTime = list[indexOfResult].time();
+    const SMILTime& currentTime = result->time();
 
     // The special value "indefinite" does not yield an instance time in the begin list.
     if (currentTime.isIndefinite() && beginOrEnd == Begin)
         return SMILTime::unresolved();
 
-    if (currentTime < minimumTime)
-        return SMILTime::unresolved();
     if (currentTime > minimumTime)
         return currentTime;
 
@@ -803,12 +794,9 @@ SMILTime SVGSMILElement::findInstanceTime(BeginOrEnd beginOrEnd, SMILTime minimu
         return currentTime;
 
     // If the equals is not accepted, return the next bigger item in the list.
-    SMILTime nextTime = currentTime;
-    while (indexOfResult < sizeOfList - 1) {
-        nextTime = list[indexOfResult + 1].time();
-        if (nextTime > minimumTime)
-            return nextTime;
-        ++indexOfResult;
+    for (auto it = result + 1; it != list.end(); ++it) {
+        if (it->time() > minimumTime)
+            return it->time();
     }
 
     return beginOrEnd == Begin ? SMILTime::unresolved() : SMILTime::indefinite();

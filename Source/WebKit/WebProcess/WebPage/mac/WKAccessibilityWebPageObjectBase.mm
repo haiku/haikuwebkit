@@ -131,7 +131,7 @@ namespace ax = WebCore::Accessibility;
                 return [protectedSelf accessibilityPluginObject];
         }
 
-        RefPtr frame = protectedFrame ? protectedFrame : [protectedSelf focusedLocalFrame];
+        RefPtr frame = protectedFrame ? protectedFrame : RefPtr { [protectedSelf focusedLocalFrame] };
         if (RefPtr document = frame ? frame->document() : nullptr) {
             if (CheckedPtr cache = document->axObjectCache()) {
                 if (RefPtr root = cache->rootObjectForFrame(*frame))
@@ -143,7 +143,7 @@ namespace ax = WebCore::Accessibility;
             // It's possible we were given a null frame (this is explicitly expected when off the main-thread, since
             // we can't access the webpage off the main-thread to get a frame). Now that we are actually on the main-thread,
             // try again if necessary.
-            RefPtr frame = protectedFrame ? protectedFrame : [protectedSelf focusedLocalFrame];
+            RefPtr frame = protectedFrame ? protectedFrame : RefPtr { [protectedSelf focusedLocalFrame] };
 
             if (RefPtr root = frame ? cache->rootObjectForFrame(*frame) : nullptr)
                 return root->wrapper();
@@ -202,20 +202,21 @@ namespace ax = WebCore::Accessibility;
     if (!cache)
         return;
 
-    std::optional isolatedTreeFrameID = cache->frameID();
-    if (!isolatedTreeFrameID)
-        return;
-
     RefPtr mainFrame = m_page ? Ref { *m_page }->mainFrame() : nullptr;
     if (!mainFrame)
         return;
 
     // Ignore an isolated tree that's not the main frame, otherwise VoiceOver might jump directly to an iframe
     // when interacting with a page.
-    if (*isolatedTreeFrameID != mainFrame->frameID())
+    if (cache->frameID() != mainFrame->frameID())
         return;
 
     m_isolatedTree = tree.get();
+}
+
+- (RefPtr<WebCore::AXIsolatedTree>)isolatedTree
+{
+    return m_isolatedTree.get();
 }
 
 - (void)setWindow:(id)window

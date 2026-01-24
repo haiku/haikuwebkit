@@ -315,7 +315,7 @@ public:
 
     ScrollingNodeID scrollingNodeID() const { return m_nodeID; }
 
-    RefPtr<ScrollingStateNode> parent() const { return m_parent.get(); }
+    RefPtr<ScrollingStateNode> parent() const { return m_parent; }
     void setParent(RefPtr<ScrollingStateNode>&& parent) { m_parent = parent; }
     std::optional<ScrollingNodeID> parentNodeID() const;
 

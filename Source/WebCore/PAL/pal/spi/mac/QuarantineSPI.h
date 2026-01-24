@@ -83,11 +83,15 @@ int qtn_file_init_with_path(qtn_file_t qf, const char *path);
 
 WTF_EXTERN_C_END
 
+#ifdef __cplusplus
+
 struct QuarantineFileDeleter {
     void operator()(qtn_file_t file)
     {
         qtn_file_free(file);
     }
 };
+
+#endif // __cplusplus
 
 #endif // PLATFORM(MAC)

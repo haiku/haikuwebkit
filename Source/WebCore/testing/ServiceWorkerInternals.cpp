@@ -64,7 +64,7 @@ void ServiceWorkerInternals::terminate()
     });
 }
 
-void ServiceWorkerInternals::schedulePushEvent(const String& message, RefPtr<DeferredPromise>&& promise)
+void ServiceWorkerInternals::schedulePushEvent(const String& message, Ref<DeferredPromise>&& promise)
 {
     auto counter = ++m_pushEventCounter;
     m_pushEventPromises.add(counter, WTF::move(promise));
@@ -78,7 +78,7 @@ void ServiceWorkerInternals::schedulePushEvent(const String& message, RefPtr<Def
                 proxy->thread().runLoop().postTaskForMode([weakThis = WTF::move(weakThis), counter, result](auto&) {
                     if (!weakThis)
                         return;
-                    if (auto promise = weakThis->m_pushEventPromises.take(counter))
+                    if (RefPtr promise = weakThis->m_pushEventPromises.take(counter))
                         promise->resolve<IDLBoolean>(result);
                 }, WorkerRunLoop::defaultMode());
             }

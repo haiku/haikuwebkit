@@ -38,9 +38,9 @@
 namespace WebKit {
 using namespace WebCore;
 
-using RecvSource = struct _RecvSource {
+struct RecvSource {
     GSource source;
-    Atomic<int> needsDispatch;
+    Atomic<bool> needsDispatch;
 };
 
 static gboolean recvSourcePrepare(GSource* base, gint* timeout)
@@ -62,7 +62,7 @@ static gboolean recvSourceDispatch(GSource* base, GSourceFunc callback, gpointer
 
     // This needs to be before the callback to ensure that any later recvSourceWakeup() either in
     // the callback, or just after it can cause another wakeup to occur.
-    source->needsDispatch.exchange(0);
+    source->needsDispatch.exchange(false);
 
     if (callback)
         callback(data);
@@ -70,11 +70,11 @@ static gboolean recvSourceDispatch(GSource* base, GSourceFunc callback, gpointer
     return G_SOURCE_CONTINUE;
 }
 
-void recvSourceWakeup(GSource* base)
+static void recvSourceWakeup(GSource* base)
 {
     auto source = reinterpret_cast<RecvSource*>(base);
     auto context = g_source_get_context(base);
-    source->needsDispatch.exchange(1);
+    source->needsDispatch.exchange(true);
 
     if (context)
         g_main_context_wakeup(context);
@@ -99,13 +99,13 @@ static GRefPtr<GSource> recvSourceNew()
     g_source_set_name(source.get(), "[WebKit] ICE Agent recv loop");
 
     auto recvSource = reinterpret_cast<RecvSource*>(source.get());
-    recvSource->needsDispatch.exchange(1);
+    recvSource->needsDispatch.exchange(true);
 
     return source;
 }
 
 struct RecvSourceData {
-    RiceBackend* backend;
+    ThreadSafeWeakPtr<RiceBackend> backend;
     unsigned streamId;
 };
 WEBKIT_DEFINE_ASYNC_DATA_STRUCT(RecvSourceData);
@@ -217,11 +217,6 @@ void RiceBackend::resolveAddress(const String& address, CompletionHandler<void(E
 
 void RiceBackend::sendData(unsigned streamId, WebCore::RTCIceProtocol protocol, String from, String to, WebCore::SharedMemory::Handle&& handle)
 {
-    if (protocol != RTCIceProtocol::Udp) {
-        g_printerr("Unable to send data to rice sockets, only UDP is currently supported.\n");
-        return;
-    }
-
     auto sockets = getSocketsForStream(streamId);
     if (!sockets) [[unlikely]]
         return;
@@ -267,22 +262,20 @@ void RiceBackend::finalizeStream(unsigned streamId)
         g_source_destroy(data.source.get());
 }
 
-void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<void(Vector<String>&&)>&& completionHandler)
+void RiceBackend::gatherSocketAddresses(ScriptExecutionContextIdentifier identifier, unsigned streamId, GatherSocketAddressesCallback&& completionHandler)
 {
-    if (m_udpSocketAddressesCache.contains(streamId)) {
-        completionHandler(m_udpSocketAddressesCache.get(streamId));
-        return;
-    }
-
-    Vector<String> result;
+    HashMap<std::pair<String, RTCIceProtocol>, String> result;
 
     auto recvData2 = createRecvSourceData();
     recvData2->backend = this;
     recvData2->streamId = streamId;
     auto sockets = adoptGRef(rice_sockets_new_with_notify([](auto userData) {
         auto recvData = reinterpret_cast<RecvSourceData*>(userData);
-        auto recvSource = recvData->backend->getRecvSourceForStream(recvData->streamId);
-        recvSourceWakeup(recvSource.get());
+        RefPtr backend = recvData->backend.get();
+        if (!backend)
+            return;
+        if (auto recvSource = backend->getRecvSourceForStream(recvData->streamId))
+            recvSourceWakeup(recvSource.get());
     }, recvData2, reinterpret_cast<GDestroyNotify>(destroyRecvSourceData)));
 
     Vector<GUniquePtr<RiceAddress>> udpAddresses;
@@ -290,11 +283,15 @@ void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<voi
     size_t totalInterfaces = 0;
     auto interfaces = rice_interfaces(&totalInterfaces);
     std::span<RiceAddress*> interfaceAddresses = WTF::unsafeMakeSpan(interfaces, totalInterfaces);
+
     for (size_t i = 0; i < totalInterfaces; i++) {
+        auto ipAddress = riceAddressToString(interfaceAddresses[i], false);
+        // mDNS address, not supported yet.
+        auto name = emptyString();
         if (auto socket = rice_udp_socket_new(interfaceAddresses[i])) {
             GUniquePtr<RiceAddress> localAddress(rice_udp_socket_local_addr(socket));
 
-            result.append(riceAddressToString(localAddress.get()));
+            result.add({ riceAddressToString(localAddress.get()).convertToLowercaseWithoutLocale(), WebCore::RTCIceProtocol::Udp }, name);
             udpAddresses.append(WTF::move(localAddress));
             rice_sockets_add_udp(sockets.get(), socket);
         }
@@ -304,9 +301,15 @@ void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<voi
         recvData->streamId = streamId;
         auto tcpListener = adoptGRef(rice_tcp_listen(interfaceAddresses[i], [](RiceTcpSocket* socket, void* userData) {
             auto recvData = reinterpret_cast<RecvSourceData*>(userData);
-            auto sockets = recvData->backend->getSocketsForStream(recvData->streamId);
+            RefPtr backend = recvData->backend.get();
+            if (!backend)
+                return;
+            auto sockets = backend->getSocketsForStream(recvData->streamId);
             rice_sockets_add_tcp(sockets.get(), socket);
         }, recvData, reinterpret_cast<RiceIoDestroy>(destroyRecvSourceData)));
+
+        GUniquePtr<RiceAddress> tcpListenerLocalAddress(rice_tcp_listener_local_addr(tcpListener.get()));
+        result.add({ riceAddressToString(tcpListenerLocalAddress.get()).convertToLowercaseWithoutLocale(), WebCore::RTCIceProtocol::Tcp }, name);
         m_tcpListeners.append(WTF::move(tcpListener));
     }
 
@@ -322,7 +325,10 @@ void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<voi
         uint8_t data[16384];
 
         auto sourceData = reinterpret_cast<RecvSourceData*>(userData);
-        auto sockets = sourceData->backend->getSocketsForStream(sourceData->streamId);
+        RefPtr backend = sourceData->backend.get();
+        if (!backend)
+            return G_SOURCE_REMOVE;
+        auto sockets = backend->getSocketsForStream(sourceData->streamId);
         if (!sockets)
             return G_SOURCE_CONTINUE;
         while (true) {
@@ -346,7 +352,7 @@ void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<voi
                 auto handle = SharedMemoryHandle::createCopy(unsafeMakeSpan(data, recv.data.len), SharedMemoryProtection::ReadOnly);
                 if (!handle) [[unlikely]]
                     break;
-                sourceData->backend->notifyIncomingData(sourceData->streamId, protocol, WTF::move(from), WTF::move(to), WTF::move(*handle));
+                backend->notifyIncomingData(sourceData->streamId, protocol, WTF::move(from), WTF::move(to), WTF::move(*handle));
                 break;
             }
             case RICE_IO_RECV_CLOSED:
@@ -362,7 +368,7 @@ void RiceBackend::gatherSocketAddresses(unsigned streamId, CompletionHandler<voi
     g_source_attach(source.get(), m_runLoop->mainContext());
     m_sockets.add(streamId, SocketData { WTF::move(sockets), WTF::move(source) });
     m_udpAddresses.add(streamId, WTF::move(udpAddresses));
-    m_udpSocketAddressesCache.add(streamId, result);
+
     completionHandler(WTF::move(result));
 }
 

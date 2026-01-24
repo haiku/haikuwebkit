@@ -73,6 +73,7 @@ public:
     void getPlatformInfo(Ref<WebExtensionCallbackHandler>&&);
     void getBackgroundPage(Ref<WebExtensionCallbackHandler>&&);
     double getFrameId(JSValue *);
+    String getDocumentId(JSValue *, NSString **outExceptionString);
 
     void setUninstallURL(URL, Ref<WebExtensionCallbackHandler>&&);
 

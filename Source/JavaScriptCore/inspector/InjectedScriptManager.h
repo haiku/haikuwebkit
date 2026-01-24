@@ -59,7 +59,7 @@ public:
     JS_EXPORT_PRIVATE virtual void discardInjectedScripts();
 
     InjectedScriptHost& injectedScriptHost();
-    InspectorEnvironment& inspectorEnvironment() const { return *m_environment.get(); }
+    InspectorEnvironment& inspectorEnvironment() const { return *m_environment; }
     CheckedRef<InspectorEnvironment> checkedInspectorEnvironment() const { return inspectorEnvironment(); }
 
     JS_EXPORT_PRIVATE InjectedScript injectedScriptFor(JSC::JSGlobalObject*);

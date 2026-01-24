@@ -131,7 +131,7 @@ Ref<MatchResult> ElementRuleCollector::releaseMatchResult()
     return WTF::move(m_result);
 }
 
-const Vector<RefPtr<const StyleRule>>& ElementRuleCollector::matchedRuleList() const
+const Vector<Ref<const StyleRule>>& ElementRuleCollector::matchedRuleList() const
 {
     ASSERT(m_mode == SelectorChecker::Mode::CollectingRules);
     return m_matchedRuleList;
@@ -288,7 +288,7 @@ void ElementRuleCollector::transferMatchedRules(DeclarationOrigin declarationOri
             break;
 
         if (m_mode == SelectorChecker::Mode::CollectingRules) {
-            m_matchedRuleList.append(&matchedRule.ruleData->styleRule());
+            m_matchedRuleList.append(matchedRule.ruleData->styleRule());
             continue;
         }
 
@@ -299,7 +299,7 @@ void ElementRuleCollector::transferMatchedRules(DeclarationOrigin declarationOri
             matchedRule.styleScopeOrdinal,
             FromStyleAttribute::No,
             matchedRule.cascadeLayerPriority,
-            matchedRule.ruleData->usedRuleTypes()
+            matchedRule.ruleData->isStartingStyle()
         }, declarationOrigin);
     }
 }
@@ -564,12 +564,12 @@ inline bool ElementRuleCollector::ruleMatches(const RuleData& ruleData, unsigned
     } else
 #endif // ENABLE(CSS_SELECTOR_JIT)
     {
-        auto* selector = ruleData.selector();
+        auto& selector = ruleData.selector();
         // Slow path.
         SelectorChecker selectorChecker(element().document());
-        selectorMatches = selectorChecker.match(*selector, element(), context);
+        selectorMatches = selectorChecker.match(selector, element(), context);
         if (selectorMatches)
-            specificity = selector->computeSpecificity();
+            specificity = selector.computeSpecificity();
     }
 
     m_matchedPseudoElements.add(context.publicPseudoElements);
@@ -578,12 +578,9 @@ inline bool ElementRuleCollector::ruleMatches(const RuleData& ruleData, unsigned
     return selectorMatches;
 }
 
-void ElementRuleCollector::collectMatchingRulesForList(const RuleSet::RuleDataVector* rules, const MatchRequest& matchRequest)
+void ElementRuleCollector::collectMatchingRulesForListSlow(const RuleSet::RuleDataVector& rules, const MatchRequest& matchRequest)
 {
-    if (!rules)
-        return;
-
-    for (auto& ruleData : *rules) {
+    for (auto& ruleData : rules) {
         if (!ruleData.isEnabled()) [[unlikely]]
             continue;
 
@@ -639,7 +636,7 @@ bool ElementRuleCollector::containerQueriesMatch(const RuleData& ruleData, const
     auto selectionMode = [&] {
         if (matchRequest.matchingPartPseudoElementRules)
             return ContainerQueryEvaluator::SelectionMode::PartPseudoElement;
-        if (ruleData.canMatchPseudoElement() && !complexSelectorMatchesElementBackedPseudoElement(*ruleData.selector()))
+        if (ruleData.canMatchPseudoElement() && !complexSelectorMatchesElementBackedPseudoElement(ruleData.selector()))
             return ContainerQueryEvaluator::SelectionMode::PseudoElement;
         return ContainerQueryEvaluator::SelectionMode::Element;
     }();
@@ -916,11 +913,8 @@ void ElementRuleCollector::addMatchedProperties(MatchedProperties&& matchedPrope
         // It might also be beneficial to overwrite the previous declaration (insteading of appending) if it affects the same exact properties.
         return;
     }
-    if (matchedProperties.usedRuleTypes.contains(UsedRuleType::StartingStyle))
-        m_result->usedRuleTypes.add(UsedRuleType::StartingStyle);
-
-    if (matchedProperties.usedRuleTypes.contains(UsedRuleType::BaseAppearance))
-        m_result->usedRuleTypes.add(UsedRuleType::BaseAppearance);
+    if (matchedProperties.isStartingStyle == IsStartingStyle::Yes)
+        m_result->hasStartingStyle = true;
 
     if (matchedProperties.isCacheable == IsCacheable::Partially && !m_result->isCompletelyNonCacheable) {
         for (auto property : matchedProperties.properties.get())

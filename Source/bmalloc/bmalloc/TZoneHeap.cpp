@@ -28,8 +28,6 @@
 
 #if BUSE(TZONE)
 
-#include "IsoHeap.h"
-#include "IsoMallocFallback.h"
 #include "TZoneHeapManager.h"
 #include "bmalloc.h"
 #include "bmalloc_heap_internal.h"

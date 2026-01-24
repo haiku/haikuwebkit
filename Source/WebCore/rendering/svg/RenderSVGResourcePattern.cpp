@@ -78,7 +78,7 @@ void RenderSVGResourcePattern::collectPatternAttributesIfNeeded()
 
 RefPtr<Pattern> RenderSVGResourcePattern::buildPattern(GraphicsContext& context, const RenderLayerModelObject& renderer)
 {
-    RefPtr<ImageBuffer> tileImage = m_imageMap.get(renderer);
+    RefPtr tileImage = m_imageMap.get(renderer);
     if (!tileImage) {
         collectPatternAttributesIfNeeded();
 
@@ -121,12 +121,12 @@ RefPtr<Pattern> RenderSVGResourcePattern::buildPattern(GraphicsContext& context,
         if (!patternTransform.isIdentity())
             transform = patternTransform * transform;
 
-        m_imageMap.set(renderer, tileImage);
+        m_imageMap.set(renderer, *tileImage);
         m_transformMap.set(renderer, transform);
     }
 
     // Build pattern.
-    return Pattern::create({ *tileImage }, { true, true, m_transformMap.get(renderer) } );
+    return Pattern::create({ tileImage.releaseNonNull() }, { true, true, m_transformMap.get(renderer) } );
 }
 
 bool RenderSVGResourcePattern::prepareFillOperation(GraphicsContext& context, const RenderLayerModelObject& targetRenderer, const RenderStyle& style)
@@ -177,7 +177,7 @@ bool RenderSVGResourcePattern::buildTileImageTransform(const RenderElement& rend
 
 RefPtr<ImageBuffer> RenderSVGResourcePattern::createTileImage(GraphicsContext& context, const PatternAttributes& attributes, const FloatSize& size, const FloatSize& scale, const AffineTransform& tileImageTransform) const
 {
-    CheckedPtr patternRenderer = static_cast<RenderSVGResourcePattern*>(attributes.patternContentElement()->renderer());
+    CheckedPtr patternRenderer = downcast<RenderSVGResourcePattern>(attributes.patternContentElement()->renderer());
     ASSERT(patternRenderer);
     ASSERT(patternRenderer->hasLayer());
 

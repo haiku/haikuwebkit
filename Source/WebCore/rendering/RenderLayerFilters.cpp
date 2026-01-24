@@ -38,7 +38,6 @@
 #include "GraphicsContextSwitcher.h"
 #include "LegacyRenderSVGResourceFilter.h"
 #include "Logging.h"
-#include "ReferenceFilterOperation.h"
 #include "RenderObjectInlines.h"
 #include "RenderSVGShape.h"
 #include "RenderStyle+GettersInlines.h"
@@ -98,30 +97,30 @@ void RenderLayerFilters::updateReferenceFilterClients(const Style::Filter& filte
     removeReferenceFilterClients();
 
     for (auto& value : filter) {
-        Ref operation = value.value;
-        RefPtr referenceOperation = dynamicDowncast<Style::ReferenceFilterOperation>(operation);
-        if (!referenceOperation)
-            continue;
-
-        auto* documentReference = referenceOperation->cachedSVGDocumentReference();
-        if (auto* cachedSVGDocument = documentReference ? documentReference->document() : nullptr) {
-            // Reference is external; wait for notifyFinished().
-            cachedSVGDocument->addClient(*this);
-            m_externalSVGReferences.append(cachedSVGDocument);
-        } else {
-            // Reference is internal; add layer as a client so we can trigger filter repaint on SVG attribute change.
-            CheckedPtr layer = m_layer.get();
-            if (!layer)
-                continue;
-            RefPtr filterElement = layer->renderer().document().getElementById(referenceOperation->fragment());
-            if (!filterElement)
-                continue;
-            CheckedPtr renderer = dynamicDowncast<LegacyRenderSVGResourceFilter>(filterElement->renderer());
-            if (!renderer)
-                continue;
-            renderer->addClientRenderLayer(*layer);
-            m_internalSVGReferences.append(WTF::move(filterElement));
-        }
+        WTF::switchOn(value,
+            [&](const Style::FilterReference& filterReference) {
+                RefPtr documentReference = filterReference.cachedSVGDocumentReference;
+                if (auto* cachedSVGDocument = documentReference ? documentReference->document() : nullptr) {
+                    // Reference is external; wait for notifyFinished().
+                    cachedSVGDocument->addClient(*this);
+                    m_externalSVGReferences.append(cachedSVGDocument);
+                } else {
+                    // Reference is internal; add layer as a client so we can trigger filter repaint on SVG attribute change.
+                    CheckedPtr layer = m_layer.get();
+                    if (!layer)
+                        return;
+                    RefPtr filterElement = layer->renderer().document().getElementById(filterReference.cachedFragment);
+                    if (!filterElement)
+                        return;
+                    CheckedPtr renderer = dynamicDowncast<LegacyRenderSVGResourceFilter>(filterElement->renderer());
+                    if (!renderer)
+                        return;
+                    renderer->addClientRenderLayer(*layer);
+                    m_internalSVGReferences.append(filterElement.releaseNonNull());
+                }
+            },
+            []<CSSValueID C, typename T>(const FunctionNotation<C, T>&) { }
+        );
     }
 }
 

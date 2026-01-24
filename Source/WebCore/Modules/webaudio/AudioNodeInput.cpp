@@ -178,7 +178,7 @@ unsigned AudioNodeInput::numberOfChannels() const
     return maxChannels;
 }
 
-AudioBus& AudioNodeInput::bus()
+AudioBus& AudioNodeInput::bus() LIFETIME_BOUND
 {
     ASSERT(context());
     ASSERT(context()->isAudioThread());

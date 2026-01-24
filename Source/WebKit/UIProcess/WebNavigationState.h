@@ -72,7 +72,7 @@ public:
 
     void clearNavigationsFromProcess(WebCore::ProcessIdentifier);
 
-    using NavigationMap = HashMap<WebCore::NavigationIdentifier, RefPtr<API::Navigation>>;
+    using NavigationMap = HashMap<WebCore::NavigationIdentifier, Ref<API::Navigation>>;
 
 private:
     WeakRef<WebPageProxy> m_page;

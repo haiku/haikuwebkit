@@ -6,7 +6,7 @@ struct FSOut {
 struct _GlobalUniforms {
   colorWhite: vec4<f32>,
 };
-@binding(0) @group(0) var<uniform> _globalUniforms: _GlobalUniforms;
+@group(0) @binding(0) var<uniform> _globalUniforms : _GlobalUniforms;
 fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
   {
     var x: vec4<f32> = _globalUniforms.colorWhite;
@@ -14,8 +14,7 @@ fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
       var r: f32 = -5.0;
       loop {
         {
-          let _skTemp0 = saturate(r);
-          x.x = _skTemp0;
+          x.x = saturate(r);
           if x.x == 0.0 {
             break;
           }

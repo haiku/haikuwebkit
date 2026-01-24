@@ -496,14 +496,12 @@ static gboolean wpeDisplayWaylandConnect(WPEDisplay* display, GError** error)
 
 static WPEView* wpeDisplayWaylandCreateView(WPEDisplay* display)
 {
-    auto* view = WPE_VIEW(g_object_new(WPE_TYPE_VIEW_WAYLAND, "display", display, nullptr));
+    return WPE_VIEW(g_object_new(WPE_TYPE_VIEW_WAYLAND, "display", display, nullptr));
+}
 
-    if (wpe_settings_get_boolean(wpe_display_get_settings(display), WPE_SETTING_CREATE_VIEWS_WITH_A_TOPLEVEL, nullptr)) {
-        GRefPtr<WPEToplevel> toplevel = adoptGRef(wpe_toplevel_wayland_new(WPE_DISPLAY_WAYLAND(display), 1));
-        wpe_view_set_toplevel(view, toplevel.get());
-    }
-
-    return view;
+static WPEToplevel* wpeDisplayWaylandCreateToplevel(WPEDisplay* display, guint maxViews)
+{
+    return WPE_TOPLEVEL(g_object_new(WPE_TYPE_TOPLEVEL_WAYLAND, "display", display, "max-views", maxViews, nullptr));
 }
 
 static WPEInputMethodContext* wpeDisplayWaylandCreateInputMethodContext(WPEDisplay* display, WPEView* view)
@@ -667,6 +665,7 @@ static void wpe_display_wayland_class_init(WPEDisplayWaylandClass* displayWaylan
     WPEDisplayClass* displayClass = WPE_DISPLAY_CLASS(displayWaylandClass);
     displayClass->connect = wpeDisplayWaylandConnect;
     displayClass->create_view = wpeDisplayWaylandCreateView;
+    displayClass->create_toplevel = wpeDisplayWaylandCreateToplevel;
     displayClass->create_input_method_context = wpeDisplayWaylandCreateInputMethodContext;
     displayClass->get_egl_display = wpeDisplayWaylandGetEGLDisplay;
     displayClass->get_keymap = wpeDisplayWaylandGetKeymap;

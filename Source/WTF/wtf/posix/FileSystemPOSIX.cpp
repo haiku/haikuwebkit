@@ -168,11 +168,10 @@ static const char* temporaryFileDirectory()
     static std::once_flag once;
     std::call_once(once, [] {
         BPath path;
-        if (find_directory(B_SYSTEM_TEMP_DIRECTORY, &path) == B_OK) {
-            strcpy(buffer, path.Path());
-        } else {
-            strcpy(buffer, "/tmp");
-        }
+        if (find_directory(B_SYSTEM_TEMP_DIRECTORY, &path) == B_OK)
+            strlcpy(buffer, path.Path(), sizeof(buffer));
+        else
+            strlcpy(buffer, "/tmp", sizeof(buffer));
     });
     return buffer;
 #else

@@ -341,7 +341,29 @@ void UIScriptControllerCocoa::setSpellCheckerResults(JSValueRef results)
     [[LayoutTestSpellChecker checker] setResultsFromJSValue:results inContext:m_context->jsContext()];
 }
 
-RetainPtr<_WKTextExtractionConfiguration> createTextExtractionConfiguration(WKWebView *webView, TextExtractionTestOptions* options)
+static _WKTextExtractionDataDetectorTypes dataDetectorTypes(JSValueRef typesArray, JSContextRef jsContext)
+{
+    _WKTextExtractionDataDetectorTypes result = _WKTextExtractionDataDetectorNone;
+
+    if (!JSValueIsArray(jsContext, typesArray))
+        return result;
+
+    RetainPtr context = [JSContext contextWithJSGlobalContextRef:JSContextGetGlobalContext(jsContext)];
+    for (NSString *type in [[JSValue valueWithJSValueRef:typesArray inContext:context.get()] toArray]) {
+        if ([type caseInsensitiveCompare:@"money"] == NSOrderedSame)
+            result |= _WKTextExtractionDataDetectorMoney;
+        else if ([type caseInsensitiveCompare:@"address"] == NSOrderedSame)
+            result |= _WKTextExtractionDataDetectorAddress;
+        else if ([type caseInsensitiveCompare:@"calendarevent"] == NSOrderedSame)
+            result |= _WKTextExtractionDataDetectorCalendarEvent;
+        else if ([type caseInsensitiveCompare:@"trackingnumber"] == NSOrderedSame)
+            result |= _WKTextExtractionDataDetectorTrackingNumber;
+    }
+
+    return result;
+}
+
+RetainPtr<_WKTextExtractionConfiguration> createTextExtractionConfiguration(WKWebView *webView, TextExtractionTestOptions* options, JSContextRef jsContext)
 {
     auto extractionRect = CGRectNull;
     if (options && options->clipToBounds)
@@ -398,13 +420,14 @@ RetainPtr<_WKTextExtractionConfiguration> createTextExtractionConfiguration(WKWe
     [configuration setTargetRect:extractionRect];
     [configuration setMergeParagraphs:options && options->mergeParagraphs];
     [configuration setSkipNearlyTransparentContent:options && options->skipNearlyTransparentContent];
+    [configuration setDataDetectorTypes:options ? dataDetectorTypes(options->dataDetectorTypes, jsContext) : _WKTextExtractionDataDetectorNone];
     return configuration;
 }
 
 void UIScriptControllerCocoa::requestTextExtraction(JSValueRef callback, TextExtractionTestOptions* options)
 {
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
-    RetainPtr configuration = createTextExtractionConfiguration(webView(), options);
+    RetainPtr configuration = createTextExtractionConfiguration(webView(), options, m_context->jsContext());
     auto includeRects = [configuration includeRects] ? IncludeRects::Yes : IncludeRects::No;
     [webView() _requestTextExtraction:configuration.get() completionHandler:^(WKTextExtractionItem *rootItem) {
         if (!m_context)
@@ -418,7 +441,7 @@ void UIScriptControllerCocoa::requestTextExtraction(JSValueRef callback, TextExt
 void UIScriptControllerCocoa::requestDebugText(JSValueRef callback, TextExtractionTestOptions* options)
 {
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
-    RetainPtr configuration = createTextExtractionConfiguration(webView(), options);
+    RetainPtr configuration = createTextExtractionConfiguration(webView(), options, m_context->jsContext());
     [webView() _debugTextWithConfiguration:configuration.get() completionHandler:^(NSString *text) {
         if (!m_context)
             return;

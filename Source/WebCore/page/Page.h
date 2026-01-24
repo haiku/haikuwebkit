@@ -287,7 +287,6 @@ enum class CompositingPolicy : bool {
 
 enum class FinalizeRenderingUpdateFlags : uint8_t {
     ApplyScrollingTreeLayerPositions    = 1 << 0,
-    InvalidateImagesWithAsyncDecodes    = 1 << 1,
 };
 
 enum class RenderingUpdateStep : uint32_t {
@@ -781,9 +780,7 @@ public:
 
 #if ENABLE(WEB_AUTHN)
     AuthenticatorCoordinator& authenticatorCoordinator() { return m_authenticatorCoordinator.get(); }
-#if HAVE(DIGITAL_CREDENTIALS_UI)
     CredentialRequestCoordinator& credentialRequestCoordinator() { return m_credentialRequestCoordinator.get(); }
-#endif
 #endif
 
 #if ENABLE(APPLICATION_MANIFEST)
@@ -1405,6 +1402,8 @@ public:
     AcceleratedTimelinesUpdater& ensureAcceleratedTimelinesUpdater();
 #endif
 
+    void syncLocalFrameInfoToRemote();
+
 private:
     explicit Page(PageConfiguration&&);
 
@@ -1735,11 +1734,7 @@ private:
 
 #if ENABLE(WEB_AUTHN)
     const UniqueRef<AuthenticatorCoordinator> m_authenticatorCoordinator;
-
-#if HAVE(DIGITAL_CREDENTIALS_UI)
     const Ref<CredentialRequestCoordinator> m_credentialRequestCoordinator;
-#endif
-
 #endif // ENABLE(WEB_AUTHN)
 
 #if ENABLE(APPLICATION_MANIFEST)

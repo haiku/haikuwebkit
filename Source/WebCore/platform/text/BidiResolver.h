@@ -124,6 +124,7 @@ inline bool operator==(const BidiStatus& status1, const BidiStatus& status2)
     return status1.eor == status2.eor && status1.last == status2.last && status1.lastStrong == status2.lastStrong && *(status1.context) == *(status2.context);
 }
 
+template<typename ConcreteRunType>
 struct BidiCharacterRun {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(BidiCharacterRun);
 public:
@@ -163,18 +164,23 @@ public:
     bool reversed(bool visuallyOrdered) { return m_level % 2 && !visuallyOrdered; }
     bool dirOverride(bool visuallyOrdered) { return m_override || visuallyOrdered; }
 
-    BidiCharacterRun* next() const { return m_next.get(); }
-    std::unique_ptr<BidiCharacterRun> takeNext() { return WTF::move(m_next); }
-    void setNext(std::unique_ptr<BidiCharacterRun>&& next) { m_next = WTF::move(next); }
+    ConcreteRunType* next() const { return m_next.get(); }
+    std::unique_ptr<ConcreteRunType> takeNext() { return WTF::move(m_next); }
+    void setNext(std::unique_ptr<ConcreteRunType>&& next) { m_next = WTF::move(next); }
 
 private:
-    std::unique_ptr<BidiCharacterRun> m_next;
+    std::unique_ptr<ConcreteRunType> m_next;
 
 public:
     unsigned m_start;
     unsigned m_stop;
     unsigned char m_level;
     bool m_override : 1;
+};
+
+// Standalone BidiCharacterRun for cases that don't need a derived class.
+struct SimpleBidiCharacterRun : BidiCharacterRun<SimpleBidiCharacterRun> {
+    using BidiCharacterRun<SimpleBidiCharacterRun>::BidiCharacterRun;
 };
 
 enum VisualDirectionOverride {

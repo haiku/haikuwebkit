@@ -27,6 +27,7 @@
 
 #if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
 
+#include "DestinationColorSpace.h"
 #include "MediaPlayerPrivate.h"
 #include <wtf/CanMakeWeakPtr.h>
 #include <wtf/LoggerHelper.h>

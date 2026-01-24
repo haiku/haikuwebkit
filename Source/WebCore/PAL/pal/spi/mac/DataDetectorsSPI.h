@@ -25,6 +25,8 @@
 
 #pragma once
 
+#ifdef __cplusplus
+
 #include <wtf/Compiler.h>
 
 DECLARE_SYSTEM_HEADER
@@ -137,3 +139,4 @@ using WKDDActionContext = DDActionContext;
 
 #endif // ENABLE(DATA_DETECTION)
 
+#endif // __cplusplus

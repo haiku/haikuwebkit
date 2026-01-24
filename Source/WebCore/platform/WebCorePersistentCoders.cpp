@@ -37,7 +37,10 @@
 #include "NavigationPreloadState.h"
 #include "ResourceRequest.h"
 #include "ResourceResponse.h"
+#include "RouterSourceDict.h"
+#include "RouterSourceEnum.h"
 #include "SWRegistrationDatabase.h"
+#include "ServiceWorkerRoute.h"
 #include <wtf/persistence/PersistentCoders.h>
 
 #if PLATFORM(COCOA)
@@ -854,6 +857,170 @@ std::optional<WebCore::HTTPHeaderMap> Coder<WebCore::HTTPHeaderMap>::decodeForPe
         headers.append(WTF::move(*name), WTF::move(*value));
     }
     return headers;
+}
+
+void Coder<WebCore::RouterSourceDict>::encodeForPersistence(Encoder& encoder, const WebCore::RouterSourceDict& route)
+{
+    encoder << route.cacheName;
+}
+
+std::optional<WebCore::RouterSourceDict> Coder<WebCore::RouterSourceDict>::decodeForPersistence(Decoder& decoder)
+{
+    std::optional<String> cacheName;
+    decoder >> cacheName;
+    if (!cacheName)
+        return std::nullopt;
+
+    return WebCore::RouterSourceDict { WTF::move(*cacheName) };
+}
+
+void Coder<WebCore::ServiceWorkerRoute>::encodeForPersistence(Encoder& encoder, const WebCore::ServiceWorkerRoute& route)
+{
+    encoder << route.condition;
+    encoder << route.source;
+}
+
+std::optional<WebCore::ServiceWorkerRoute> Coder<WebCore::ServiceWorkerRoute>::decodeForPersistence(Decoder& decoder)
+{
+    std::optional<WebCore::ServiceWorkerRouteCondition> condition;
+    std::optional<WebCore::RouterSource> source;
+    decoder >> condition;
+    if (!condition)
+        return std::nullopt;
+    decoder >> source;
+    if (!source)
+        return std::nullopt;
+
+    return WebCore::ServiceWorkerRoute { WTF::move(*condition), WTF::move(*source) };
+}
+
+void Coder<WebCore::ServiceWorkerRouteCondition>::encodeForPersistence(Encoder& encoder, const WebCore::ServiceWorkerRouteCondition& condition)
+{
+    encoder << condition.urlPattern;
+    encoder << condition.requestMethod;
+    encoder << condition.requestMode;
+    encoder << condition.requestDestination;
+    encoder << condition.runningStatus;
+    encoder << condition.orConditions;
+
+    if (!condition.notCondition) {
+        encoder << false;
+        return;
+    }
+    encoder << true;
+    encoder << *condition.notCondition;
+}
+
+std::optional<WebCore::ServiceWorkerRouteCondition> Coder<WebCore::ServiceWorkerRouteCondition>::decodeForPersistence(Decoder& decoder)
+{
+    std::optional<std::optional<WebCore::ServiceWorkerRoutePattern>> urlPattern;
+    decoder >> urlPattern;
+    if (!urlPattern)
+        return std::nullopt;
+
+    std::optional<String> requestMethod;
+    decoder >> requestMethod;
+    if (!requestMethod)
+        return std::nullopt;
+
+    std::optional<std::optional<WebCore::FetchRequestMode>> requestMode;
+    decoder >> requestMode;
+    if (!requestMode)
+        return std::nullopt;
+
+    std::optional<std::optional<WebCore::FetchRequestDestination>> requestDestination;
+    decoder >> requestDestination;
+    if (!requestDestination)
+        return std::nullopt;
+
+    std::optional<std::optional<WebCore::RunningStatus>> runningStatus;
+    decoder >> runningStatus;
+    if (!runningStatus)
+        return std::nullopt;
+
+    std::optional<Vector<WebCore::ServiceWorkerRouteCondition>> orConditions;
+    decoder >> orConditions;
+    if (!orConditions)
+        return std::nullopt;
+
+    std::optional<bool> hasNotCondition;
+    decoder >> hasNotCondition;
+    if (!hasNotCondition)
+        return std::nullopt;
+
+    std::unique_ptr<WebCore::ServiceWorkerRouteCondition> notCondition;
+    if (*hasNotCondition) {
+        std::optional<WebCore::ServiceWorkerRouteCondition> notConditionValue;
+        decoder >> notConditionValue;
+        if (!notConditionValue)
+            return std::nullopt;
+        notCondition = makeUnique<WebCore::ServiceWorkerRouteCondition>(WTF::move(*notConditionValue));
+    }
+
+    return WebCore::ServiceWorkerRouteCondition { WTF::move(*urlPattern), WTF::move(*requestMethod), WTF::move(*requestMode), WTF::move(*requestDestination), WTF::move(*runningStatus), WTF::move(*orConditions), WTF::move(notCondition) };
+}
+
+void Coder<WebCore::ServiceWorkerRoutePattern>::encodeForPersistence(Encoder& encoder, const WebCore::ServiceWorkerRoutePattern& condition)
+{
+    encoder << condition.shouldIgnoreCase;
+    encoder << condition.protocol;
+    encoder << condition.username;
+    encoder << condition.password;
+    encoder << condition.hostname;
+    encoder << condition.port;
+    encoder << condition.pathname;
+    encoder << condition.search;
+    encoder << condition.hash;
+}
+
+std::optional<WebCore::ServiceWorkerRoutePattern> Coder<WebCore::ServiceWorkerRoutePattern>::decodeForPersistence(Decoder& decoder)
+{
+    std::optional<bool> shouldIgnoreCase;
+    decoder >> shouldIgnoreCase;
+    if (!shouldIgnoreCase)
+        return std::nullopt;
+
+    std::optional<String> protocol;
+    decoder >> protocol;
+    if (!protocol)
+        return std::nullopt;
+
+    std::optional<String> username;
+    decoder >> username;
+    if (!username)
+        return std::nullopt;
+
+    std::optional<String> password;
+    decoder >> password;
+    if (!password)
+        return std::nullopt;
+
+    std::optional<String> hostname;
+    decoder >> hostname;
+    if (!hostname)
+        return std::nullopt;
+
+    std::optional<String> port;
+    decoder >> port;
+    if (!port)
+        return std::nullopt;
+
+    std::optional<String> pathname;
+    decoder >> pathname;
+    if (!pathname)
+        return std::nullopt;
+
+    std::optional<String> search;
+    decoder >> search;
+    if (!search)
+        return std::nullopt;
+
+    std::optional<String> hash;
+    decoder >> hash;
+    if (!hash)
+        return std::nullopt;
+
+    return WebCore::ServiceWorkerRoutePattern { WTF::move(*shouldIgnoreCase), WTF::move(*protocol), WTF::move(*username), WTF::move(*password), WTF::move(*hostname), WTF::move(*port), WTF::move(*pathname), WTF::move(*search), WTF::move(*hash) };
 }
 
 } // namespace WTF::Persistence

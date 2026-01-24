@@ -49,7 +49,7 @@ public:
     void setMediaStreamID(const String& mediaStreamId) { m_mediaStreamId = mediaStreamId; }
     const String& mediaStreamID() const { return m_mediaStreamId; }
     const GRefPtr<GstCaps>& allowedCaps() const;
-    WARN_UNUSED_RETURN GRefPtr<GstCaps> rtpCaps() const;
+    [[nodiscard]] GRefPtr<GstCaps> rtpCaps() const;
 
     void link();
     const GRefPtr<GstPad>& pad() const { return m_webrtcSinkPad; }
@@ -66,11 +66,11 @@ public:
 
     void configure(GRefPtr<GstCaps>&&);
 
-    WARN_UNUSED_RETURN GUniquePtr<GstStructure> stats();
+    [[nodiscard]] GUniquePtr<GstStructure> stats();
 
-    WARN_UNUSED_RETURN GUniquePtr<GstStructure> mediaCaptureStats();
+    [[nodiscard]] GUniquePtr<GstStructure> mediaCaptureStats();
 
-    WARN_UNUSED_RETURN virtual GRefPtr<GstPad> outgoingSourcePad() const = 0;
+    [[nodiscard]] virtual GRefPtr<GstPad> outgoingSourcePad() const = 0;
     virtual RefPtr<GStreamerRTPPacketizer> createPacketizer(RefPtr<UniqueSSRCGenerator>, const GstStructure*, GUniquePtr<GstStructure>&&) = 0;
 
     void replaceTrack(const RefPtr<MediaStreamTrack>&);

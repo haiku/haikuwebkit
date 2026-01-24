@@ -59,7 +59,7 @@ template<typename T, typename arcEnabled = ARCEnabled> struct DefaultOSObjectRet
     }
 };
 
-template<typename T, typename RetainTraits = DefaultOSObjectRetainTraits<T, ARCEnabled>> WARN_UNUSED_RETURN OSObjectPtr<T, RetainTraits> adoptOSObject(T);
+template<typename T, typename RetainTraits = DefaultOSObjectRetainTraits<T, ARCEnabled>> [[nodiscard]] OSObjectPtr<T, RetainTraits> adoptOSObject(T);
 
 template<typename T, typename RetainTraits> class OSObjectPtr {
 public:
@@ -140,7 +140,7 @@ public:
         std::swap(m_ptr, other.m_ptr);
     }
 
-    WARN_UNUSED_RETURN T leakRef()
+    [[nodiscard]] T leakRef()
     {
         return std::exchange(m_ptr, nullptr);
     }

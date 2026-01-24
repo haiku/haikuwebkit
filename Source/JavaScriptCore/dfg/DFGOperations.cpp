@@ -4612,6 +4612,19 @@ JSC_DEFINE_JIT_OPERATION(operationSpreadGeneric, JSCell*, (JSGlobalObject* globa
     OPERATION_RETURN(scope, JSCellButterfly::createFromArray(globalObject, vm, array));
 }
 
+JSC_DEFINE_JIT_OPERATION(operationSpreadSet, JSCell*, (JSGlobalObject* globalObject, JSCell* cell))
+{
+    VM& vm = globalObject->vm();
+    CallFrame* callFrame = DECLARE_CALL_FRAME(vm);
+    JITOperationPrologueCallFrameTracer tracer(vm, callFrame);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    ASSERT(jsDynamicCast<JSSet*>(cell));
+    JSSet* set = jsCast<JSSet*>(cell);
+
+    OPERATION_RETURN(scope, JSCellButterfly::createFromSet(globalObject, set));
+}
+
 JSC_DEFINE_JIT_OPERATION(operationSpreadFastArray, JSCell*, (JSGlobalObject* globalObject, JSCell* cell))
 {
     VM& vm = globalObject->vm();

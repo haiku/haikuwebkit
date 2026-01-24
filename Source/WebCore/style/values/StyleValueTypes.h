@@ -180,6 +180,16 @@ template<NonConverting StyleType> struct ToCSS<StyleType> {
     }
 };
 
+// Constrained for `TreatAsEmptyLike`.
+template<EmptyLike StyleType> struct ToCSS<StyleType> {
+    using Result = typename ToCSSMapping<StyleType>::type;
+
+    template<typename... Rest> Result operator()(const StyleType&, const RenderStyle&, Rest&&...)
+    {
+        return { };
+    }
+};
+
 // Constrained for `TreatAsOptionalLike`.
 template<OptionalLike StyleType> struct ToCSS<StyleType> {
     using Result = typename ToCSSMapping<StyleType>::type;
@@ -311,6 +321,16 @@ template<NonConverting CSSType> struct ToStyle<CSSType> {
     template<typename... Rest> constexpr CSSType operator()(const CSSType& value, Rest&&...)
     {
         return value;
+    }
+};
+
+// Constrained for `TreatAsEmptyLike`.
+template<EmptyLike CSSType> struct ToStyle<CSSType> {
+    using Result = typename ToStyleMapping<CSSType>::type;
+
+    template<typename... Rest> constexpr Result operator()(const CSSType&, Rest&&...)
+    {
+        return Result { };
     }
 };
 
@@ -535,6 +555,14 @@ struct ToPlatformInvoker {
     }
 };
 inline constexpr ToPlatformInvoker toPlatform{};
+
+// Specialization for `FunctionNotation`.
+template<CSSValueID Name, typename StyleType> struct ToPlatform<FunctionNotation<Name, StyleType>> {
+    template<typename... Rest> decltype(auto) operator()(const FunctionNotation<Name, StyleType>& value, Rest&&... rest)
+    {
+        return toPlatform(value.parameters, std::forward<Rest>(rest)...);
+    }
+};
 
 // MARK: - Serialization
 
@@ -1023,6 +1051,18 @@ template<typename StyleType> auto blendOnTupleLike(const StyleType& a, const Sty
         return StyleType { WebCore::Style::blend(std::get<0>(pair), std::get<1>(pair), aStyle, bStyle, context)... };
     }, WTF::tuple_zip(a, b));
 }
+
+// Constrained for `TreatAsEmptyLike`.
+template<EmptyLike StyleType> struct Blending<StyleType> {
+    auto blend(const StyleType&, const StyleType&, const auto&) -> StyleType
+    {
+        return { };
+    }
+    auto blend(const StyleType&, const StyleType&, const RenderStyle&, const RenderStyle&, const auto&) -> StyleType
+    {
+        return { };
+    }
+};
 
 // Constrained for `TreatAsOptionalLike`.
 template<OptionalLike StyleType> struct Blending<StyleType> {

@@ -61,8 +61,8 @@ template<typename T> bool isOSObject(CFTypeRef);
 #define WTF_IMPLEMENT_IS_OS_OBJECT_FUNCTIONS_INTERNAL(TypeName, ProtocolString) \
 template<> inline bool isOSObject<OSObjectTypeCastTraits<TypeName>::BaseType>(CFTypeRef object) \
 { \
-    Class cls = object_getClass(bridge_id_cast(object)); \
-    return class_conformsToProtocol(cls, objc_getProtocol(ProtocolString)); \
+    RetainPtr cls = object_getClass(bridge_id_cast(object)); \
+    return class_conformsToProtocol(cls.get(), objc_getProtocol(ProtocolString)); \
 } \
 
 #ifdef __OBJC__

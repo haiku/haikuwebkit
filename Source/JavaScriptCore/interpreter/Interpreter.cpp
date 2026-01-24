@@ -37,7 +37,6 @@
 #include "BuiltinNames.h"
 #include "Bytecodes.h"
 #include "CallLinkInfo.h"
-#include "CatchScope.h"
 #include "CheckpointOSRExitSideState.h"
 #include "CodeBlock.h"
 #include "Debugger.h"
@@ -51,7 +50,7 @@
 #include "InterpreterInlines.h"
 #include "JITCode.h"
 #include "JSArrayInlines.h"
-#include "JSBoundFunction.h"
+#include "JSBoundFunctionInlines.h"
 #include "JSCInlines.h"
 #include "JSCellButterfly.h"
 #include "JSLexicalEnvironment.h"
@@ -78,6 +77,7 @@
 #include "StackFrame.h"
 #include "StackVisitor.h"
 #include "StrictEvalActivation.h"
+#include "TopExceptionScope.h"
 #include "VMEntryScopeInlines.h"
 #include "VMInlines.h"
 #include "VMTrapsInlines.h"
@@ -895,7 +895,7 @@ static void sanitizeRemoteFunctionException(VM& vm, JSRemoteFunction* remoteFunc
 
     JSGlobalObject* globalObject = remoteFunction->globalObject();
     JSValue exceptionValue = exception->value();
-    scope.clearException();
+    TRY_CLEAR_EXCEPTION(scope, void());
 
     // Avoid user-observable ToString()
     String exceptionString;
@@ -938,7 +938,7 @@ NEVER_INLINE CatchInfo Interpreter::unwind(VM& vm, CallFrame*& callFrame, Except
     std::optional<DeferTerminationForAWhile> deferScope;
     if (!vm.isTerminationException(exception))
         deferScope.emplace(vm);
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     ASSERT(reinterpret_cast<void*>(callFrame) != vm.topEntryFrame);
     CodeBlock* codeBlock = callFrame->isNativeCalleeFrame() ? nullptr : callFrame->codeBlock();
@@ -1710,7 +1710,7 @@ NEVER_INLINE void Interpreter::debug(CallFrame* callFrame, DebugHookType debugHo
 {
     VM& vm = this->vm();
     DeferTermination deferScope(vm);
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     if (Options::debuggerTriggersBreakpointException()) [[unlikely]] {
         if (debugHookType == DidReachDebuggerStatement)

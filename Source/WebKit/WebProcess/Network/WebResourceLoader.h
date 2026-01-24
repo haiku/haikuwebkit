@@ -27,6 +27,7 @@
 
 #include "Connection.h"
 #include "MessageSender.h"
+#include "ServiceWorkerTimingInfo.h"
 #include "WebPageProxyIdentifier.h"
 #include "WebResourceInterceptController.h"
 #include <WebCore/FrameIdentifier.h>
@@ -95,7 +96,7 @@ private:
     void updateResultingClientIdentifier(WTF::UUID currentIdentifier, WTF::UUID newIdentifier);
 
     void didBlockAuthenticationChallenge();
-    void setWorkerStart(MonotonicTime value) { m_workerStart = value; }
+    void setServiceWorkerTimingInfo(ServiceWorkerTimingInfo&& info) { m_serviceWorkerTimingInfo = WTF::move(info); }
 
     void stopLoadingAfterXFrameOptionsOrContentSecurityPolicyDenied(const WebCore::ResourceResponse&);
 
@@ -110,6 +111,7 @@ private:
 #endif
 
     size_t calculateBytesTransferredOverNetworkDelta(size_t bytesTransferredOverNetwork);
+    void updateNetworkLoadMetrics(WebCore::NetworkLoadMetrics&);
 
     RefPtr<WebCore::ResourceLoader> m_coreLoader;
     const std::optional<TrackingParameters> m_trackingParameters;
@@ -124,7 +126,7 @@ private:
     Seconds timeSinceLoadStart() const { return MonotonicTime::now() - m_loadStart; }
 
     const MonotonicTime m_loadStart;
-    MonotonicTime m_workerStart;
+    std::optional<ServiceWorkerTimingInfo> m_serviceWorkerTimingInfo;
 };
 
 } // namespace WebKit

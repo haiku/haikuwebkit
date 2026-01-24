@@ -42,7 +42,7 @@ class ThreadTimers;
 class TimerBase;
 
 struct ThreadTimerHeapItem;
-typedef Vector<RefPtr<ThreadTimerHeapItem>> ThreadTimerHeap;
+using ThreadTimerHeap = Vector<Ref<ThreadTimerHeapItem>>;
     
 // A collection of timers per thread. Kept in ThreadGlobalData.
 class ThreadTimers {

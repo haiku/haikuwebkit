@@ -98,9 +98,7 @@ for (var i = 0; i < testLoopCount; i++) {
         1.5819637896591838e308
     );
     shouldBeCloseEnough(Math.hypot(-2.534858246857893e115, 8.988465674311579e307, 8.98846567431158e307), 1.2711610061536462e308);
-    // FIXME: This test result differs from Chrome and Firefox,
-    // although it matches the behavior of Swift, C++, Rust, and Python. Commenting out this test case for now.
-    // shouldBeCloseEnough(Math.hypot(1.3588124894186193e308, 1.4803986201152006e223, 6.741349255733684e307), 1.5168484694516577e308);
+    shouldBeCloseEnough(Math.hypot(1.3588124894186193e308, 1.4803986201152006e223, 6.741349255733684e307), 1.5168484694516577e308);
     shouldBeCloseEnough(Math.hypot(6.741349255733684e307, 1.7976931348623155e308, -7.388327292663961e41), Infinity);
     shouldBeCloseEnough(Math.hypot(-1.9807040628566093e28, 1.7976931348623157e308, 9.9792015476736e291), 1.7976931348623157e308);
     shouldBeCloseEnough(

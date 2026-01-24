@@ -22,7 +22,6 @@ Modules/WebGPU/Implementation/WebGPUTextureViewImpl.cpp
 Modules/WebGPU/Implementation/WebGPUXRBindingImpl.cpp
 Modules/WebGPU/Implementation/WebGPUXRSubImageImpl.cpp
 Modules/notifications/NotificationController.h
-Modules/webdatabase/DatabaseManager.h
 Modules/webdatabase/DatabaseThread.h
 accessibility/AccessibilityObject.cpp
 bindings/js/GarbageCollectionController.cpp
@@ -41,7 +40,6 @@ editing/TextIterator.cpp
 html/HTMLMediaElement.cpp
 html/canvas/PlaceholderRenderingContext.cpp
 html/shadow/DateTimeEditElement.h
-inspector/InspectorInstrumentation.h
 inspector/InspectorStyleSheet.h
 inspector/InstrumentingAgents.h
 inspector/PageInspectorController.h
@@ -78,4 +76,3 @@ rendering/svg/SVGRenderingContext.h
 style/StyleExtractorState.h
 style/StyleScope.h
 testing/Internals.cpp
-xml/parser/XMLDocumentParserLibxml2.cpp

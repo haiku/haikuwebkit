@@ -94,7 +94,7 @@ inline void RenderObject::setNeedsLayout(MarkingBehavior markParents)
         return;
     m_stateBitfields.setFlag(StateFlag::NeedsLayout);
     if (markParents == MarkContainingBlockChain)
-        scheduleLayout(CheckedPtr { markContainingBlocksForLayout() }.get());
+        scheduleLayout(CheckedPtr { markContainingBlocksForLayout() });
     if (hasLayer())
         setLayerNeedsFullRepaint();
 }

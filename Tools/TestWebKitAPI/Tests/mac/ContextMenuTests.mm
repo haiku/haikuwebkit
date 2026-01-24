@@ -324,7 +324,12 @@ TEST(ContextMenuTests, ContextMenuElementInfoContainsQRCodePayloadStringDefaultC
     EXPECT_NULL(elementInfo.qrCodePayloadString);
 }
 
+// FIXME when rdar://168100136 is resolved.
+#if PLATFORM(MAC) && defined(NDEBUG)
+TEST(ContextMenuTests, DISABLED_ContextMenuElementInfoContainsQRCodePayloadString)
+#else
 TEST(ContextMenuTests, ContextMenuElementInfoContainsQRCodePayloadString)
+#endif
 {
     auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
     [configuration _setContextMenuQRCodeDetectionEnabled:YES];

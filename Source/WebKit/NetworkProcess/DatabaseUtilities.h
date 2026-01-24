@@ -48,7 +48,7 @@ protected:
     ~DatabaseUtilities();
 
     WebCore::SQLiteStatementAutoResetScope scopedStatement(std::unique_ptr<WebCore::SQLiteStatement>&, ASCIILiteral query, ASCIILiteral logString) const;
-    WARN_UNUSED_RETURN ScopeExit<Function<void()>> beginTransactionIfNecessary();
+    [[nodiscard]] ScopeExit<Function<void()>> beginTransactionIfNecessary();
     enum class CreatedNewFile : bool { No, Yes };
     CreatedNewFile openDatabaseAndCreateSchemaIfNecessary();
     void enableForeignKeys();

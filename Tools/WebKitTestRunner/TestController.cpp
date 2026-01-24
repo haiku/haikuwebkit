@@ -2710,9 +2710,9 @@ void TestController::didReceiveScriptMessage(WKScriptMessageRef message, Complet
         const auto length = WKArrayGetSize(keys);
         Vector<unsigned char> bytes;
         for (size_t i = 0; i < length; i++) {
-            const auto key = WKArrayGetItemAtIndex(keys, i);
-            const auto keyStr = toWTFString(stringValue(key)).utf8().data();
-            const auto intValue = doubleValue(dictionary, keyStr);
+            auto key = WKArrayGetItemAtIndex(keys, i);
+            auto keyStr = toWTFString(stringValue(key)).utf8();
+            auto intValue = doubleValue(dictionary, keyStr.data());
             bytes.append(static_cast<unsigned char>(intValue));
         }
         WKDataRef data = WKDataCreate(bytes.begin(), bytes.size());

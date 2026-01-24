@@ -52,6 +52,7 @@ static ExceptionOr<ServiceWorkerRoutePattern> toServiceWorkerRoutePattern(const 
         return Exception { ExceptionCode::TypeError, "Service Worker route url pattern has regexp groups"_s };
 
     return ServiceWorkerRoutePattern {
+        pattern.shouldIgnoreCase(),
         pattern.protocol(),
         pattern.username(),
         pattern.password(),
@@ -156,16 +157,12 @@ static std::optional<Exception> verifyRouterCondition(RouterCondition& condition
     return { };
 }
 
-static std::optional<Exception> addServiceWorkerRoute(Vector<ServiceWorkerRoute>& routes, RouterRule&& rule, ServiceWorkerGlobalScope& scope)
+static ExceptionOr<ServiceWorkerRoute> convertServiceWorkerRule(RouterRule&& rule, ServiceWorkerGlobalScope& scope)
 {
     if (auto validationException = verifyRouterCondition(rule.condition, scope))
-        return *validationException;
+        return WTF::move(*validationException);
 
-    auto routeOrException = toServiceWorkerRoute(WTF::move(rule));
-    if (routeOrException.hasException())
-        return routeOrException.releaseException();
-    routes.append(routeOrException.releaseReturnValue());
-    return { };
+    return toServiceWorkerRoute(WTF::move(rule));
 }
 
 // https://w3c.github.io/ServiceWorker/#dom-installevent-addroutes
@@ -177,20 +174,25 @@ void InstallEvent::addRoutes(JSC::JSGlobalObject& globalObject, Variant<RouterRu
     auto rulesVector = switchOn(WTF::move(rules), [](RouterRule&& rule) -> Vector<RouterRule> {
         return Vector<RouterRule>::from(WTF::move(rule));
     }, [](Vector<RouterRule>&& rules) -> Vector<RouterRule> {
-        return { WTF::move(rules) };
+        return WTF::move(rules);
     });
 
     Vector<ServiceWorkerRoute> routes;
     for (auto& rule : rulesVector) {
-        if (auto exception = addServiceWorkerRoute(routes, WTF::move(rule), *serviceWorkerGlobalScope)) {
-            promise->reject(WTF::move(*exception));
+        auto routeOrException = convertServiceWorkerRule(WTF::move(rule), *serviceWorkerGlobalScope);
+        if (routeOrException.hasException()) {
+            promise->reject(routeOrException.releaseException());
             return;
         }
 
-        if (!serviceWorkerGlobalScope->hasFetchEventHandler() && std::get<RouterSourceEnum>(rule.source) == RouterSourceEnum::FetchEvent) {
-            promise->reject(Exception { ExceptionCode::TypeError, "Rule source is fetch event but no fetch event handler is registered"_s });
-            return;
+        auto route = routeOrException.releaseReturnValue();
+        if (!serviceWorkerGlobalScope->hasFetchEventHandler()) {
+            if (auto* source = std::get_if<RouterSourceEnum>(&route.source); *source == RouterSourceEnum::FetchEvent || *source == RouterSourceEnum::RaceNetworkAndFetchHandler) {
+                promise->reject(Exception { ExceptionCode::TypeError, "Rule source requires registering a fetch event handler"_s });
+                return;
+            }
         }
+        routes.append(WTF::move(route));
     }
 
     if (!isWaiting()) {

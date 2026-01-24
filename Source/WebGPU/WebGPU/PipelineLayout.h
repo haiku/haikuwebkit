@@ -81,7 +81,7 @@ public:
     bool updateVertexOffsets(uint32_t, const Vector<uint32_t>&, std::span<uint32_t> destination);
     bool updateFragmentOffsets(uint32_t, const Vector<uint32_t>&, std::span<uint32_t> destination);
     bool updateComputeOffsets(uint32_t, const Vector<uint32_t>&, std::span<uint32_t> destination);
-    using BindGroupHashMap = HashMap<uint32_t, RefPtr<const BindGroup>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
+    using BindGroupHashMap = HashMap<uint32_t, Ref<const BindGroup>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
     NSString* errorValidatingBindGroupCompatibility(const BindGroupHashMap&) const;
     uint64_t uniqueId() const { return m_uniqueId; }
 private:

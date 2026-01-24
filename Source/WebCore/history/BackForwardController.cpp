@@ -63,7 +63,7 @@ RefPtr<HistoryItem> BackForwardController::forwardItem(std::optional<FrameIdenti
 
 Ref<Page> BackForwardController::protectedPage() const
 {
-    return m_page.get();
+    return m_page;
 }
 
 bool BackForwardController::canGoBackOrForward(int distance) const

@@ -14,6 +14,7 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
+/LayoutTests/imported/w3c/web-platform-tests/html/browsers/origin/api/file-scheme-origin.tentative.any.js
 /LayoutTests/imported/w3c/web-platform-tests/html/browsers/origin/api/origin-comparison.any.js
 /LayoutTests/imported/w3c/web-platform-tests/html/browsers/origin/api/origin-from-extendablemessageevent.any.js
 /LayoutTests/imported/w3c/web-platform-tests/html/browsers/origin/api/origin-from-global.any.js
@@ -25,4 +26,5 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/browsers/origin/api/origin-from-string.any.js
 /LayoutTests/imported/w3c/web-platform-tests/html/browsers/origin/api/origin-from-url.any.js
 /LayoutTests/imported/w3c/web-platform-tests/html/browsers/origin/api/origin-from-window.window.js
+/LayoutTests/imported/w3c/web-platform-tests/html/browsers/origin/api/origin-from-worker.window.js
 /LayoutTests/imported/w3c/web-platform-tests/html/browsers/origin/api/origin-from.any.js

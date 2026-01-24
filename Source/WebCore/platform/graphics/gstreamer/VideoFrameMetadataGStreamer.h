@@ -31,7 +31,7 @@
 void webkitGstBufferAddVideoFrameMetadata(GstBuffer*, std::optional<WebCore::VideoFrameTimeMetadata>, WebCore::VideoFrame::Rotation, bool isMirrored, WebCore::VideoFrameContentHint);
 
 // Makes the buffer writable before modifying it.
-WARN_UNUSED_RETURN GRefPtr<GstBuffer> webkitGstBufferSetVideoFrameMetadata(GRefPtr<GstBuffer>&&, std::optional<WebCore::VideoFrameTimeMetadata>, WebCore::VideoFrame::Rotation = WebCore::VideoFrame::Rotation::None, bool isMirrored = false, WebCore::VideoFrameContentHint = WebCore::VideoFrameContentHint::None);
+[[nodiscard]] GRefPtr<GstBuffer> webkitGstBufferSetVideoFrameMetadata(GRefPtr<GstBuffer>&&, std::optional<WebCore::VideoFrameTimeMetadata>, WebCore::VideoFrame::Rotation = WebCore::VideoFrame::Rotation::None, bool isMirrored = false, WebCore::VideoFrameContentHint = WebCore::VideoFrameContentHint::None);
 
 void webkitGstTraceProcessingTimeForElement(GstElement*);
 WebCore::VideoFrameMetadata webkitGstBufferGetVideoFrameMetadata(GstBuffer*);

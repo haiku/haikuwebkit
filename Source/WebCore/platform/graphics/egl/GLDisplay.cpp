@@ -58,7 +58,9 @@ namespace WebCore {
 
 RefPtr<GLDisplay> GLDisplay::create(EGLDisplay eglDisplay)
 {
+#if !USE(GRAPHICS_LAYER_WC)
     ASSERT(isMainThread());
+#endif
     if (eglDisplay == EGL_NO_DISPLAY)
         return nullptr;
 

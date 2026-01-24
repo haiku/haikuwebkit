@@ -95,20 +95,19 @@ void ClipboardItemBindingsDataSource::getType(const String& type, Ref<DeferredPr
     }
 
     Ref itemPromise = m_itemPromises[matchIndex].value;
-    itemPromise->whenSettled([itemPromise, promise = WTF::move(promise), type] () mutable {
-        if (itemPromise->status() != DOMPromise::Status::Fulfilled) {
+    itemPromise->whenSettledWithResult([promise = WTF::move(promise), type](auto* globalObject, bool isFulfilled, auto result) mutable {
+        if (!isFulfilled) {
             promise->reject(ExceptionCode::AbortError);
             return;
         }
 
-        auto result = itemPromise->result();
         if (!result) {
             promise->reject(ExceptionCode::TypeError);
             return;
         }
 
         String string;
-        result.getString(itemPromise->globalObject(), string);
+        result.getString(globalObject, string);
         if (!string.isNull()) {
             promise->resolve<IDLInterface<Blob>>(ClipboardItem::blobFromString(promise->protectedScriptExecutionContext().get(), string, type));
             return;
@@ -152,14 +151,13 @@ void ClipboardItemBindingsDataSource::collectDataForWriting(Clipboard& destinati
         auto promise = typeAndItem.value;
         /* hack: gcc 8.4 will segfault if the WeakPtr is instantiated within the lambda captures */
         auto wl = WeakPtr { itemTypeLoader };
-        promise->whenSettled([this, protectedItem = Ref { m_item.get() }, destination = m_writingDestination, promise, type, weakItemTypeLoader = WTF::move(wl)] () mutable {
+        promise->whenSettledWithResult([this, protectedItem = Ref { m_item.get() }, destination = m_writingDestination, type, weakItemTypeLoader = WTF::move(wl)] (auto* globalObject, bool, JSC::JSValue result) mutable {
             if (!weakItemTypeLoader)
                 return;
 
             Ref itemTypeLoader { *weakItemTypeLoader };
             ASSERT_UNUSED(this, notFound != m_itemTypeLoaders.findIf([&] (auto& loader) { return loader.ptr() == itemTypeLoader.ptr(); }));
 
-            auto result = promise->result();
             if (!result) {
                 itemTypeLoader->didFailToResolve();
                 return;
@@ -177,7 +175,7 @@ void ClipboardItemBindingsDataSource::collectDataForWriting(Clipboard& destinati
             }
 
             String text;
-            result.getString(promise->globalObject(), text);
+            result.getString(globalObject, text);
             if (!text.isNull()) {
                 itemTypeLoader->didResolveToString(text);
                 return;

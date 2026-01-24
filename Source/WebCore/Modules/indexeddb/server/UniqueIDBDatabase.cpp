@@ -536,7 +536,7 @@ void UniqueIDBDatabase::clearTransactionsOnConnection(UniqueIDBDatabaseConnectio
     Deque<Ref<UniqueIDBDatabaseTransaction>> transactionsToAbort;
     for (auto& transaction : m_inProgressTransactions.values()) {
         if (transaction->databaseConnection() == &connection)
-            transactionsToAbort.append(*transaction);
+            transactionsToAbort.append(transaction);
     }
     for (auto& transaction : transactionsToAbort)
         transaction->abortWithoutCallback();
@@ -1393,10 +1393,10 @@ void UniqueIDBDatabase::handleTransactions()
     LOG(IndexedDB, "UniqueIDBDatabase::handleTransactions - There are %zu pending", m_pendingTransactions.size());
 
     bool hadDeferredTransactions = false;
-    auto transaction = takeNextRunnableTransaction(hadDeferredTransactions);
+    RefPtr transaction = takeNextRunnableTransaction(hadDeferredTransactions);
 
     while (transaction) {
-        m_inProgressTransactions.set(transaction->info().identifier(), transaction);
+        m_inProgressTransactions.set(transaction->info().identifier(), *transaction);
         for (auto objectStore : transaction->objectStoreIdentifiers()) {
             m_objectStoreTransactionCounts.add(objectStore);
             if (!transaction->isReadOnly()) {
@@ -1543,7 +1543,7 @@ void UniqueIDBDatabase::immediateClose()
     }
     m_pendingTransactions.clear();
 
-    for (RefPtr transaction : copyToVector(m_inProgressTransactions.values()))
+    for (Ref transaction : copyToVector(m_inProgressTransactions.values()))
         transaction->abortWithoutCallback();
 
     ASSERT(m_inProgressTransactions.isEmpty());

@@ -94,17 +94,55 @@ enum class DDBridgeDataUpdateType : uint8_t {
 
 @end
 
-@interface DDBridgeChainedFloat4x4 : NSObject
+@interface DDBridgeSkinningData : NSObject
 
-@property (nonatomic) simd_float4x4 transform;
-@property (nonatomic, strong, nullable) DDBridgeChainedFloat4x4 *next;
+@property (nonatomic, readonly) uint8_t influencePerVertexCount;
+@property (nonatomic, readonly, nullable) NSData *jointTransformsData; // [simd_float4x4]
+@property (nonatomic, readonly, nullable) NSData *inverseBindPosesData; // [simd_float4x4]
+@property (nonatomic, readonly, nullable) NSData *influenceJointIndicesData; // [UInt32]
+@property (nonatomic, readonly, nullable) NSData *influenceWeightsData; // [Float]
+@property (nonatomic, readonly) simd_float4x4 geometryBindTransform;
 
 - (instancetype)init NS_UNAVAILABLE;
-
-- (instancetype)initWithTransform:(simd_float4x4)transform NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithInfluencePerVertexCount:(uint8_t)influencePerVertexCount jointTransforms:(nullable NSData *)jointTransforms inverseBindPoses:(nullable NSData *)inverseBindPoses influenceJointIndices:(nullable NSData *)influenceJointIndices influenceWeights:(nullable NSData *)influenceWeights geometryBindTransform:(simd_float4x4)geometryBindTransform NS_DESIGNATED_INITIALIZER;
 
 @end
 
+@interface DDBridgeBlendShapeData : NSObject
+
+@property (nonatomic, readonly) NSData *weights; // [Float]
+@property (nonatomic, readonly) NSArray<NSData *> *positionOffsets; // [[SIMD3<Float>]]
+@property (nonatomic, readonly) NSArray<NSData *> *normalOffsets; // [[SIMD3<Float>]]
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithWeights:(NSData *)weights positionOffsets:(NSArray<NSData *> *)positionOffsets normalOffsets:(NSArray<NSData *> *)normalOffsets NS_DESIGNATED_INITIALIZER;
+
+@end
+
+@interface DDBridgeRenormalizationData : NSObject
+
+@property (nonatomic, readonly) NSData *vertexIndicesPerTriangle; // [UInt32]
+@property (nonatomic, readonly) NSData *vertexAdjacencies; // [UInt32]
+@property (nonatomic, readonly) NSData *vertexAdjacencyEndIndices; // [UInt32]
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithVertexIndicesPerTriangle:(NSData *)vertexIndicesPerTriangle vertexAdjacencies:(NSData *)vertexAdjacencies vertexAdjacencyEndIndices:(NSData *)vertexAdjacencyEndIndices NS_DESIGNATED_INITIALIZER;
+
+@end
+
+@interface DDBridgeDeformationData : NSObject
+
+@property (nonatomic, readonly, nullable) DDBridgeSkinningData *skinningData;
+@property (nonatomic, readonly, nullable) DDBridgeBlendShapeData *blendShapeData;
+@property (nonatomic, readonly, nullable) DDBridgeRenormalizationData *renormalizationData;
+
+- (instancetype)init NS_UNAVAILABLE;
+
+- (instancetype)initWithSkinningData:(nullable DDBridgeSkinningData *)skinningData blendShapeData:(nullable DDBridgeBlendShapeData *)blendShapeData renormalizationData:(nullable DDBridgeRenormalizationData *)renormalizationData NS_DESIGNATED_INITIALIZER;
+
+@end
+
+NS_SWIFT_SENDABLE
 @interface DDBridgeUpdateMesh : NSObject
 
 @property (nonatomic, readonly) NSString *identifier;
@@ -113,9 +151,10 @@ enum class DDBridgeDataUpdateType : uint8_t {
 @property (nonatomic, strong, readonly) NSArray<DDBridgeMeshPart*> *parts;
 @property (nonatomic, strong, readonly, nullable) NSData *indexData;
 @property (nonatomic, strong, readonly) NSArray<NSData *> *vertexData;
-@property (nonatomic, strong, readonly, nullable) DDBridgeChainedFloat4x4 *instanceTransforms;
+@property (nonatomic, strong, readonly, nullable) NSData *instanceTransformsData;
 @property (nonatomic, readonly) long instanceTransformsCount;
 @property (nonatomic, strong, readonly) NSArray<NSString *> *materialPrims;
+@property (nonatomic, strong, readonly, nullable) DDBridgeDeformationData *deformationData;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithIdentifier:(NSString *)identifier
@@ -124,9 +163,10 @@ enum class DDBridgeDataUpdateType : uint8_t {
     parts:(NSArray<DDBridgeMeshPart*> *)parts
     indexData:(nullable NSData *)indexData
     vertexData:(NSArray<NSData *> *)vertexData
-    instanceTransforms:(nullable DDBridgeChainedFloat4x4 *)instanceTransforms
+    instanceTransforms:(nullable NSData *)instanceTransforms
     instanceTransformsCount:(long)instanceTransformsCount
-    materialPrims:(NSArray<NSString *> *)materialPrims NS_DESIGNATED_INITIALIZER;
+    materialPrims:(NSArray<NSString *> *)materialPrims
+    deformationData:(nullable DDBridgeDeformationData *)deformationData NS_DESIGNATED_INITIALIZER;
 
 @end
 
@@ -313,6 +353,7 @@ typedef NS_ENUM(NSInteger, DDBridgeNodeType) {
 
 @end
 
+NS_SWIFT_SENDABLE
 @interface DDBridgeUpdateMaterial : NSObject
 
 @property (nonatomic, strong, readonly, nullable) NSData *materialGraph;
@@ -323,19 +364,28 @@ typedef NS_ENUM(NSInteger, DDBridgeNodeType) {
 
 @end
 
+@interface DDUSDConfiguration : NSObject
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
+
+- (void)createMaterialCompiler:(void (^)(void))completionHandler;
+
+@end
+
 @interface DDBridgeReceiver : NSObject
 
-- (void)initRenderer:(id<MTLTexture>)texture completionHandler:(void (^)(void))completionHandler;
 - (void)renderWithTexture:(id<MTLTexture>)texture;
 - (void)updateMesh:(DDBridgeUpdateMesh *)descriptor completionHandler:(void (^)(void))completionHandler;
-- (void)updateTexture:(DDBridgeUpdateTexture *)descriptor completionHandler:(void (^)(void))completionHandler;
+- (void)updateTexture:(DDBridgeUpdateTexture *)descriptor;
 - (void)updateMaterial:(DDBridgeUpdateMaterial *)descriptor completionHandler:(void (^)(void))completionHandler;
 - (void)setTransform:(simd_float4x4)transform;
 - (void)setCameraDistance:(float)distance;
 - (void)setPlaying:(BOOL)play;
+- (void)setEnvironmentMap:(DDBridgeImageAsset *)imageAsset;
 
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
+- (nullable instancetype)initWithConfiguration:(DDUSDConfiguration *)configuration diffuseAsset:(DDBridgeImageAsset *)diffuseAsset specularAsset:(DDBridgeImageAsset *)specularAsset error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 @end
 

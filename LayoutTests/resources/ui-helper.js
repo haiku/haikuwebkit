@@ -2584,8 +2584,8 @@ window.UIHelper = class UIHelper {
             })()`, debugText => {
                 if (options.normalize) {
                     debugText = debugText
-                        .replace(/uid=\d+/g, "uid=…")
-                        .replace(/"uid":\d+/g, "\"uid\":\"…\"")
+                        .replace(/uid=((\d+_)+)?(\d+)/g, "uid=…")
+                        .replace(/"uid":\"((\d+_)+)?(\d+)\"/g, "\"uid\":\"…\"")
                         .replace(/\[\d+,\d+;\d+x\d+\]/g, "[…]")
                         .replace(/\t/g, "    ");
                 }

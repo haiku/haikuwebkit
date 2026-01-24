@@ -71,7 +71,6 @@ enum GeneratedOperandType { GeneratedOperandTypeUnknown, GeneratedOperandInteger
 // a speculative check has failed. This allows the SpeculativeJIT
 // to propagate type information (including information that has
 // only speculatively been asserted) through the dataflow.
-DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(SpeculativeJIT);
 class SpeculativeJIT : public JITCompiler {
     using Base = JITCompiler;
     WTF_MAKE_SEQUESTERED_ARENA_ALLOCATED(SpeculativeJIT);
@@ -2298,7 +2297,7 @@ public:
         m_edge = edge;
         ASSERT(m_gprOrInvalid == InvalidGPRReg);
         ASSERT(m_jit);
-        ASSERT(edge.useKind() == UntypedUse || edge.useKind() == KnownCellUse);
+        ASSERT(edge.useKind() == KnownStorageUse);
         if (jit->isFilled(node()))
             gpr();
     }

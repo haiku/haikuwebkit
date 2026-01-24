@@ -2039,6 +2039,11 @@ LayoutRect LocalFrameView::layoutViewportRect() const
     return LayoutRect(m_layoutViewportOrigin, baseLayoutViewportSize());
 }
 
+void LocalFrameView::updateLayoutViewportRect()
+{
+    m_frame->loader().client().broadcastFrameLayoutViewportRectToOtherProcesses(layoutViewportRect());
+}
+
 // visibleContentRect is in the bounds of the scroll view content. That consists of an
 // optional header, the document, and an optional footer. Only the document is scaled,
 // so we have to compute the visible part of the document in unscaled document coordinates.
@@ -5496,11 +5501,6 @@ void LocalFrameView::invalidateControlTints()
     traverseForPaintInvalidation(NullGraphicsContext::PaintInvalidationReasons::InvalidatingControlTints);
 }
 
-void LocalFrameView::invalidateImagesWithAsyncDecodes()
-{
-    traverseForPaintInvalidation(NullGraphicsContext::PaintInvalidationReasons::InvalidatingImagesWithAsyncDecodes);
-}
-
 void LocalFrameView::updateAccessibilityObjectRegions()
 {
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
@@ -6188,37 +6188,6 @@ FloatPoint LocalFrameView::clientToDocumentPoint(FloatPoint point) const
 {
     point.move(-documentToClientOffset());
     return point;
-}
-
-FloatPoint LocalFrameView::absoluteToLayoutViewportPoint(FloatPoint p) const
-{
-    ASSERT(m_frame->settings().visualViewportEnabled());
-    p.scale(1 / m_frame->frameScaleFactor());
-    p.moveBy(-layoutViewportRect().location());
-    return p;
-}
-
-FloatPoint LocalFrameView::layoutViewportToAbsolutePoint(FloatPoint p) const
-{
-    ASSERT(m_frame->settings().visualViewportEnabled());
-    p.moveBy(layoutViewportRect().location());
-    return p.scaled(m_frame->frameScaleFactor());
-}
-
-FloatRect LocalFrameView::layoutViewportToAbsoluteRect(FloatRect rect) const
-{
-    ASSERT(m_frame->settings().visualViewportEnabled());
-    rect.moveBy(layoutViewportRect().location());
-    rect.scale(m_frame->frameScaleFactor());
-    return rect;
-}
-
-FloatRect LocalFrameView::absoluteToLayoutViewportRect(FloatRect rect) const
-{
-    ASSERT(m_frame->settings().visualViewportEnabled());
-    rect.scale(1 / m_frame->frameScaleFactor());
-    rect.moveBy(-layoutViewportRect().location());
-    return rect;
 }
 
 FloatRect LocalFrameView::clientToLayoutViewportRect(FloatRect rect) const

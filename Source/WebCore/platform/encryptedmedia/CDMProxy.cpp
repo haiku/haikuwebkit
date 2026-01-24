@@ -127,8 +127,7 @@ void ReferenceAwareKeyStore::unrefAllKeysFrom(const KeyStore& otherStore)
         auto findingResult = m_keys.find(otherKey->id());
         if (findingResult == m_keys.end())
             continue;
-        const RefPtr<ReferenceAwareKeyHandle>& key = findingResult->value;
-        RELEASE_ASSERT(key);
+        Ref key = findingResult->value;
         key->removeReference(otherStore.id());
         if (!key->hasReferences())
             remove(key);
@@ -139,8 +138,8 @@ void ReferenceAwareKeyStore::merge(const KeyStore& otherStore)
 {
     ASSERT(isMainThread());
     for (const auto& otherKey : otherStore.values()) {
-        RefPtr<ReferenceAwareKeyHandle> key = keyHandle(otherKey->id());
-        auto otherReferenceAwareKey = ReferenceAwareKeyHandle::createFrom(otherKey, otherStore.id());
+        RefPtr key = keyHandle(otherKey->id());
+        Ref otherReferenceAwareKey = ReferenceAwareKeyHandle::create(otherKey, otherStore.id());
         if (key)
             key->updateKeyFrom(WTF::move(otherReferenceAwareKey));
         else

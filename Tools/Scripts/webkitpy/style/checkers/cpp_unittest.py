@@ -2241,6 +2241,17 @@ class CppStyleTest(CppStyleTestBase):
             '{\n'
             '}\n',
             '')
+        # Test LIFETIME_BOUND allows braces on next line
+        self.assert_multi_line_lint(
+            'T& getValue() LIFETIME_BOUND\n'
+            '{\n'
+            '}\n',
+            '')
+        self.assert_multi_line_lint(
+            'const T& getValue() const LIFETIME_BOUND\n'
+            '{\n'
+            '}\n',
+            '')
         self.assert_multi_line_lint(
             '[]() {\n'
             '}\n',
@@ -5942,6 +5953,54 @@ class WebKitStyleTest(CppStyleTestBase):
             "  [build/using_std] [4]",
             'foo.mm')
 
+    def test_variant_usage(self):
+        # Test detection of <variant> include
+        self.assert_lint(
+            '#include <variant>',
+            "Use '#include <wtf/Variant.h>' and 'WTF::Variant' instead of '#include <variant>' and 'std::variant'."
+            "  [build/variant] [4]",
+            'foo.cpp')
+
+        # Test detection of std::variant usage
+        self.assert_lint(
+            'using MyVariant = std::variant<int, double>;',
+            "Use 'WTF::Variant' instead of 'std::variant'. WTF::Variant provides better code size and performance."
+            "  [build/variant] [4]",
+            'foo.cpp')
+
+        self.assert_lint(
+            'std::variant<Foo, Bar> m_data;',
+            "Use 'WTF::Variant' instead of 'std::variant'. WTF::Variant provides better code size and performance."
+            "  [build/variant] [4]",
+            'foo.h')
+
+        # Test that WTF::Variant is acceptable
+        self.assert_lint(
+            'using MyVariant = Variant<int, double>;',
+            '',
+            'foo.cpp')
+
+        self.assert_lint(
+            '#include <wtf/Variant.h>',
+            '',
+            'foo.cpp')
+
+        self.assert_lint(
+            'Variant<Foo, Bar> m_data;',
+            '',
+            'foo.h')
+
+        # Test that the check doesn't apply to C files
+        self.assert_lint(
+            '#include <variant>',
+            '',
+            'foo.c')
+
+        self.assert_lint(
+            'std::variant<int, double> data;',
+            '',
+            'foo.c')
+
     def test_using_namespace(self):
         self.assert_lint(
             'using namespace foo;',
@@ -6499,6 +6558,22 @@ class WebKitStyleTest(CppStyleTestBase):
         self.assert_lint(
             'snprintf(buffer, "%s", s);',
             'snprintf is unsafe. Use SAFE_SPRINTF instead.  [safercpp/printf] [4]',
+            'foo.cpp')
+
+        # Method calls should not trigger warnings (PrintStream::printf is safe)
+        self.assert_lint(
+            'out.printf("%s", s);',
+            '',
+            'foo.cpp')
+
+        self.assert_lint(
+            'stream->printf("%s", s);',
+            '',
+            'foo.cpp')
+
+        self.assert_lint(
+            'm_out.printf("test %d", value);',
+            '',
             'foo.cpp')
 
         self.assert_lint(

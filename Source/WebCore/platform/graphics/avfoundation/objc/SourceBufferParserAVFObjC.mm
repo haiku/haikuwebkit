@@ -48,6 +48,7 @@
 #import <objc/runtime.h>
 #import <pal/avfoundation/MediaTimeAVFoundation.h>
 #import <pal/spi/cocoa/AVFoundationSPI.h>
+#import <pal/spi/cocoa/AVStreamDataParserSPI.h>
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/WeakObjCPtr.h>
 #import <wtf/cf/TypeCastsCF.h>

@@ -688,6 +688,7 @@ private:
     // Specific to MediaStream playback.
     MediaTime m_startTime;
     std::optional<MediaTime> m_pausedTime;
+    String m_videoDecoderName;
 
     void setupCodecProbe(GstElement*);
     Lock m_codecsLock;

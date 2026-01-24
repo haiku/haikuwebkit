@@ -375,7 +375,7 @@ Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Runtime::RemoteObjec
         JSC::JSLockHolder lock(state);
 
         auto* globalObject = deprecatedGlobalObjectForPrototype(state);
-        value = toJS(state, globalObject, animation.get());
+        value = toJS(state, globalObject, *animation);
     }
 
     if (!value) {

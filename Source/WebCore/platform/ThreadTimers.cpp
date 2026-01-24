@@ -118,7 +118,7 @@ void ThreadTimers::sharedTimerFiredInternal()
     auto timeToQuit = ApproximateTime::now() + maxDurationOfFiringTimers;
 
     while (!m_timerHeap.isEmpty()) {
-        Ref<ThreadTimerHeapItem> item = *m_timerHeap.first();
+        Ref item = m_timerHeap.first();
         ASSERT(item->hasTimer());
         if (!item->hasTimer()) {
             TimerBase::heapDeleteNullMin(m_timerHeap);

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 
 #include "MessageReceiver.h"
 #include <WebCore/CredentialRequestCoordinatorClient.h>
@@ -53,7 +53,6 @@ class DigitalCredentialsCoordinator : public WebCore::CredentialRequestCoordinat
     WTF_MAKE_TZONE_ALLOCATED(DigitalCredentialsCoordinator);
 
 public:
-    explicit DigitalCredentialsCoordinator(WebPage&);
     ~DigitalCredentialsCoordinator();
 
     static Ref<DigitalCredentialsCoordinator> create(WebPage&);
@@ -66,6 +65,8 @@ public:
     void provideRawDigitalCredentialRequests(CompletionHandler<void(Vector<WebCore::UnvalidatedDigitalCredentialRequest>&&)>&&);
 
 private:
+    explicit DigitalCredentialsCoordinator(WebPage&);
+
     // IPC::MessageReceiver.
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) final;
 
@@ -76,4 +77,4 @@ private:
 
 } // namespace WebKit
 
-#endif // ENABLE(DIGITAL_CREDENTIALS_UI)
+#endif // ENABLE(WEB_AUTHN)

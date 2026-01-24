@@ -53,7 +53,7 @@ public:
     Type type() const { return m_type; }
     static constexpr UBiDiLevel opaqueBidiLevel = 0xff;
     UBiDiLevel bidiLevel() const { return m_bidiLevel; }
-    const Box& layoutBox() const { return *m_layoutBox; }
+    const Box& layoutBox() const { return m_layoutBox.get(); }
     const RenderStyle& style() const { return layoutBox().style(); }
     const RenderStyle& firstLineStyle() const { return layoutBox().firstLineStyle(); }
 
@@ -76,7 +76,7 @@ private:
     void setBidiLevel(UBiDiLevel bidiLevel) { m_bidiLevel = bidiLevel; }
     void setWidth(InlineLayoutUnit);
 
-    const Box* m_layoutBox { nullptr };
+    CheckedRef<const Box> m_layoutBox;
 
 protected:
     InlineLayoutUnit m_width { };
@@ -102,7 +102,7 @@ protected:
 };
 
 inline InlineItem::InlineItem(const Box& layoutBox, Type type, UBiDiLevel bidiLevel)
-    : m_layoutBox(&layoutBox)
+    : m_layoutBox(layoutBox)
     , m_bidiLevel(bidiLevel)
     , m_type(type)
 {

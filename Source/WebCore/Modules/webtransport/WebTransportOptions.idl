@@ -25,6 +25,7 @@
 
 [
     EnabledBySetting=WebTransportEnabled,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary WebTransportOptions {
     boolean allowPooling = false;
     boolean requireUnreliable = false;

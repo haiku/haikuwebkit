@@ -29,6 +29,7 @@
 #if PLATFORM(MAC)
 
 #import "AppKitSPI.h"
+#import "WKAPICast.h"
 #import "WKIntelligenceTextEffectCoordinator.h"
 #import "WKTextFinderClient.h"
 #import "WKWebViewConfigurationPrivate.h"
@@ -49,6 +50,10 @@
 #import <pal/spi/mac/NSViewSPI.h>
 #import <wtf/StdLibExtras.h>
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
+
+#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/WKWebViewMacAdditionsBefore.mm>)
+#import <WebKitAdditions/WKWebViewMacAdditionsBefore.mm>
+#endif
 
 _WKOverlayScrollbarStyle toAPIScrollbarStyle(std::optional<WebCore::ScrollbarOverlayStyle> coreScrollbarStyle)
 {
@@ -1173,6 +1178,10 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 }
 
 #endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
+#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/WKWebViewMacAdditionsAfter.mm>)
+#import <WebKitAdditions/WKWebViewMacAdditionsAfter.mm>
+#endif
 
 @end
 

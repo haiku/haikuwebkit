@@ -677,7 +677,7 @@ void InspectorCanvasAgent::unbindCanvas(InspectorCanvas& inspectorCanvas)
     Vector<InspectorShaderProgram*> programsToRemove;
     for (auto& inspectorProgram : m_identifierToInspectorProgram.values()) {
         if (&inspectorProgram->canvas() == &inspectorCanvas)
-            programsToRemove.append(inspectorProgram.get());
+            programsToRemove.append(inspectorProgram.ptr());
     }
     for (auto* inspectorProgram : programsToRemove)
         unbindProgram(*inspectorProgram);
@@ -711,7 +711,7 @@ RefPtr<InspectorCanvas> InspectorCanvasAgent::findInspectorCanvas(CanvasRenderin
 {
     for (auto& inspectorCanvas : m_identifierToInspectorCanvas.values()) {
         if (&inspectorCanvas->canvasContext() == &context)
-            return inspectorCanvas;
+            return inspectorCanvas.ptr();
     }
     return nullptr;
 }
@@ -746,7 +746,7 @@ RefPtr<InspectorShaderProgram> InspectorCanvasAgent::findInspectorProgram(WebGLP
 {
     for (auto& inspectorProgram : m_identifierToInspectorProgram.values()) {
         if (&inspectorProgram->program() == &program)
-            return inspectorProgram;
+            return inspectorProgram.ptr();
     }
     return nullptr;
 }

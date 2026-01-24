@@ -73,9 +73,9 @@ template<typename T> class RetainPtr;
 template<typename T> constexpr bool IsNSType = std::is_convertible_v<T, id>;
 template<typename T> using RetainPtrType = std::conditional_t<IsNSType<T> && !std::is_same_v<T, id>, std::remove_pointer_t<T>, T>;
 
-template<typename T> WARN_UNUSED_RETURN constexpr RetainPtr<RetainPtrType<T>> adoptCF(T CF_RELEASES_ARGUMENT);
+template<typename T> [[nodiscard]] constexpr RetainPtr<RetainPtrType<T>> adoptCF(T CF_RELEASES_ARGUMENT);
 
-template<typename T> WARN_UNUSED_RETURN constexpr RetainPtr<RetainPtrType<T>> adoptNS(T NS_RELEASES_ARGUMENT);
+template<typename T> [[nodiscard]] constexpr RetainPtr<RetainPtrType<T>> adoptNS(T NS_RELEASES_ARGUMENT);
 
 template<typename T> class RetainPtr {
 public:
@@ -108,12 +108,12 @@ public:
     void clear();
 
     template<typename U = StorageType>
-    WARN_UNUSED_RETURN std::enable_if_t<IsNSType<U> && std::is_same_v<U, StorageType>, StorageType> leakRef() NS_RETURNS_RETAINED {
+    [[nodiscard]] std::enable_if_t<IsNSType<U> && std::is_same_v<U, StorageType>, StorageType> leakRef() NS_RETURNS_RETAINED {
         return std::exchange(m_ptr, nullptr);
     }
 
     template<typename U = StorageType>
-    WARN_UNUSED_RETURN std::enable_if_t<!IsNSType<U> && std::is_same_v<U, StorageType>, StorageType> leakRef() CF_RETURNS_RETAINED {
+    [[nodiscard]] std::enable_if_t<!IsNSType<U> && std::is_same_v<U, StorageType>, StorageType> leakRef() CF_RETURNS_RETAINED {
         return std::exchange(m_ptr, nullptr);
     }
 
@@ -183,11 +183,11 @@ private:
 template<typename T> RetainPtr(T) -> RetainPtr<RetainPtrType<T>>;
 
 // Helper function for creating a RetainPtr using template argument deduction.
-template<typename T> WARN_UNUSED_RETURN RetainPtr<RetainPtrType<T>> retainPtr(T);
+template<typename T> [[nodiscard]] RetainPtr<RetainPtrType<T>> retainPtr(T);
 
 template<typename T> inline RetainPtr<T>::~RetainPtr()
 {
-    if (auto ptr = std::exchange(m_ptr, nullptr))
+    SUPPRESS_UNRETAINED_LOCAL if (auto ptr = std::exchange(m_ptr, nullptr))
         releaseFoundationPtr(ptr);
 }
 

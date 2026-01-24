@@ -47,7 +47,7 @@ struct DataKey {
         encoder << partition << type << identifier;
     }
 
-    template <class Decoder> WARN_UNUSED_RETURN static bool decodeForPersistence(Decoder& decoder, DataKey& dataKey)
+    template <class Decoder> [[nodiscard]] static bool decodeForPersistence(Decoder& decoder, DataKey& dataKey)
     {
         return decoder.decode(dataKey.partition) && decoder.decode(dataKey.type) && decoder.decode(dataKey.identifier);
     }

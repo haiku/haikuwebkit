@@ -3,7 +3,6 @@ list(APPEND WTF_SOURCES
     android/RefPtrAndroid.cpp
 
     generic/MainThreadGeneric.cpp
-    generic/MemoryFootprintGeneric.cpp
     generic/WorkQueueGeneric.cpp
 
     glib/Application.cpp
@@ -20,6 +19,7 @@ list(APPEND WTF_SOURCES
     glib/URLGLib.cpp
 
     linux/CurrentProcessMemoryStatus.cpp
+    linux/MemoryFootprintLinux.cpp
     linux/RealTimeThreads.cpp
 
     posix/CPUTimePOSIX.cpp

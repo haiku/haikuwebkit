@@ -57,7 +57,7 @@ private:
 
     // CSSOM functions. Don't make these public.
     CSSRule* parentRule() const final;
-    CSSRule* cssRules() const final;
+    CSSRuleList* cssRules() const final;
     unsigned length() const final;
     String item(unsigned index) const final;
     RefPtr<DeprecatedCSSOMValue> getPropertyCSSValue(const String& propertyName) final;

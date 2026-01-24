@@ -280,6 +280,15 @@ auto RegisterAllocator<Backend>::allocate(Backend& jit, const OpPutToScope& inst
     return allocateImpl<1>(jit, instruction, index, uses, defs); // 1 scratch for metadata
 }
 
+template<typename Backend>
+auto RegisterAllocator<Backend>::allocate(Backend& jit, const OpMov& instruction, BytecodeIndex index)
+{
+    // TODO: Consider other heuristics here such as transferring ownership (optionally only if all registers are full)
+    std::array<VirtualRegister, 1> uses = { instruction.m_src };
+    std::array<VirtualRegister, 1> defs = { instruction.m_dst };
+    return allocateImpl<0>(jit, instruction, index, uses, defs);
+}
+
 
 } // namespace JSC
 

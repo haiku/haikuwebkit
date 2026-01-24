@@ -86,7 +86,7 @@ DOCUMENTLOADER_STOPLOADING, "[pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMainFra
 
 MEDIASESSIONMANAGERCOCOA_SESSIONCANPRODUCEAUDIOCHANGED, "MediaSessionManagerCocoa::sessionCanProduceAudioChanged", (), DEFAULT, Media
 MEDIASESSIONMANAGERCOCOA_CLIENTCHARACTERISTICSCHANGED, "MediaSessionManagerCocoa::clientCharacteristicsChanged, session ID = %" PRIu64, (uint64_t), DEFAULT, Media
-MEDIASESSIONMANAGERCOCOA_UPDATESESSIONSTATE, "MediaSessionManagerCocoa::updateSessionState: AudioCapture(%d), AudioTrack(%d), Video(%d), Audio(%d), VideoAudio(%d), WebAudio(%d)", (int, int, int, int, int, int), DEFAULT, Media
+MEDIASESSIONMANAGERCOCOA_UPDATESESSIONSTATE, "MediaSessionManagerCocoa::updateSessionState: AudioCapture(%d), AudioTrack(%d), Video(%d), Audio(%d), VideoAudio(%d), WebAudio(%d), DOMMediaSession(%d)", (int, int, int, int, int, int, int), DEFAULT, Media
 
 MEDIASESSIONMANAGERINTERFACE_REMOVESESSION, "MediaSessionManagerInterface::removeSession, session ID = %" PRIu64 "", (uint64_t), DEFAULT, Media
 MEDIASESSIONMANAGERINTERFACE_SESSIONWILLENDPLAYBACK, "MediaSessionManagerInterface::sessionWillEndPlayback, session ID = %" PRIu64 "", (uint64_t), DEFAULT, Media

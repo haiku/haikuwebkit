@@ -27,6 +27,7 @@
     EnabledBySetting=WebTransportEnabled,
     JSGenerateToJSObject,
     JSGenerateToNativeObject,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary WebTransportDatagramStats {
     unsigned long long droppedIncoming;
     unsigned long long expiredIncoming;

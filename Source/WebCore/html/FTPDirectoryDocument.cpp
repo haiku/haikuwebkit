@@ -32,6 +32,7 @@
 #include "HTMLDocumentParser.h"
 #include "HTMLTableCellElement.h"
 #include "HTMLTableElement.h"
+#include "HTMLTableRowElement.h"
 #include "LocalizedStrings.h"
 #include "Logging.h"
 #include "FTPDirectoryParser.h"

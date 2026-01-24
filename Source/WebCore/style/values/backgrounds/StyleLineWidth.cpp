@@ -42,29 +42,7 @@ namespace Style {
 
 // MARK: - Conversion
 
-static auto handleKeywordValue(BuilderState& state, CSSValueID valueID) -> LineWidth
-{
-    float keywordValue;
-    switch (valueID) {
-    case CSSValueThin:
-        keywordValue = 1.0f;
-        break;
-    case CSSValueMedium:
-        keywordValue = 3.0f;
-        break;
-    case CSSValueThick:
-        keywordValue = 5.0f;
-        break;
-    default:
-        state.setCurrentPropertyInvalidAtComputedValueTime();
-        keywordValue = 3.0f; // Medium
-        break;
-    }
-
-    return LineWidth::Length { floorToDevicePixel(keywordValue * state.style().usedZoom(), state.document().deviceScaleFactor()) };
-}
-
-static LineWidth::Length snapLengthAsBorderWidth(float length, float deviceScaleFactor)
+LineWidth::Length LineWidth::snapLengthAsBorderWidth(float length, float deviceScaleFactor)
 {
     // https://drafts.csswg.org/css-values-4/#snap-a-length-as-a-border-width
 
@@ -82,25 +60,32 @@ static LineWidth::Length snapLengthAsBorderWidth(float length, float deviceScale
     return LineWidth::Length { floorToDevicePixel(length, deviceScaleFactor) };
 }
 
+LineWidth::Length LineWidth::snapLengthAsBorderWidth(LineWidth::Length length, float deviceScaleFactor)
+{
+    return snapLengthAsBorderWidth(length.unresolvedValue(), deviceScaleFactor);
+}
+
 auto CSSValueConversion<LineWidth>::operator()(BuilderState& state, const CSSValue& value) -> LineWidth
 {
     RefPtr primitiveValue = requiredDowncast<CSSPrimitiveValue>(state, value);
     if (!primitiveValue)
         return LineWidth::Length { 3.0f };
 
-    if (primitiveValue->isValueID())
-        return handleKeywordValue(state, primitiveValue->valueID());
-
-    // Any original result that was >= 1 should not be allowed to fall below 1. This keeps border lines from vanishing.
-
-    auto result = primitiveValue->resolveAsLength<float>(state.cssToLengthConversionData());
-    if (state.style().usedZoom() < 1.0f && result < 1.0f) {
-        auto originalLength = primitiveValue->resolveAsLength<float>(state.cssToLengthConversionData().copyWithAdjustedZoom(1.0));
-        if (originalLength >= 1.0f)
-            return LineWidth::Length { 1.0f };
+    if (primitiveValue->isValueID()) {
+        switch (primitiveValue->valueID()) {
+        case CSSValueThin:
+            return LineWidth::snapLengthAsBorderWidth(1.0f * state.style().usedZoom(), state.document().deviceScaleFactor());
+        case CSSValueMedium:
+            return LineWidth::snapLengthAsBorderWidth(3.0f * state.style().usedZoom(), state.document().deviceScaleFactor());
+        case CSSValueThick:
+            return LineWidth::snapLengthAsBorderWidth(5.0f * state.style().usedZoom(), state.document().deviceScaleFactor());
+        default:
+            state.setCurrentPropertyInvalidAtComputedValueTime();
+            return LineWidth::Length { 3.0f };
+        }
     }
 
-    return snapLengthAsBorderWidth(result, state.document().deviceScaleFactor());
+    return LineWidth::snapLengthAsBorderWidth(toStyleFromCSSValue<LineWidth::Length>(state, *primitiveValue), state.document().deviceScaleFactor());
 }
 
 // MARK: - Blending
@@ -109,7 +94,7 @@ auto Blending<LineWidth>::blend(const LineWidth& a, const LineWidth& b, const Re
 {
     auto blendedValue = Style::blend(a.value, b.value, aStyle, bStyle, context);
     if (RefPtr document = context.client.document())
-        return snapLengthAsBorderWidth(blendedValue.unresolvedValue(), document->deviceScaleFactor());
+        return LineWidth::snapLengthAsBorderWidth(blendedValue, document->deviceScaleFactor());
     return blendedValue;
 }
 

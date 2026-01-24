@@ -54,7 +54,7 @@ struct FetchOptions {
     FetchOptions isolatedCopy() && { return { destination, mode, credentials, cache, redirect, referrerPolicy, keepAlive, WTF::move(integrity).isolatedCopy(), clientIdentifier, resultingClientIdentifier }; }
 
     template<class Encoder> void encodePersistent(Encoder&) const;
-    template<class Decoder> WARN_UNUSED_RETURN static bool decodePersistent(Decoder&, FetchOptions&);
+    template<class Decoder> [[nodiscard]] static bool decodePersistent(Decoder&, FetchOptions&);
 
     Destination destination { Destination::EmptyString };
     Mode mode { Mode::NoCors };

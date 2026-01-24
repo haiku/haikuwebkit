@@ -315,12 +315,12 @@ public:
     using ArrayBase::end;
 };
 
-inline ObjectBase::iterator ObjectBase::find(const String& name)
+inline ObjectBase::iterator ObjectBase::find(const String& name) LIFETIME_BOUND
 {
     return m_map.find(name);
 }
 
-inline ObjectBase::const_iterator ObjectBase::find(const String& name) const
+inline ObjectBase::const_iterator ObjectBase::find(const String& name) const LIFETIME_BOUND
 {
     return m_map.find(name);
 }

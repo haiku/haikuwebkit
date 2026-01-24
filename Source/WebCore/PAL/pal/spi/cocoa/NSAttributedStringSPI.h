@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 #ifdef __cplusplus
 
 #include <wtf/Compiler.h>
@@ -151,3 +154,5 @@ static NSString *const NSExcludedElementsDocumentAttribute = @"ExcludedElements"
 #endif // PLATFORM(IOS_FAMILY)
 
 #endif // __cplusplus
+
+#endif // !__has_feature(modules)

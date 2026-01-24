@@ -367,12 +367,12 @@ void Queue::submit(Vector<Ref<WebGPU::CommandBuffer>>&& commands)
     finalizeBlitCommandEncoder();
 
     NSMutableOrderedSet<id<MTLCommandBuffer>> *commandBuffersToSubmit = [NSMutableOrderedSet orderedSetWithCapacity:commands.size()];
-    HashMap<void*, RefPtr<CommandBuffer>> metalCommandBuffersReverseMap;
+    HashMap<void*, Ref<CommandBuffer>> metalCommandBuffersReverseMap;
     NSString* validationError = nil;
     for (Ref command : commands) {
         if (id<MTLCommandBuffer> mtlBuffer = command->commandBuffer(); mtlBuffer && ![commandBuffersToSubmit containsObject:mtlBuffer]) {
             [commandBuffersToSubmit addObject:mtlBuffer];
-            metalCommandBuffersReverseMap.set((__bridge void*)mtlBuffer, RefPtr { command.ptr() });
+            metalCommandBuffersReverseMap.set((__bridge void*)mtlBuffer, WTF::move(command));
         } else {
             validationError = command->lastError() ?: @"Command buffer appears twice.";
             break;
@@ -388,9 +388,7 @@ void Queue::submit(Vector<Ref<WebGPU::CommandBuffer>>&& commands)
     }
 
     for (id<MTLCommandBuffer> commandBuffer in commandBuffersToSubmit) {
-        RefPtr<CommandBuffer> apiCommandBuffer;
-        if (auto it = metalCommandBuffersReverseMap.find((__bridge void*)commandBuffer); it != metalCommandBuffersReverseMap.end())
-            apiCommandBuffer = it->value;
+        RefPtr apiCommandBuffer = metalCommandBuffersReverseMap.get((__bridge void*)commandBuffer);
 #if ASSERT_ENABLED
         if (!apiCommandBuffer)
             ASSERT_NOT_REACHED("Always expect command buffer in the container");

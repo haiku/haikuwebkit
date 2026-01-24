@@ -836,7 +836,6 @@
                     "text-box-trim",
                     "text-box-edge"
                 ],
-                "settings-flag": "cssTextBoxTrimEnabled",
                 "parser-function": "consumeTextBoxShorthand",
                 "parser-grammar-unused": "normal | [ <'text-box-trim'> || <'text-box-edge'> ]",
                 "parser-grammar-unused-reason": "Needs support for shorthand grammars."
@@ -860,7 +859,6 @@
                 "cap"
             ],
             "codegen-properties": {
-                "settings-flag": "cssTextBoxTrimEnabled",
                 "computed-style-initial-constexpr": true,
                 "computed-style-storage-path": ["m_inheritedRareData"],
                 "computed-style-storage-kind": "value",
@@ -884,7 +882,6 @@
                 "trim-both"
             ],
             "codegen-properties": {
-                "settings-flag": "cssTextBoxTrimEnabled",
                 "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
                 "computed-style-storage-kind": "enum",
                 "computed-style-type": "TextBoxTrim",
@@ -1563,7 +1560,6 @@
                 "ideograph-numeric"
             ],
             "codegen-properties": {
-                "settings-flag": "cssTextAutospaceEnabled",
                 "font-property": true,
                 "high-priority": true,
                 "sink-priority": true,
@@ -2039,7 +2035,6 @@
                 ],
                 "coordinated-value-list-property": true,
                 "separator": ",",
-                "settings-flag": "scrollDrivenAnimationsEnabled",
                 "parser-function": "consumeAnimationRangeShorthand",
                 "parser-grammar-unused": "[ <'animation-range-start'> <'animation-range-end'>? ]#",
                 "parser-grammar-unused-reason": "Needs support for shorthand grammars."
@@ -2068,8 +2063,7 @@
                 "computed-style-storage-container": "opaque",
                 "computed-style-storage-path": ["m_nonInheritedData", "miscData", "animations"],
                 "separator": ",",
-                "parser-grammar": "<single-animation-range-start>#",
-                "settings-flag": "scrollDrivenAnimationsEnabled"
+                "parser-grammar": "<single-animation-range-start>#"
             },
             "specification": {
                 "category": "scroll-animations",
@@ -2095,8 +2089,7 @@
                 "computed-style-storage-container": "opaque",
                 "computed-style-storage-path": ["m_nonInheritedData", "miscData", "animations"],
                 "separator": ",",
-                "parser-grammar": "<single-animation-range-end>#",
-                "settings-flag": "scrollDrivenAnimationsEnabled"
+                "parser-grammar": "<single-animation-range-end>#"
             },
             "specification": {
                 "category": "scroll-animations",
@@ -2111,7 +2104,6 @@
                 "none"
             ],
             "codegen-properties": {
-                "settings-flag": "scrollDrivenAnimationsEnabled",
                 "coordinated-value-list-property": true,
                 "coordinated-value-list-property-name-for-methods": "Timeline",
                 "coordinated-value-list-property-item-type": "Style::SingleAnimationTimeline",
@@ -2249,15 +2241,8 @@
                 "border-box",
                 "padding-box",
                 "content-box",
-                {
-                    "value": "border-area",
-                    "settings-flag": "cssBackgroundClipBorderAreaEnabled",
-                    "url": "https://drafts.csswg.org/css-backgrounds-4/#background-clip"
-                },
-                {
-                    "value": "text",
-                    "url": "https://drafts.csswg.org/css-backgrounds-4/#background-clip"
-                },
+                "border-area",
+                "text",
                 {
                     "value": "-webkit-text",
                     "status": "non-standard"
@@ -2275,7 +2260,7 @@
             },
             "specification": {
                 "category": "css-backgrounds",
-                "url": "https://drafts.csswg.org/css-backgrounds/#propdef-background-clip"
+                "url": "https://www.w3.org/TR/css-backgrounds-4/#background-clip"
             }
         },
         "background-color": {
@@ -5240,7 +5225,7 @@
                 "infinite"
             ],
             "codegen-properties": {
-                "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
+                "computed-style-storage-path": ["m_nonInheritedData", "rareData", "grid"],
                 "computed-style-storage-kind": "reference",
                 "computed-style-type": "Style::FlowTolerance",
                 "parser-grammar": "normal | <length-percentage> | infinite"
@@ -7899,7 +7884,6 @@
                 "space-around"
             ],
             "codegen-properties": {
-                "settings-flag": "cssRubyAlignEnabled",
                 "computed-style-storage-path": ["m_inheritedRareData"],
                 "computed-style-storage-kind": "enum",
                 "computed-style-type": "RubyAlign",
@@ -7920,7 +7904,6 @@
                 "none"
             ],
             "codegen-properties": {
-                "settings-flag": "cssRubyOverhangEnabled",
                 "computed-style-storage-path": ["m_inheritedRareData"],
                 "computed-style-storage-kind": "enum",
                 "computed-style-type": "RubyOverhang",
@@ -12782,7 +12765,6 @@
                     "scroll-timeline-name",
                     "scroll-timeline-axis"
                 ],
-                "settings-flag": "scrollDrivenAnimationsEnabled",
                 "parser-function": "consumeScrollTimelineShorthand",
                 "parser-grammar-unused": "[ <'scroll-timeline-name'> <'scroll-timeline-axis'>? ]#",
                 "parser-grammar-unused-reason": "Needs support for shorthand grammars."
@@ -12802,7 +12784,6 @@
                 "y"
             ],
             "codegen-properties": {
-                "settings-flag": "scrollDrivenAnimationsEnabled",
                 "computed-style-name-for-methods": "ScrollTimelineAxes",
                 "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
                 "computed-style-storage-kind": "reference",
@@ -12822,7 +12803,6 @@
                 "none"
             ],
             "codegen-properties": {
-                "settings-flag": "scrollDrivenAnimationsEnabled",
                 "computed-style-name-for-methods": "ScrollTimelineNames",
                 "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
                 "computed-style-storage-kind": "reference",
@@ -12966,8 +12946,7 @@
                 "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
                 "computed-style-storage-kind": "reference",
                 "computed-style-type": "Style::NameScope",
-               "parser-grammar": "none | all | <dashed-ident>#",
-               "settings-flag": "scrollDrivenAnimationsEnabled"
+                "parser-grammar": "none | all | <dashed-ident>#"
            },
            "specification": {
                "category": "scroll-animations",
@@ -12981,7 +12960,6 @@
                     "view-timeline-axis",
                     "view-timeline-inset"
                 ],
-                "settings-flag": "scrollDrivenAnimationsEnabled",
                 "parser-function": "consumeViewTimelineShorthand",
                 "parser-grammar-unused": "[ <'view-timeline-name'> [ <'view-timeline-axis'> || <'view-timeline-inset'> ]? ]#",
                 "parser-grammar-unused-reason": "Needs support for shorthand grammars."
@@ -13001,7 +12979,6 @@
                 "y"
             ],
             "codegen-properties": {
-                "settings-flag": "scrollDrivenAnimationsEnabled",
                 "computed-style-name-for-methods": "ViewTimelineAxes",
                 "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
                 "computed-style-storage-kind": "reference",
@@ -13022,7 +12999,6 @@
                 "auto"
             ],
             "codegen-properties": {
-                "settings-flag": "scrollDrivenAnimationsEnabled",
                 "computed-style-name-for-methods": "ViewTimelineInsets",
                 "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
                 "computed-style-storage-kind": "reference",
@@ -13041,7 +13017,6 @@
                 "none"
             ],
             "codegen-properties": {
-                "settings-flag": "scrollDrivenAnimationsEnabled",
                 "computed-style-name-for-methods": "ViewTimelineNames",
                 "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
                 "computed-style-storage-kind": "reference",
@@ -14452,13 +14427,13 @@
             }
         },
         "<single-background-clip>": {
-            "grammar": "<box> | border-area@(settings-flag=cssBackgroundClipBorderAreaEnabled) | text | -webkit-text",
+            "grammar": "<box> | border-area | text | -webkit-text",
             "exported": true,
             "specification": {
                 "category": "css-backgrounds",
-                "url": "https://www.w3.org/TR/css-backgrounds-3/#background-clip"
+                "url": "https://www.w3.org/TR/css-backgrounds-4/#background-clip"
             },
-            "comment": "Out of spec. 'background-clip' is currently defined to '<box>#'."
+            "comment": "-webkit-text is non-standard."
         },
         "<single-background-origin>": {
             "grammar": "<box>",

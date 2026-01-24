@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/ColorTypes.h>
+#include <WebCore/PlatformExportMacros.h>
 #include <numeric>
 #include <wtf/MathExtras.h>
 

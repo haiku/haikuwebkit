@@ -599,10 +599,7 @@ bool GraphicsLayerTextureMapper::shouldHaveBackingStore() const
 
 bool GraphicsLayerTextureMapper::filtersCanBeComposited(const FilterOperations& filters) const
 {
-    if (!filters.size())
-        return false;
-
-    return !filters.hasReferenceFilter();
+    return !filters.isEmpty();
 }
 
 bool GraphicsLayerTextureMapper::addAnimation(const GraphicsLayerKeyframeValueList& valueList, const GraphicsLayerAnimation* anim, const String& keyframesName, double timeOffset)
@@ -618,10 +615,6 @@ bool GraphicsLayerTextureMapper::addAnimation(const GraphicsLayerKeyframeValueLi
             return false;
 
         const auto& filters = static_cast<const GraphicsLayerFilterAnimationValue&>(valueList.at(listIndex)).value();
-        // The animation of drop-shadow filter with currentColor isn't supported yet.
-        // GraphicsLayerCA doesn't accept animations with drap-shadow. Do it here.
-        if (filters.hasFilterOfType<FilterOperation::Type::DropShadowWithStyleColor>())
-            return false;
         if (!filtersCanBeComposited(filters))
             return false;
     }

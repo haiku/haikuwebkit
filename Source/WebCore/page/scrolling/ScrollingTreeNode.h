@@ -80,7 +80,7 @@ public:
     
     virtual void willBeDestroyed() { }
 
-    RefPtr<ScrollingTreeNode> parent() const { return m_parent.get(); }
+    RefPtr<ScrollingTreeNode> parent() const { return m_parent; }
     void setParent(RefPtr<ScrollingTreeNode>&& parent) { m_parent = parent; }
 
     WEBCORE_EXPORT bool isRootNode() const;
@@ -103,7 +103,7 @@ public:
 
 protected:
     ScrollingTreeNode(ScrollingTree&, ScrollingNodeType, ScrollingNodeID);
-    RefPtr<ScrollingTree> scrollingTree() const { return m_scrollingTree.get(); }
+    RefPtr<ScrollingTree> scrollingTree() const { return m_scrollingTree; }
 
     virtual void applyLayerPositions() = 0;
 

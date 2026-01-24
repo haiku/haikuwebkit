@@ -824,6 +824,10 @@ class RunTest262Tests(TestWithFailureCount, CustomFlagsMixin, ShellMixin):
     command = ["perl", "Tools/Scripts/test262-runner", "--verbose", WithProperties("--%(configuration)s")]
     test_summary_re = re.compile(r'^\! NEW FAIL')
 
+    def __init__(self, *args, **kwargs):
+        kwargs['timeout'] = 60 * 60
+        super().__init__(*args, **kwargs)
+
     def run(self):
         filter_command = ' '.join(self.command) + ' 2>&1 | python3 Tools/Scripts/filter-test-logs test262'
         self.command = self.shell_command(filter_command)
@@ -1371,13 +1375,17 @@ class RunWebDriverTests(shell.Test, CustomFlagsMixin, ShellMixin):
         logText = self.log_observer.getStdout()
 
         self.failuresCount = 0
+        self.timeoutCount = 0
         self.newPassesCount = 0
-        foundItems = re.findall(r"^Unexpected .+ \((\d+)\)", logText, re.MULTILINE)
-        if foundItems:
-            self.failuresCount = int(foundItems[0])
-        foundItems = re.findall(r"^Expected to .+, but passed \((\d+)\)", logText, re.MULTILINE)
-        if foundItems:
-            self.newPassesCount = int(foundItems[0])
+        foundFailures = re.findall(r"Unexpected failures \((\d+)\)", logText, re.MULTILINE)
+        if foundFailures:
+            self.failuresCount = int(foundFailures[0])
+        foundTimeouts = re.findall(r"Unexpected timeouts \((\d+)\)", logText, re.MULTILINE)
+        if foundTimeouts:
+            self.timeoutCount = int(foundTimeouts[0])
+        foundNewPasses = re.findall(r"Expected to .+, but passed \((\d+)\)", logText, re.MULTILINE)
+        if foundNewPasses:
+            self.newPassesCount = int(foundNewPasses[0])
 
         steps_to_add = [
             GenerateS3URL(
@@ -1402,19 +1410,36 @@ class RunWebDriverTests(shell.Test, CustomFlagsMixin, ShellMixin):
         else:
             defer.returnValue(SUCCESS)
 
-    def getText(self, cmd, results):
-        return self.getText2(cmd, results)
-
-    def getText2(self, cmd, results):
-        if results != SUCCESS and (self.failuresCount or self.newPassesCount):
-            lines = []
+    def getResultSummary(self):
+        if self.results != SUCCESS:
+            summaries = []
+            summary = None
+            shouldReportBuild = False
             if self.failuresCount:
-                lines.append("%d failures" % self.failuresCount)
+                suffix = "" if self.failuresCount == 1 else "s"
+                summaries.append(f"{self.failuresCount} failure{suffix}")
+                shouldReportBuild = True
+            if self.timeoutCount:
+                suffix = "" if self.timeoutCount == 1 else "s"
+                summaries.append(f"{self.timeoutCount} timeout{suffix}")
+                shouldReportBuild = True
             if self.newPassesCount:
-                lines.append("%d new passes" % self.newPassesCount)
-            return ["%s %s" % (self.name, ", ".join(lines))]
+                suffix = "" if self.newPassesCount == 1 else "es"
+                summaries.append(f"{self.newPassesCount} new pass{suffix}")
 
-        return [self.name]
+            if len(summaries) >= 2:
+                last = summaries.pop()
+                summary = ', '.join(summaries) + ' and ' + last
+            elif summaries:
+                summary = summaries[0]
+
+            if summary:
+                result = {'step': summary}
+                if shouldReportBuild:
+                    result['build'] = summary
+
+                return result
+        return super().getResultSummary()
 
 
 class RunWebKit1Tests(RunWebKitTests):
@@ -2056,7 +2081,7 @@ class PrintConfiguration(steps.ShellSequence, ShellMixin):
         elif platform in ('gtk', 'wpe', 'jsc-only'):
             command_list.extend(self.command_list_linux)
             if platform in ('gtk', 'wpe'):
-                command_list.append(['if test -f /etc/build-info; then cat /etc/build-info; else cat /etc/os-release; fi'])
+                command_list.append(self.shell_command('if test -f /etc/build-info; then cat /etc/build-info; else cat /etc/os-release; fi'))
 
         for command in command_list:
             self.commands.append(util.ShellArg(command=command, logname='stdio'))
@@ -2264,10 +2289,3 @@ class RebootWithUpdatedCrossTargetImage(shell.ShellCommand):
         if rc == SUCCESS:
             self.build.buildFinished(['Rebooting with updated image, retrying build'], RETRY)
         defer.returnValue(rc)
-
-
-class SetO3OptimizationLevel(shell.ShellCommand):
-    command = ["Tools/Scripts/set-webkit-configuration", "--force-optimization-level=O3"]
-    name = "set-o3-optimization-level"
-    description = ["set O3 optimization level"]
-    descriptionDone = ["set O3 optimization level"]

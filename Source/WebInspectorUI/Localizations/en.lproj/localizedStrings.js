@@ -1391,6 +1391,7 @@ localizedStrings["Reduction"] = "Reduction";
 localizedStrings["Reference Issue"] = "Reference Issue";
 localizedStrings["Reflection"] = "Reflection";
 localizedStrings["Refresh"] = "Refresh";
+localizedStrings["Refresh layers"] = "Refresh layers";
 localizedStrings["Refresh watch expressions"] = "Refresh watch expressions";
 localizedStrings["Region announced in its entirety."] = "Region announced in its entirety.";
 localizedStrings["Regular Expression"] = "Regular Expression";

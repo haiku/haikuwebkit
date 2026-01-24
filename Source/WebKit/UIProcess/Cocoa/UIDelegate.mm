@@ -150,10 +150,10 @@ void UIDelegate::setDelegate(id<WKUIDelegate> delegate)
     m_delegateMethods.webViewMouseDidMoveOverElementWithFlagsUserInfo = [delegate respondsToSelector:@selector(_webView:mouseDidMoveOverElement:withFlags:userInfo:)];
 #endif
 
-#if PLATFORM(MAC)
-    m_delegateMethods.showWebView = [delegate respondsToSelector:@selector(_showWebView:)];
     m_delegateMethods.focusWebView = [delegate respondsToSelector:@selector(_focusWebView:)];
     m_delegateMethods.unfocusWebView = [delegate respondsToSelector:@selector(_unfocusWebView:)];
+#if PLATFORM(MAC)
+    m_delegateMethods.showWebView = [delegate respondsToSelector:@selector(_showWebView:)];
     m_delegateMethods.webViewRunModal = [delegate respondsToSelector:@selector(_webViewRunModal:)];
     m_delegateMethods.webViewDidScroll = [delegate respondsToSelector:@selector(_webViewDidScroll:)];
     m_delegateMethods.webViewDidNotHandleWheelEvent = [delegate respondsToSelector:@selector(_webView:didNotHandleWheelEvent:)];
@@ -950,6 +950,38 @@ bool UIDelegate::UIClient::runOpenPanel(WebPageProxy& page, WebFrameProxy* webFr
     return true;
 }
 
+void UIDelegate::UIClient::focus(WebPageProxy*)
+{
+    RefPtr uiDelegate = m_uiDelegate.get();
+    if (!uiDelegate)
+        return;
+
+    if (!uiDelegate->m_delegateMethods.focusWebView)
+        return;
+
+    RetainPtr delegate = uiDelegatePrivate();
+    if (!delegate)
+        return;
+
+    [delegate _focusWebView:uiDelegate->m_webView.get().get()];
+}
+
+void UIDelegate::UIClient::unfocus(WebPageProxy*)
+{
+    RefPtr uiDelegate = m_uiDelegate.get();
+    if (!uiDelegate)
+        return;
+
+    if (!uiDelegate->m_delegateMethods.unfocusWebView)
+        return;
+
+    RetainPtr delegate = uiDelegatePrivate();
+    if (!delegate)
+        return;
+
+    [delegate _unfocusWebView:uiDelegate->m_webView.get().get()];
+}
+
 #if PLATFORM(MAC)
 bool UIDelegate::UIClient::canRunModal() const
 {
@@ -1051,38 +1083,6 @@ void UIDelegate::UIClient::pageDidScroll(WebPageProxy*)
         return;
     
     [delegate _webViewDidScroll:uiDelegate->m_webView.get().get()];
-}
-
-void UIDelegate::UIClient::focus(WebPageProxy*)
-{
-    RefPtr uiDelegate = m_uiDelegate.get();
-    if (!uiDelegate)
-        return;
-
-    if (!uiDelegate->m_delegateMethods.focusWebView)
-        return;
-    
-    RetainPtr delegate = uiDelegatePrivate();
-    if (!delegate)
-        return;
-
-    [delegate _focusWebView:uiDelegate->m_webView.get().get()];
-}
-
-void UIDelegate::UIClient::unfocus(WebPageProxy*)
-{
-    RefPtr uiDelegate = m_uiDelegate.get();
-    if (!uiDelegate)
-        return;
-
-    if (!uiDelegate->m_delegateMethods.unfocusWebView)
-        return;
-    
-    RetainPtr delegate = uiDelegatePrivate();
-    if (!delegate)
-        return;
-    
-    [delegate _unfocusWebView:uiDelegate->m_webView.get().get()];
 }
 
 void UIDelegate::UIClient::didNotHandleWheelEvent(WebPageProxy*, const NativeWebWheelEvent& event)

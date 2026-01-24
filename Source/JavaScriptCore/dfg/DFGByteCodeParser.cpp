@@ -64,7 +64,7 @@
 #include "JSArrayBufferConstructor.h"
 #include "JSArrayIterator.h"
 #include "JSAsyncFromSyncIterator.h"
-#include "JSBoundFunction.h"
+#include "JSBoundFunctionInlines.h"
 #include "JSRegExpStringIterator.h"
 #include "JSCInlines.h"
 #include "JSCellButterfly.h"
@@ -2771,7 +2771,7 @@ auto ByteCodeParser::handleIntrinsicCall(Node* callee, Operand resultOperand, Ca
                         addVarArgChild(get(virtualRegisterForArgumentIncludingThis(1, registerOffset))); // Start index.
                     if (argumentCountIncludingThis >= 3)
                         addVarArgChild(get(virtualRegisterForArgumentIncludingThis(2, registerOffset))); // End index.
-                    addVarArgChild(addToGraph(GetButterfly, array));
+                    addVarArgChild(Edge(addToGraph(GetButterfly, array), KnownStorageUse));
 
                     Node* arraySlice = addToGraph(Node::VarArg, ArraySlice, OpInfo(), OpInfo());
                     setResult(arraySlice);
@@ -3639,7 +3639,7 @@ auto ByteCodeParser::handleIntrinsicCall(Node* callee, Operand resultOperand, Ca
             Node* hash = addToGraph(MapHash, normalizedKey);
 
             Node* keySlot = addToGraph(MapGet, Edge(map, MapObjectUse), Edge(normalizedKey), Edge(hash));
-            Node* result = addToGraph(LoadMapValue, OpInfo(0), OpInfo(prediction), Edge(keySlot));
+            Node* result = addToGraph(LoadMapValue, OpInfo(0), OpInfo(prediction), Edge(keySlot, KnownStorageUse));
             setResult(result);
             return CallOptimizationResult::Inlined;
         }
@@ -3657,7 +3657,8 @@ auto ByteCodeParser::handleIntrinsicCall(Node* callee, Operand resultOperand, Ca
 
             UseKind useKind = intrinsic == JSSetHasIntrinsic ? SetObjectUse : MapObjectUse;
             Node* keySlot = addToGraph(MapGet, Edge(mapOrSet, useKind), Edge(normalizedKey), Edge(hash));
-            Node* invertedResult = addToGraph(IsEmptyStorage, keySlot);
+            Node* invertedResult = addToGraph(IsEmptyStorage, Edge(keySlot, KnownStorageUse));
+            ASSERT(invertedResult->child1().useKind() == KnownStorageUse);
             Node* result = addToGraph(LogicalNot, invertedResult);
             setResult(result);
             return CallOptimizationResult::Inlined;
@@ -4559,8 +4560,11 @@ auto ByteCodeParser::handleIntrinsicCall(Node* callee, Operand resultOperand, Ca
             Node* regExpStringIterator = addToGraph(NewInternalFieldObject, OpInfo(m_graph.registerStructure(globalObject->regExpStringIteratorStructure())));
             addToGraph(PutInternalField, OpInfo(static_cast<uint32_t>(JSRegExpStringIterator::Field::RegExp)), regExpStringIterator, regExp);
             addToGraph(PutInternalField, OpInfo(static_cast<uint32_t>(JSRegExpStringIterator::Field::String)), regExpStringIterator, string);
-            addToGraph(PutInternalField, OpInfo(static_cast<uint32_t>(JSRegExpStringIterator::Field::Global)), regExpStringIterator, global);
-            addToGraph(PutInternalField, OpInfo(static_cast<uint32_t>(JSRegExpStringIterator::Field::FullUnicode)), regExpStringIterator, fullUnicode);
+            // Combine global and fullUnicode into a single flags field: flags = global | (fullUnicode << 1)
+            Node* one = addToGraph(JSConstant, OpInfo(m_graph.freeze(jsNumber(1))));
+            Node* fullUnicodeShifted = addToGraph(ArithBitLShift, fullUnicode, one);
+            Node* flags = addToGraph(ArithBitOr, global, fullUnicodeShifted);
+            addToGraph(PutInternalField, OpInfo(static_cast<uint32_t>(JSRegExpStringIterator::Field::Flags)), regExpStringIterator, flags);
             setResult(regExpStringIterator);
             return CallOptimizationResult::Inlined;
         }
@@ -5609,7 +5613,7 @@ Node* ByteCodeParser::handleGetByOffset(
     data->offset = offset;
     data->identifierNumber = identifierNumber;
     
-    Node* getByOffset = addToGraph(op, OpInfo(data), OpInfo(prediction), propertyStorage, base);
+    Node* getByOffset = addToGraph(op, OpInfo(data), OpInfo(prediction), Edge(propertyStorage, KnownStorageUse), Edge(base));
 
     return getByOffset;
 }
@@ -5628,7 +5632,7 @@ Node* ByteCodeParser::handlePutByOffset(
     data->offset = offset;
     data->identifierNumber = identifier;
     
-    Node* result = addToGraph(PutByOffset, OpInfo(data), propertyStorage, base, value);
+    Node* result = addToGraph(PutByOffset, OpInfo(data), Edge(propertyStorage, KnownStorageUse), Edge(base), Edge(value));
     
     return result;
 }
@@ -6424,9 +6428,9 @@ void ByteCodeParser::handleDeleteById(
     addToGraph(
         PutByOffset,
         OpInfo(storageData),
-        propertyStorage,
-        base,
-        jsConstant(JSValue()));
+        Edge(propertyStorage, KnownStorageUse),
+        Edge(base),
+        Edge(jsConstant(JSValue())));
 
     addToGraph(PutStructure, OpInfo(transition), base);
     set(destination, jsConstant(jsBoolean(variant.result())));
@@ -6628,7 +6632,7 @@ void ByteCodeParser::handlePutById(
             } else {
                 propertyStorage = addToGraph(
                     ReallocatePropertyStorage, OpInfo(transition),
-                    unwrapped, addToGraph(GetButterfly, unwrapped));
+                    Edge(unwrapped), Edge(addToGraph(GetButterfly, unwrapped), KnownStorageUse));
             }
         } else {
             if (isInlineOffset(variant.offset()))
@@ -6651,12 +6655,12 @@ void ByteCodeParser::handlePutById(
         addToGraph(
             PutByOffset,
             OpInfo(data),
-            propertyStorage,
-            unwrapped,
-            value);
+            Edge(propertyStorage, KnownStorageUse),
+            Edge(unwrapped),
+            Edge(value));
         
         if (variant.reallocatesStorage())
-            addToGraph(NukeStructureAndSetButterfly, unwrapped, propertyStorage);
+            addToGraph(NukeStructureAndSetButterfly, Edge(unwrapped), Edge(propertyStorage, KnownStorageUse));
 
         // FIXME: PutStructure goes last until we fix either
         // https://bugs.webkit.org/show_bug.cgi?id=142921 or
@@ -6805,7 +6809,7 @@ void ByteCodeParser::handlePutPrivateNameById(
             } else {
                 propertyStorage = addToGraph(
                     ReallocatePropertyStorage, OpInfo(transition),
-                    base, addToGraph(GetButterfly, base));
+                    Edge(base), Edge(addToGraph(GetButterfly, base), KnownStorageUse));
             }
         } else {
             if (isInlineOffset(variant.offset()))
@@ -6828,12 +6832,12 @@ void ByteCodeParser::handlePutPrivateNameById(
         addToGraph(
             PutByOffset,
             OpInfo(data),
-            propertyStorage,
-            base,
-            value);
+            Edge(propertyStorage, KnownStorageUse),
+            Edge(base),
+            Edge(value));
         
         if (variant.reallocatesStorage())
-            addToGraph(NukeStructureAndSetButterfly, base, propertyStorage);
+            addToGraph(NukeStructureAndSetButterfly, Edge(base), Edge(propertyStorage, KnownStorageUse));
     
         // FIXME: PutStructure goes last until we fix either
         // https://bugs.webkit.org/show_bug.cgi?id=142921 or
@@ -7096,7 +7100,7 @@ void ByteCodeParser::parseBlock(unsigned limit)
                                 data->offset = knownPolyProtoOffset;
                                 data->identifierNumber = m_graph.identifiers().ensure(m_graph.m_vm.propertyNames->builtinNames().polyProtoName().impl());
                                 ASSERT(isInlineOffset(knownPolyProtoOffset));
-                                addToGraph(PutByOffset, OpInfo(data), object, object, weakJSConstant(prototype));
+                                addToGraph(PutByOffset, OpInfo(data), Edge(object, KnownStorageUse), Edge(object), Edge(weakJSConstant(prototype)));
                             }
                             set(VirtualRegister(bytecode.m_dst), object);
                             // The callee is still live up to this point.
@@ -9308,7 +9312,7 @@ void ByteCodeParser::parseBlock(unsigned limit)
 
                     Node* iterable = get(bytecode.m_iterable);
                     Node* butterfly = addToGraph(GetButterfly, iterable);
-                    Node* length = addToGraph(GetArrayLength, OpInfo(arrayMode.asWord()), iterable, butterfly);
+                    Node* length = addToGraph(GetArrayLength, OpInfo(arrayMode.asWord()), Edge(iterable), Edge(butterfly, KnownStorageUse));
                     // GetArrayLength is pessimized prior to fixup.
                     m_exitOK = true;
                     addToGraph(ExitOK);

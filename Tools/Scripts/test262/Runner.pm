@@ -496,7 +496,7 @@ sub main {
             $expectedFailure = $expect->{$path}->{$test->{mode}};
         }
 
-        if ($test->{result} eq 'FAIL') {
+        if ($test->{result} =~ /fail$/) {
             $failcount++;
 
             # Record this round of failures
@@ -517,7 +517,7 @@ sub main {
             }
 
         }
-        elsif ($test->{result} eq 'PASS') {
+        elsif ($test->{result} =~ /pass$/) {
             # If this is an newly passing test
             if ($expectedFailure || $skippedOnly) {
                 $newpasscount++;
@@ -529,7 +529,7 @@ sub main {
                 }
             }
         }
-        elsif ($test->{result} eq 'SKIP') {
+        elsif ($test->{result} eq 'skip') {
             $skipfilecount++;
         }
     }
@@ -886,7 +886,9 @@ sub processResult {
         # expectation fail and (there is no expected failure OR the failure
         # has changed).
         my $isnewfailure = $exitSignalNumber || !$expect
-            || !$expectedfailure || (rindex $currentfailure, $expectedfailure, 0) < 0;
+            || !$expectedfailure || (rindex $currentfailure, $expectedfailure, 0);
+
+        $resultdata{result} = $isnewfailure ? 'unexpected_fail' : 'expected_fail';
 
         # Print the failure if we haven't loaded an expectation file
         # or the failure is new.
@@ -906,23 +908,22 @@ sub processResult {
 
         print "$newFail$failMsg$featuresList$result\n\n" if ($printFailure || $verbose);
 
-        $resultdata{result} = 'FAIL';
         $resultdata{error} = $currentfailure;
         $resultdata{error} = "Bad exit code: $exitCode" if $exitSignalNumber;
         $resultdata{output} = $result;
     } elsif ($scenario ne 'skip' && !$currentfailure) {
+        $resultdata{result} = $expectedfailure ? 'unexpected_pass' : 'expected_pass';
+
         if ($expectedfailure) {
             print "NEW PASS $file ($scenario)\n";
         } elsif ($verbose) {
             print "PASS $file ($scenario)\n";
         }
-
-        $resultdata{result} = 'PASS';
     } else {
         if ($verbose) {
             print "SKIP $file\n";
         }
-        $resultdata{result} = 'SKIP';
+        $resultdata{result} = 'skip';
     }
 
     $resultdata{features} = $data->{features} if $data->{features};
@@ -1049,13 +1050,13 @@ sub summarizeResults {
                     $byfeature{$feature} = [0, 0, 0, 0];
                 }
 
-                if ($result eq 'PASS') {
+                if ($result =~ /pass$/) {
                     $byfeature{$feature}->[0]++;
                 }
-                if ($result eq 'FAIL') {
+                if ($result =~ /fail$/) {
                     $byfeature{$feature}->[1]++;
                 }
-                if ($result eq 'SKIP') {
+                if ($result eq 'skip') {
                     $byfeature{$feature}->[2]++;
                 }
 
@@ -1073,13 +1074,13 @@ sub summarizeResults {
                 $bypath{$partialpath} = [0, 0, 0, 0];
             }
 
-            if ($result eq 'PASS') {
+            if ($result =~ /pass$/) {
                 $bypath{$partialpath}->[0]++;
             }
-            if ($result eq 'FAIL') {
+            if ($result =~ /fail$/) {
                 $bypath{$partialpath}->[1]++;
             }
-            if ($result eq 'SKIP') {
+            if ($result eq 'skip') {
                 $bypath{$partialpath}->[2]++;
             }
 
@@ -1237,7 +1238,7 @@ sub findAllFailing {
 
     my %filedictionary;
     foreach my $test (@allresults) {
-        if ($test->{result} eq 'FAIL') {
+        if ($test->{result} =~ /fail$/) {
             $filedictionary{$test->{path}} = 1;
         }
     }

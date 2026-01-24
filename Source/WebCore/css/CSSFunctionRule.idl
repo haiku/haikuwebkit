@@ -26,7 +26,8 @@
 typedef USVString CSSOMString;
 
 [
-    JSGenerateToJSObject
+    JSGenerateToJSObject,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary FunctionParameter {
   required CSSOMString name;
   required CSSOMString type;

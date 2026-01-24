@@ -91,7 +91,7 @@ void JSPromisePrototype::addOwnInternalSlots(VM& vm, JSGlobalObject* globalObjec
     putDirectWithoutTransition(vm, vm.propertyNames->builtinNames().thenPrivateName(), globalObject->promiseProtoThenFunction(), PropertyAttribute::DontEnum | PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly);
 }
 
-bool promiseSpeciesWatchpointIsValid(VM& vm, JSPromise* thisObject)
+bool promiseSpeciesWatchpointIsValid(JSPromise* thisObject)
 {
     auto* structure = thisObject->structure();
     JSGlobalObject* globalObject = structure->globalObject();
@@ -112,10 +112,7 @@ bool promiseSpeciesWatchpointIsValid(VM& vm, JSPromise* thisObject)
     if (promisePrototype != structure->storedPrototype(thisObject))
         return false;
 
-    if (!thisObject->hasCustomProperties())
-        return true;
-
-    return thisObject->getDirectOffset(vm, vm.propertyNames->constructor) == invalidOffset;
+    return !structure->hasSpecialProperties();
 }
 
 JSC_DEFINE_HOST_FUNCTION(promiseProtoFuncThen, (JSGlobalObject* globalObject, CallFrame* callFrame))
@@ -268,7 +265,7 @@ JSC_DEFINE_HOST_FUNCTION(promiseProtoFuncFinally, (JSGlobalObject* globalObject,
     }
 
     auto* promise = jsDynamicCast<JSPromise*>(thisValue);
-    if (promise && promise->isThenFastAndNonObservable() && promiseSpeciesWatchpointIsValid(vm, promise)) [[likely]] {
+    if (promise && promise->isThenFastAndNonObservable() && promiseSpeciesWatchpointIsValid(promise)) [[likely]] {
         JSPromise* resultPromise = JSPromise::create(vm, globalObject->promiseStructure());
         auto* context = JSPromiseCombinatorsGlobalContext::create(vm, resultPromise, onFinally, jsUndefined());
         promise->performPromiseThenWithInternalMicrotask(vm, globalObject, InternalMicrotask::PromiseFinallyReactionJob, resultPromise, context);

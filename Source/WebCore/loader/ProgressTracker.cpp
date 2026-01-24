@@ -106,7 +106,7 @@ void ProgressTracker::reset()
 
 Ref<Page> ProgressTracker::protectedPage() const
 {
-    return m_page.get();
+    return m_page;
 }
 
 void ProgressTracker::progressStarted(LocalFrame& frame)
@@ -121,7 +121,7 @@ void ProgressTracker::progressStarted(LocalFrame& frame)
         m_originatingProgressFrame = frame;
 
         m_progressHeartbeatTimer.startRepeating(progressHeartbeatInterval);
-        RefPtr originatingProgressFrame = m_originatingProgressFrame.get();
+        RefPtr originatingProgressFrame = m_originatingProgressFrame;
         originatingProgressFrame->loader().loadProgressingStatusChanged();
 
         bool isMainFrame = !originatingProgressFrame->tree().parent();

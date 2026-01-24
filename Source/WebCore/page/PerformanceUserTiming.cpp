@@ -136,11 +136,10 @@ ExceptionOr<double> PerformanceUserTiming::convertMarkToTimestamp(const String& 
             if (*function == &PerformanceTiming::navigationStart)
                 return 0.0;
 
-            // PerformanceTiming should always be non-null for the Document ScriptExecutionContext.
-            ASSERT(m_performance->timing());
-            RefPtr timing = m_performance->timing();
+            // PerformanceTiming is only available for the Document ScriptExecutionContext.
+            Ref timing = m_performance->timing();
             auto startTime = timing->navigationStart();
-            auto endTime = ((*timing).*(*function))();
+            auto endTime = ((timing.get()).*(*function))();
             if (!endTime)
                 return Exception { ExceptionCode::InvalidAccessError };
             return endTime - startTime;

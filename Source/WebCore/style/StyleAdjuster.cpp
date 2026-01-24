@@ -248,7 +248,7 @@ static bool shouldInheritTextDecorationsInEffect(const RenderStyle& style, const
 #if ENABLE(VIDEO)
         if (!element)
             return false;
-        auto* parentNode = element->parentNode();
+        RefPtr parentNode = element->parentNode();
         return parentNode && parentNode->isUserAgentShadowRoot() && parentNode->parentOrShadowHostElement()->isMediaElement();
 #else
         return false;
@@ -1180,7 +1180,7 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
 
 void Adjuster::propagateToDocumentElementAndInitialContainingBlock(Update& update, const Document& document)
 {
-    auto* body = document.body();
+    RefPtr body = document.body();
     auto* bodyStyle = body ? update.elementStyle(*body) : nullptr;
     auto* documentElementStyle = update.elementStyle(*document.documentElement());
 
@@ -1263,10 +1263,10 @@ auto Adjuster::adjustmentForTextAutosizing(const RenderStyle& style, const Eleme
 {
     AdjustmentForTextAutosizing adjustmentForTextAutosizing;
 
-    auto& document = element.document();
-    if (!document.settings().textAutosizingEnabled()
-        || !document.settings().textAutosizingUsesIdempotentMode()
-        || document.settings().idempotentModeAutosizingOnlyHonorsPercentages())
+    Ref document = element.document();
+    if (!document->settings().textAutosizingEnabled()
+        || !document->settings().textAutosizingUsesIdempotentMode()
+        || document->settings().idempotentModeAutosizingOnlyHonorsPercentages())
         return adjustmentForTextAutosizing;
 
     auto newStatus = AutosizeStatus::computeStatus(style);
@@ -1276,7 +1276,7 @@ auto Adjuster::adjustmentForTextAutosizing(const RenderStyle& style, const Eleme
     if (style.textSizeAdjust().isNone())
         return adjustmentForTextAutosizing;
 
-    float initialScale = document.page() ? document.page()->initialScaleIgnoringContentSize() : 1;
+    float initialScale = document->page() ? document->page()->initialScaleIgnoringContentSize() : 1;
     auto adjustLineHeightIfNeeded = [&](auto computedFontSize) {
         auto lineHeight = style.specifiedLineHeight();
         constexpr static unsigned eligibleFontSize = 12;

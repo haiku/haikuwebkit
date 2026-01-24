@@ -63,7 +63,7 @@ static GstStaticPadTemplate audioSrcTemplate = GST_STATIC_PAD_TEMPLATE("audio_sr
 GST_DEBUG_CATEGORY_STATIC(webkitMediaStreamSrcDebug);
 #define GST_CAT_DEFAULT webkitMediaStreamSrcDebug
 
-WARN_UNUSED_RETURN GRefPtr<GstTagList> mediaStreamTrackPrivateGetTags(const RefPtr<MediaStreamTrackPrivate>& track)
+[[nodiscard]] GRefPtr<GstTagList> mediaStreamTrackPrivateGetTags(const RefPtr<MediaStreamTrackPrivate>& track)
 {
     auto tagList = adoptGRef(gst_tag_list_new_empty());
 
@@ -148,7 +148,7 @@ private:
     GThreadSafeWeakPtr<GstElement> m_src;
 };
 
-static void webkitMediaStreamSrcEnsureStreamCollectionPosted(WebKitMediaStreamSrc*);
+static void webkitMediaStreamSrcEnsureStreamCollectionPosted(WebKitMediaStreamSrc*, bool isEmpty = false);
 
 
 class InternalSource final : public MediaStreamTrackPrivateObserver,
@@ -522,13 +522,13 @@ public:
             return;
 
         const auto& data = static_cast<const GStreamerAudioData&>(audioData);
+        GRefPtr<GstSample> sample = data.getSample();
         if (m_track->enabled()) {
-            GRefPtr<GstSample> sample = data.getSample();
             pushSample(sample, "Pushing audio sample from enabled track"_s);
             return;
         }
 
-        pushSilentSample();
+        pushSilentSample(GST_BUFFER_PTS(gst_sample_get_buffer(sample.get())));
     }
 
     Lock* eosLocker() { return &m_eosLock; }
@@ -606,6 +606,8 @@ private:
 
         g_object_set(m_src.get(), "is-live", TRUE, "format", GST_FORMAT_TIME, "min-percent", 100,
             "do-timestamp", isCaptureTrack, "handle-segment-change", TRUE, nullptr);
+        if (track.isVideo())
+            g_object_set(m_src.get(), "max-bytes", static_cast<guint64>(2 * MB), nullptr);
         gst_base_src_set_automatic_eos(GST_BASE_SRC_CAST(m_src.get()), FALSE);
 
         static GstAppSrcCallbacks callbacks = {
@@ -741,24 +743,24 @@ private:
         pushSample(sample, "Pushing black video frame"_s);
     }
 
-    void pushSilentSample()
+    void pushSilentSample(GstClockTime timestamp)
     {
-        DisableMallocRestrictionsForCurrentThreadScope disableMallocRestrictions;
         if (!m_silentSampleCaps) {
+            DisableMallocRestrictionsForCurrentThreadScope disableMallocRestrictions;
             GstAudioInfo info;
             gst_audio_info_set_format(&info, GST_AUDIO_FORMAT_F32LE, 44100, 1, nullptr);
             m_silentSampleCaps = adoptGRef(gst_audio_info_to_caps(&info));
+
+            m_silentBuffer = adoptGRef(gst_buffer_new_and_alloc(128 * GST_AUDIO_INFO_BPF(&info)));
+            {
+                GstMappedBuffer map(m_silentBuffer.get(), GST_MAP_WRITE);
+                webkitGstAudioFormatFillSilence(info.finfo, map.data(), map.size());
+            }
+            gst_buffer_add_audio_meta(m_silentBuffer.get(), &info, 128, nullptr);
         }
 
-        auto buffer = adoptGRef(gst_buffer_new_and_alloc(512));
-        GST_BUFFER_DTS(buffer.get()) = GST_BUFFER_PTS(buffer.get()) = gst_element_get_current_running_time(m_parent);
-        GstAudioInfo info;
-        gst_audio_info_from_caps(&info, m_silentSampleCaps.get());
-        {
-            GstMappedBuffer map(buffer.get(), GST_MAP_WRITE);
-            webkitGstAudioFormatFillSilence(info.finfo, map.data(), map.size());
-        }
-        auto sample = adoptGRef(gst_sample_new(buffer.get(), m_silentSampleCaps.get(), nullptr, nullptr));
+        GST_BUFFER_DTS(m_silentBuffer.get()) = GST_BUFFER_PTS(m_silentBuffer.get()) = timestamp;
+        auto sample = adoptGRef(gst_sample_new(m_silentBuffer.get(), m_silentSampleCaps.get(), nullptr, nullptr));
         pushSample(sample, "Pushing audio silence from disabled track"_s);
     }
 
@@ -853,6 +855,7 @@ private:
     IntSize m_lastKnownSize;
     GRefPtr<GstCaps> m_blackFrameCaps;
     GRefPtr<GstCaps> m_silentSampleCaps;
+    GRefPtr<GstBuffer> m_silentBuffer;
     VideoFrame::Rotation m_videoRotation { VideoFrame::Rotation::None };
     bool m_videoMirrored { false };
     bool m_isEnded { false };
@@ -1182,7 +1185,7 @@ static void webkit_media_stream_src_class_init(WebKitMediaStreamSrcClass* klass)
     gst_element_class_add_pad_template(gstElementClass, gst_static_pad_template_get(&audioSrcTemplate));
 }
 
-static GRefPtr<GstStreamCollection> webkitMediaStreamSrcCreateStreamCollection(WebKitMediaStreamSrc* self);
+static GRefPtr<GstStreamCollection> webkitMediaStreamSrcCreateStreamCollection(WebKitMediaStreamSrc* self, bool isEmpty = false);
 
 struct PadChainData {
     GRefPtr<GstStream> stream;
@@ -1229,12 +1232,15 @@ static GstFlowReturn webkitMediaStreamSrcChain(GstPad* pad, GstObject*, GstBuffe
     return result;
 }
 
-static GRefPtr<GstStreamCollection> webkitMediaStreamSrcCreateStreamCollection(WebKitMediaStreamSrc* self)
+static GRefPtr<GstStreamCollection> webkitMediaStreamSrcCreateStreamCollection(WebKitMediaStreamSrc* self, bool isEmpty)
 {
     auto priv = self->priv;
     auto locker = GstObjectLocker(self);
     auto upstreamId = priv->stream ? priv->stream->id() : createVersion4UUIDString();
     auto streamCollection = adoptGRef(gst_stream_collection_new(upstreamId.ascii().data()));
+    if (isEmpty)
+        return streamCollection;
+
     for (auto& source : priv->sources.values()) {
         if (source->isEnded())
             continue;
@@ -1244,12 +1250,12 @@ static GRefPtr<GstStreamCollection> webkitMediaStreamSrcCreateStreamCollection(W
     return streamCollection;
 }
 
-static void webkitMediaStreamSrcEnsureStreamCollectionPosted(WebKitMediaStreamSrc* self)
+static void webkitMediaStreamSrcEnsureStreamCollectionPosted(WebKitMediaStreamSrc* self, bool isEmpty)
 {
     GST_DEBUG_OBJECT(self, "Posting stream collection");
     DisableMallocRestrictionsForCurrentThreadScope disableMallocRestrictions;
     callOnMainThreadAndWait([&] {
-        auto streamCollection = webkitMediaStreamSrcCreateStreamCollection(self);
+        auto streamCollection = webkitMediaStreamSrcCreateStreamCollection(self, isEmpty);
         GST_DEBUG_OBJECT(self, "Posting stream collection message containing %u streams", gst_stream_collection_get_size(streamCollection.get()));
         gst_element_post_message(GST_ELEMENT_CAST(self), gst_message_new_stream_collection(GST_OBJECT_CAST(self), streamCollection.get()));
     });
@@ -1403,9 +1409,9 @@ bool webkitMediaStreamSrcSignalEndOfStream(WebKitMediaStreamSrc* self)
             break;
         }
     }
-    self->priv->sources.clear();
+
     if (result)
-        webkitMediaStreamSrcEnsureStreamCollectionPosted(self);
+        webkitMediaStreamSrcEnsureStreamCollectionPosted(self, true);
     return result;
 }
 

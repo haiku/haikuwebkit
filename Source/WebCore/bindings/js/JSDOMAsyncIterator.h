@@ -210,7 +210,8 @@ inline EnableIfSet<IteratorTraits, JSC::JSValue> convertToJS(JSC::JSGlobalObject
 template<typename JSWrapper, typename IteratorTraits>
 void JSDOMAsyncIteratorBase<JSWrapper, IteratorTraits>::destroy(JSCell* cell)
 {
-    JSDOMAsyncIteratorBase<JSWrapper, IteratorTraits>* thisObject = static_cast<JSDOMAsyncIteratorBase<JSWrapper, IteratorTraits>*>(cell);
+    // We cannot rely on jsCast() during JSObject destruction.
+    SUPPRESS_MEMORY_UNSAFE_CAST auto* thisObject = static_cast<JSDOMAsyncIteratorBase<JSWrapper, IteratorTraits>*>(cell);
     thisObject->JSDOMAsyncIteratorBase<JSWrapper, IteratorTraits>::~JSDOMAsyncIteratorBase();
 }
 

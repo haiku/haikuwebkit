@@ -64,8 +64,8 @@ public:
         std::optional<ReaderMode> mode;
     };
     struct WritablePair {
-        RefPtr<ReadableStream> readable;
-        RefPtr<WritableStream> writable;
+        Ref<ReadableStream> readable;
+        Ref<WritableStream> writable;
     };
     struct IteratorOptions {
         bool preventCancel { false };
@@ -171,7 +171,7 @@ public:
         bool m_preventCancel { false };
     };
 
-    ExceptionOr<Ref<Iterator>> createIterator(ScriptExecutionContext*, IteratorOptions&&);
+    ExceptionOr<Ref<Iterator>> createIterator(ScriptExecutionContext*, std::optional<IteratorOptions>&&);
 
 protected:
     static ExceptionOr<Ref<ReadableStream>> createFromJSValues(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue);

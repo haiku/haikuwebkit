@@ -194,7 +194,9 @@ public:
     void didAllowPrivateTokenUsageByThirdPartyForTesting(bool wasAllowed, URL&& resourceURL);
 
     bool isBlobRegistryPartitioningEnabled() const;
-    bool isOptInCookiePartitioningEnabled() const;
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
+    bool computeIsOptInCookiePartitioningEnabled() const;
+#endif
     void propagateSettingUpdates();
 
 #if PLATFORM(IOS_FAMILY)
@@ -684,7 +686,7 @@ private:
     bool m_inspectionForServiceWorkersAllowed { true };
     bool m_isBlobRegistryPartitioningEnabled { false };
 #if ENABLE(OPT_IN_PARTITIONED_COOKIES)
-    bool m_isOptInCookiePartitioningEnabled { false };
+    std::optional<bool> m_cachedIsOptInCookiePartitioningEnabled;
 #endif
 
     HashMap<WebCore::RegistrableDomain, RestrictedOpenerType> m_restrictedOpenerTypesForTesting;

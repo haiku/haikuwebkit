@@ -78,8 +78,11 @@ FloatRect RenderSVGPath::adjustStrokeBoundingBoxForZeroLengthLinecaps(RepaintRec
     if (style().hasStroke()) {
         // FIXME: zero-length subpaths do not respect vector-effect = non-scaling-stroke.
         float strokeWidth = this->strokeWidth();
-        for (size_t i = 0; i < m_zeroLengthLinecapLocations.size(); ++i)
-            strokeBoundingBox.unite(zeroLengthSubpathRect(m_zeroLengthLinecapLocations[i], strokeWidth));
+        for (auto& zeroLengthLinecapLocation : m_zeroLengthLinecapLocations) {
+            auto subpathRect = zeroLengthSubpathRect(zeroLengthLinecapLocation, strokeWidth);
+            if (!subpathRect.isNaN())
+                strokeBoundingBox.unite(subpathRect);
+        }
     }
 
     return strokeBoundingBox;

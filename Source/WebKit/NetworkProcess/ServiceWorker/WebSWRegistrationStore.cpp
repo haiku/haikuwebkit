@@ -89,7 +89,7 @@ void WebSWRegistrationStore::importRegistrations(CompletionHandler<void(std::opt
 
 void WebSWRegistrationStore::updateRegistration(const WebCore::ServiceWorkerContextData& registration)
 {
-    m_updates.set(registration.registration.key, registration);
+    m_updates.set(registration.registration.key, registration.copy());
     scheduleUpdateIfNecessary();
 }
 

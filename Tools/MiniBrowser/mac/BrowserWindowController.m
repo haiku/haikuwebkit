@@ -92,6 +92,9 @@
     if ([address hasPrefix:@"about:"])
         return address;
 
+    if ([address hasPrefix:@"javascript:"])
+        return address;
+
     return [@"http://" stringByAppendingString:address];
 }
 

@@ -90,9 +90,9 @@ public:
     DOMHighResTimeStamp timeOrigin() const;
     ReducedResolutionSeconds nowInReducedResolutionSeconds() const;
 
-    PerformanceNavigation* navigation();
-    PerformanceTiming* timing();
-    EventCounts* eventCounts();
+    PerformanceNavigation& navigation();
+    PerformanceTiming& timing();
+    EventCounts& eventCounts();
 
     uint64_t interactionCount();
 

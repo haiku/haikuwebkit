@@ -421,12 +421,6 @@
 #define UNUSED_VARIADIC_PARAMS __attribute__((unused))
 #endif
 
-/* WARN_UNUSED_RETURN */
-
-#if !defined(WARN_UNUSED_RETURN)
-#define WARN_UNUSED_RETURN [[nodiscard]] // NOLINT: check-webkit-style does not understand annotations.
-#endif
-
 /* DEBUGGER_ANNOTATION_MARKER */
 
 #if !defined(DEBUGGER_ANNOTATION_MARKER) && COMPILER(GCC)

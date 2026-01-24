@@ -35,7 +35,6 @@
 #include "MediaCapabilitiesEncodingInfo.h"
 #include "MediaDecodingConfiguration.h"
 #include "MediaEncodingConfiguration.h"
-#include "MediaPlayer.h"
 #include <wtf/Function.h>
 
 #if ENABLE(MEDIA_SOURCE)
@@ -61,6 +60,7 @@ void createMediaPlayerDecodingConfigurationGStreamer(MediaDecodingConfiguration&
     info.supported = lookupResult.isSupported;
     info.powerEfficient = lookupResult.isUsingHardware;
     info.configuration = WTF::move(configuration);
+    info.smooth = lookupResult.isSupported;
 
     callback(WTF::move(info));
 }
@@ -73,6 +73,7 @@ void createMediaPlayerEncodingConfigurationGStreamer(MediaEncodingConfiguration&
     info.supported = lookupResult.isSupported;
     info.powerEfficient = lookupResult.isUsingHardware;
     info.configuration = WTF::move(configuration);
+    info.smooth = lookupResult.isSupported;
 
     callback(WTF::move(info));
 }

@@ -608,10 +608,6 @@ bool GraphicsLayerCoordinated::addAnimation(const GraphicsLayerKeyframeValueList
             return false;
 
         const auto& filters = static_cast<const GraphicsLayerFilterAnimationValue&>(valueList.at(listIndex)).value();
-        // The animation of drop-shadow filter with currentColor isn't supported yet.
-        // GraphicsLayerCA doesn't accept animations with drap-shadow. Do it here.
-        if (filters.hasFilterOfType<FilterOperation::Type::DropShadowWithStyleColor>())
-            return false;
         if (!filtersCanBeComposited(filters))
             return false;
         break;
@@ -715,7 +711,7 @@ void GraphicsLayerCoordinated::dumpAdditionalProperties(TextStream& textStream, 
 
 bool GraphicsLayerCoordinated::filtersCanBeComposited(const FilterOperations& filters) const
 {
-    return filters.size() && !filters.hasReferenceFilter();
+    return !filters.isEmpty();
 }
 
 void GraphicsLayerCoordinated::noteLayerPropertyChanged(OptionSet<Change> change, ScheduleFlush scheduleFlush)

@@ -46,6 +46,7 @@
 [
     EnabledBySetting=WebXREnabled,
     Conditional=WEBXR,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary FakeXRDeviceInit {
     // Deprecated - use `supportedModes` instead.
     boolean supportsImmersive;

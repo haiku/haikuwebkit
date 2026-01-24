@@ -32,9 +32,9 @@
 #include <WebCore/PathSegment.h>
 #include <WebCore/PlatformPath.h>
 #include <WebCore/WindRule.h>
-#include <variant>
 #include <wtf/DataRef.h>
 #include <wtf/TZoneMalloc.h>
+#include <wtf/Variant.h>
 
 namespace WebCore {
 
@@ -49,7 +49,7 @@ public:
     Path(PathSegment&&);
     WEBCORE_EXPORT Path(Vector<PathSegment>&&);
     explicit Path(const Vector<FloatPoint>& points);
-    Path(Ref<PathImpl>&&);
+    WEBCORE_EXPORT Path(Ref<PathImpl>&&);
 
     Path(const Path&) = default;
     Path(Path&&) = default;

@@ -57,6 +57,7 @@ private:
     CommandBufferImpl& operator=(CommandBufferImpl&&) = delete;
 
     WGPUCommandBuffer backing() const { return m_backing.get(); }
+    bool isCommandBufferImpl() const final { return true; }
 
     void setLabelInternal(const String&) final;
 
@@ -65,5 +66,9 @@ private:
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::CommandBufferImpl)
+    static bool isType(const WebCore::WebGPU::CommandBuffer& commandBuffer) { return commandBuffer.isCommandBufferImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

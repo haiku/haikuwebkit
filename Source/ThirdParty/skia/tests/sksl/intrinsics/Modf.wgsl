@@ -7,7 +7,7 @@ struct _GlobalUniforms {
   colorGreen: vec4<f32>,
   colorRed: vec4<f32>,
 };
-@binding(0) @group(0) var<uniform> _globalUniforms: _GlobalUniforms;
+@group(0) @binding(0) var<uniform> _globalUniforms : _GlobalUniforms;
 fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
   {
     const value: vec4<f32> = vec4<f32>(2.5, -2.5, 8.0, -0.125);
@@ -32,8 +32,7 @@ fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
     whole = _skTemp3.whole;
     fraction = _skTemp3.fract;
     ok.w = all(whole == expectedWhole) && all(fraction == expectedFraction);
-    let _skTemp4 = all(ok);
-    return select(_globalUniforms.colorRed, _globalUniforms.colorGreen, vec4<bool>(_skTemp4));
+    return select(_globalUniforms.colorRed, _globalUniforms.colorGreen, vec4<bool>(all(ok)));
   }
 }
 @fragment fn main() -> FSOut {

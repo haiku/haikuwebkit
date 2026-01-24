@@ -69,9 +69,7 @@ std::optional<IntRect> AXGeometryManager::cachedRectForID(AXID axID)
 
 bool AXGeometryManager::cacheRectIfNeeded(AXID axID, IntRect&& rect)
 {
-    // We shouldn't call this method on a geometry manager that has no page ID.
-    AX_DEBUG_ASSERT(m_cache->pageID());
-    AX_DEBUG_ASSERT(AXObjectCache::isIsolatedTreeEnabled());
+    AX_ASSERT(AXObjectCache::isIsolatedTreeEnabled());
 
     auto rectIterator = m_cachedRects.find(axID);
 
@@ -88,7 +86,7 @@ bool AXGeometryManager::cacheRectIfNeeded(AXID axID, IntRect&& rect)
     if (!rectChanged)
         return false;
 
-    RefPtr tree = AXIsolatedTree::treeForFrameID(*m_cache->frameID());
+    RefPtr tree = AXIsolatedTree::treeForFrameID(m_cache->frameID());
     if (!tree)
         return false;
     tree->updateFrame(axID, WTF::move(rect));

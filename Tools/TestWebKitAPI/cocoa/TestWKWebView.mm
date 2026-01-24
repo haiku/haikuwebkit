@@ -64,6 +64,8 @@
 #if PLATFORM(MAC)
 #import <AppKit/AppKit.h>
 #import <Carbon/Carbon.h>
+#else
+#import <WebKitLegacy/WebEvent.h>
 #endif
 
 #ifdef __cplusplus
@@ -1362,6 +1364,21 @@ static UIWindowScene *windowScene()
     return result;
 }
 
+- (void)typeCharacter:(char)character
+{
+#if PLATFORM(MAC)
+    [self typeCharacter:character modifiers:0];
+#else
+    unichar c = character;
+    RetainPtr characters = adoptNS([[NSString alloc] initWithCharacters:&c length:1]);
+
+    auto firstWebEvent = adoptNS([[WebEvent alloc] initWithKeyEventType:WebEventKeyDown timeStamp:CFAbsoluteTimeGetCurrent() characters:characters.get() charactersIgnoringModifiers:characters.get() modifiers:0 isRepeating:NO withFlags:0 withInputManagerHint:nil keyCode:0 isTabKey:NO]);
+    [self handleKeyEvent:firstWebEvent.get() completion:[=](WebEvent *event, BOOL) {
+        EXPECT_TRUE([event isEqual:firstWebEvent.get()]);
+    }];
+#endif
+}
+
 #if PLATFORM(IOS_FAMILY)
 
 - (NSString *)textForSpeakSelection
@@ -1635,11 +1652,6 @@ static WKContentView *recursiveFindWKContentView(UIView *view)
 - (NSWindow *)hostWindow
 {
     return _hostWindow.getAutoreleased();
-}
-
-- (void)typeCharacter:(char)character
-{
-    [self typeCharacter:character modifiers:0];
 }
 
 - (void)sendKey:(NSString *)characters code:(unsigned short)keyCode isDown:(BOOL)isDown modifiers:(NSEventModifierFlags)modifiers

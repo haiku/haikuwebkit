@@ -484,13 +484,13 @@ inline JSString* tryReplaceOneCharUsingString(JSGlobalObject* globalObject, JSSt
     RETURN_IF_EXCEPTION(scope, nullptr);
     auto searchString = search->value(globalObject);
     if (searchString->length() != 1)
-        return nullptr;
+        RELEASE_AND_RETURN(scope, nullptr);
 
     auto replaceString = replacement->value(globalObject);
     RETURN_IF_EXCEPTION(scope, nullptr);
     if constexpr (check == DollarCheck::Yes) {
         if (replaceString->find('$') != notFound)
-            return nullptr;
+            RELEASE_AND_RETURN(scope, nullptr);
     }
 
     RELEASE_AND_RETURN(scope, string->tryReplaceOneChar(globalObject, searchString[0], replacement));
@@ -1571,6 +1571,17 @@ ALWAYS_INLINE JSString* replace(VM& vm, JSGlobalObject* globalObject, JSValue th
     RETURN_IF_EXCEPTION(scope, nullptr);
 
     RELEASE_AND_RETURN(scope, replaceUsingStringSearch<replaceMode>(vm, globalObject, string, thisString, WTF::move(searchString), replaceValue));
+}
+
+ALWAYS_INLINE char32_t codePointAt(const String& string, unsigned position, unsigned length)
+{
+    RELEASE_ASSERT(position < length);
+    if (string.is8Bit())
+        return string.span8()[position];
+    char32_t character;
+    auto characters = string.span16();
+    U16_NEXT(characters, position, length, character);
+    return character;
 }
 
 } // namespace JSC

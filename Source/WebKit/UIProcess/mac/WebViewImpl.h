@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
+
 #if PLATFORM(MAC)
 
 #include "AppKitSPI.h"
@@ -44,6 +46,7 @@
 #include <WebCore/UserInterfaceLayoutDirection.h>
 #include <WebKit/WKDragDestinationAction.h>
 #include <WebKit/_WKOverlayScrollbarStyle.h>
+#include <WebKit/_WKRectEdge.h>
 #include <pal/spi/cocoa/AVKitSPI.h>
 #include <pal/spi/cocoa/WritingToolsSPI.h>
 #include <wtf/BlockPtr.h>
@@ -55,8 +58,6 @@
 #include <wtf/WeakPtr.h>
 #include <wtf/WorkQueue.h>
 #include <wtf/text/WTFString.h>
-
-using _WKRectEdge = NSUInteger;
 
 OBJC_CLASS NSAccessibilityRemoteUIElement;
 OBJC_CLASS NSImmediateActionGestureRecognizer;
@@ -77,7 +78,7 @@ OBJC_CLASS WKFullScreenWindowController;
 OBJC_CLASS WKImageAnalysisOverlayViewDelegate;
 OBJC_CLASS WKImmediateActionController;
 OBJC_CLASS WKMouseTrackingObserver;
-OBJC_CLASS WKPanGestureController;
+OBJC_CLASS WKAppKitGestureController;
 OBJC_CLASS WKRevealItemPresenter;
 OBJC_CLASS _WKWarningView;
 OBJC_CLASS WKShareSheet;
@@ -98,7 +99,7 @@ OBJC_CLASS WKTextTouchBarItemController;
 OBJC_CLASS WebPlaybackControlsManager;
 #endif // HAVE(TOUCH_BAR)
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 OBJC_CLASS WKDigitalCredentialsPicker;
 #endif
 
@@ -126,7 +127,9 @@ namespace WebCore {
 class DestinationColorSpace;
 class IntPoint;
 struct DataDetectorElementInfo;
+struct ExceptionData;
 struct ShareDataWithParsedURL;
+struct TextAnimationData;
 struct TextRecognitionResult;
 
 #if HAVE(TRANSLATION_UI_SERVICES) && ENABLE(CONTEXT_MENUS)
@@ -192,8 +195,9 @@ namespace WebCore {
 struct DragItem;
 struct ResolvedCaptionDisplaySettingsOptions;
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 struct DigitalCredentialsRequestData;
+struct DigitalCredentialsResponseData;
 #endif
 
 struct FrameIdentifierType;
@@ -556,7 +560,7 @@ public:
     void showShareSheet(WebCore::ShareDataWithParsedURL&&, WTF::CompletionHandler<void(bool)>&&, WKWebView *);
     void shareSheetDidDismiss(WKShareSheet *);
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
     void showDigitalCredentialsPicker(const WebCore::DigitalCredentialsRequestData&, WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&, WKWebView*);
     void dismissDigitalCredentialsPicker(WTF::CompletionHandler<void(bool)>&&, WKWebView*);
 #endif
@@ -973,7 +977,7 @@ private:
 
     RetainPtr<WKShareSheet> _shareSheet;
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
     RetainPtr<WKDigitalCredentialsPicker> _digitalCredentialsPicker;
 #endif
 
@@ -1118,7 +1122,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     bool m_inlinePredictionsEnabled { false };
 #endif
 
-    RetainPtr<WKPanGestureController> m_panGestureController;
+    RetainPtr<WKAppKitGestureController> m_appKitGestureController;
 };
 
 } // namespace WebKit

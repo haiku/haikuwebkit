@@ -48,6 +48,7 @@ public:
     }
 
     virtual bool isRemoteBindGroupProxy() const { return false; }
+    virtual bool isBindGroupImpl() const { return false; }
 
 protected:
     BindGroup() = default;

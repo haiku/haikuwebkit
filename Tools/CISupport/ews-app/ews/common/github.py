@@ -221,7 +221,7 @@ class GitHubEWS(GitHub):
                           ['webkitperl', 'ios-wk2', 'api-mac', 'api-wpe', ''],
                           ['webkitpy', 'ios-wk2-wpt', 'api-mac-debug', 'wpe-cairo-libwebrtc', ''],
                           ['jsc', 'api-ios', 'mac-wk1', 'gtk', ''],
-                          ['jsc-arm64', 'vision', 'mac-wk2', 'gtk-wk2', ''],
+                          ['jsc-debug-arm64', 'vision', 'mac-wk2', 'gtk-wk2', ''],
                           ['services', 'vision-sim', 'mac-AS-debug-wk2', 'api-gtk', ''],
                           ['merge', 'vision-wk2', 'mac-wk2-stress', 'playstation', ''],
                           ['unsafe-merge', 'tv', 'mac-intel-wk2', 'jsc-armv7', ''],

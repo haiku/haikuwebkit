@@ -31,7 +31,6 @@
 #include "CSSFunctionRule.h"
 #include "CSSGroupingRule.h"
 #include "CSSImportRule.h"
-#include "CSSInternalBaseAppearanceRule.h"
 #include "CSSKeyframeRule.h"
 #include "CSSKeyframesRule.h"
 #include "CSSLayerBlockRule.h"
@@ -145,8 +144,6 @@ template<typename Visitor> constexpr decltype(auto) StyleRuleBase::visitDerived(
         return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<StyleRuleFunction>(*this));
     case StyleRuleType::FunctionDeclarations:
         return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<StyleRuleFunctionDeclarations>(*this));
-    case StyleRuleType::InternalBaseAppearance:
-        return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<StyleRuleInternalBaseAppearance>(*this));
     case StyleRuleType::Margin:
         break;
     }
@@ -252,9 +249,6 @@ Ref<CSSRule> StyleRuleBase::createCSSOMWrapper(CSSStyleSheet* parentSheet, CSSRu
         },
         [&](StyleRuleFunctionDeclarations& rule) -> Ref<CSSRule> {
             return CSSFunctionDeclarations::create(rule, parentSheet);
-        },
-        [&](StyleRuleInternalBaseAppearance& rule) -> Ref<CSSRule> {
-            return CSSInternalBaseAppearanceRule::create(rule, parentSheet);
         },
         [](StyleRuleCharset&) -> Ref<CSSRule> {
             RELEASE_ASSERT_NOT_REACHED();
@@ -512,16 +506,6 @@ StyleRuleFontPaletteValues::StyleRuleFontPaletteValues(const AtomString& name, V
     , m_name(name)
     , m_fontFamilies(WTF::move(fontFamilies))
     , m_fontPaletteValues(basePalette, WTF::move(overrideColors))
-{
-}
-
-Ref<StyleRuleInternalBaseAppearance> StyleRuleInternalBaseAppearance::create(Vector<Ref<StyleRuleBase>>&& rules)
-{
-    return adoptRef(*new StyleRuleInternalBaseAppearance(WTF::move(rules)));
-}
-
-StyleRuleInternalBaseAppearance::StyleRuleInternalBaseAppearance(Vector<Ref<StyleRuleBase>>&& rules)
-    : StyleRuleGroup(StyleRuleType::InternalBaseAppearance, WTF::move(rules))
 {
 }
 

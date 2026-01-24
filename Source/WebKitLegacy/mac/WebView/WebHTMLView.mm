@@ -721,7 +721,11 @@ static BOOL forceNSViewHitTest;
 // if YES, do the "top WebHTMLView" hit test (which we'd like to do all the time but can't because of Java requirements [see bug 4349721])
 static BOOL forceWebHTMLViewHitTest;
 
-static WebHTMLView *lastHitView;
+static RetainPtr<WebHTMLView>& lastHitView()
+{
+    static NeverDestroyed<RetainPtr<WebHTMLView>> lastHitView;
+    return lastHitView;
+}
 
 static bool needsCursorRectsSupportAtPoint(NSWindow* window, NSPoint point)
 {
@@ -779,7 +783,7 @@ static void setCursor(NSWindow *self, SEL cmd, NSPoint point)
     }
 
     static Class webFrameViewClass = [WebFrameView class];
-    WebFrameView *enclosingWebFrameView = (WebFrameView *)self;
+    RetainPtr enclosingWebFrameView = (WebFrameView *)self;
     while (enclosingWebFrameView && ![enclosingWebFrameView isKindOfClass:webFrameViewClass])
         enclosingWebFrameView = (WebFrameView *)[enclosingWebFrameView superview];
 
@@ -788,16 +792,16 @@ static void setCursor(NSWindow *self, SEL cmd, NSPoint point)
         return;
     }
 
-    auto* coreFrame = core([enclosingWebFrameView webFrame]);
+    auto* coreFrame = core([enclosingWebFrameView.get() webFrame]);
     auto* frameView = coreFrame ? coreFrame->view() : 0;
     if (!frameView || !frameView->isEnclosedInCompositingLayer()) {
         [self _web_setNeedsDisplayInRect:invalidRect];
         return;
     }
 
-    NSRect invalidRectInWebFrameViewCoordinates = [enclosingWebFrameView convertRect:invalidRect fromView:self];
+    NSRect invalidRectInWebFrameViewCoordinates = [enclosingWebFrameView.get() convertRect:invalidRect fromView:self];
     WebCore::IntRect invalidRectInFrameViewCoordinates(invalidRectInWebFrameViewCoordinates);
-    if (![enclosingWebFrameView isFlipped])
+    if (![enclosingWebFrameView.get() isFlipped])
         invalidRectInFrameViewCoordinates.setY(frameView->frameRect().size().height() - invalidRectInFrameViewCoordinates.maxY());
 
     frameView->invalidateRect(invalidRectInFrameViewCoordinates);
@@ -1367,7 +1371,7 @@ static NSControlStateValue kit(TriState state)
 
 #if PLATFORM(MAC)
 
-- (void)_writeSelectionWithPasteboardTypes:(NSArray *)types toPasteboard:(NSPasteboard *)pasteboard cachedAttributedString:(NSAttributedString *)attributedString
+- (void)_writeSelectionWithPasteboardTypes:(NSArray *)types toPasteboard:(NSPasteboard *)pasteboard cachedAttributedString:(NSAttributedString *)attributedStringArg
 {
     // Put HTML on the pasteboard.
     if ([types containsObject:WebArchivePboardType]) {
@@ -1379,18 +1383,19 @@ static NSControlStateValue kit(TriState state)
 
     // Put the attributed string on the pasteboard (RTF/RTFD format).
     if ([types containsObject:WebCore::legacyRTFDPasteboardTypeSingleton()]) {
-        if (attributedString == nil) {
+        RetainPtr attributedString = attributedStringArg;
+        if (!attributedString)
             attributedString = [self selectedAttributedString];
-        }        
         NSData *RTFDData = [attributedString RTFDFromRange:NSMakeRange(0, [attributedString length]) documentAttributes:@{ }];
         [pasteboard setData:RTFDData forType:WebCore::legacyRTFDPasteboardTypeSingleton()];
-    }        
+    }
     if ([types containsObject:WebCore::legacyRTFPasteboardTypeSingleton()]) {
+        RetainPtr attributedString = attributedStringArg;
         if (!attributedString)
             attributedString = [self selectedAttributedString];
         if ([attributedString containsAttachments])
-            attributedString = WebCore::attributedStringByStrippingAttachmentCharacters(attributedString);
-        NSData *RTFData = [attributedString RTFFromRange:NSMakeRange(0, [attributedString length]) documentAttributes:@{ }];
+            attributedString = WebCore::attributedStringByStrippingAttachmentCharacters(attributedString.get());
+        NSData *RTFData = [attributedString RTFDFromRange:NSMakeRange(0, [attributedString length]) documentAttributes:@{ }];
         [pasteboard setData:RTFData forType:WebCore::legacyRTFPasteboardTypeSingleton()];
     }
 
@@ -1740,10 +1745,10 @@ static BOOL isQuickLookEvent(NSEvent *event)
     }
 
     if (!captureHitsOnSubviews) {
-        NSView* hitView = [super hitTest:point];
+        RetainPtr hitView = [super hitTest:point];
         if (_private && hitView == _private->layerHostingView)
             hitView = self;
-        return hitView;
+        return hitView.autorelease();
     }
 #endif // !PLATFORM(IOS_FAMILY)
 
@@ -1867,8 +1872,8 @@ static BOOL isQuickLookEvent(NSEvent *event)
 {
 #if PLATFORM(MAC)
     NSString *toolTip = [string length] == 0 ? nil : string;
-    NSString *oldToolTip = _private->toolTip.get();
-    if (toolTip == oldToolTip || [toolTip isEqualToString:oldToolTip])
+    RetainPtr oldToolTip = _private->toolTip.get();
+    if (toolTip == oldToolTip || [toolTip isEqualToString:oldToolTip.get()])
         return;
     if (oldToolTip)
         [self _sendToolTipMouseExited];
@@ -1923,11 +1928,11 @@ static bool mouseEventIsPartOfClickOrDrag(NSEvent *event)
     forceWebHTMLViewHitTest = NO;
     
     auto view = retainPtr(dynamic_objc_cast<WebHTMLView>(hitView));
-    if (lastHitView != view && lastHitView && [lastHitView _frame]) {
+    if (lastHitView() != view && lastHitView() && [lastHitView().get() _frame]) {
         // If we are moving out of a view (or frame), let's pretend the mouse moved
         // all the way out of that view. But we have to account for scrolling, because
         // WebCore doesn't understand our clipping.
-        NSRect visibleRect = [[[[lastHitView _frame] frameView] _scrollView] documentVisibleRect];
+        NSRect visibleRect = [[[[lastHitView().get() _frame] frameView] _scrollView] documentVisibleRect];
         float yScroll = visibleRect.origin.y;
         float xScroll = visibleRect.origin.x;
 
@@ -1939,11 +1944,11 @@ static bool mouseEventIsPartOfClickOrDrag(NSEvent *event)
             context:nullptr
             eventNumber:0 clickCount:0 pressure:0];
 
-        if (auto* lastHitCoreFrame = core([lastHitView _frame]))
+        if (auto* lastHitCoreFrame = core([lastHitView().get() _frame]))
             lastHitCoreFrame->eventHandler().mouseMoved(event, [[self _webView] _pressureEvent]);
     }
 
-    lastHitView = view.get();
+    lastHitView() = view.get();
 
     if (view) {
         if (auto* coreFrame = core([view _frame])) {
@@ -2234,7 +2239,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 - (void)_writeSelectionToPasteboard:(NSPasteboard *)pasteboard
 {
     ASSERT([self _hasSelection]);
-    NSArray *types = [self pasteboardTypesForSelection];
+    RetainPtr types = [self pasteboardTypesForSelection];
 
     // Don't write RTFD to the pasteboard when the copied attributed string has no attachments.
     NSAttributedString *attributedString = [self selectedAttributedString];
@@ -2245,8 +2250,8 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         types = mutableTypes.get();
     }
 
-    [pasteboard declareTypes:types owner:[self _topHTMLView]];
-    [self _writeSelectionWithPasteboardTypes:types toPasteboard:pasteboard cachedAttributedString:attributedString];
+    [pasteboard declareTypes:types.get() owner:[self _topHTMLView]];
+    [self _writeSelectionWithPasteboardTypes:types.get() toPasteboard:pasteboard cachedAttributedString:attributedString];
 }
 
 #endif
@@ -2261,8 +2266,8 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     _private->closed = YES;
 
 #if PLATFORM(MAC)
-    if (lastHitView == self)
-        lastHitView = nil;
+    if (lastHitView() == self)
+        lastHitView() = nil;
 
     [self _removeWindowObservers];
     [self _removeSuperviewObservers];
@@ -3245,9 +3250,9 @@ IGNORE_WARNINGS_END
 
 #if PLATFORM(MAC)
         if (!_private->flagsChangedEventMonitor) {
-            __block WebHTMLView *weakSelf = self;
+            __block RetainPtr<WebHTMLView> weakSelf = self;
             _private->flagsChangedEventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskFlagsChanged handler:^(NSEvent *flagsChangedEvent) {
-                [weakSelf _postFakeMouseMovedEventForFlagsChangedEvent:flagsChangedEvent];
+                [weakSelf.get() _postFakeMouseMovedEventForFlagsChangedEvent:flagsChangedEvent];
                 return flagsChangedEvent;
             }];
         }
@@ -3680,9 +3685,9 @@ static RetainPtr<NSArray> customMenuFromDefaultItems(WebView *webView, const Web
 
     auto savedItems = fixMenusToSendToOldClients(defaultMenuItems.get());
 
-    NSArray *delegateSuppliedItems = CallUIDelegate(webView, selector, element.get(), defaultMenuItems.get());
+    RetainPtr delegateSuppliedItems = CallUIDelegate(webView, selector, element.get(), defaultMenuItems.get());
 
-    return fixMenusReceivedFromOldClients(delegateSuppliedItems, savedItems.get());
+    return fixMenusReceivedFromOldClients(delegateSuppliedItems.get(), savedItems.get());
 }
 
 - (NSMenu *)menuForEvent:(NSEvent *)event
@@ -4094,21 +4099,21 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     retainPtr(event).autorelease();
 
     NSView *hitView = [self _hitViewForEvent:event];
-    WebHTMLView *hitHTMLView = [hitView isKindOfClass:[self class]] ? (WebHTMLView *)hitView : nil;
+    RetainPtr<WebHTMLView> hitHTMLView = dynamic_objc_cast<WebHTMLView>(hitView);
 
     if (hitHTMLView) {
         bool result = false;
-        if (auto* coreFrame = core([hitHTMLView _frame])) {
+        if (auto* coreFrame = core([hitHTMLView.get() _frame])) {
             coreFrame->eventHandler().setActivationEventNumber([event eventNumber]);
-            [hitHTMLView _setMouseDownEvent:event];
-            if ([hitHTMLView _isSelectionEvent:event]) {
+            [hitHTMLView.get() _setMouseDownEvent:event];
+            if ([hitHTMLView.get() _isSelectionEvent:event]) {
 #if ENABLE(DRAG_SUPPORT)
                 if (auto* page = coreFrame->page())
                     result = coreFrame->eventHandler().eventMayStartDrag(WebCore::PlatformEventFactory::createPlatformMouseEvent(event, [[self _webView] _pressureEvent], page->chrome().platformPageClient()));
 #endif
-            } else if ([hitHTMLView _isScrollBarEvent:event])
+            } else if ([hitHTMLView.get() _isScrollBarEvent:event])
                 result = true;
-            [hitHTMLView _setMouseDownEvent:nil];
+            [hitHTMLView.get() _setMouseDownEvent:nil];
         }
         return result;
     }
@@ -4123,18 +4128,18 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     retainPtr(event).autorelease();
 
     NSView *hitView = [self _hitViewForEvent:event];
-    WebHTMLView *hitHTMLView = [hitView isKindOfClass:[self class]] ? (WebHTMLView *)hitView : nil;
+    RetainPtr<WebHTMLView> hitHTMLView = dynamic_objc_cast<WebHTMLView>(hitView);
     if (hitHTMLView) {
         bool result = false;
-        if ([hitHTMLView _isSelectionEvent:event]) {
-            [hitHTMLView _setMouseDownEvent:event];
+        if ([hitHTMLView.get() _isSelectionEvent:event]) {
+            [hitHTMLView.get() _setMouseDownEvent:event];
 #if ENABLE(DRAG_SUPPORT)
-            if (auto* coreFrame = core([hitHTMLView _frame])) {
+            if (auto* coreFrame = core([hitHTMLView.get() _frame])) {
                 if (auto* page = coreFrame->page())
                     result = coreFrame->eventHandler().eventMayStartDrag(WebCore::PlatformEventFactory::createPlatformMouseEvent(event, [[self _webView] _pressureEvent], page->chrome().platformPageClient()));
             }
 #endif
-            [hitHTMLView _setMouseDownEvent:nil];
+            [hitHTMLView.get() _setMouseDownEvent:nil];
         }
         return result;
     }
@@ -5972,10 +5977,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (!platformEvent)
         return NO;
 
-    NSEvent *macEvent = platformEvent->macEvent();
-    if ([macEvent type] == NSEventTypeKeyDown && [_private->completionController filterKeyDown:macEvent])
+    RetainPtr macEvent = platformEvent->macEvent();
+    if ([macEvent type] == NSEventTypeKeyDown && [_private->completionController filterKeyDown:macEvent.get()])
         return YES;
-    
+
     if ([macEvent type] == NSEventTypeFlagsChanged)
         return NO;
     
@@ -5992,7 +5997,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         // execute the calls immediately. DOM events like keydown are tweaked to have keyCode of 229, and canceling them has no effect.
         // Unfortunately, there is no real difference between plain text input and IM processing - for example, AppKit queries hasMarkedText
         // when typing with U.S. keyboard, and inserts marked text for dead keys.
-        [self interpretKeyEvents:@[macEvent]];
+        [self interpretKeyEvents:@[macEvent.get()]];
     } else {
         // Are there commands that could just cause text insertion if executed via Editor?
         // WebKit doesn't have enough information about mode to decide how they should be treated, so we leave it upon WebCore
@@ -6674,14 +6679,14 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
             if (!platformKeyEvent)
                 return NO;
 
-            NSEvent *nsEvent = platformKeyEvent->macEvent();
-            if (!(nsEvent.modifierFlags & NSEventModifierFlagFunction))
+            RetainPtr nsEvent = platformKeyEvent->macEvent();
+            if (!(nsEvent.get().modifierFlags & NSEventModifierFlagFunction))
                 return NO;
 
             if (![menu respondsToSelector:@selector(_containsItemMatchingEvent:includingDisabledItems:)])
                 return NO;
 
-            return [menu _containsItemMatchingEvent:nsEvent includingDisabledItems:YES];
+            return [menu _containsItemMatchingEvent:nsEvent.get() includingDisabledItems:YES];
 #else
             return NO;
 #endif
@@ -6761,8 +6766,9 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         // WebKit substitutes nil for input context when in password field, which corresponds to null TSMDocument. So, there is
         // no need to call TSMGetActiveDocument(), which may return an incorrect result when selection hasn't been yet updated
         // after focusing a node.
-        static CFArrayRef inputSources = TISCreateASCIICapableInputSourceList();
-        TSMSetDocumentProperty(0, kTSMDocumentEnabledInputSourcesPropertyTag, sizeof(CFArrayRef), &inputSources);
+        static NeverDestroyed<RetainPtr<CFArrayRef>> inputSources = TISCreateASCIICapableInputSourceList();
+        CFArrayRef inputSourcesRef = inputSources->get();
+        TSMSetDocumentProperty(0, kTSMDocumentEnabledInputSourcesPropertyTag, sizeof(CFArrayRef), &inputSourcesRef);
     } else {
         if (_private->isInSecureInputState)
             DisableSecureEventInput();

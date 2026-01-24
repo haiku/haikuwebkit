@@ -263,6 +263,7 @@
 		BC05ACA62CEA70E500750CB1 /* VariantListOperations.h in Headers */ = {isa = PBXBuildFile; fileRef = BC05ACA52CEA70E500750CB1 /* VariantListOperations.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		BC2C0C212D2C54A900FCFBA0 /* FlatteningVariantAdaptor.h in Headers */ = {isa = PBXBuildFile; fileRef = BC2C0C202D2C54A900FCFBA0 /* FlatteningVariantAdaptor.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		BC5267672C2726D600E422DD /* MakeString.h in Headers */ = {isa = PBXBuildFile; fileRef = BC5267662C2726D600E422DD /* MakeString.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		BCD8F92A2F1EDB8B00B42872 /* IsIncreasing.h in Headers */ = {isa = PBXBuildFile; fileRef = BCD8F9292F1EDB8B00B42872 /* IsIncreasing.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		BCE0DFA72D1865B9003F0349 /* CompactVariant.h in Headers */ = {isa = PBXBuildFile; fileRef = BCE0DFA62D1865B9003F0349 /* CompactVariant.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		BCE0DFA92D1865C4003F0349 /* CompactVariantOperations.h in Headers */ = {isa = PBXBuildFile; fileRef = BCE0DFA82D1865C4003F0349 /* CompactVariantOperations.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		BCE0DFAB2D18670B003F0349 /* VariantExtras.h in Headers */ = {isa = PBXBuildFile; fileRef = BCE0DFAA2D18670B003F0349 /* VariantExtras.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -1287,19 +1288,7 @@
 		27C793CE2C40909D000E1BE8 /* PlatformEnableWin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformEnableWin.h; sourceTree = "<group>"; };
 		2B1B1C7E2E3A879A00D7D9ED /* ForwardDeclCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = ForwardDeclCheckerExpectations; sourceTree = "<group>"; };
 		2B1B1C7F2E3A879A00D7D9ED /* MemoryUnsafeCastCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = MemoryUnsafeCastCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C802E3A879A00D7D9ED /* NoUncheckedPtrMemberCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = NoUncheckedPtrMemberCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C812E3A879A00D7D9ED /* NoUncountedMemberCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = NoUncountedMemberCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C822E3A879A00D7D9ED /* NoUnretainedMemberCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = NoUnretainedMemberCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C832E3A879A00D7D9ED /* RefCntblBaseVirtualDtorExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = RefCntblBaseVirtualDtorExpectations; sourceTree = "<group>"; };
-		2B1B1C842E3A879A00D7D9ED /* RetainPtrCtorAdoptCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = RetainPtrCtorAdoptCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C852E3A879A00D7D9ED /* UncheckedCallArgsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncheckedCallArgsCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C862E3A879A00D7D9ED /* UncheckedLocalVarsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncheckedLocalVarsCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C872E3A879A00D7D9ED /* UncountedCallArgsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncountedCallArgsCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C882E3A879A00D7D9ED /* UncountedLambdaCapturesCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncountedLambdaCapturesCheckerExpectations; sourceTree = "<group>"; };
 		2B1B1C892E3A879A00D7D9ED /* UncountedLocalVarsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncountedLocalVarsCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C8A2E3A879A00D7D9ED /* UnretainedCallArgsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UnretainedCallArgsCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C8B2E3A879A00D7D9ED /* UnretainedLambdaCapturesCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UnretainedLambdaCapturesCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C8C2E3A879A00D7D9ED /* UnretainedLocalVarsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UnretainedLocalVarsCheckerExpectations; sourceTree = "<group>"; };
 		2B70468C2C6BC5F600318C0A /* StdMultimap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StdMultimap.h; sourceTree = "<group>"; };
 		2C05385315BC819000F21B96 /* GregorianDateTime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GregorianDateTime.h; sourceTree = "<group>"; };
 		2CCD892915C0390200285083 /* GregorianDateTime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GregorianDateTime.cpp; sourceTree = "<group>"; };
@@ -1694,6 +1683,7 @@
 		BC05ACA52CEA70E500750CB1 /* VariantListOperations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VariantListOperations.h; sourceTree = "<group>"; };
 		BC2C0C202D2C54A900FCFBA0 /* FlatteningVariantAdaptor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FlatteningVariantAdaptor.h; sourceTree = "<group>"; };
 		BC5267662C2726D600E422DD /* MakeString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MakeString.h; sourceTree = "<group>"; };
+		BCD8F9292F1EDB8B00B42872 /* IsIncreasing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IsIncreasing.h; sourceTree = "<group>"; };
 		BCE0DFA62D1865B9003F0349 /* CompactVariant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CompactVariant.h; sourceTree = "<group>"; };
 		BCE0DFA82D1865C4003F0349 /* CompactVariantOperations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CompactVariantOperations.h; sourceTree = "<group>"; };
 		BCE0DFAA2D18670B003F0349 /* VariantExtras.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VariantExtras.h; sourceTree = "<group>"; };
@@ -2174,19 +2164,7 @@
 			children = (
 				2B1B1C7E2E3A879A00D7D9ED /* ForwardDeclCheckerExpectations */,
 				2B1B1C7F2E3A879A00D7D9ED /* MemoryUnsafeCastCheckerExpectations */,
-				2B1B1C802E3A879A00D7D9ED /* NoUncheckedPtrMemberCheckerExpectations */,
-				2B1B1C812E3A879A00D7D9ED /* NoUncountedMemberCheckerExpectations */,
-				2B1B1C822E3A879A00D7D9ED /* NoUnretainedMemberCheckerExpectations */,
-				2B1B1C832E3A879A00D7D9ED /* RefCntblBaseVirtualDtorExpectations */,
-				2B1B1C842E3A879A00D7D9ED /* RetainPtrCtorAdoptCheckerExpectations */,
-				2B1B1C852E3A879A00D7D9ED /* UncheckedCallArgsCheckerExpectations */,
-				2B1B1C862E3A879A00D7D9ED /* UncheckedLocalVarsCheckerExpectations */,
-				2B1B1C872E3A879A00D7D9ED /* UncountedCallArgsCheckerExpectations */,
-				2B1B1C882E3A879A00D7D9ED /* UncountedLambdaCapturesCheckerExpectations */,
 				2B1B1C892E3A879A00D7D9ED /* UncountedLocalVarsCheckerExpectations */,
-				2B1B1C8A2E3A879A00D7D9ED /* UnretainedCallArgsCheckerExpectations */,
-				2B1B1C8B2E3A879A00D7D9ED /* UnretainedLambdaCapturesCheckerExpectations */,
-				2B1B1C8C2E3A879A00D7D9ED /* UnretainedLocalVarsCheckerExpectations */,
 			);
 			path = SaferCPPExpectations;
 			sourceTree = "<group>";
@@ -2517,6 +2495,7 @@
 				F6D67D3226F90142006E0349 /* Int128.h */,
 				33FD4811265CB38000ABE4F4 /* InterferenceGraph.h */,
 				A4F0F47C2E3056A3001BF35C /* IntervalSet.h */,
+				BCD8F9292F1EDB8B00B42872 /* IsIncreasing.h */,
 				5295B00427920C54006D746A /* IterationStatus.h */,
 				7CDD7FF9186D2A54007433CD /* IteratorRange.h */,
 				7A05093E1FB9DCC500B33FB8 /* JSONValues.cpp */,
@@ -3680,6 +3659,7 @@
 				1C08E3682985D8F300CAE594 /* IOReturnSPI.h in Headers */,
 				1C97FF7A297CD119006422AA /* IOSurfaceSPI.h in Headers */,
 				1C08E3692985D8F800CAE594 /* IOTypesSPI.h in Headers */,
+				BCD8F92A2F1EDB8B00B42872 /* IsIncreasing.h in Headers */,
 				DD3DC8B227A4BF8E007E5B61 /* IterationStatus.h in Headers */,
 				DD3DC86B27A4BF8E007E5B61 /* IteratorRange.h in Headers */,
 				DD3DC92D27A4BF8E007E5B61 /* JSONValues.h in Headers */,

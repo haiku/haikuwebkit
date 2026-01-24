@@ -27,6 +27,7 @@
     Conditional=WEB_AUTHN,
     JSGenerateToNativeObject,
     JSGenerateToJSObject,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary AuthenticatorSelectionCriteria {
     [PermissiveInvalidValue] AuthenticatorAttachment authenticatorAttachment;
     [PermissiveInvalidValue] ResidentKeyRequirement  residentKey;

@@ -3468,17 +3468,25 @@ bool RenderLayer::setupFontSubpixelQuantization(GraphicsContext& context, bool& 
     if (context.paintingDisabled())
         return false;
 
-    bool scrollingOnMainThread = true;
-#if ENABLE(ASYNC_SCROLLING)
-    if (RefPtr scrollingCoordinator = page().scrollingCoordinator())
-        scrollingOnMainThread = scrollingCoordinator->shouldUpdateScrollLayerPositionSynchronously(renderer().view().frameView());
-#endif
+    CheckedPtr box = dynamicDowncast<RenderBox>(renderer());
+    if (!box)
+        return false;
 
-    // FIXME: We shouldn't have to disable subpixel quantization for overflow clips or subframes once we scroll those
-    // things on the scrolling thread.
-    bool contentsScrollByPainting = (renderer().hasNonVisibleOverflow() && !usesCompositedScrolling()) || (renderer().frame().ownerElement());
+    bool documentScrollsOnMainThread = [&]() {
+        auto& frameView = renderer().view().frameView();
+#if ENABLE(ASYNC_SCROLLING)
+        if (RefPtr scrollingCoordinator = page().scrollingCoordinator())
+            return scrollingCoordinator->shouldUpdateScrollLayerPositionSynchronously(frameView);
+#endif
+        if (frameView.isScrollableOrRubberbandable())
+            return true;
+
+        return false;
+    }();
+
+    bool contentScrollsByPainting = box->hasScrollableOverflow() && !usesCompositedScrolling();
     bool isZooming = !page().chrome().client().hasStablePageScaleFactor();
-    if (scrollingOnMainThread || contentsScrollByPainting || isZooming) {
+    if (documentScrollsOnMainThread || contentScrollsByPainting || isZooming) {
         didQuantizeFonts = context.shouldSubpixelQuantizeFonts();
         context.setShouldSubpixelQuantizeFonts(false);
         return true;
@@ -6482,7 +6490,7 @@ IntOutsets RenderLayer::filterOutsets() const
 {
     if (m_filters)
         return m_filters->calculateOutsets(renderer(), localBoundingBox());
-    return renderer().style().filter().outsets();
+    return renderer().style().filter().calculateOutsets(renderer().style().usedZoomForLength());
 }
 
 static RenderLayer* parentLayerCrossFrame(const RenderLayer& layer)

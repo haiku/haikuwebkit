@@ -202,7 +202,7 @@ WTF_EXPORT_PRIVATE bool deleteNonEmptyDirectory(const String&);
 WTF_EXPORT_PRIVATE String realPath(const String&);
 
 WTF_EXPORT_PRIVATE bool isSafeToUseMemoryMapForPath(const String&);
-WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE bool makeSafeToUseMemoryMapForPath(const String&);
+[[nodiscard]] WTF_EXPORT_PRIVATE bool makeSafeToUseMemoryMapForPath(const String&);
 
 WTF_EXPORT_PRIVATE std::optional<MappedFileData> mapFile(const String& path, MappedFileMode);
 

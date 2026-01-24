@@ -2210,6 +2210,10 @@ imported/w3c/web-platform-tests/css/selectors/focus-visible-022.tentative.html [
 imported/w3c/web-platform-tests/css/selectors/user-invalid.html [ Skip ] # Failure
 imported/w3c/web-platform-tests/css/selectors/user-valid.html [ Skip ] # Failure
 
+# open pseudo 
+imported/w3c/web-platform-tests/css/selectors/open-pseudo.html [ Skip ] # Timeout
+imported/w3c/web-platform-tests/css/selectors/invalidation/open-pseudo-class-in-has.html [ Skip ] # Timeout
+
 imported/w3c/web-platform-tests/css/selectors/invalidation/media-loading-pseudo-classes-in-has.html [ Skip ] # Failure on Buildbot
 
 imported/w3c/web-platform-tests/css/support [ Skip ]
@@ -4574,10 +4578,6 @@ imported/w3c/web-platform-tests/focus/iframe-contentwindow-focus-with-different-
 imported/w3c/web-platform-tests/focus/iframe-contentwindow-focus-with-same-as-top-intermediate-frame.html [ Failure ]
 imported/w3c/web-platform-tests/focus/iframe-focus-with-different-site-intermediate-frame.html [ Failure ]
 imported/w3c/web-platform-tests/focus/iframe-focus-with-same-as-top-intermediate-frame.html [ Failure ]
-
-# Now that partial fonts are working, two characters previously rendered as a square are now showing correctly, which makes the test fail. 
-# Probably the test should be updated.
-fast/text/text-combine-placement.html [ Failure ]
 
 fast/css/vertical-align-rem-on-root.html [ Skip ] # [ Timeout Pass ]
 

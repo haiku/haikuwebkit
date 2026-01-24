@@ -332,10 +332,10 @@ std::optional<int> payloadTypeForEncodingName(const String& encodingName);
 
 using RTPHeaderExtensionMapping = HashMap<String, uint8_t>;
 
-WARN_UNUSED_RETURN GRefPtr<GstCaps> capsFromRtpCapabilities(const RTPHeaderExtensionMapping&, const RTCRtpCapabilities&, Function<void(GstStructure*)> supplementCapsCallback);
+[[nodiscard]] GRefPtr<GstCaps> capsFromRtpCapabilities(const RTPHeaderExtensionMapping&, const RTCRtpCapabilities&, Function<void(GstStructure*)> supplementCapsCallback);
 
 GstWebRTCRTPTransceiverDirection getDirectionFromSDPMedia(const GstSDPMedia*);
-WARN_UNUSED_RETURN GRefPtr<GstCaps> capsFromSDPMedia(const GstSDPMedia*);
+[[nodiscard]] GRefPtr<GstCaps> capsFromSDPMedia(const GstSDPMedia*);
 
 void setSsrcAudioLevelVadOn(GstStructure*);
 
@@ -393,7 +393,7 @@ String sdpAsString(const GstSDPMessage*);
 
 bool sdpMediaHasRTPHeaderExtension(const GstSDPMedia*, const String&);
 
-WARN_UNUSED_RETURN GRefPtr<GstCaps> extractMidAndRidFromRTPBuffer(const GstMappedRtpBuffer&, const GstSDPMessage*);
+[[nodiscard]] GRefPtr<GstCaps> extractMidAndRidFromRTPBuffer(const GstMappedRtpBuffer&, const GstSDPMessage*);
 
 bool validateRTPHeaderExtensions(const GstSDPMessage* previousSDP, const GstSDPMessage* newSDP);
 

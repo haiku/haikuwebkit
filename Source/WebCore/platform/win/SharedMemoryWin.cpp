@@ -62,8 +62,12 @@ static DWORD accessRights(SharedMemory::Protection protection)
     return 0;
 }
 
-RefPtr<SharedMemory> SharedMemory::map(Handle&& handle, Protection protection)
+RefPtr<SharedMemory> SharedMemory::map(Handle&& handle, Protection protection, CopyOnWrite copyOnWrite)
 {
+    // Copy-on-write is not supported on this platform.
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=305633
+    ASSERT_UNUSED(copyOnWrite, copyOnWrite == CopyOnWrite::No);
+
     void* data = ::MapViewOfFile(handle.m_handle.get(), accessRights(protection), 0, 0, handle.size());
     ASSERT_WITH_MESSAGE(data, "::MapViewOfFile failed with error %lu %p", ::GetLastError(), handle.m_handle.get());
     if (!data)

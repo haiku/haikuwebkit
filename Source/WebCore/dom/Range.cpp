@@ -427,7 +427,7 @@ ExceptionOr<RefPtr<DocumentFragment>> Range::processContents(ActionType action)
 
         if (processStart) {
             Vector<Ref<Node>> nodes;
-            for (Node* node = processStart.get(); node && node != processEnd; node = node->nextSibling())
+            for (RefPtr node = processStart.get(); node && node != processEnd; node = node->nextSibling())
                 nodes.append(*node);
             auto result = processNodes(action, nodes, commonRoot.get(), fragment.get());
             if (result.hasException())
@@ -538,7 +538,7 @@ static ExceptionOr<RefPtr<Node>> processContentsBetweenOffsets(Range::ActionType
                 result = container->cloneNode(false);
         }
         Vector<Ref<Node>> nodes;
-        Node* n = container->firstChild();
+        CheckedPtr n = container->firstChild();
         for (unsigned i = startOffset; n && i; i--)
             n = n->nextSibling();
         for (unsigned i = startOffset; n && i < endOffset; i++, n = n->nextSibling()) {
@@ -591,7 +591,7 @@ ExceptionOr<RefPtr<Node>> processAncestorsAndTheirSiblings(Range::ActionType act
     RefPtr clonedContainer = passedClonedContainer.releaseReturnValue();
 
     Vector<Ref<ContainerNode>> ancestors;
-    for (ContainerNode* ancestor = container->parentNode(); ancestor && ancestor != commonRoot; ancestor = ancestor->parentNode())
+    for (CheckedPtr<ContainerNode> ancestor = container->parentNode(); ancestor && ancestor != commonRoot; ancestor = ancestor->parentNode())
         ancestors.append(*ancestor);
 
     RefPtr firstChildInAncestorToProcess = direction == ProcessContentsForward ? container->nextSibling() : container->previousSibling();
@@ -616,7 +616,7 @@ ExceptionOr<RefPtr<Node>> processAncestorsAndTheirSiblings(Range::ActionType act
         ASSERT(!firstChildInAncestorToProcess || firstChildInAncestorToProcess->parentNode() == ancestor.ptr());
         
         Vector<Ref<Node>> nodes;
-        for (Node* child = firstChildInAncestorToProcess.get(); child;
+        for (CheckedPtr child = firstChildInAncestorToProcess.get(); child;
             child = (direction == ProcessContentsForward) ? child->nextSibling() : child->previousSibling())
             nodes.append(*child);
 
@@ -742,8 +742,8 @@ String Range::toString() const
 // https://w3c.github.io/DOM-Parsing/#widl-Range-createContextualFragment-DocumentFragment-DOMString-fragment
 ExceptionOr<Ref<DocumentFragment>> Range::createContextualFragment(Variant<RefPtr<TrustedHTML>, String>&& markup)
 {
-    Node& node = startContainer();
-    auto stringValueHolder = trustedTypeCompliantString(node.document().contextDocument(), WTF::move(markup), "Range createContextualFragment"_s);
+    CheckedRef node = startContainer();
+    auto stringValueHolder = trustedTypeCompliantString(node->document().contextDocument(), WTF::move(markup), "Range createContextualFragment"_s);
 
     if (stringValueHolder.hasException())
         return stringValueHolder.releaseException();
@@ -751,12 +751,12 @@ ExceptionOr<Ref<DocumentFragment>> Range::createContextualFragment(Variant<RefPt
     RefPtr<Element> element;
     if (is<Document>(node) || is<DocumentFragment>(node))
         element = nullptr;
-    else if (auto* maybeElement = dynamicDowncast<Element>(node))
+    else if (auto* maybeElement = dynamicDowncast<Element>(node.ptr()))
         element = maybeElement;
     else
-        element = node.parentElement();
+        element = node->parentElement();
     if (!element || (element->document().isHTMLDocument() && is<HTMLHtmlElement>(*element)))
-        element = HTMLBodyElement::create(node.protectedDocument());
+        element = HTMLBodyElement::create(node->protectedDocument());
     return WebCore::createContextualFragment(*element, stringValueHolder.releaseReturnValue(), { ParserContentPolicy::AllowScriptingContent, ParserContentPolicy::DoNotMarkAlreadyStarted });
 }
 

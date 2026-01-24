@@ -57,10 +57,10 @@ bool WebDriverService::platformValidateCapability(const String& name, const Ref<
     if (browserOptions->isNull())
         return true;
 
-    // If browser options are provided, binary is required.
-    auto binary = browserOptions->getString("binary"_s);
-    if (!binary)
-        return false;
+    if (auto binaryValue = browserOptions->getValue("binary"_s)) {
+        if (!binaryValue->asString())
+            return false;
+    }
 
     if (auto browserArgumentsValue = browserOptions->getValue("args"_s)) {
         auto browserArguments = browserArgumentsValue->asArray();

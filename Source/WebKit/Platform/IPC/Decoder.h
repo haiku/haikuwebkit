@@ -29,6 +29,8 @@
 #include "MessageNames.h"
 #include "ReceiverMatcher.h"
 #include "SyncRequestID.h"
+#include <bmalloc/TZoneHeap.h>
+#include <bmalloc/bmalloc.h>
 #include <memory>
 #include <span>
 #include <wtf/ArgumentCoder.h>
@@ -48,11 +50,6 @@
 
 #if PLATFORM(MAC)
 #include "ImportanceAssertion.h"
-#endif
-
-#if !USE(SYSTEM_MALLOC)
-#include <bmalloc/TZoneHeap.h>
-#include <bmalloc/bmalloc.h>
 #endif
 
 namespace IPC {
@@ -127,7 +124,7 @@ public:
     std::span<const uint8_t> span() const { return m_buffer; }
     size_t currentBufferOffset() const { return std::distance(m_buffer.begin(), m_bufferPosition); }
 
-    WARN_UNUSED_RETURN bool isValid() const { return !!m_buffer.data(); }
+    [[nodiscard]] bool isValid() const { return !!m_buffer.data(); }
     void markInvalid()
     {
         auto buffer = std::exchange(m_buffer, { });
@@ -136,10 +133,10 @@ public:
     }
 
     template<typename T>
-    WARN_UNUSED_RETURN std::span<const T> decodeSpan(size_t);
+    [[nodiscard]] std::span<const T> decodeSpan(size_t);
 
     template<typename T>
-    WARN_UNUSED_RETURN std::optional<T> decodeObject();
+    [[nodiscard]] std::optional<T> decodeObject();
 
     template<typename T>
     Decoder& operator>>(std::optional<T>& t)

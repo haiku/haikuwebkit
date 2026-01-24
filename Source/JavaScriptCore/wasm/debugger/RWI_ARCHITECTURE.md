@@ -86,7 +86,7 @@ WebKit's WebAssembly debugging uses a **singleton `WasmDebugServer`** that manag
 **WasmDebugServer** - Process-wide debugging coordinator
 - Singleton: `DebugServer::singleton()`
 - Dual-mode operation: Standalone (TCP) and RWI (IPC)
-- Thread-safe in RWI mode: WorkQueue is serial, guarantees no concurrent access to `handleRawPacket()`
+- Thread-safe in RWI mode: WorkQueue is serial, guarantees no concurrent access
 - Tracks all Wasm modules and instances across entire process
 
 > **Implementation Details**: See [README.md](./README.md) for debug server internals, protocol handlers, and virtual address encoding.

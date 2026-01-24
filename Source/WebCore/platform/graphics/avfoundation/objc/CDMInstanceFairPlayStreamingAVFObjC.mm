@@ -836,7 +836,7 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::updateLicense(const String&, Li
 {
     if (!m_expiredSessions.isEmpty() && isEqual(responseData, "acknowledged"_s)) {
         auto* certificate = m_instance->serverCertificate();
-        auto* storageURL = m_instance->storageURL();
+        RetainPtr storageURL = m_instance->storageURL();
 
         if (!certificate || !storageURL) {
             ERROR_LOG(LOGIDENTIFIER, "\"acknowledged\", Failed, no certificate and storageURL");
@@ -849,13 +849,13 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::updateLicense(const String&, Li
             return data.get();
         });
         auto appIdentifier = certificate->makeContiguous()->createNSData();
-        [PAL::getAVContentKeySessionClassSingleton() removePendingExpiredSessionReports:expiredSessions.get() withAppIdentifier:appIdentifier.get() storageDirectoryAtURL:storageURL];
+        [PAL::getAVContentKeySessionClassSingleton() removePendingExpiredSessionReports:expiredSessions.get() withAppIdentifier:appIdentifier.get() storageDirectoryAtURL:storageURL.get()];
         callback(false, { }, std::nullopt, std::nullopt, Succeeded);
         return;
     }
 
     if (!m_requests.isEmpty() && isEqual(responseData, "renew"_s)) {
-        auto request = lastKeyRequest();
+        RetainPtr request = lastKeyRequest();
         if (!request) {
             ERROR_LOG(LOGIDENTIFIER, "\"renew\", Failed, no outstanding keys");
             callback(false, std::nullopt, std::nullopt, std::nullopt, Failed);
@@ -863,8 +863,8 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::updateLicense(const String&, Li
         }
         m_renewingRequest = m_requests.last();
         ALWAYS_LOG(LOGIDENTIFIER, "\"renew\", processing renewal");
-        auto session = m_session ? m_session.get() : m_instance->contentKeySession();
-        [session renewExpiringResponseDataForContentKeyRequest:request];
+        RetainPtr session = m_session ? m_session.get() : m_instance->contentKeySession();
+        [session.get() renewExpiringResponseDataForContentKeyRequest:request.get()];
         m_updateLicenseCallback = WTF::move(callback);
         return;
     }
@@ -997,7 +997,7 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::updateLicense(const String&, Li
 void CDMInstanceSessionFairPlayStreamingAVFObjC::loadSession(LicenseType licenseType, const String& sessionId, const String&, LoadSessionCallback&& callback)
 {
     if (licenseType == LicenseType::PersistentUsageRecord) {
-        auto* storageURL = m_instance->storageURL();
+        RetainPtr storageURL = m_instance->storageURL();
         if (!m_instance->persistentStateAllowed() || !storageURL) {
             ERROR_LOG(LOGIDENTIFIER, " Failed, mismatched session type");
             callback(std::nullopt, std::nullopt, std::nullopt, Failed, SessionLoadFailure::MismatchedSessionType);
@@ -1012,7 +1012,7 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::loadSession(LicenseType license
 
         RetainPtr<NSData> appIdentifier = certificate->makeContiguous()->createNSData();
         KeyStatusVector changedKeys;
-        for (NSData* expiredSessionData in [PAL::getAVContentKeySessionClassSingleton() pendingExpiredSessionReportsWithAppIdentifier:appIdentifier.get() storageDirectoryAtURL:storageURL]) {
+        for (NSData* expiredSessionData in [PAL::getAVContentKeySessionClassSingleton() pendingExpiredSessionReportsWithAppIdentifier:appIdentifier.get() storageDirectoryAtURL:storageURL.get()]) {
             static const NSString *PlaybackSessionIdKey = @"PlaybackSessionID";
             NSDictionary *expiredSession = [NSPropertyListSerialization propertyListWithData:expiredSessionData options:kCFPropertyListImmutable format:nullptr error:nullptr];
             RetainPtr playbackSessionIdValue = dynamic_objc_cast<NSString>([expiredSession objectForKey:PlaybackSessionIdKey]);
@@ -1066,7 +1066,7 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::removeSessionData(const String&
         [m_session expire];
 
     if (licenseType == LicenseType::PersistentUsageRecord) {
-        auto* storageURL = m_instance->storageURL();
+        RetainPtr storageURL = m_instance->storageURL();
         auto* certificate = m_instance->serverCertificate();
 
         if (!m_instance->persistentStateAllowed() || !storageURL || !certificate) {
@@ -1078,7 +1078,7 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::removeSessionData(const String&
         RetainPtr<NSData> appIdentifier = certificate->makeContiguous()->createNSData();
         RetainPtr<NSMutableArray> expiredSessionsArray = adoptNS([[NSMutableArray alloc] init]);
         KeyStatusVector changedKeys;
-        for (NSData* expiredSessionData in [PAL::getAVContentKeySessionClassSingleton() pendingExpiredSessionReportsWithAppIdentifier:appIdentifier.get() storageDirectoryAtURL:storageURL]) {
+        for (NSData* expiredSessionData in [PAL::getAVContentKeySessionClassSingleton() pendingExpiredSessionReportsWithAppIdentifier:appIdentifier.get() storageDirectoryAtURL:storageURL.get()]) {
             NSDictionary *expiredSession = [NSPropertyListSerialization propertyListWithData:expiredSessionData options:kCFPropertyListImmutable format:nullptr error:nullptr];
             static const NSString *PlaybackSessionIdKey = @"PlaybackSessionID";
             RetainPtr playbackSessionIdValue = dynamic_objc_cast<NSString>([expiredSession objectForKey:PlaybackSessionIdKey]);
@@ -1109,9 +1109,9 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::removeSessionData(const String&
             return;
         }
 
-        id propertyList = expiredSessionsCount == 1 ? [expiredSessionsArray firstObject] : expiredSessionsArray.get();
+        RetainPtr<id> propertyList = expiredSessionsCount == 1 ? [expiredSessionsArray firstObject] : expiredSessionsArray.get();
 
-        RetainPtr<NSData> expiredSessionsData = [NSPropertyListSerialization dataWithPropertyList:propertyList format:NSPropertyListBinaryFormat_v1_0 options:kCFPropertyListImmutable error:nullptr];
+        RetainPtr<NSData> expiredSessionsData = [NSPropertyListSerialization dataWithPropertyList:propertyList.get() format:NSPropertyListBinaryFormat_v1_0 options:kCFPropertyListImmutable error:nullptr];
 
         if (expiredSessionsCount > 1)
             ERROR_LOG(LOGIDENTIFIER, "Multiple(", expiredSessionsCount, ") expired session reports found with same sessionID(", sessionId, ")!");
@@ -1493,11 +1493,11 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::nextRequest()
     }
 
     ASSERT(nextRequest.requests.size() == 1);
-    auto* oneRequest = nextRequest.requests.first().get();
-    if (oneRequest.renewsExpiringResponseData)
-        didProvideRenewingRequest(oneRequest);
+    RetainPtr oneRequest = nextRequest.requests.first().get();
+    if (oneRequest.get().renewsExpiringResponseData)
+        didProvideRenewingRequest(oneRequest.get());
     else
-        didProvideRequest(oneRequest);
+        didProvideRequest(oneRequest.get());
 }
 
 AVContentKeyRequest* CDMInstanceSessionFairPlayStreamingAVFObjC::lastKeyRequest() const
@@ -1731,16 +1731,16 @@ bool CDMInstanceSessionFairPlayStreamingAVFObjC::ensureSessionOrGroup(KeyGroupin
     if (m_group)
         return true;
 
-    if (auto* session = m_instance->contentKeySession()) {
-        lazyInitialize(m_group, ContentKeyGroupFactoryAVFObjC::createContentKeyGroup(keyGroupingStrategy, session, *this));
+    if (RetainPtr session = m_instance->contentKeySession()) {
+        lazyInitialize(m_group, ContentKeyGroupFactoryAVFObjC::createContentKeyGroup(keyGroupingStrategy, session.get(), *this));
         return true;
     }
 
-    auto storageURL = m_instance->storageURL();
+    RetainPtr storageURL = m_instance->storageURL();
     if (!m_instance->persistentStateAllowed() || !storageURL)
         m_session = [PAL::getAVContentKeySessionClassSingleton() contentKeySessionWithKeySystem:AVContentKeySystemFairPlayStreaming];
     else
-        m_session = [PAL::getAVContentKeySessionClassSingleton() contentKeySessionWithKeySystem:AVContentKeySystemFairPlayStreaming storageDirectoryAtURL:storageURL];
+        m_session = [PAL::getAVContentKeySessionClassSingleton() contentKeySessionWithKeySystem:AVContentKeySystemFairPlayStreaming storageDirectoryAtURL:storageURL.get()];
 
     if (!m_session)
         return false;
@@ -1784,12 +1784,12 @@ AVContentKey *CDMInstanceSessionFairPlayStreamingAVFObjC::contentKeyForSample(co
 
 void CDMInstanceSessionFairPlayStreamingAVFObjC::attachContentKeyToSample(const MediaSampleAVFObjC& sample)
 {
-    AVContentKey *contentKey = contentKeyForSample(sample);
+    RetainPtr contentKey = contentKeyForSample(sample);
     if (!contentKey)
         return;
 
     NSError *error = nil;
-    if (!AVSampleBufferAttachContentKey(sample.platformSample().cmSampleBuffer(), contentKey, &error))
+    if (!AVSampleBufferAttachContentKey(sample.platformSample().cmSampleBuffer(), contentKey.get(), &error))
         ERROR_LOG(LOGIDENTIFIER, "Failed to attach content key with error: %{public}@", error);
 }
 

@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "APICustomProtocolManagerClient.h"
 #include "AppPrivacyReport.h"
 #include "AuxiliaryProcessProxy.h"
 #include "BackgroundFetchState.h"
@@ -34,6 +35,7 @@
 #include "ProcessLauncher.h"
 #include "ProcessThrottler.h"
 #include "QuotaIncreaseRequestIdentifier.h"
+#include "SharedPreferencesForWebProcess.h"
 #include "UserContentControllerIdentifier.h"
 #include "WebsiteDataStore.h"
 #include <WebCore/CrossSiteNavigationDataTransfer.h>
@@ -59,7 +61,6 @@ class FormDataReference;
 }
 
 namespace API {
-class CustomProtocolManagerClient;
 class DataTask;
 }
 
@@ -465,7 +466,7 @@ private:
     struct UploadActivity {
         RefPtr<ProcessAssertion> uiAssertion;
         RefPtr<ProcessAssertion> networkAssertion;
-        HashMap<WebCore::ProcessIdentifier, RefPtr<ProcessAssertion>> webProcessAssertions;
+        HashMap<WebCore::ProcessIdentifier, Ref<ProcessAssertion>> webProcessAssertions;
     };
     std::optional<UploadActivity> m_uploadActivity;
 

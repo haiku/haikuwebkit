@@ -148,8 +148,8 @@ public:
     virtual void setName(const String& name) { m_name = name; }
     WEBCORE_EXPORT virtual String debugName() const;
 
-    GraphicsLayer* parent() const { return m_parent.get(); }
-    RefPtr<GraphicsLayer> protectedParent() const { return m_parent.get(); }
+    GraphicsLayer* parent() const { return m_parent; }
+    RefPtr<GraphicsLayer> protectedParent() const { return m_parent; }
     void setParent(GraphicsLayer*); // Internal use only.
     
     // Returns true if the layer has the given layer as an ancestor (excluding self).
@@ -550,6 +550,8 @@ public:
     virtual void purgeFrontBufferForTesting() { }
     virtual void purgeBackBufferForTesting() { }
 
+    virtual void setShadowPath(const Path&);
+
 protected:
     WEBCORE_EXPORT explicit GraphicsLayer(Type, GraphicsLayerClient&);
 
@@ -696,6 +698,7 @@ protected:
 
     EventRegion m_eventRegion;
 #if USE(CA)
+    Path m_shadowPath;
     MediaPlayerVideoGravity m_videoGravity { MediaPlayerVideoGravity::ResizeAspect };
     WindRule m_shapeLayerWindRule { WindRule::NonZero };
     Path m_shapeLayerPath;

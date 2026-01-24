@@ -20,19 +20,17 @@
 
 #pragma once
 
+#include <bmalloc/BPlatform.h>
 #include <new>
 #include <stdlib.h>
 #include <wtf/DebugHeap.h>
 #include <wtf/MallocCommon.h>
 #include <wtf/StdLibExtras.h>
 
-#if !USE(SYSTEM_MALLOC)
-#include <bmalloc/BPlatform.h>
 // Enable USE(LIBPAS)
 // FIXME: Replaces uses of `#if !USE(SYSTEM_MALLOC) \n #if BUSE(LIBPAS)` with `#if USE(LIBPAS)`
 #if BUSE(LIBPAS)
 #define USE_LIBPAS 1
-#endif
 #endif
 
 namespace WTF {
@@ -147,10 +145,8 @@ WTF_EXPORT_PRIVATE TryMallocReturnValue tryFastRealloc(void*, size_t);
 
 WTF_EXPORT_PRIVATE void fastFree(void*);
 
-// Allocations from fastAlignedMalloc() must be freed using fastAlignedFree().
 WTF_EXPORT_PRIVATE void* fastAlignedMalloc(size_t alignment, size_t) RETURNS_NONNULL;
 WTF_EXPORT_PRIVATE void* tryFastAlignedMalloc(size_t alignment, size_t);
-WTF_EXPORT_PRIVATE void fastAlignedFree(void*);
 
 // These functions behave like their non-compact counterparts, but guarantee
 // that the pointer returned can be stored as a CompactPtr or PackedPtr.
@@ -279,7 +275,7 @@ struct FastMalloc {
 struct FastAlignedMalloc {
     static void* alignedMalloc(size_t alignment, size_t size) { return fastAlignedMalloc(alignment, size); }
     static void* tryAlignedMalloc(size_t alignment, size_t size) { return tryFastAlignedMalloc(alignment, size); }
-    static void free(void* p) { fastAlignedFree(p); }
+    static void free(void* p) { fastFree(p); }
 };
 
 struct FastCompactMalloc {
@@ -425,7 +421,6 @@ using WTF::tryFastCalloc;
 using WTF::tryFastMalloc;
 using WTF::tryFastZeroedMalloc;
 using WTF::fastAlignedMalloc;
-using WTF::fastAlignedFree;
 using WTF::fastCompactCalloc;
 using WTF::fastCompactMalloc;
 using WTF::fastCompactMemDup;

@@ -45,7 +45,7 @@ public:
     void ref() const override { RefCounted::ref(); }
     void deref() const override { RefCounted::deref(); }
 
-    virtual CallbackResult<RefPtr<DOMPromise>> invoke(HTMLMediaElement&, const ResolvedCaptionDisplaySettingsOptionsWrapper&) = 0;
+    virtual CallbackResult<Ref<DOMPromise>> invoke(HTMLMediaElement&, const ResolvedCaptionDisplaySettingsOptionsWrapper&) = 0;
 
     void showCaptionDisplaySettings(HTMLMediaElement&, const ResolvedCaptionDisplaySettingsOptions&, CompletionHandler<void(ExceptionOr<void>)>&&) override;
 

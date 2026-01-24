@@ -28,6 +28,8 @@
 #include <wtf/Compiler.h>
 #include <wtf/Platform.h>
 
+#if PLATFORM(MAC)
+
 DECLARE_SYSTEM_HEADER
 
 #if USE(APPLE_INTERNAL_SDK)
@@ -50,3 +52,5 @@ WTF_EXTERN_C_END
 #endif
 
 extern NSString *const kPLTaskingStartNotification;
+
+#endif // PLATFORM(MAC)

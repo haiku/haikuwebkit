@@ -38,6 +38,7 @@ from .steps import *
 
 CURRENT_HOSTNAME = socket.gethostname().strip()
 LLVM_DIR = 'llvm-project'
+SWIFT_DIR = 'swift-project/swift'
 
 # Workaround for https://github.com/buildbot/buildbot/issues/4669
 FakeBuild.addStepsAfterLastStep = lambda FakeBuild, step_factories: None
@@ -438,6 +439,271 @@ class TestInstallNinja(BuildStepMixinAdditions, unittest.TestCase):
             .exit(1),
         )
         self.expect_outcome(result=FAILURE, state_string='Failed to install Ninja')
+        return self.run_step()
+
+
+class TestPrintSwiftVersion(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setup_test_build_step()
+
+    def tearDown(self):
+        return self.tear_down_test_build_step()
+
+    def configureStep(self):
+        self.setup_step(PrintSwiftVersion())
+
+    def test_success_with_tag_and_executable(self):
+        self.configureStep()
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'git describe --tags'])
+            .log('stdio', stdout='swift-6.3-DEVELOPMENT-SNAPSHOT\n')
+            .exit(0),
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', '../build/Ninja-ReleaseAssert/swift-macosx-arm64/bin/swift --version'])
+            .log('stdio', stdout='Swift version 6.0.3 (swift-6.0.3-RELEASE)\nTarget: arm64-apple-macosx26.0\n')
+            .exit(0),
+        )
+        self.expect_outcome(result=SUCCESS, state_string='Current Swift tag: swift-6.3-DEVELOPMENT-SNAPSHOT')
+        rc = self.run_step()
+        self.expect_property('current_swift_tag', 'swift-6.3-DEVELOPMENT-SNAPSHOT')
+        self.expect_property('has_swift_executable', True)
+        return rc
+
+    def test_no_git_repository(self):
+        self.configureStep()
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'git describe --tags'])
+            .log('stdio', stdout='fatal: not a git repository\n')
+            .exit(1),
+        )
+        self.expect_outcome(result=SUCCESS, state_string='Swift repository does not exist')
+        rc = self.run_step()
+        return rc
+
+    def test_no_swift_executable(self):
+        self.configureStep()
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'git describe --tags'])
+            .log('stdio', stdout='swift-6.3-DEVELOPMENT-SNAPSHOT\n')
+            .exit(0),
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', '../build/Ninja-ReleaseAssert/swift-macosx-arm64/bin/swift --version'])
+            .log('stdio', stdout='No such file or directory\n')
+            .exit(1),
+        )
+        self.expect_outcome(result=SUCCESS, state_string='Swift executable does not exist')
+        rc = self.run_step()
+        self.expect_property('current_swift_tag', 'swift-6.3-DEVELOPMENT-SNAPSHOT')
+        return rc
+
+
+class TestGetSwiftTagName(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setup_test_build_step()
+
+    def tearDown(self):
+        return self.tear_down_test_build_step()
+
+    def configureStep(self):
+        self.setup_step(GetSwiftTagName())
+
+    def test_success(self):
+        self.configureStep()
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        log_environ=False,
+                        timeout=60,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'cat Tools/CISupport/safer-cpp-swift-version'])
+            .log('stdio', stdout='swift-6.3-DEVELOPMENT-SNAPSHOT\n')
+            .exit(0),
+        )
+        self.expect_outcome(result=SUCCESS, state_string='Canonical Swift tag name: swift-6.3-DEVELOPMENT-SNAPSHOT')
+        rc = self.run_step()
+        self.expect_property('canonical_swift_tag', 'swift-6.3-DEVELOPMENT-SNAPSHOT')
+        return rc
+
+    def test_failure_empty_file(self):
+        self.configureStep()
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        log_environ=False,
+                        timeout=60,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'cat Tools/CISupport/safer-cpp-swift-version'])
+            .log('stdio', stdout='')
+            .exit(0),
+        )
+        self.expect_outcome(result=FAILURE, state_string='Failed to find canonical Swift tag')
+        return self.run_step()
+
+
+class TestCheckOutSwiftProject(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setup_test_build_step()
+
+    def tearDown(self):
+        return self.tear_down_test_build_step()
+
+    def configureStep(self):
+        self.setup_step(CheckOutSwiftProject())
+        self.setProperty('canonical_swift_tag', 'swift-6.3-DEVELOPMENT-SNAPSHOT')
+
+    def test_skipped_already_up_to_date(self):
+        self.configureStep()
+        self.setProperty('current_swift_tag', 'swift-6.3-DEVELOPMENT-SNAPSHOT')
+        self.expect_outcome(result=SKIPPED, state_string='swift-project is already up to date')
+        return self.run_step()
+
+
+class TestUpdateSwiftCheckouts(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setup_test_build_step()
+
+    def tearDown(self):
+        return self.tear_down_test_build_step()
+
+    def configureStep(self):
+        self.setup_step(UpdateSwiftCheckouts())
+        self.setProperty('canonical_swift_tag', 'swift-6.3-DEVELOPMENT-SNAPSHOT')
+
+    def test_success(self):
+        self.configureStep()
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'utils/update-checkout --clone'])
+            .exit(0),
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'utils/update-checkout --tag swift-6.3-DEVELOPMENT-SNAPSHOT'])
+            .exit(0),
+        )
+        self.expect_outcome(result=SUCCESS, state_string='Successfully updated swift checkout')
+        return self.run_step()
+
+    def test_skipped_already_up_to_date(self):
+        self.configureStep()
+        self.setProperty('current_swift_tag', 'swift-6.3-DEVELOPMENT-SNAPSHOT')
+        self.expect_outcome(result=SKIPPED, state_string='Swift checkout is already up to date')
+        return self.run_step()
+
+    def test_failure_with_previous_checkout(self):
+        self.configureStep()
+        self.setProperty('current_swift_tag', 'swift-6.4-DEVELOPMENT-SNAPSHOT')
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'utils/update-checkout --clone'])
+            .exit(1),
+        )
+        self.expect_outcome(result=WARNINGS, state_string='Failed to update swift, using previous checkout')
+        return self.run_step()
+
+    def test_failure_without_previous_checkout(self):
+        self.configureStep()
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['/bin/bash', '--posix', '-o', 'pipefail', '-c', 'utils/update-checkout --clone'])
+            .exit(1),
+        )
+        self.expect_outcome(result=FAILURE, state_string='Failed to update swift checkout')
+        return self.run_step()
+
+
+class TestBuildSwift(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        self.longMessage = True
+        return self.setup_test_build_step()
+
+    def tearDown(self):
+        return self.tear_down_test_build_step()
+
+    def configureStep(self):
+        self.setup_step(BuildSwift())
+        self.setProperty('architecture', 'arm64')
+
+    def test_success(self):
+        self.configureStep()
+        self.setProperty('has_swift_executable', False)
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['utils/build-script', '--skip-build-benchmarks', '--swift-darwin-supported-archs', 'arm64', '--release', '--no-assertions', '--swift-disable-dead-stripping', '--bootstrapping=hosttools'])
+            .exit(0),
+        )
+        self.expect_outcome(result=SUCCESS, state_string='Successfully built Swift')
+        return self.run_step()
+
+    def test_skipped_executable_exists_same_tag(self):
+        self.configureStep()
+        self.setProperty('has_swift_executable', True)
+        self.setProperty('canonical_swift_tag', 'swift-6.0.3-RELEASE')
+        self.setProperty('current_swift_tag', 'swift-6.0.3-RELEASE')
+        self.expect_outcome(result=SKIPPED, state_string='Swift executable already exists')
+        return self.run_step()
+
+    def test_build_when_tag_changed(self):
+        self.configureStep()
+        self.setProperty('has_swift_executable', True)
+        self.setProperty('canonical_swift_tag', 'swift-6.0.3-RELEASE')
+        self.setProperty('current_swift_tag', 'swift-6.0.2-RELEASE')
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['utils/build-script', '--skip-build-benchmarks', '--swift-darwin-supported-archs', 'arm64', '--release', '--no-assertions', '--swift-disable-dead-stripping', '--bootstrapping=hosttools'])
+            .exit(0),
+        )
+        self.expect_outcome(result=SUCCESS, state_string='Successfully built Swift')
+        return self.run_step()
+
+    def test_failure_with_previous_checkout(self):
+        self.configureStep()
+        self.setProperty('has_swift_executable', False)
+        self.setProperty('current_swift_tag', 'swift-6.0.2-RELEASE')
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['utils/build-script', '--skip-build-benchmarks', '--swift-darwin-supported-archs', 'arm64', '--release', '--no-assertions', '--swift-disable-dead-stripping', '--bootstrapping=hosttools'])
+            .exit(1),
+        )
+        self.expect_outcome(result=WARNINGS, state_string='Failed to update swift, using previous checkout')
+        return self.run_step()
+
+    def test_failure_without_previous_checkout(self):
+        self.configureStep()
+        self.setProperty('has_swift_executable', False)
+        self.expectRemoteCommands(
+            ExpectShell(workdir=SWIFT_DIR,
+                        log_environ=False,
+                        timeout=1200,
+                        command=['utils/build-script', '--skip-build-benchmarks', '--swift-darwin-supported-archs', 'arm64', '--release', '--no-assertions', '--swift-disable-dead-stripping', '--bootstrapping=hosttools'])
+            .exit(1),
+        )
+        self.expect_outcome(result=FAILURE, state_string='Failed to build Swift')
         return self.run_step()
 
 

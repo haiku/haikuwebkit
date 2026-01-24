@@ -235,8 +235,8 @@ CVPixelBufferRef LibWebRTCVPXInternalVideoDecoder::createPixelBuffer(size_t widt
 
     {
         Locker locker(m_pixelBufferPoolLock);
-        if (auto bufferPool = pixelBufferPool(width, height, pixelBufferType))
-            status = CVPixelBufferPoolCreatePixelBuffer(nullptr, bufferPool, &pixelBuffer);
+        if (RetainPtr bufferPool = pixelBufferPool(width, height, pixelBufferType))
+            status = CVPixelBufferPoolCreatePixelBuffer(nullptr, bufferPool.get(), &pixelBuffer);
     }
 
     if (status || !pixelBuffer) {

@@ -183,7 +183,7 @@ const SimpleRange& TextCheckingParagraph::offsetAsRange() const
     return *m_offsetAsRange;
 }
 
-StringView TextCheckingParagraph::text() const
+StringView TextCheckingParagraph::text() const LIFETIME_BOUND
 {
     if (m_text.isNull())
         m_text = plainText(paragraphRange());

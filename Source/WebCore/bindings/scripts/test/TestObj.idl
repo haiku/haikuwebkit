@@ -603,6 +603,11 @@ dictionary ChildDictionary : ParentDictionary {
     boolean childMember1;
 };
 
+dictionary GrandchildDictionary : ChildDictionary {
+    boolean grandchildMember2;
+    boolean grandchildMember1;
+};
+
 [
     Conditional=Condition1
 ] dictionary TestConditionalDictionaryA {

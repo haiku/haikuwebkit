@@ -971,18 +971,18 @@ bool ResourceLoader::isPDFJSResourceLoad() const
 
 RefPtr<LocalFrame> ResourceLoader::protectedFrame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 LocalFrame* ResourceLoader::frame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 #if ENABLE(CONTENT_EXTENSIONS)
 ResourceMonitor* ResourceLoader::resourceMonitorIfExists()
 {
-    RefPtr frame = m_frame.get();
+    RefPtr frame = m_frame;
     if (RefPtr document = frame ? frame->document() : nullptr)
         return document->resourceMonitorIfExists();
     return nullptr;

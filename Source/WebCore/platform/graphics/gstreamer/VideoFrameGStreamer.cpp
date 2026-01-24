@@ -496,7 +496,7 @@ void VideoFrameGStreamer::setPresentationTime(const MediaTime& presentationTime)
 {
     updateTimestamp(presentationTime, VideoFrame::ShouldCloneWithDifferentTimestamp::No);
     auto buffer = gst_sample_get_buffer(m_sample.get());
-    GST_BUFFER_PTS(buffer) = GST_BUFFER_DTS(buffer) = toGstClockTime(1_s / presentationTime.toDouble());
+    GST_BUFFER_PTS(buffer) = GST_BUFFER_DTS(buffer) = toGstClockTime(presentationTime);
 }
 
 void VideoFrameGStreamer::setMetadataAndContentHint(std::optional<VideoFrameTimeMetadata> metadata, VideoFrameContentHint hint)

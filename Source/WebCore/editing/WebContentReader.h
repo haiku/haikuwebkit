@@ -44,8 +44,8 @@ public:
     {
     }
 
-    LocalFrame& frame() const { return m_frame.get(); }
-    Ref<LocalFrame> protectedFrame() const { return m_frame.get(); }
+    LocalFrame& frame() const { return m_frame; }
+    Ref<LocalFrame> protectedFrame() const { return m_frame; }
 
 protected:
     bool shouldSanitize() const;

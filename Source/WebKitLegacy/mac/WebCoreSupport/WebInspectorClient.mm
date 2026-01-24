@@ -162,16 +162,16 @@ void WebInspectorClient::hideHighlight()
 
 void WebInspectorClient::didSetSearchingForNode(bool enabled)
 {
-    WebInspector *inspector = [m_inspectedWebView.get() inspector];
+    RetainPtr inspector = [m_inspectedWebView.get() inspector];
 
     ASSERT(isMainThread());
 
     if (enabled) {
         [[m_inspectedWebView.get() window] makeKeyAndOrderFront:nil];
         [[m_inspectedWebView.get() window] makeFirstResponder:m_inspectedWebView.get().get()];
-        [[NSNotificationCenter defaultCenter] postNotificationName:WebInspectorDidStartSearchingForNode object:inspector];
+        [[NSNotificationCenter defaultCenter] postNotificationName:WebInspectorDidStartSearchingForNode object:inspector.get()];
     } else
-        [[NSNotificationCenter defaultCenter] postNotificationName:WebInspectorDidStopSearchingForNode object:inspector];
+        [[NSNotificationCenter defaultCenter] postNotificationName:WebInspectorDidStopSearchingForNode object:inspector.get()];
 }
 
 void WebInspectorClient::releaseFrontend()
@@ -211,12 +211,12 @@ void WebInspectorFrontendClient::frontendLoaded()
 
     InspectorFrontendClientLocal::frontendLoaded();
 
-    WebFrame *frame = [m_inspectedWebView.get() mainFrame];
+    RetainPtr frame = [m_inspectedWebView.get() mainFrame];
 
     WebFrameLoadDelegateImplementationCache* implementations = WebViewGetFrameLoadDelegateImplementations(m_inspectedWebView.get().get());
     if (implementations->didClearInspectorWindowObjectForFrameFunc)
         CallFrameLoadDelegate(implementations->didClearInspectorWindowObjectForFrameFunc, m_inspectedWebView.get().get(),
-                              @selector(webView:didClearInspectorWindowObject:forFrame:), [frame windowObject], frame);
+                              @selector(webView:didClearInspectorWindowObject:forFrame:), [frame.get() windowObject], frame.get());
 
     bool attached = [m_frontendWindowController.get() attached];
     setAttachedWindow(attached ? DockSide::Bottom : DockSide::Undocked);
@@ -259,9 +259,9 @@ void WebInspectorFrontendClient::closeWindow()
 
 void WebInspectorFrontendClient::reopen()
 {
-    WebInspector* inspector = [m_inspectedWebView.get() inspector];
-    [inspector close:nil];
-    [inspector show:nil];
+    RetainPtr inspector = [m_inspectedWebView.get() inspector];
+    [inspector.get() close:nil];
+    [inspector.get() show:nil];
 }
 
 void WebInspectorFrontendClient::resetState()
@@ -381,8 +381,8 @@ void WebInspectorFrontendClient::logDiagnosticEvent(const String& eventName, con
 
 void WebInspectorFrontendClient::updateWindowTitle() const
 {
-    NSString *title = [NSString stringWithFormat:UI_STRING_INTERNAL("Web Inspector — %@", "Web Inspector window title"), m_inspectedURL.createNSString().get()];
-    [[m_frontendWindowController.get() window] setTitle:title];
+    RetainPtr title = [NSString stringWithFormat:UI_STRING_INTERNAL("Web Inspector — %@", "Web Inspector window title"), m_inspectedURL.createNSString().get()];
+    [[m_frontendWindowController.get() window] setTitle:title.get()];
 }
 
 bool WebInspectorFrontendClient::canSave(InspectorFrontendClient::SaveMode saveMode)
@@ -461,9 +461,9 @@ void WebInspectorFrontendClient::save(Vector<InspectorFrontendClient::SaveData>&
     };
 
     NSWindow *frontendWindow = [[m_frontendWindowController frontendWebView] window];
-    NSWindow *window = frontendWindow ? frontendWindow : [NSApp keyWindow];
+    RetainPtr window = frontendWindow ? frontendWindow : [NSApp keyWindow];
     if (window)
-        [panel beginSheetModalForWindow:window completionHandler:completionHandler];
+        [panel beginSheetModalForWindow:window.get() completionHandler:completionHandler];
     else
         completionHandler([panel runModal]);
 }

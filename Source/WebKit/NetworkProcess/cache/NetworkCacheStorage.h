@@ -51,7 +51,7 @@ class Storage : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<Storage, 
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(Storage);
 public:
     enum class Mode { Normal, AvoidRandomness };
-    static RefPtr<Storage> open(const String& cachePath, Mode, size_t capacity);
+    static RefPtr<Storage> open(const String& cachePath, Mode, size_t capacity, size_t mainResourceBlobMemoryCacheFileLimit);
 
     enum class ReadOperationIdentifierType { };
     using ReadOperationIdentifier = ObjectIdentifier<ReadOperationIdentifierType>;
@@ -142,7 +142,7 @@ public:
     void writeWithoutWaiting() { m_initialWriteDelay = 0_s; };
 
 private:
-    Storage(const String& directoryPath, Mode, Salt, size_t capacity);
+    Storage(const String& directoryPath, Mode, Salt, size_t capacity, size_t mainResourceBlobMemoryCacheFileLimit);
 
     String recordDirectoryPathForKey(const Key&) const;
     String recordPathForKey(const Key&) const;

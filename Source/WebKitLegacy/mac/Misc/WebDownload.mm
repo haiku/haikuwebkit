@@ -132,9 +132,9 @@ using namespace WebCore;
 #if !PLATFORM(IOS_FAMILY)
     // Try previously stored credential first.
     if (![challenge previousFailureCount]) {
-        NSURLCredential *credential = NetworkStorageSessionMap::defaultStorageSession().credentialStorage().get(emptyString(), ProtectionSpace([challenge protectionSpace])).nsCredential();
+        RetainPtr credential = NetworkStorageSessionMap::defaultStorageSession().credentialStorage().get(emptyString(), ProtectionSpace([challenge protectionSpace])).nsCredential();
         if (credential) {
-            [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
+            [[challenge sender] useCredential:credential.get() forAuthenticationChallenge:challenge];
             return;
         }
     }

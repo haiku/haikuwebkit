@@ -1078,7 +1078,7 @@ inline bool PropertyParserCustom::consumeBackgroundShorthand(CSSParserTokenRange
         switch (property) {
         // background-*
         case CSSPropertyBackgroundClip:
-            return CSSPropertyParsing::consumeSingleBackgroundClip(range, state);
+            return CSSPropertyParsing::consumeSingleBackgroundClip(range);
         case CSSPropertyBackgroundBlendMode:
             return CSSPropertyParsing::consumeSingleBackgroundBlendMode(range);
         case CSSPropertyBackgroundAttachment:

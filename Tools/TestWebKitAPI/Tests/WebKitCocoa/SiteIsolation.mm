@@ -810,12 +810,7 @@ TEST(SiteIsolation, NavigationAfterWindowOpen)
         Util::spinRunLoop();
 }
 
-// FIXME: Re-enable this test once https://bugs.webkit.org/show_bug.cgi?id=300844 is resolved
-#if !defined(NDEBUG)
-TEST(SiteIsolation, DISABLED_OpenBeforeInitialLoad)
-#else
 TEST(SiteIsolation, OpenBeforeInitialLoad)
-#endif
 {
     HTTPServer server({
         { "/webkit"_s, { "<script>alert('loaded')</script>"_s } }
@@ -978,6 +973,18 @@ TEST(SiteIsolation, WindowOpenRedirect)
         auto [opener, opened] = openerAndOpenedViews(server, @"https://example.com/example4");
         EXPECT_WK_STREQ(opened.webView.get().URL.absoluteString, "https://apple.com/apple");
     }
+}
+
+TEST(SiteIsolation, InitialNavigationRedirect)
+{
+    HTTPServer server({
+        { "/example"_s, { 302, { { "Location"_s, "https://webkit.org/webkit"_s } }, "redirecting..."_s } },
+        { "/webkit"_s, { "hi"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
 }
 
 void pollUntilOpenedWindowIsClosed(RetainPtr<WKWebView> webView, bool& finished)
@@ -7621,6 +7628,122 @@ TEST(SiteIsolation, RequestRectForFoundTextRangeIOS)
 }
 
 #endif
+
+TEST(SiteIsolation, MainPageNavigatesCrossOriginIframeToAboutBlank)
+{
+    HTTPServer server({
+        { "/example"_s, { "<iframe id='iframe1' src='https://webkit.org/webkit'></iframe>"_s } },
+        { "/webkit"_s, { "<script>alert('loaded iframe1');</script>"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    // Load main page
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+
+    // Wait until cross-origin iframe is loaded
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "loaded iframe1");
+
+    // Before the main page navigates the iframe, check that
+    // the iframe is in a separate process.
+    checkFrameTreesInProcesses(webView.get(), {
+        { "https://example.com"_s,
+            { { RemoteFrame } }
+        },
+        { RemoteFrame,
+            { { "https://webkit.org"_s } }
+        },
+    });
+
+    // Have the main frame navigate a cross-origin child iframe
+    // to about:blank.
+    // The about:blank iframe should inherit the origin of it's parent,
+    // or it's opener if the parent doesn't exist.
+    // https://dev.w3.org/html5/spec-LC/origin-0.html
+    // https://dev.w3.org/html5/spec-LC/browsers.html#about-blank-origin
+    //
+    // iframe goes from "https://example.com/example" -> "about:blank"
+    // and inherits the origin of the origin which initiated navigation.
+    [webView evaluateJavaScript:
+        @"let iframe1 = document.getElementById('iframe1');"
+        "iframe1.onload = () => { alert('loaded about:blank'); };"
+        "iframe1.src = 'about:blank';"
+    completionHandler:nil];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "loaded about:blank");
+
+    auto mainFrame = [webView mainFrame];
+    auto childFrame = mainFrame.childFrames.firstObject;
+    pid_t mainFramePid = mainFrame.info._processIdentifier;
+    pid_t childFramePid = childFrame.info._processIdentifier;
+    EXPECT_NE(mainFramePid, 0);
+    EXPECT_NE(childFramePid, 0);
+    EXPECT_EQ(mainFramePid, childFramePid);
+    EXPECT_WK_STREQ(mainFrame.info.securityOrigin.host, "example.com");
+    EXPECT_WK_STREQ(childFrame.info.securityOrigin.host, "example.com");
+
+    // After navigation, the cross-origin iframe has now become about:blank
+    // and should have the same origin as the main page.
+    checkFrameTreesInProcesses(webView.get(), {
+        { "https://example.com"_s,
+            { { "https://example.com"_s } }
+        },
+    });
+}
+
+TEST(SiteIsolation, ChildIframeNavigatesCrossOriginGrandchildIframeToAboutBlank)
+{
+    HTTPServer server({
+        { "/main"_s, { "<iframe id='child' src='https://example.com/child_iframe'></iframe>"_s } },
+        { "/child_iframe"_s, { "<iframe id='grandchild' src='https://webkit.org/grandchild_iframe'></iframe>"_s } },
+        { "/grandchild_iframe"_s, { "<script>alert('loaded webkit.org');</script>"_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/main"]]];
+
+    // wait for cross-origin grandchild iframe to be loaded
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "loaded webkit.org");
+
+    // ensure that the cross-origin grandchild iframe is in a separate process
+    checkFrameTreesInProcesses(webView.get(), {
+        { "https://example.com"_s,
+            { { "https://example.com"_s, { { RemoteFrame } } } }
+        },
+        { RemoteFrame,
+            { { RemoteFrame, { { "https://webkit.org"_s } } } }
+        },
+    });
+
+    // note that this JavaScript gets executed in the context of the
+    // child iframe (which is at example.com).
+    //
+    // The example.com child iframe navigates the webkit.org grandchild iframe.
+    // to about:blank
+    [webView evaluateJavaScript:
+        @"let grandchild = document.getElementById('grandchild');"
+        "grandchild.onload = () => { alert('loaded about:blank'); };"
+        "grandchild.src = 'about:blank';"
+    inFrame:[webView firstChildFrame]
+    completionHandler:nil];
+
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "loaded about:blank");
+
+    auto mainFrame = [webView mainFrame];
+    auto childFrame = mainFrame.childFrames.firstObject;
+    auto grandChildFrame = childFrame.childFrames.firstObject;
+    pid_t childFramePid = childFrame.info._processIdentifier;
+    pid_t grandChildFramePid = grandChildFrame.info._processIdentifier;
+    EXPECT_NE(childFramePid, 0);
+    EXPECT_NE(grandChildFramePid, 0);
+    EXPECT_EQ(childFramePid, grandChildFramePid);
+    EXPECT_WK_STREQ(childFrame.info.securityOrigin.host, "example.com");
+    EXPECT_WK_STREQ(grandChildFrame.info.securityOrigin.host, "example.com");
+
+    // After navigation, the cross-origin iframe has now become about:blank
+    // and should have the same origin as the main page.
+    checkFrameTreesInProcesses(webView.get(), {
+        { "https://example.com"_s,
+            { { "https://example.com"_s,  { { "https://example.com"_s } } } }
+        },
+    });
+}
 
 TEST(SiteIsolation, BrowsingContextGroupSwitchForIncompatibleCrossOriginOpenerPolicy)
 {

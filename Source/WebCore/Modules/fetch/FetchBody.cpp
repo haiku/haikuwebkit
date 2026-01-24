@@ -382,7 +382,7 @@ FetchBody FetchBody::createProxy(JSDOMGlobalObject& globalObject)
         return proxy;
 
     Ref identityTransform = identityTransformOrException.releaseReturnValue();
-    auto proxyStreamOrException = Ref { *m_readableStream }->pipeThrough(globalObject, { &identityTransform->readable(), &identityTransform->writable() }, { });
+    auto proxyStreamOrException = Ref { *m_readableStream }->pipeThrough(globalObject, { identityTransform->readable(), identityTransform->writable() }, { });
     ASSERT(!proxyStreamOrException.hasException());
     if (proxyStreamOrException.hasException())
         return proxy;

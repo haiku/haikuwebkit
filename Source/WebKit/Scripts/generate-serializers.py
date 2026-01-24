@@ -781,7 +781,7 @@ def check_type_members(type, checking_parent_class):
                 result.append(f'        {member.dictionary_type()} {member.type};')
             result.append('    };')
             result.append(f'    static_assert(sizeof(ShouldBeSameSizeAs{type.name_as_identifier()}) == sizeof({type.namespace_and_name()}));')
-        result.append('    static_assert(MembersInCorrectOrder < 0')
+        result.append('    static_assert(IsIncreasing < 0')
         for member in type.members:
             if 'BitField' in member.attributes:
                 continue
@@ -792,7 +792,7 @@ def check_type_members(type, checking_parent_class):
                 result.append('#endif')
         for member in type.dictionary_members:
             result.append(f'        , offsetof({type.namespace_and_name()}, m_{member.type})')
-        result.append(f'    >::value);')
+        result.append(f'    >);')
     if type.has_optional_tuple_bits():
         serialized_members = type.serialized_members()
         optional_tuple_state = None
@@ -1163,6 +1163,7 @@ def generate_impl(serialized_types, serialized_enums, headers, generating_webkit
     result.append('#include "config.h"')
     result.append('#include "GeneratedSerializers.h"')
     result.append('#include "GeneratedWebKitSecureCoding.h"')
+    result.append('#include <wtf/IsIncreasing.h>')
     result.append('')
     for header in headers:
         if header.webkit_platform != generating_webkit_platform_impl:
@@ -1172,14 +1173,6 @@ def generate_impl(serialized_types, serialized_enums, headers, generating_webkit
         result.append(f'#include {header.header}')
         if header.condition is not None:
             result.append('#endif')
-    result.append('')
-    result.append('template<size_t...> struct MembersInCorrectOrder;')
-    result.append('template<size_t onlyOffset> struct MembersInCorrectOrder<onlyOffset> {')
-    result.append('    static constexpr bool value = true;')
-    result.append('};')
-    result.append('template<size_t firstOffset, size_t secondOffset, size_t... remainingOffsets> struct MembersInCorrectOrder<firstOffset, secondOffset, remainingOffsets...> {')
-    result.append('    static constexpr bool value = firstOffset > secondOffset ? false : MembersInCorrectOrder<secondOffset, remainingOffsets...>::value;')
-    result.append('};')
     result.append('')
     result.append('template<uint64_t...> struct BitsInIncreasingOrder;')
     result.append('template<uint64_t onlyBit> struct BitsInIncreasingOrder<onlyBit> {')

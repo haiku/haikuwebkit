@@ -51,4 +51,13 @@ private:
     unsigned m_span;
 };
 
-} //namespace
+} // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::HTMLTableColElement)
+    static bool isType(const WebCore::HTMLElement& element) { return element.hasTagName(WebCore::HTMLNames::colTag) || element.hasTagName(WebCore::HTMLNames::colgroupTag); }
+    static bool isType(const WebCore::Node& node)
+    {
+        auto* htmlElement = dynamicDowncast<WebCore::HTMLElement>(node);
+        return htmlElement && isType(*htmlElement);
+    }
+SPECIALIZE_TYPE_TRAITS_END()

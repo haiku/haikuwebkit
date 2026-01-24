@@ -655,6 +655,13 @@ float SVGSVGElement::intrinsicHeight() const
     return height().value(lengthContext);
 }
 
+bool SVGSVGElement::hasIntrinsicDimensions() const
+{
+    if (hasIntrinsicWidth() && hasIntrinsicHeight())
+        return true;
+    return !currentViewBoxRect().isEmpty();
+}
+
 AffineTransform SVGSVGElement::viewBoxToViewTransform(float viewWidth, float viewHeight) const
 {
     if (!m_useCurrentView || !m_viewSpec) {
@@ -836,9 +843,9 @@ RefPtr<Element> SVGSVGElement::getElementById(const AtomString& id)
         return nullptr;
 
     if (!isInTreeScope()) [[unlikely]] {
-        for (auto& element : descendantsOfType<Element>(*this)) {
-            if (element.getIdAttribute() == id)
-                return &element;
+        for (Ref element : descendantsOfType<Element>(*this)) {
+            if (element->getIdAttribute() == id)
+                return element.ptr();
         }
         return nullptr;
     }

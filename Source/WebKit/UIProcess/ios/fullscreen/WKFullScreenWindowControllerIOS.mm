@@ -139,9 +139,12 @@ static void resizeScene(UIWindowScene *scene, CGSize size, BOOL useDefaultSceneG
         if (updateSceneGeometryEnabled)
             [scene setUsesDefaultGeometry:useDefaultSceneGeometry];
 #endif
+        // FIXME: Migrate to windowResizability or requestGeometryUpdate (rdar://168305873).
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         [scene mrui_requestResizeToSize:size options:nil completion:makeBlockPtr([completionHandler = WTF::move(completionHandler)](CGSize sizeReceived, NSError *error) mutable {
             completionHandler();
         }).get()];
+        ALLOW_DEPRECATED_DECLARATIONS_END
     } completion:nil];
 }
 
@@ -852,7 +855,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     CGRect _initialFrame;
     CGRect _finalFrame;
-    std::unique_ptr<WebCore::Timer> _watchdogTimer;
+    RetainPtr<NSTimer> _watchdogTimer;
     CGSize _originalWindowSize;
 
     RetainPtr<NSString> _EVOrganizationName;
@@ -1724,12 +1727,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     // If the page doesn't respond in DefaultWatchdogTimerInterval seconds, it could be because
     // the WebProcess has hung, so exit anyway.
     if (!_watchdogTimer) {
-        _watchdogTimer = makeUnique<WebCore::Timer>([weakSelf = WeakObjCPtr { self }] {
-            RetainPtr strongSelf = weakSelf.get();
-            if (strongSelf)
-                [strongSelf _exitFullscreenImmediately];
-        });
-        _watchdogTimer->startOneShot(DefaultWatchdogTimerInterval);
+        _watchdogTimer = adoptNS([[NSTimer alloc] initWithFireDate:[NSDate dateWithTimeIntervalSinceNow:DefaultWatchdogTimerInterval.seconds()] interval:0 target:self selector:@selector(_exitFullscreenImmediately) userInfo:nil repeats:NO]);
+        [[NSRunLoop mainRunLoop] addTimer:_watchdogTimer.get() forMode:NSDefaultRunLoopMode];
     }
 }
 
@@ -1737,7 +1736,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     if (!_watchdogTimer)
         return;
-    _watchdogTimer->stop();
+    [_watchdogTimer invalidate];
     _watchdogTimer = nullptr;
 }
 

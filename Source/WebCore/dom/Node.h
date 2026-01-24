@@ -172,10 +172,10 @@ public:
     Node* previousSibling() const { return m_previousSibling; }
     RefPtr<Node> protectedPreviousSibling() const { return m_previousSibling; }
     static constexpr ptrdiff_t previousSiblingMemoryOffset() { return OBJECT_OFFSETOF(Node, m_previousSibling); }
-    Node* nextSibling() const { return m_next.get(); }
-    RefPtr<Node> protectedNextSibling() const { return m_next.get(); }
+    Node* nextSibling() const { return m_next; }
+    RefPtr<Node> protectedNextSibling() const { return m_next; }
     static constexpr ptrdiff_t nextSiblingMemoryOffset() { return OBJECT_OFFSETOF(Node, m_next); }
-    WEBCORE_EXPORT RefPtr<NodeList> childNodes();
+    WEBCORE_EXPORT Ref<NodeList> childNodes();
     inline Node* firstChild() const;
     inline RefPtr<Node> protectedFirstChild() const;
     inline Node* lastChild() const;
@@ -264,7 +264,6 @@ public:
     virtual bool isWebVTTElement() const { return false; }
 #endif
     bool isStyledElement() const { return hasTypeFlag(TypeFlag::IsHTMLElement) || hasTypeFlag(TypeFlag::IsSVGElement) || hasTypeFlag(TypeFlag::IsMathMLElement); }
-    virtual bool isAttributeNode() const { return false; }
     virtual bool isHTMLFrameOwnerElement() const { return false; }
     virtual bool isPluginElement() const { return false; }
 
@@ -333,6 +332,7 @@ public:
     Element* parentOrShadowHostElement() const;
     inline void setParentNode(ContainerNode*);
     inline Node& rootNode() const;
+    inline Ref<Node> protectedRootNode() const;
     WEBCORE_EXPORT Node& traverseToRootNode() const;
     Node& shadowIncludingRoot() const;
 

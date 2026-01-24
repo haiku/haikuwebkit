@@ -161,49 +161,49 @@ inline bool HashCountedSet<Value, HashFunctions, Traits>::isEmpty() const
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::begin() -> iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::begin() LIFETIME_BOUND -> iterator
 {
     return m_impl.begin();
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::end() -> iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::end() LIFETIME_BOUND -> iterator
 {
     return m_impl.end();
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::begin() const -> const_iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::begin() const LIFETIME_BOUND -> const_iterator
 {
     return m_impl.begin();
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::end() const -> const_iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::end() const LIFETIME_BOUND -> const_iterator
 {
     return m_impl.end();
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::values() -> ValuesIteratorRange
+inline auto HashCountedSet<Value, HashFunctions, Traits>::values() LIFETIME_BOUND -> ValuesIteratorRange
 {
     return m_impl.keys();
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::values() const -> const ValuesConstIteratorRange
+inline auto HashCountedSet<Value, HashFunctions, Traits>::values() const LIFETIME_BOUND -> const ValuesConstIteratorRange
 {
     return m_impl.keys();
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::find(const ValueType& value) -> iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::find(const ValueType& value) LIFETIME_BOUND -> iterator
 {
     return m_impl.find(value);
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::find(const ValueType& value) const -> const_iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::find(const ValueType& value) const LIFETIME_BOUND -> const_iterator
 {
     return m_impl.find(value);
 }
@@ -221,7 +221,7 @@ inline unsigned HashCountedSet<Value, HashFunctions, Traits>::count(const ValueT
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::add(const ValueType &value) -> AddResult
+inline auto HashCountedSet<Value, HashFunctions, Traits>::add(const ValueType &value) LIFETIME_BOUND -> AddResult
 {
     auto result = m_impl.add(value, 0);
     ++result.iterator->value;
@@ -229,7 +229,7 @@ inline auto HashCountedSet<Value, HashFunctions, Traits>::add(const ValueType &v
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::add(ValueType&& value) -> AddResult
+inline auto HashCountedSet<Value, HashFunctions, Traits>::add(ValueType&& value) LIFETIME_BOUND -> AddResult
 {
     auto result = m_impl.add(std::forward<Value>(value), 0);
     ++result.iterator->value;
@@ -237,7 +237,7 @@ inline auto HashCountedSet<Value, HashFunctions, Traits>::add(ValueType&& value)
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::add(const ValueType& value, unsigned count) -> AddResult
+inline auto HashCountedSet<Value, HashFunctions, Traits>::add(const ValueType& value, unsigned count) LIFETIME_BOUND -> AddResult
 {
     auto result = m_impl.add(value, 0);
     result.iterator->value += count;
@@ -245,7 +245,7 @@ inline auto HashCountedSet<Value, HashFunctions, Traits>::add(const ValueType& v
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::add(ValueType&& value, unsigned count) -> AddResult
+inline auto HashCountedSet<Value, HashFunctions, Traits>::add(ValueType&& value, unsigned count) LIFETIME_BOUND -> AddResult
 {
     auto result = m_impl.add(std::forward<Value>(value), 0);
     result.iterator->value += count;
@@ -323,14 +323,14 @@ inline bool HashCountedSet<Value, HashFunctions, Traits>::isValidValue(const Val
 
 template<typename Value, typename HashFunctions, typename Traits>
 template<SmartPtr V>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>* value) -> iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>* value) LIFETIME_BOUND -> iterator
 {
     return m_impl.find(value);
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
 template<SmartPtr V>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>* value) const -> const_iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>* value) const LIFETIME_BOUND -> const_iterator
 {
     return m_impl.find(value);
 }
@@ -358,14 +358,14 @@ inline auto HashCountedSet<Value, HashFunctions, Traits>::remove(std::add_const_
 
 template<typename Value, typename HashFunctions, typename Traits>
 template<NonNullableSmartPtr V>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& value) -> iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& value) LIFETIME_BOUND -> iterator
 {
     return find(&value);
 }
 
 template<typename Value, typename HashFunctions, typename Traits>
 template<NonNullableSmartPtr V>
-inline auto HashCountedSet<Value, HashFunctions, Traits>::find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& value) const -> const_iterator
+inline auto HashCountedSet<Value, HashFunctions, Traits>::find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>& value) const LIFETIME_BOUND -> const_iterator
 {
     return find(&value);
 }

@@ -48,8 +48,7 @@ public:
         AfterAnimation = 1 << 3,
         AfterTransition = 1 << 4,
         StartingStyle = 1 << 5,
-        BaseAppearanceStyle = 1 << 6,
-        NonCacheable = 1 << 7,
+        NonCacheable = 1 << 6,
     };
 
     enum class Origin : uint8_t {
@@ -64,7 +63,7 @@ public:
 
     struct IncludedProperties {
         OptionSet<PropertyType> types;
-        // Ids are mutually exclusive with types. They are low-priority only.
+        // Ids are mutually exclusive with types. They are low-priority only and have any cascade aliases resolved.
         Vector<CSSPropertyID, 4> ids { };
 
         bool isEmpty() const { return !types && ids.isEmpty(); }
@@ -108,8 +107,6 @@ public:
     const PropertyBitSet& propertyIsPresent() const { return m_propertyIsPresent; }
 
     bool applyLowPriorityOnly() const { return !m_includedProperties.ids.isEmpty(); }
-
-    void addBaseAppearanceStyles();
 
 private:
     void buildCascade();

@@ -47,7 +47,7 @@ String LegacyWebPageDebuggable::name() const
 {
     String result;
     callOnMainThreadAndWait([this, protectedThis = Ref { *this }, &result] {
-        if (RefPtr page = m_page.get()) {
+        if (RefPtr page = m_page) {
             if (RefPtr document = page->localTopDocument())
                 result = document->title().isolatedCopy();
         }
@@ -59,7 +59,7 @@ String LegacyWebPageDebuggable::url() const
 {
     String result;
     callOnMainThreadAndWait([this, protectedThis = Ref { *this }, &result] {
-        RefPtr page = m_page.get();
+        RefPtr page = m_page;
         if (!page)
             return;
 
@@ -74,7 +74,7 @@ bool LegacyWebPageDebuggable::hasLocalDebugger() const
 {
     bool result;
     callOnMainThreadAndWait([this, protectedThis = Ref { *this }, &result] {
-        RefPtr controller = m_inspectorController.get();
+        RefPtr controller = m_inspectorController;
         result = controller && controller->hasLocalFrontend();
     });
     return result;
@@ -86,7 +86,7 @@ void LegacyWebPageDebuggable::connect(Inspector::FrontendChannel& frontendChanne
     UNUSED_PARAM(immediatelyPause);
 
     callOnMainThreadAndWait([this, protectedThis = Ref { *this }, &frontendChannel] {
-        if (RefPtr controller = m_inspectorController.get())
+        if (RefPtr controller = m_inspectorController)
             controller->connectFrontend(frontendChannel);
     });
 }
@@ -94,7 +94,7 @@ void LegacyWebPageDebuggable::connect(Inspector::FrontendChannel& frontendChanne
 void LegacyWebPageDebuggable::disconnect(Inspector::FrontendChannel& frontendChannel)
 {
     callOnMainThreadAndWait([this, protectedThis = Ref { *this }, &frontendChannel] {
-        if (RefPtr controller = m_inspectorController.get())
+        if (RefPtr controller = m_inspectorController)
             controller->disconnectFrontend(frontendChannel);
     });
 }
@@ -102,7 +102,7 @@ void LegacyWebPageDebuggable::disconnect(Inspector::FrontendChannel& frontendCha
 void LegacyWebPageDebuggable::dispatchMessageFromRemote(String&& message)
 {
     callOnMainThreadAndWait([this, protectedThis = Ref { *this }, message = WTF::move(message).isolatedCopy()] mutable {
-        if (RefPtr controller = m_inspectorController.get())
+        if (RefPtr controller = m_inspectorController)
             controller->dispatchMessageFromFrontend(WTF::move(message));
     });
 }
@@ -110,7 +110,7 @@ void LegacyWebPageDebuggable::dispatchMessageFromRemote(String&& message)
 void LegacyWebPageDebuggable::setIndicating(bool indicating)
 {
     callOnMainThreadAndWait([this, protectedThis = Ref { *this }, indicating] {
-        if (RefPtr page = m_page.get())
+        if (RefPtr page = m_page)
             page->protectedInspectorController()->setIndicating(indicating);
     });
 }

@@ -108,7 +108,17 @@ UnplacedGridItems GridFormattingContext::constructUnplacedGridItems() const
 void GridFormattingContext::layout(GridLayoutConstraints layoutConstraints)
 {
     auto unplacedGridItems = constructUnplacedGridItems();
-    auto [ usedTrackSizes, gridItemRects ] = GridLayout { *this }.layout(layoutConstraints, unplacedGridItems);
+
+    CheckedRef gridStyle = root().style();
+
+    GridAutoFlowOptions autoFlowOptions {
+        .strategy = gridStyle->gridAutoFlow().isDense() ? PackingStrategy::Dense : PackingStrategy::Sparse,
+        .direction = gridStyle->gridAutoFlow().isRow() ? GridAutoFlowDirection::Row : GridAutoFlowDirection::Column
+    };
+
+    GridDefinition gridDefinition { gridStyle->gridTemplateColumns(), gridStyle->gridTemplateRows(), autoFlowOptions };
+
+    auto [ usedTrackSizes, gridItemRects ] = GridLayout { *this }.layout(layoutConstraints, unplacedGridItems, gridDefinition);
 
     // Grid layout positions each item within its containing block which is the grid area.
     // Here we translate it to the coordinate space of the grid.
@@ -116,7 +126,6 @@ void GridFormattingContext::layout(GridLayoutConstraints layoutConstraints)
 
         // Compute gap values for columns and rows.
         // For now, we handle fixed gaps only (not percentages or calc).
-        CheckedRef gridStyle = root().style();
 
         auto columnGap = GridLayoutUtils::computeGapValue(gridStyle->columnGap());
         auto rowGap = GridLayoutUtils::computeGapValue(gridStyle->rowGap());

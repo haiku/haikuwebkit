@@ -76,27 +76,8 @@ RefPtr<ShareableBitmap> createShareableBitmap(RenderImage& renderImage, CreateSh
     }
 
 #if ENABLE(VIDEO)
-    if (auto* renderVideo = dynamicDowncast<RenderVideo>(renderImage)) {
-        Ref video = renderVideo->videoElement();
-        auto image = video->nativeImageForCurrentTime();
-        if (!image)
-            return { };
-
-        auto imageSize = image->size();
-        if (imageSize.isEmpty() || imageSize.width() <= 1 || imageSize.height() <= 1)
-            return { };
-
-        auto bitmap = ShareableBitmap::create({ imageSize, WTF::move(colorSpaceForBitmap) });
-        if (!bitmap)
-            return { };
-
-        auto context = bitmap->createGraphicsContext();
-        if (!context)
-            return { };
-
-        context->drawNativeImage(*image, FloatRect { { }, imageSize }, FloatRect { { }, imageSize });
-        return bitmap;
-    }
+    if (auto* renderVideo = dynamicDowncast<RenderVideo>(renderImage))
+        return renderVideo->protectedVideoElement()->bitmapImageForCurrentTime();
 #endif // ENABLE(VIDEO)
 
     auto* cachedImage = renderImage.cachedImage();

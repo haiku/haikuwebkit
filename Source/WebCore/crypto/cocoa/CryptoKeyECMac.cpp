@@ -99,23 +99,23 @@ bool CryptoKeyEC::platformSupportedCurve(NamedCurve curve)
 
 #if !defined(CLANG_WEBKIT_BRANCH)
 
-static PAL::ECCurve namedCurveToCryptoKitCurve(CryptoKeyEC::NamedCurve curve)
+static pal::ECCurve namedCurveToCryptoKitCurve(CryptoKeyEC::NamedCurve curve)
 {
     switch (curve) {
     case CryptoKeyEC::NamedCurve::P256:
-        return PAL::ECCurve::p256();
+        return pal::ECCurve::p256();
     case CryptoKeyEC::NamedCurve::P384:
-        return PAL::ECCurve::p384();
+        return pal::ECCurve::p384();
     case CryptoKeyEC::NamedCurve::P521:
-        return PAL::ECCurve::p521();
+        return pal::ECCurve::p521();
     }
 
     ASSERT_NOT_REACHED();
-    return PAL::ECCurve::p256();
+    return pal::ECCurve::p256();
 }
-static PlatformECKeyContainer toPlatformKey(PAL::ECKey key)
+static PlatformECKeyContainer toPlatformKey(pal::ECKey key)
 {
-    return makeUniqueRefWithoutFastMallocCheck<PAL::ECKey>(key);
+    return makeUniqueRefWithoutFastMallocCheck<pal::ECKey>(key);
 }
 
 #endif
@@ -123,7 +123,7 @@ static PlatformECKeyContainer toPlatformKey(PAL::ECKey key)
 std::optional<CryptoKeyPair> CryptoKeyEC::platformGeneratePair(CryptoAlgorithmIdentifier identifier, NamedCurve curve, bool extractable, CryptoKeyUsageBitmap usages)
 {
 #if !defined(CLANG_WEBKIT_BRANCH)
-    auto privateKey = CryptoKeyEC::create(identifier, curve, CryptoKeyType::Private, toPlatformKey(PAL::ECKey::init(namedCurveToCryptoKitCurve(curve))), extractable, usages);
+    auto privateKey = CryptoKeyEC::create(identifier, curve, CryptoKeyType::Private, toPlatformKey(pal::ECKey::init(namedCurveToCryptoKitCurve(curve))), extractable, usages);
     auto publicKey = CryptoKeyEC::create(identifier, curve, CryptoKeyType::Public, toPlatformKey(privateKey->platformKey()->toPub()), true, usages);
     return CryptoKeyPair { WTF::move(publicKey), WTF::move(privateKey) };
 #else
@@ -141,7 +141,7 @@ RefPtr<CryptoKeyEC> CryptoKeyEC::platformImportRaw(CryptoAlgorithmIdentifier ide
     if (!doesUncompressedPointMatchNamedCurve(curve, keyData.size()))
         return nullptr;
 
-    auto rv = PAL::ECKey::importX963Pub(keyData.span(), namedCurveToCryptoKitCurve(curve));
+    auto rv = pal::ECKey::importX963Pub(keyData.span(), namedCurveToCryptoKitCurve(curve));
     if (!rv.getErrorCode().isSuccess() || !rv.getKey())
         return nullptr;
     return create(identifier, curve, CryptoKeyType::Public, toPlatformKey(rv.getKey().get()), extractable, usages);
@@ -194,7 +194,7 @@ RefPtr<CryptoKeyEC> CryptoKeyEC::platformImportJWKPrivate(CryptoAlgorithmIdentif
     binaryInput.appendVector(y);
     binaryInput.appendVector(d);
 
-    auto rv = PAL::ECKey::importX963Private(binaryInput.span(), namedCurveToCryptoKitCurve(curve));
+    auto rv = pal::ECKey::importX963Private(binaryInput.span(), namedCurveToCryptoKitCurve(curve));
     if (!rv.getErrorCode().isSuccess() || !rv.getKey())
         return nullptr;
     return create(identifier, curve, CryptoKeyType::Private, toPlatformKey(rv.getKey().get()), extractable, usages);
@@ -303,7 +303,7 @@ RefPtr<CryptoKeyEC> CryptoKeyEC::platformImportSpki(CryptoAlgorithmIdentifier id
         return platformImportRaw(identifier, curve, Vector<uint8_t>(keyData.subspan(index, keyData.size() - index)), extractable, usages);
 
     // CryptoKit can read pure compressed so no need for index++ here.
-    auto rv = PAL::ECKey::importCompressedPub(keyData.subspan(index, keyData.size() - index), namedCurveToCryptoKitCurve(curve));
+    auto rv = pal::ECKey::importCompressedPub(keyData.subspan(index, keyData.size() - index), namedCurveToCryptoKitCurve(curve));
     if (!rv.getErrorCode().isSuccess() || !rv.getKey())
         return nullptr;
     return create(identifier, curve, CryptoKeyType::Public, toPlatformKey(rv.getKey().get()), extractable, usages);
@@ -416,7 +416,7 @@ RefPtr<CryptoKeyEC> CryptoKeyEC::platformImportPkcs8(CryptoAlgorithmIdentifier i
         return nullptr;
     keyBinary.append(keyData.subspan(privateKeyPos, privateKeySize));
 
-    auto rv = PAL::ECKey::importX963Private(keyBinary.span(), namedCurveToCryptoKitCurve(curve));
+    auto rv = pal::ECKey::importX963Private(keyBinary.span(), namedCurveToCryptoKitCurve(curve));
     if (!rv.getErrorCode().isSuccess() || !rv.getKey())
         return nullptr;
     return create(identifier, curve, CryptoKeyType::Private, toPlatformKey(rv.getKey().get()), extractable, usages);

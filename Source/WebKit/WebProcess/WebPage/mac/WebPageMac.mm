@@ -517,6 +517,11 @@ void WebPage::setIsolatedTree(Ref<WebCore::AXIsolatedTree>&& tree)
 {
     [m_mockAccessibilityElement setIsolatedTree:WTF::move(tree)];
 }
+
+RefPtr<AXIsolatedTree> WebPage::isolatedTree() const
+{
+    return [m_mockAccessibilityElement isolatedTree];
+}
 #endif
 
 bool WebPage::platformCanHandleRequest(const WebCore::ResourceRequest& request)
@@ -795,7 +800,7 @@ void WebPage::performImmediateActionHitTestAtLocation(WebCore::FrameIdentifier f
 
     bool pageOverlayDidOverrideDataDetectors = false;
     for (auto& overlay : corePage()->pageOverlayController().pageOverlays()) {
-        RefPtr webOverlay = WebPageOverlay::fromCoreOverlay(*overlay);
+        RefPtr webOverlay = WebPageOverlay::fromCoreOverlay(overlay);
         if (!webOverlay)
             continue;
 
@@ -895,7 +900,7 @@ void WebPage::dataDetectorsDidPresentUI(PageOverlay::PageOverlayID overlayID)
 {
     for (const auto& overlay : corePage()->pageOverlayController().pageOverlays()) {
         if (overlay->pageOverlayID() == overlayID) {
-            if (RefPtr webOverlay = WebPageOverlay::fromCoreOverlay(*overlay))
+            if (RefPtr webOverlay = WebPageOverlay::fromCoreOverlay(overlay))
                 webOverlay->dataDetectorsDidPresentUI();
             return;
         }
@@ -906,7 +911,7 @@ void WebPage::dataDetectorsDidChangeUI(PageOverlay::PageOverlayID overlayID)
 {
     for (const auto& overlay : corePage()->pageOverlayController().pageOverlays()) {
         if (overlay->pageOverlayID() == overlayID) {
-            if (RefPtr webOverlay = WebPageOverlay::fromCoreOverlay(*overlay))
+            if (RefPtr webOverlay = WebPageOverlay::fromCoreOverlay(overlay))
                 webOverlay->dataDetectorsDidChangeUI();
             return;
         }
@@ -923,7 +928,7 @@ void WebPage::dataDetectorsDidHideUI(PageOverlay::PageOverlayID overlayID)
 
     for (const auto& overlay : corePage()->pageOverlayController().pageOverlays()) {
         if (overlay->pageOverlayID() == overlayID) {
-            if (RefPtr webOverlay = WebPageOverlay::fromCoreOverlay(*overlay))
+            if (RefPtr webOverlay = WebPageOverlay::fromCoreOverlay(overlay))
                 webOverlay->dataDetectorsDidHideUI();
             return;
         }

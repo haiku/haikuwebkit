@@ -30,10 +30,14 @@
 #include "CryptoAlgorithmHkdfParams.h"
 #include "CryptoKeyRaw.h"
 #include "CryptoUtilitiesCocoa.h"
-
-#if HAVE(SWIFT_CPP_INTEROP)
 #include <pal/PALSwift.h>
-#endif
+
+#if !defined(CLANG_WEBKIT_BRANCH)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#include "PALSwift-Generated.h"
+#pragma clang diagnostic pop
+#endif // !defined(CLANG_WEBKIT_BRANCH)
 
 namespace WebCore {
 
@@ -42,7 +46,7 @@ static ExceptionOr<Vector<uint8_t>> platformDeriveBitsCryptoKit(const CryptoAlgo
 #if !defined(CLANG_WEBKIT_BRANCH)
     if (!isValidHashParameter(parameters.hashIdentifier))
         return Exception { ExceptionCode::OperationError };
-    auto rv = PAL::HKDF::deriveBits(key.key().span(), parameters.saltVector().span(), parameters.infoVector().span(), length, std::to_underlying(toCKHashFunction(parameters.hashIdentifier)));
+    auto rv = pal::HKDF::deriveBits(key.key().span(), parameters.saltVector().span(), parameters.infoVector().span(), length, std::to_underlying(toCKHashFunction(parameters.hashIdentifier)));
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return Exception { ExceptionCode::OperationError };
     return WTF::move(rv.result);

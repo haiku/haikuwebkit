@@ -133,7 +133,7 @@ void WebFoundTextRangeController::findTextRangesForStringMatches(const String& s
     };
 
     HashMap<WebCore::FrameIdentifier, Vector<WebFoundTextRange>> frameMatches;
-    for (const auto& [foundTextRange, simpleRange] : std::views::zip(webFoundTextRanges, validSimpleRanges)) {
+    for (const auto& [foundTextRange, simpleRange] : WTF::zippedRange(webFoundTextRanges, validSimpleRanges)) {
         m_cachedFoundRanges.add(foundTextRange, simpleRange.makeWeakSimpleRange());
         const auto frameID = simpleRange.startContainer().protectedDocument()->frame()->frameID();
         auto& matches = frameMatches.ensure(frameID, createEmptyVector).iterator->value;

@@ -1976,11 +1976,19 @@ struct AddIceCandidateCallData {
 };
 WEBKIT_DEFINE_ASYNC_DATA_STRUCT(AddIceCandidateCallData)
 
-void GStreamerMediaEndpoint::addIceCandidate(GStreamerIceCandidate& candidate, PeerConnectionBackend::AddIceCandidateCallback&& callback)
+void GStreamerMediaEndpoint::addIceCandidate(const RTCIceCandidate& candidate, PeerConnectionBackend::AddIceCandidateCallback&& callback)
 {
-    GST_DEBUG_OBJECT(m_pipeline.get(), "Adding ICE candidate %s", candidate.candidate.utf8().data());
+    String sdp = candidate.candidate();
+    if (sdp.startsWithIgnoringASCIICase("a="_s))
+        sdp = sdp.substring(2);
 
-    if (!candidate.candidate.startsWith("candidate:"_s) && !candidate.candidate.startsWith("a=candidate:"_s)) {
+    sdp = sdp.trim([](auto c) {
+        return c == ' ';
+    });
+    auto sdpString = sdp.utf8();
+    GST_DEBUG_OBJECT(m_pipeline.get(), "Adding ICE candidate %s", sdpString.data());
+
+    if (!sdp.startsWith("candidate:"_s)) {
         callOnMainThread([task = createSharedTask<PeerConnectionBackend::AddIceCandidateCallbackFunction>(WTF::move(callback))]() mutable {
             task->run(Exception { ExceptionCode::OperationError, "Expect line: candidate:<candidate-str>"_s });
         });
@@ -1995,14 +2003,7 @@ void GStreamerMediaEndpoint::addIceCandidate(GStreamerIceCandidate& candidate, P
         data->webrtcBin = m_webrtcBin;
         data->callback = WTF::move(callback);
 
-        StringView view;
-        if (candidate.candidate.startsWithIgnoringASCIICase("a="_s))
-            view = candidate.candidate.substring(2);
-        else
-            view = candidate.candidate;
-
-        view = view.trim(isASCIIWhitespace<char8_t>);
-        g_signal_emit_by_name(m_webrtcBin.get(), "add-ice-candidate-full", candidate.sdpMLineIndex, view.toStringWithoutCopying().utf8().data(), gst_promise_new_with_change_func([](GstPromise* rawPromise, gpointer userData) {
+        g_signal_emit_by_name(m_webrtcBin.get(), "add-ice-candidate-full", candidate.sdpMLineIndex().value_or(0), sdpString.data(), gst_promise_new_with_change_func([](GstPromise* rawPromise, gpointer userData) {
             auto* data = reinterpret_cast<AddIceCandidateCallData*>(userData);
             auto promise = adoptGRef(rawPromise);
             auto result = gst_promise_wait(promise.get());
@@ -2030,7 +2031,7 @@ void GStreamerMediaEndpoint::addIceCandidate(GStreamerIceCandidate& candidate, P
     }
 
     // Candidate parsing is still needed for old GStreamer versions.
-    auto parsedCandidate = parseIceCandidateSDP(candidate.candidate);
+    auto parsedCandidate = parseIceCandidateSDP(sdp);
     if (!parsedCandidate) {
         callOnMainThread([task = createSharedTask<PeerConnectionBackend::AddIceCandidateCallbackFunction>(WTF::move(callback))]() mutable {
             task->run(Exception { ExceptionCode::OperationError, "Error processing ICE candidate"_s });
@@ -2039,7 +2040,7 @@ void GStreamerMediaEndpoint::addIceCandidate(GStreamerIceCandidate& candidate, P
     }
 
     // This is racy but nothing we can do about it when we are on older GStreamer runtimes.
-    g_signal_emit_by_name(m_webrtcBin.get(), "add-ice-candidate", candidate.sdpMLineIndex, candidate.candidate.utf8().data());
+    g_signal_emit_by_name(m_webrtcBin.get(), "add-ice-candidate", candidate.sdpMLineIndex().value_or(0), sdp.utf8().data());
     callOnMainThread([task = createSharedTask<PeerConnectionBackend::AddIceCandidateCallbackFunction>(WTF::move(callback)), weakWebrtcBin = GThreadSafeWeakPtr { m_webrtcBin.get() }]() mutable {
         auto webrtcBin = weakWebrtcBin.get();
         if (!webrtcBin)
@@ -2481,11 +2482,6 @@ GUniquePtr<GstStructure> GStreamerMediaEndpoint::preprocessStats(const GRefPtr<G
         mergeStructureInAdditionalStats(stats);
     }
 
-    bool hasInboundAudioStats = false;
-    bool hasOutboundAudioStats = false;
-    bool hasInboundVideoStats = false;
-    bool hasOutboundVideoStats = false;
-    Seconds convertedTimestamp;
     gstStructureMapInPlace(result.get(), [&](auto, auto value) -> bool {
         if (!GST_VALUE_HOLDS_STRUCTURE(value))
             return TRUE;
@@ -2513,14 +2509,11 @@ GUniquePtr<GstStructure> GStreamerMediaEndpoint::preprocessStats(const GRefPtr<G
                 gst_structure_set(structure.get(), "frames-received", G_TYPE_UINT64, *framesReceived, nullptr);
             if (auto keyFramesDecoded = gstStructureGet<uint64_t>(additionalStats.get(), "key-frames-decoded"_s))
                 gst_structure_set(structure.get(), "key-frames-decoded", G_TYPE_UINT64, *keyFramesDecoded, nullptr);
+            if (auto decoderImplementation = gstStructureGetString(additionalStats.get(), "decoder-implementation"_s))
+                gst_structure_set(structure.get(), "decoder-implementation", G_TYPE_STRING, decoderImplementation.utf8(), nullptr);
             auto trackIdentifier = gstStructureGetString(additionalStats.get(), "track-identifier"_s);
             if (!trackIdentifier.isEmpty())
                 gst_structure_set(structure.get(), "track-identifier", G_TYPE_STRING, trackIdentifier.utf8(), nullptr);
-            auto kind = gstStructureGetString(structure.get(), "kind"_s);
-            if (kind == "audio"_s)
-                hasInboundAudioStats = true;
-            else if (kind == "video"_s)
-                hasInboundVideoStats = true;
             break;
         }
         case GST_WEBRTC_STATS_OUTBOUND_RTP: {
@@ -2558,11 +2551,6 @@ GUniquePtr<GstStructure> GStreamerMediaEndpoint::preprocessStats(const GRefPtr<G
                 gst_structure_set(structure.get(), "mid", G_TYPE_STRING, midValue.utf8(), nullptr);
             if (auto ridValue = gstStructureGetString(ssrcStats.get(), "rid"_s))
                 gst_structure_set(structure.get(), "rid", G_TYPE_STRING, ridValue.utf8(), nullptr);
-            auto kind = gstStructureGetString(structure.get(), "kind"_s);
-            if (kind == "audio"_s)
-                hasOutboundAudioStats = true;
-            else if (kind == "video"_s)
-                hasOutboundVideoStats = true;
             break;
         }
         default:
@@ -2572,7 +2560,6 @@ GUniquePtr<GstStructure> GStreamerMediaEndpoint::preprocessStats(const GRefPtr<G
         auto timestamp = gstStructureGet<double>(structure.get(), "timestamp"_s);
         if (timestamp) [[unlikely]] {
             auto newTimestamp = StatsTimestampConverter::singleton().convertFromMonotonicTime(Seconds::fromMilliseconds(*timestamp));
-            convertedTimestamp = newTimestamp;
             gst_structure_set(structure.get(), "timestamp", G_TYPE_DOUBLE, newTimestamp.microseconds(), nullptr);
         }
 
@@ -2580,33 +2567,6 @@ GUniquePtr<GstStructure> GStreamerMediaEndpoint::preprocessStats(const GRefPtr<G
         return TRUE;
     });
 
-    if (!hasInboundVideoStats) {
-        GUniquePtr<GstStructure> emptyInboundStats(gst_structure_new_empty("rtp-inbound-video-stream-stats"));
-        gst_structure_set(emptyInboundStats.get(), "type", GST_TYPE_WEBRTC_STATS_TYPE, GST_WEBRTC_STATS_INBOUND_RTP, "timestamp",
-            G_TYPE_DOUBLE, convertedTimestamp.microseconds(), "id", G_TYPE_STRING, "rtp-inbound-video-stream-stats", "kind", G_TYPE_STRING, "video", "frames-decoded", G_TYPE_UINT64, 0, nullptr);
-        gst_structure_set(result.get(), "rtp-inbound-video-stream-stats", GST_TYPE_STRUCTURE, emptyInboundStats.get(), nullptr);
-    }
-
-    if (!hasInboundAudioStats) {
-        GUniquePtr<GstStructure> emptyInboundStats(gst_structure_new_empty("rtp-inbound-audio-stream-stats"));
-        gst_structure_set(emptyInboundStats.get(), "type", GST_TYPE_WEBRTC_STATS_TYPE, GST_WEBRTC_STATS_INBOUND_RTP, "timestamp",
-            G_TYPE_DOUBLE, convertedTimestamp.microseconds(), "id", G_TYPE_STRING, "rtp-inbound-audio-stream-stats", "kind", G_TYPE_STRING, "audio", nullptr);
-        gst_structure_set(result.get(), "rtp-inbound-audio-stream-stats", GST_TYPE_STRUCTURE, emptyInboundStats.get(), nullptr);
-    }
-
-    if (!hasOutboundVideoStats) {
-        GUniquePtr<GstStructure> emptyOutboundStats(gst_structure_new_empty("rtp-outbound-video-stream-stats"));
-        gst_structure_set(emptyOutboundStats.get(), "type", GST_TYPE_WEBRTC_STATS_TYPE, GST_WEBRTC_STATS_OUTBOUND_RTP, "timestamp",
-            G_TYPE_DOUBLE, convertedTimestamp.microseconds(), "id", G_TYPE_STRING, "rtp-outbound-video-stream-stats", "kind", G_TYPE_STRING, "video", "frames-encoded", G_TYPE_UINT64, 0, nullptr);
-        gst_structure_set(result.get(), "rtp-outbound-video-stream-stats", GST_TYPE_STRUCTURE, emptyOutboundStats.get(), nullptr);
-    }
-
-    if (!hasOutboundAudioStats) {
-        GUniquePtr<GstStructure> emptyOutboundStats(gst_structure_new_empty("rtp-outbound-audio-stream-stats"));
-        gst_structure_set(emptyOutboundStats.get(), "type", GST_TYPE_WEBRTC_STATS_TYPE, GST_WEBRTC_STATS_OUTBOUND_RTP, "timestamp",
-            G_TYPE_DOUBLE, convertedTimestamp.microseconds(), "id", G_TYPE_STRING, "rtp-outbound-audio-stream-stats", "kind", G_TYPE_STRING, "audio", nullptr);
-        gst_structure_set(result.get(), "rtp-outbound-audio-stream-stats", GST_TYPE_STRUCTURE, emptyOutboundStats.get(), nullptr);
-    }
     return result;
 }
 
@@ -2742,8 +2702,35 @@ Seconds GStreamerMediaEndpoint::statsLogInterval(Seconds reportTimestamp) const
 
 void GStreamerMediaEndpoint::gatherDecoderImplementationName(Function<void(String&&)>&& callback)
 {
-    // TODO: collect stats and lookup InboundRtp "decoder_implementation" field.
-    callback({ });
+    if (isStopped() || !m_webrtcBin) {
+        callback({ });
+        return;
+    }
+
+    GRefPtr<GstPad> pad;
+    for (auto* srcPad : GstIteratorAdaptor<GstPad>(gst_element_iterate_src_pads(m_webrtcBin.get()))) {
+        GRefPtr<GstWebRTCRTPTransceiver> transceiver;
+        g_object_get(srcPad, "transceiver", &transceiver.outPtr(), nullptr);
+
+        GstWebRTCKind kind;
+        g_object_get(transceiver.get(), "kind", &kind, nullptr);
+        if (kind == GST_WEBRTC_KIND_VIDEO) {
+            pad = srcPad;
+            break;
+        }
+    }
+
+    if (!pad) {
+        callback({ });
+        return;
+    }
+
+    m_statsCollector->gatherDecoderImplementationName(pad, [weakThis = ThreadSafeWeakPtr { *this }, this](const auto& pad, const auto* stats) -> GUniquePtr<GstStructure> {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return nullptr;
+        return preprocessStats(pad, stats);
+    }, WTF::move(callback));
 }
 
 std::optional<bool> GStreamerMediaEndpoint::canTrickleIceCandidates() const

@@ -122,7 +122,7 @@ bool WebGLProgram::linkStatus()
     return *m_state.linkStatus;
 }
 
-std::span<const GCGLAttribActiveInfo> WebGLProgram::activeAttribs()
+std::span<const GCGLAttribActiveInfo> WebGLProgram::activeAttribs() LIFETIME_BOUND
 {
     if (!m_state.activeAttribs) {
         RefPtr context = graphicsContextGL();
@@ -133,7 +133,7 @@ std::span<const GCGLAttribActiveInfo> WebGLProgram::activeAttribs()
     return *m_state.activeAttribs;
 }
 
-const HashMap<String, int>& WebGLProgram::attribLocations()
+const HashMap<String, int>& WebGLProgram::attribLocations() LIFETIME_BOUND
 {
     if (!m_state.attribLocations) {
         auto& locations = m_state.attribLocations.emplace();
@@ -156,7 +156,7 @@ std::span<const GCGLUniformActiveInfo> WebGLProgram::activeUniforms()
     return *m_state.activeUniforms;
 }
 
-const HashMap<String, int>& WebGLProgram::uniformLocations()
+const HashMap<String, int>& WebGLProgram::uniformLocations() LIFETIME_BOUND
 {
     if (!m_state.uniformLocations) {
         auto& locations = m_state.uniformLocations.emplace();
@@ -176,7 +176,7 @@ const HashMap<String, int>& WebGLProgram::uniformLocations()
     return *m_state.uniformLocations;
 }
 
-const HashMap<String, unsigned>& WebGLProgram::uniformIndices()
+const HashMap<String, unsigned>& WebGLProgram::uniformIndices() LIFETIME_BOUND
 {
     if (!m_state.uniformIndices) {
         auto& indices = m_state.uniformIndices.emplace();

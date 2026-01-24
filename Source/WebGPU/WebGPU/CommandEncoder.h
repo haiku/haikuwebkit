@@ -158,7 +158,7 @@ public:
     bool useResidencySet(id<MTLResidencySet>);
 #endif
     void skippedDrawIndexedValidation(uint64_t bufferIdentifier, DrawIndexCacheContainerIterator);
-    void rebindSamplersPreCommit(const BindGroup*);
+    void rebindSamplersPreCommit(const BindGroup&);
 
 private:
     CommandEncoder(id<MTLCommandBuffer>, Device&, uint64_t uniqueId);
@@ -198,12 +198,12 @@ private:
     NSMutableSet<id<MTLCounterSampleBuffer>> * _Nullable m_retainedTimestampBuffers { nil };
     Vector<Function<bool(CommandBuffer&, CommandEncoder&)>> m_onCommitHandlers;
     HashMap<uint64_t, Vector<std::pair<DrawIndexCacheContainerValue, uint32_t>>, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>> m_skippedDrawIndexedValidationKeys;
-    Vector<RefPtr<const BindGroup>> m_bindGroups;
-    Vector<RefPtr<const Buffer>> m_trackedBuffers;
-    Vector<RefPtr<const Texture>> m_trackedTextures;
-    Vector<RefPtr<const TextureView>> m_trackedTextureViews;
-    Vector<RefPtr<const ExternalTexture>> m_trackedExternalTextures;
-    Vector<RefPtr<const QuerySet>> m_trackedQuerySets;
+    Vector<Ref<const BindGroup>> m_bindGroups;
+    Vector<Ref<const Buffer>> m_trackedBuffers;
+    Vector<Ref<const Texture>> m_trackedTextures;
+    Vector<Ref<const TextureView>> m_trackedTextureViews;
+    Vector<Ref<const ExternalTexture>> m_trackedExternalTextures;
+    Vector<Ref<const QuerySet>> m_trackedQuerySets;
 
     int m_bufferMapCount { 0 };
     bool m_makeSubmitInvalid { false };

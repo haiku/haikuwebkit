@@ -32,9 +32,15 @@ DECLARE_SYSTEM_HEADER
 
 #if USE(MEDIATOOLBOX)
 
-#include <MediaToolbox/MediaToolbox.h>
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
 
+#include <MediaToolbox/MediaToolbox.h>
 #include <pal/spi/cf/CoreMediaSPI.h>
+
+#endif // !__has_feature(modules)
+
+#include <CoreFoundation/CoreFoundation.h>
 #include <wtf/spi/darwin/XPCSPI.h>
 
 WTF_EXTERN_C_BEGIN

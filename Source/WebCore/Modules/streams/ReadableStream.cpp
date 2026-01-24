@@ -269,7 +269,7 @@ void ReadableStream::cancel(Exception&& exception)
 
     Ref vm = globalObject->vm();
     JSC::JSLockHolder lock(vm);
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
     auto jsException = createDOMException(globalObject, exception.code(), exception.message());
 
     if (scope.exception()) [[unlikely]] {
@@ -551,9 +551,9 @@ ExceptionOr<Ref<ReadableStream>> ReadableStream::pipeThrough(JSDOMGlobalObject& 
     SUPPRESS_UNCOUNTED_ARG if (transform.writable->locked())
         return Exception { ExceptionCode::TypeError, "transform writable is locked"_s };
 
-    pipeToInternal(globalObject, *this, transform.writable.releaseNonNull(), WTF::move(options), nullptr);
+    pipeToInternal(globalObject, *this, WTF::move(transform.writable), WTF::move(options), nullptr);
 
-    return transform.readable.releaseNonNull();
+    return WTF::move(transform.readable);
 }
 
 JSC::JSValue ReadableStream::storedError(JSDOMGlobalObject& globalObject) const
@@ -728,14 +728,14 @@ Ref<DOMPromise> ReadableStream::Iterator::returnSteps(JSDOMGlobalObject& globalO
 }
 
 // https://streams.spec.whatwg.org/#rs-asynciterator
-ExceptionOr<Ref<ReadableStream::Iterator>> ReadableStream::createIterator(ScriptExecutionContext* context, IteratorOptions&& options)
+ExceptionOr<Ref<ReadableStream::Iterator>> ReadableStream::createIterator(ScriptExecutionContext* context, std::optional<IteratorOptions>&& options)
 {
     auto& globalObject = *JSC::jsCast<JSDOMGlobalObject*>(context->globalObject());
     auto readerOrException = ReadableStreamDefaultReader::create(globalObject, *this);
     if (readerOrException.hasException())
         return readerOrException.releaseException();
 
-    return Iterator::create(readerOrException.releaseReturnValue(), options.preventCancel);
+    return Iterator::create(readerOrException.releaseReturnValue(), options.value_or(IteratorOptions { }).preventCancel);
 }
 
 template<typename Visitor>

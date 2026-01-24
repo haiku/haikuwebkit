@@ -25,7 +25,9 @@
 
 // https://dom.spec.whatwg.org/#dictdef-shadowrootinit
 
-dictionary ShadowRootInit {
+[
+    LegacyNativeDictionaryRequiredInterfaceNullability,
+] dictionary ShadowRootInit {
     required ShadowRootMode mode;
     boolean delegatesFocus = false;
     boolean clonable = false;

@@ -477,13 +477,7 @@ void GraphicsLayerWC::setShowRepaintCounter(bool show)
 
 static bool filtersCanBeComposited(const FilterOperations& filters)
 {
-    if (!filters.size())
-        return false;
-    for (const auto& filterOperation : filters) {
-        if (filterOperation->type() == FilterOperation::Type::Reference)
-            return false;
-    }
-    return true;
+    return !filters.isEmpty();
 }
 
 bool GraphicsLayerWC::setFilters(const FilterOperations& filters)

@@ -49,7 +49,7 @@ public:
     T get() const { return m_object; }
 
     void clear();
-    WARN_UNUSED_RETURN T leak();
+    [[nodiscard]] T leak();
 
     bool operator!() const { return !m_object; }
 

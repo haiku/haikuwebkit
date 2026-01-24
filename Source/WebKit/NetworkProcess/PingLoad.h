@@ -94,7 +94,7 @@ private:
     RefPtr<NetworkDataTask> m_task;
     WebCore::Timer m_timeoutTimer;
     const Ref<NetworkLoadChecker> m_networkLoadChecker;
-    Vector<RefPtr<WebCore::BlobDataFileReference>> m_blobFiles;
+    Vector<Ref<WebCore::BlobDataFileReference>> m_blobFiles;
 };
 
 }

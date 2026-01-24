@@ -2963,7 +2963,7 @@ String RenderLayerCompositor::layerTreeAsText(OptionSet<LayerTreeAsTextOptions> 
     updateCompositingForLayerTreeAsTextDump();
 
     // Exclude any implicitly created layers that wrap the root contents layer, unless the caller explicitly requested the true root to be included.
-    RefPtr dumpRootLayer = (options & LayerTreeAsTextOptions::IncludeRootLayers) ? rootGraphicsLayer() : m_rootContentsLayer;
+    RefPtr dumpRootLayer = (options & LayerTreeAsTextOptions::IncludeRootLayers) ? RefPtr { rootGraphicsLayer() } : m_rootContentsLayer;
 
     if (!dumpRootLayer)
         return String();
@@ -5251,8 +5251,11 @@ void RenderLayerCompositor::attachRootLayer(RootLayerAttachment attachment)
         case RootLayerAttachedViaEnclosingFrame: {
             // The layer will get hooked up via RenderLayerBacking::updateConfiguration()
             // for the frame's renderer in the parent document.
-            if (RefPtr ownerElement = m_renderView.protectedDocument()->ownerElement())
+            if (RefPtr ownerElement = m_renderView.protectedDocument()->ownerElement()) {
                 ownerElement->scheduleInvalidateStyleAndLayerComposition();
+                if (CheckedPtr renderer = ownerElement->renderer())
+                    renderer->repaint();
+            }
             break;
         }
     }

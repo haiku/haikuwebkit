@@ -193,7 +193,6 @@ AllowedSPI*.toml @emw-apple
 # CMake
 
 /Source/cmake/WebKitCompilerFlags.cmake @mcatanzaro
-/Source/cmake/WebKitFeatures.cmake @mcatanzaro
 
 # ================================================================================
 # Xcode

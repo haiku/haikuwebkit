@@ -23,4 +23,3 @@ root
         'Ready'
         button,'Update Status'
     'The quick brown fox jumped…\n\n\n\n\n    \nFooter content with © 2024'
-version=2

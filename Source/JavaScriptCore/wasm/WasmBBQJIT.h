@@ -693,7 +693,7 @@ public:
             : m_enclosedHeight(0)
         { }
 
-        ControlData(BBQJIT& generator, BlockType, BlockSignature, LocalOrTempIndex enclosedHeight, RegisterSet liveScratchGPRs, RegisterSet liveScratchFPRs);
+        ControlData(BBQJIT& generator, BlockType, BlockSignature&&, LocalOrTempIndex enclosedHeight, RegisterSet liveScratchGPRs, RegisterSet liveScratchFPRs);
 
         // Re-use the argument layout of another block (eg. else will re-use the argument/result locations from if)
         enum BranchCallingConventionReuseTag { UseBlockCallingConventionOfOtherBranch };
@@ -862,7 +862,7 @@ public:
         const Vector<Location, 2>& resultLocations() const;
 
         BlockType blockType() const;
-        BlockSignature signature() const;
+        const BlockSignature& signature() const;
 
         FunctionArgCount branchTargetArity() const;
 
@@ -1105,29 +1105,29 @@ public:
     Value instanceValue();
 
     // Tables
-    WARN_UNUSED_RETURN PartialResult addTableGet(unsigned tableIndex, Value index, Value& result);
+    [[nodiscard]] PartialResult addTableGet(unsigned tableIndex, Value index, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addTableSet(unsigned tableIndex, Value index, Value value);
+    [[nodiscard]] PartialResult addTableSet(unsigned tableIndex, Value index, Value value);
 
-    WARN_UNUSED_RETURN PartialResult addTableInit(unsigned elementIndex, unsigned tableIndex, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
+    [[nodiscard]] PartialResult addTableInit(unsigned elementIndex, unsigned tableIndex, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
 
-    WARN_UNUSED_RETURN PartialResult addElemDrop(unsigned elementIndex);
+    [[nodiscard]] PartialResult addElemDrop(unsigned elementIndex);
 
-    WARN_UNUSED_RETURN PartialResult addTableSize(unsigned tableIndex, Value& result);
+    [[nodiscard]] PartialResult addTableSize(unsigned tableIndex, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addTableGrow(unsigned tableIndex, Value fill, Value delta, Value& result);
+    [[nodiscard]] PartialResult addTableGrow(unsigned tableIndex, Value fill, Value delta, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addTableFill(unsigned tableIndex, Value offset, Value fill, Value count);
+    [[nodiscard]] PartialResult addTableFill(unsigned tableIndex, Value offset, Value fill, Value count);
 
-    WARN_UNUSED_RETURN PartialResult addTableCopy(unsigned dstTableIndex, unsigned srcTableIndex, Value dstOffset, Value srcOffset, Value length);
+    [[nodiscard]] PartialResult addTableCopy(unsigned dstTableIndex, unsigned srcTableIndex, Value dstOffset, Value srcOffset, Value length);
 
     // Locals
 
-    WARN_UNUSED_RETURN PartialResult getLocal(uint32_t localIndex, Value& result);
+    [[nodiscard]] PartialResult getLocal(uint32_t localIndex, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult setLocal(uint32_t localIndex, Value value);
+    [[nodiscard]] PartialResult setLocal(uint32_t localIndex, Value value);
 
-    WARN_UNUSED_RETURN PartialResult teeLocal(uint32_t localIndex, Value, Value& result);
+    [[nodiscard]] PartialResult teeLocal(uint32_t localIndex, Value, Value& result);
 
     // Globals
 
@@ -1135,12 +1135,12 @@ public:
 
     Value exception(const ControlData& control);
 
-    WARN_UNUSED_RETURN PartialResult getGlobal(uint32_t index, Value& result);
+    [[nodiscard]] PartialResult getGlobal(uint32_t index, Value& result);
 
     void emitWriteBarrier(GPRReg cellGPR);
     void emitMutatorFence();
 
-    WARN_UNUSED_RETURN PartialResult setGlobal(uint32_t index, Value value);
+    [[nodiscard]] PartialResult setGlobal(uint32_t index, Value value);
 
     // Memory
 
@@ -1268,7 +1268,7 @@ public:
         "I64Load8S", "I64Load8U", "I64Load16S", "I64Load16U", "I64Load32S", "I64Load32U"
     };
 
-    WARN_UNUSED_RETURN PartialResult load(LoadOpType loadOp, Value pointer, Value& result, uint32_t uoffset);
+    [[nodiscard]] PartialResult load(LoadOpType loadOp, Value pointer, Value& result, uint32_t uoffset);
 
     inline uint32_t sizeOfStoreOp(StoreOpType op)
     {
@@ -1296,19 +1296,19 @@ public:
         "I64Store8", "I64Store16", "I64Store32",
     };
 
-    WARN_UNUSED_RETURN PartialResult store(StoreOpType storeOp, Value pointer, Value value, uint32_t uoffset);
+    [[nodiscard]] PartialResult store(StoreOpType storeOp, Value pointer, Value value, uint32_t uoffset);
 
-    WARN_UNUSED_RETURN PartialResult addGrowMemory(Value delta, Value& result);
+    [[nodiscard]] PartialResult addGrowMemory(Value delta, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addCurrentMemory(Value& result);
+    [[nodiscard]] PartialResult addCurrentMemory(Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addMemoryFill(Value dstAddress, Value targetValue, Value count);
+    [[nodiscard]] PartialResult addMemoryFill(Value dstAddress, Value targetValue, Value count);
 
-    WARN_UNUSED_RETURN PartialResult addMemoryCopy(Value dstAddress, Value srcAddress, Value count);
+    [[nodiscard]] PartialResult addMemoryCopy(Value dstAddress, Value srcAddress, Value count);
 
-    WARN_UNUSED_RETURN PartialResult addMemoryInit(unsigned dataSegmentIndex, Value dstAddress, Value srcAddress, Value length);
+    [[nodiscard]] PartialResult addMemoryInit(unsigned dataSegmentIndex, Value dstAddress, Value srcAddress, Value length);
 
-    WARN_UNUSED_RETURN PartialResult addDataDrop(unsigned dataSegmentIndex);
+    [[nodiscard]] PartialResult addDataDrop(unsigned dataSegmentIndex);
 
     // Atomics
 
@@ -1335,27 +1335,27 @@ public:
     template<typename Functor>
     void emitAtomicOpGeneric(ExtAtomicOpType op, Address address, Location old, Location cur, const Functor& functor);
 
-    WARN_UNUSED_RETURN Value emitAtomicLoadOp(ExtAtomicOpType loadOp, Type valueType, Location pointer, uint32_t uoffset);
+    [[nodiscard]] Value emitAtomicLoadOp(ExtAtomicOpType loadOp, Type valueType, Location pointer, uint32_t uoffset);
 
-    WARN_UNUSED_RETURN PartialResult atomicLoad(ExtAtomicOpType loadOp, Type valueType, ExpressionType pointer, ExpressionType& result, uint32_t uoffset);
+    [[nodiscard]] PartialResult atomicLoad(ExtAtomicOpType loadOp, Type valueType, ExpressionType pointer, ExpressionType& result, uint32_t uoffset);
 
     void emitAtomicStoreOp(ExtAtomicOpType storeOp, Type, Location pointer, Value value, uint32_t uoffset);
 
-    WARN_UNUSED_RETURN PartialResult atomicStore(ExtAtomicOpType storeOp, Type valueType, ExpressionType pointer, ExpressionType value, uint32_t uoffset);
+    [[nodiscard]] PartialResult atomicStore(ExtAtomicOpType storeOp, Type valueType, ExpressionType pointer, ExpressionType value, uint32_t uoffset);
 
     Value emitAtomicBinaryRMWOp(ExtAtomicOpType op, Type valueType, Location pointer, Value value, uint32_t uoffset);
 
-    WARN_UNUSED_RETURN PartialResult atomicBinaryRMW(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t uoffset);
+    [[nodiscard]] PartialResult atomicBinaryRMW(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t uoffset);
 
-    WARN_UNUSED_RETURN Value emitAtomicCompareExchange(ExtAtomicOpType op, Type, Location pointer, Value expected, Value value, uint32_t uoffset);
+    [[nodiscard]] Value emitAtomicCompareExchange(ExtAtomicOpType op, Type, Location pointer, Value expected, Value value, uint32_t uoffset);
 
-    WARN_UNUSED_RETURN PartialResult atomicCompareExchange(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t uoffset);
+    [[nodiscard]] PartialResult atomicCompareExchange(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t uoffset);
 
-    WARN_UNUSED_RETURN PartialResult atomicWait(ExtAtomicOpType op, ExpressionType pointer, ExpressionType value, ExpressionType timeout, ExpressionType& result, uint32_t uoffset);
+    [[nodiscard]] PartialResult atomicWait(ExtAtomicOpType op, ExpressionType pointer, ExpressionType value, ExpressionType timeout, ExpressionType& result, uint32_t uoffset);
 
-    WARN_UNUSED_RETURN PartialResult atomicNotify(ExtAtomicOpType op, ExpressionType pointer, ExpressionType count, ExpressionType& result, uint32_t uoffset);
+    [[nodiscard]] PartialResult atomicNotify(ExtAtomicOpType op, ExpressionType pointer, ExpressionType count, ExpressionType& result, uint32_t uoffset);
 
-    WARN_UNUSED_RETURN PartialResult atomicFence(ExtAtomicOpType, uint8_t);
+    [[nodiscard]] PartialResult atomicFence(ExtAtomicOpType, uint8_t);
 
     // Saturated truncation.
 
@@ -1383,16 +1383,16 @@ public:
 
     void truncInBounds(TruncationKind truncationKind, Location operandLocation, Location resultLocation, FPRReg scratch1FPR, FPRReg scratch2FPR);
 
-    WARN_UNUSED_RETURN PartialResult truncTrapping(OpType truncationOp, Value operand, Value& result, Type returnType, Type operandType);
-    WARN_UNUSED_RETURN PartialResult truncSaturated(Ext1OpType truncationOp, Value operand, Value& result, Type returnType, Type operandType);
+    [[nodiscard]] PartialResult truncTrapping(OpType truncationOp, Value operand, Value& result, Type returnType, Type operandType);
+    [[nodiscard]] PartialResult truncSaturated(Ext1OpType truncationOp, Value operand, Value& result, Type returnType, Type operandType);
 
 
     // GC
-    WARN_UNUSED_RETURN PartialResult addRefI31(ExpressionType value, ExpressionType& result);
+    [[nodiscard]] PartialResult addRefI31(ExpressionType value, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addI31GetS(TypedExpression value, ExpressionType& result);
+    [[nodiscard]] PartialResult addI31GetS(TypedExpression value, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addI31GetU(TypedExpression value, ExpressionType& result);
+    [[nodiscard]] PartialResult addI31GetU(TypedExpression value, ExpressionType& result);
 
     const Ref<TypeDefinition> getTypeDefinition(uint32_t typeIndex);
 
@@ -1407,62 +1407,62 @@ public:
     Value marshallToI64(Value value);
 
     void emitAllocateGCArrayUninitialized(GPRReg result, uint32_t typeIndex, ExpressionType size, GPRReg scratchGPR, GPRReg scratchGPR2);
-    WARN_UNUSED_RETURN PartialResult addArrayNew(uint32_t typeIndex, ExpressionType size, ExpressionType initValue, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addArrayNewDefault(uint32_t typeIndex, ExpressionType size, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNew(uint32_t typeIndex, ExpressionType size, ExpressionType initValue, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewDefault(uint32_t typeIndex, ExpressionType size, ExpressionType& result);
 
     using ArraySegmentOperation = EncodedJSValue SYSV_ABI (&)(JSC::JSWebAssemblyInstance*, uint32_t, uint32_t, uint32_t, uint32_t);
     void pushArrayNewFromSegment(ArraySegmentOperation operation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType exceptionType, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result);
 
     void emitArrayStoreElementUnchecked(StorageType elementType, GPRReg payloadGPR, Location index, Value value, bool preserveIndex = false);
     void emitArrayStoreElementUnchecked(StorageType elementType, GPRReg payloadGPR, Value index, Value value);
     void emitArraySetUnchecked(uint32_t typeIndex, Value arrayref, Value index, Value value);
 
-    WARN_UNUSED_RETURN PartialResult addArrayNewFixed(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewFixed(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
 
     void emitArrayGetPayload(StorageType, GPRReg arrayGPR, GPRReg payloadGPR);
 
-    WARN_UNUSED_RETURN PartialResult addArrayGet(ExtGCOpType arrayGetKind, uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayGet(ExtGCOpType arrayGetKind, uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addArraySet(uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
+    [[nodiscard]] PartialResult addArraySet(uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
 
-    WARN_UNUSED_RETURN PartialResult addArrayLen(TypedExpression arrayref, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayLen(TypedExpression arrayref, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addArrayFill(uint32_t typeIndex, TypedExpression arrayref, ExpressionType offset, ExpressionType value, ExpressionType size);
+    [[nodiscard]] PartialResult addArrayFill(uint32_t typeIndex, TypedExpression arrayref, ExpressionType offset, ExpressionType value, ExpressionType size);
 
-    WARN_UNUSED_RETURN PartialResult addArrayCopy(uint32_t dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcTypeIndex, TypedExpression src, ExpressionType srcOffset, ExpressionType size);
+    [[nodiscard]] PartialResult addArrayCopy(uint32_t dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcTypeIndex, TypedExpression src, ExpressionType srcOffset, ExpressionType size);
 
-    WARN_UNUSED_RETURN PartialResult addArrayInitElem(uint32_t dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcElementIndex, ExpressionType srcOffset, ExpressionType size);
+    [[nodiscard]] PartialResult addArrayInitElem(uint32_t dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcElementIndex, ExpressionType srcOffset, ExpressionType size);
 
-    WARN_UNUSED_RETURN PartialResult addArrayInitData(uint32_t dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcDataIndex, ExpressionType srcOffset, ExpressionType size);
+    [[nodiscard]] PartialResult addArrayInitData(uint32_t dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcDataIndex, ExpressionType srcOffset, ExpressionType size);
 
     // Returns true if a writeBarrier/mutatorFence is needed.
-    WARN_UNUSED_RETURN bool emitStructSet(GPRReg structGPR, const StructType& structType, uint32_t fieldIndex, Value value);
+    [[nodiscard]] bool emitStructSet(GPRReg structGPR, const StructType& structType, uint32_t fieldIndex, Value value);
 
     void emitAllocateGCStructUninitialized(GPRReg resultGPR, uint32_t typeIndex, GPRReg scratchGPR, GPRReg scratchGPR2);
-    WARN_UNUSED_RETURN PartialResult addStructNewDefault(uint32_t typeIndex, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addStructNew(uint32_t typeIndex, ArgumentList& args, Value& result);
+    [[nodiscard]] PartialResult addStructNewDefault(uint32_t typeIndex, ExpressionType& result);
+    [[nodiscard]] PartialResult addStructNew(uint32_t typeIndex, ArgumentList& args, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addStructGet(ExtGCOpType structGetKind, TypedExpression structValue, const StructType& structType, uint32_t fieldIndex, Value& result);
+    [[nodiscard]] PartialResult addStructGet(ExtGCOpType structGetKind, TypedExpression structValue, const StructType& structType, const RTT&, uint32_t fieldIndex, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addStructSet(TypedExpression structValue, const StructType& structType, uint32_t fieldIndex, Value value);
+    [[nodiscard]] PartialResult addStructSet(TypedExpression structValue, const StructType& structType, const RTT&, uint32_t fieldIndex, Value value);
 
     enum class CastKind { Test, Cast };
     void emitRefTestOrCast(CastKind, const TypedExpression&, GPRReg, bool allowNull, int32_t toHeapType, JumpList& failureCases);
 
-    WARN_UNUSED_RETURN PartialResult addRefTest(TypedExpression reference, bool allowNull, int32_t heapType, bool shouldNegate, ExpressionType& result);
+    [[nodiscard]] PartialResult addRefTest(TypedExpression reference, bool allowNull, int32_t heapType, bool shouldNegate, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addRefCast(TypedExpression reference, bool allowNull, int32_t heapType, ExpressionType& result);
+    [[nodiscard]] PartialResult addRefCast(TypedExpression reference, bool allowNull, int32_t heapType, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addAnyConvertExtern(ExpressionType reference, ExpressionType& result);
+    [[nodiscard]] PartialResult addAnyConvertExtern(ExpressionType reference, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addExternConvertAny(ExpressionType reference, ExpressionType& result);
+    [[nodiscard]] PartialResult addExternConvertAny(ExpressionType reference, ExpressionType& result);
 
     // Basic operators
-    WARN_UNUSED_RETURN PartialResult addSelect(Value condition, Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addSelect(Value condition, Value lhs, Value rhs, Value& result);
 
     template<typename Fold, typename RegReg, typename RegImm>
     inline PartialResult binary(const char* opcode, TypeKind resultType, Value& lhs, Value& rhs, Value& result, Fold fold, RegReg regReg, RegImm regImm)
@@ -1588,29 +1588,29 @@ public:
                 regStatement /* Lambda to be called when both operands are registers. */ \
             });
 
-    WARN_UNUSED_RETURN PartialResult addI32Add(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Add(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Add(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Add(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Add(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Add(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Add(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Add(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Sub(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Sub(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Sub(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Sub(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Sub(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Sub(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Sub(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Sub(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Mul(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Mul(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Mul(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Mul(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Mul(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Mul(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Mul(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Mul(Value lhs, Value rhs, Value& result);
 
     template<typename Func>
     void addLatePath(WasmOrigin, Func&&);
@@ -1629,25 +1629,25 @@ public:
     template<typename IntType>
     Value checkConstantDivision(const Value& lhs, const Value& rhs);
 
-    WARN_UNUSED_RETURN PartialResult addI32DivS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32DivS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64DivS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64DivS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32DivU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32DivU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64DivU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64DivU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32RemS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32RemS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64RemS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64RemS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32RemU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32RemU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64RemU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64RemU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Div(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Div(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Div(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Div(Value lhs, Value rhs, Value& result);
 
     enum class MinOrMax { Min, Max };
 
@@ -1668,13 +1668,13 @@ public:
             return std::max<FloatType>(left, right);
     }
 
-    WARN_UNUSED_RETURN PartialResult addF32Min(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Min(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Min(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Min(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Max(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Max(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Max(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Max(Value lhs, Value rhs, Value& result);
 
     inline float floatCopySign(float lhs, float rhs)
     {
@@ -1696,241 +1696,241 @@ public:
         return std::bit_cast<double>(lhsAsInt64);
     }
 
-    WARN_UNUSED_RETURN PartialResult addI32And(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32And(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64And(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64And(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Xor(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Xor(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Xor(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Xor(Value lhs, Value rhs, Value& result);
 
 
-    WARN_UNUSED_RETURN PartialResult addI32Or(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Or(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Or(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Or(Value lhs, Value rhs, Value& result);
 
     void moveShiftAmountIfNecessary(Location& rhsLocation);
 
-    WARN_UNUSED_RETURN PartialResult addI32Shl(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Shl(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Shl(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Shl(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32ShrS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32ShrS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64ShrS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64ShrS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32ShrU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32ShrU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64ShrU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64ShrU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Rotl(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Rotl(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Rotl(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Rotl(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Rotr(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Rotr(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Rotr(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Rotr(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Clz(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32Clz(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Clz(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64Clz(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Ctz(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32Ctz(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Ctz(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64Ctz(Value operand, Value& result);
 
     PartialResult emitCompareI32(const char* opcode, Value& lhs, Value& rhs, Value& result, RelationalCondition condition, bool (*comparator)(int32_t lhs, int32_t rhs));
 
     PartialResult emitCompareI64(const char* opcode, Value& lhs, Value& rhs, Value& result, RelationalCondition condition, bool (*comparator)(int64_t lhs, int64_t rhs));
 
-    WARN_UNUSED_RETURN PartialResult addI32Eq(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Eq(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Eq(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Eq(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Ne(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32Ne(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Ne(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64Ne(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32LtS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32LtS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64LtS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64LtS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32LeS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32LeS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64LeS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64LeS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32GtS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32GtS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64GtS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64GtS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32GeS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32GeS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64GeS(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64GeS(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32LtU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32LtU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64LtU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64LtU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32LeU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32LeU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64LeU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64LeU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32GtU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32GtU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64GtU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64GtU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32GeU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI32GeU(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64GeU(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addI64GeU(Value lhs, Value rhs, Value& result);
 
     PartialResult emitCompareF32(const char* opcode, Value& lhs, Value& rhs, Value& result, DoubleCondition condition, bool (*comparator)(float lhs, float rhs));
 
     PartialResult emitCompareF64(const char* opcode, Value& lhs, Value& rhs, Value& result, DoubleCondition condition, bool (*comparator)(double lhs, double rhs));
 
-    WARN_UNUSED_RETURN PartialResult addF32Eq(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Eq(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Eq(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Eq(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Ne(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Ne(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Ne(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Ne(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Lt(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Lt(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Lt(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Lt(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Le(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Le(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Le(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Le(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Gt(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Gt(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Gt(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Gt(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Ge(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Ge(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Ge(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Ge(Value lhs, Value rhs, Value& result);
 
     PartialResult addI32WrapI64(Value operand, Value& result);
 
     PartialResult addI32Extend8S(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Extend16S(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32Extend16S(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Extend8S(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64Extend8S(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Extend16S(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64Extend16S(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Extend32S(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64Extend32S(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64ExtendSI32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64ExtendSI32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64ExtendUI32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64ExtendUI32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Eqz(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32Eqz(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Eqz(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64Eqz(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32Popcnt(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32Popcnt(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64Popcnt(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64Popcnt(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32ReinterpretF32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32ReinterpretF32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64ReinterpretF64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64ReinterpretF64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32ReinterpretI32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32ReinterpretI32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64ReinterpretI64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64ReinterpretI64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32DemoteF64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32DemoteF64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64PromoteF32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64PromoteF32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32ConvertSI32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32ConvertSI32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32ConvertUI32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32ConvertUI32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32ConvertSI64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32ConvertSI64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32ConvertUI64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32ConvertUI64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64ConvertSI32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64ConvertSI32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64ConvertUI32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64ConvertUI32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64ConvertSI64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64ConvertSI64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64ConvertUI64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64ConvertUI64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Copysign(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF32Copysign(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Copysign(Value lhs, Value rhs, Value& result);
+    [[nodiscard]] PartialResult addF64Copysign(Value lhs, Value rhs, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Floor(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32Floor(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Floor(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64Floor(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Ceil(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32Ceil(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Ceil(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64Ceil(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Abs(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32Abs(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Abs(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64Abs(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Sqrt(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32Sqrt(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Sqrt(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64Sqrt(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Neg(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32Neg(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Neg(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64Neg(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Nearest(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32Nearest(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Nearest(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64Nearest(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF32Trunc(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF32Trunc(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addF64Trunc(Value operand, Value& result);
+    [[nodiscard]] PartialResult addF64Trunc(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32TruncSF32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32TruncSF32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32TruncSF64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32TruncSF64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32TruncUF32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32TruncUF32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI32TruncUF64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI32TruncUF64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64TruncSF32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64TruncSF32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64TruncSF64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64TruncSF64(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64TruncUF32(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64TruncUF32(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addI64TruncUF64(Value operand, Value& result);
+    [[nodiscard]] PartialResult addI64TruncUF64(Value operand, Value& result);
 
     // References
 
-    WARN_UNUSED_RETURN PartialResult addRefIsNull(Value operand, Value& result);
+    [[nodiscard]] PartialResult addRefIsNull(Value operand, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addRefAsNonNull(Value value, Value& result);
+    [[nodiscard]] PartialResult addRefAsNonNull(Value value, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addRefEq(Value ref0, Value ref1, Value& result);
+    [[nodiscard]] PartialResult addRefEq(Value ref0, Value ref1, Value& result);
 
-    WARN_UNUSED_RETURN PartialResult addRefFunc(FunctionSpaceIndex index, Value& result);
+    [[nodiscard]] PartialResult addRefFunc(FunctionSpaceIndex index, Value& result);
 
     void emitEntryTierUpCheck();
 
     // Control flow
-    WARN_UNUSED_RETURN ControlData addTopLevel(BlockSignature signature);
+    [[nodiscard]] ControlData addTopLevel(BlockSignature&&);
 
     bool hasLoops() const;
 
     MacroAssembler::Label addLoopOSREntrypoint();
 
-    WARN_UNUSED_RETURN PartialResult addBlock(BlockSignature signature, Stack& enclosingStack, ControlType& result, Stack& newStack);
+    [[nodiscard]] PartialResult addBlock(BlockSignature&&, Stack& enclosingStack, ControlType& result, Stack& newStack);
 
     B3::Type toB3Type(Type type);
 
@@ -1942,16 +1942,16 @@ public:
 
     void emitLoopTierUpCheckAndOSREntryData(const ControlData&, Stack& enclosingStack, unsigned loopIndex);
 
-    WARN_UNUSED_RETURN PartialResult addLoop(BlockSignature signature, Stack& enclosingStack, ControlType& result, Stack& newStack, uint32_t loopIndex);
+    [[nodiscard]] PartialResult addLoop(BlockSignature&&, Stack& enclosingStack, ControlType& result, Stack& newStack, uint32_t loopIndex);
 
-    WARN_UNUSED_RETURN PartialResult addIf(Value condition, BlockSignature signature, Stack& enclosingStack, ControlData& result, Stack& newStack);
+    [[nodiscard]] PartialResult addIf(Value condition, BlockSignature&&, Stack& enclosingStack, ControlData& result, Stack& newStack);
 
-    WARN_UNUSED_RETURN PartialResult addElse(ControlData& data, Stack& expressionStack);
+    [[nodiscard]] PartialResult addElse(ControlData& data, Stack& expressionStack);
 
-    WARN_UNUSED_RETURN PartialResult addElseToUnreachable(ControlData& data);
+    [[nodiscard]] PartialResult addElseToUnreachable(ControlData& data);
 
-    WARN_UNUSED_RETURN PartialResult addTry(BlockSignature signature, Stack& enclosingStack, ControlType& result, Stack& newStack);
-    WARN_UNUSED_RETURN PartialResult addTryTable(BlockSignature, Stack& enclosingStack, const Vector<CatchHandler>& targets, ControlType& result, Stack& newStack);
+    [[nodiscard]] PartialResult addTry(BlockSignature&&, Stack& enclosingStack, ControlType& result, Stack& newStack);
+    [[nodiscard]] PartialResult addTryTable(BlockSignature&&, Stack& enclosingStack, const Vector<CatchHandler>& targets, ControlType& result, Stack& newStack);
 
     void emitCatchPrologue();
 
@@ -1960,43 +1960,43 @@ public:
     void emitCatchImpl(ControlData& dataCatch, const TypeDefinition& exceptionSignature, ResultList& results);
     void emitCatchTableImpl(ControlData& entryData, ControlType::TryTableTarget&);
 
-    WARN_UNUSED_RETURN PartialResult addCatch(unsigned exceptionIndex, const TypeDefinition& exceptionSignature, Stack& expressionStack, ControlType& data, ResultList& results);
+    [[nodiscard]] PartialResult addCatch(unsigned exceptionIndex, const TypeDefinition& exceptionSignature, Stack& expressionStack, ControlType& data, ResultList& results);
 
-    WARN_UNUSED_RETURN PartialResult addCatchToUnreachable(unsigned exceptionIndex, const TypeDefinition& exceptionSignature, ControlType& data, ResultList& results);
+    [[nodiscard]] PartialResult addCatchToUnreachable(unsigned exceptionIndex, const TypeDefinition& exceptionSignature, ControlType& data, ResultList& results);
 
-    WARN_UNUSED_RETURN PartialResult addCatchAll(Stack& expressionStack, ControlType& data);
+    [[nodiscard]] PartialResult addCatchAll(Stack& expressionStack, ControlType& data);
 
-    WARN_UNUSED_RETURN PartialResult addCatchAllToUnreachable(ControlType& data);
+    [[nodiscard]] PartialResult addCatchAllToUnreachable(ControlType& data);
 
-    WARN_UNUSED_RETURN PartialResult addDelegate(ControlType& target, ControlType& data);
+    [[nodiscard]] PartialResult addDelegate(ControlType& target, ControlType& data);
 
-    WARN_UNUSED_RETURN PartialResult addDelegateToUnreachable(ControlType& target, ControlType& data);
+    [[nodiscard]] PartialResult addDelegateToUnreachable(ControlType& target, ControlType& data);
 
-    WARN_UNUSED_RETURN PartialResult addThrow(unsigned exceptionIndex, ArgumentList& arguments, Stack&);
+    [[nodiscard]] PartialResult addThrow(unsigned exceptionIndex, ArgumentList& arguments, Stack&);
 
-    WARN_UNUSED_RETURN PartialResult addRethrow(unsigned, ControlType& data);
+    [[nodiscard]] PartialResult addRethrow(unsigned, ControlType& data);
 
-    WARN_UNUSED_RETURN PartialResult addThrowRef(ExpressionType exception, Stack&);
+    [[nodiscard]] PartialResult addThrowRef(ExpressionType exception, Stack&);
 
     void prepareForExceptions();
 
-    WARN_UNUSED_RETURN PartialResult addReturn(const ControlData& data, const Stack& returnValues);
+    [[nodiscard]] PartialResult addReturn(const ControlData& data, const Stack& returnValues);
 
-    WARN_UNUSED_RETURN PartialResult addBranch(ControlData& target, Value condition, Stack& results);
+    [[nodiscard]] PartialResult addBranch(ControlData& target, Value condition, Stack& results);
 
-    WARN_UNUSED_RETURN PartialResult addBranchNull(ControlData& data, ExpressionType reference, Stack& returnValues, bool shouldNegate, ExpressionType& result);
+    [[nodiscard]] PartialResult addBranchNull(ControlData& data, ExpressionType reference, Stack& returnValues, bool shouldNegate, ExpressionType& result);
 
-    WARN_UNUSED_RETURN PartialResult addBranchCast(ControlData& data, ExpressionType reference, Stack& returnValues, bool allowNull, int32_t heapType, bool shouldNegate);
+    [[nodiscard]] PartialResult addBranchCast(ControlData& data, ExpressionType reference, Stack& returnValues, bool allowNull, int32_t heapType, bool shouldNegate);
 
-    WARN_UNUSED_RETURN PartialResult addSwitch(Value condition, const Vector<ControlData*>& targets, ControlData& defaultTarget, Stack& results);
+    [[nodiscard]] PartialResult addSwitch(Value condition, const Vector<ControlData*>& targets, ControlData& defaultTarget, Stack& results);
 
-    WARN_UNUSED_RETURN PartialResult endBlock(ControlEntry& entry, Stack& stack);
+    [[nodiscard]] PartialResult endBlock(ControlEntry& entry, Stack& stack);
 
-    WARN_UNUSED_RETURN PartialResult addEndToUnreachable(ControlEntry& entry, Stack& stack, bool unreachable = true);
+    [[nodiscard]] PartialResult addEndToUnreachable(ControlEntry& entry, Stack& stack, bool unreachable = true);
 
     int alignedFrameSize(int frameSize) const;
 
-    WARN_UNUSED_RETURN PartialResult endTopLevel(BlockSignature, const Stack&);
+    [[nodiscard]] PartialResult endTopLevel(const Stack&);
 
     enum BranchFoldResult {
         BranchAlwaysTaken,
@@ -2004,15 +2004,15 @@ public:
         BranchNotFolded
     };
 
-    WARN_UNUSED_RETURN BranchFoldResult tryFoldFusedBranchCompare(OpType, ExpressionType);
-    WARN_UNUSED_RETURN Jump emitFusedBranchCompareBranch(OpType, ExpressionType, Location);
-    WARN_UNUSED_RETURN BranchFoldResult tryFoldFusedBranchCompare(OpType, ExpressionType, ExpressionType);
-    WARN_UNUSED_RETURN Jump emitFusedBranchCompareBranch(OpType, ExpressionType, Location, ExpressionType, Location);
+    [[nodiscard]] BranchFoldResult tryFoldFusedBranchCompare(OpType, ExpressionType);
+    [[nodiscard]] Jump emitFusedBranchCompareBranch(OpType, ExpressionType, Location);
+    [[nodiscard]] BranchFoldResult tryFoldFusedBranchCompare(OpType, ExpressionType, ExpressionType);
+    [[nodiscard]] Jump emitFusedBranchCompareBranch(OpType, ExpressionType, Location, ExpressionType, Location);
 
-    WARN_UNUSED_RETURN PartialResult addFusedBranchCompare(OpType, ControlType& target, ExpressionType, Stack&);
-    WARN_UNUSED_RETURN PartialResult addFusedBranchCompare(OpType, ControlType& target, ExpressionType, ExpressionType, Stack&);
-    WARN_UNUSED_RETURN PartialResult addFusedIfCompare(OpType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&);
-    WARN_UNUSED_RETURN PartialResult addFusedIfCompare(OpType, ExpressionType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&);
+    [[nodiscard]] PartialResult addFusedBranchCompare(OpType, ControlType& target, ExpressionType, Stack&);
+    [[nodiscard]] PartialResult addFusedBranchCompare(OpType, ControlType& target, ExpressionType, ExpressionType, Stack&);
+    [[nodiscard]] PartialResult addFusedIfCompare(OpType, ExpressionType, BlockSignature&&, Stack&, ControlType&, Stack&);
+    [[nodiscard]] PartialResult addFusedIfCompare(OpType, ExpressionType, ExpressionType, BlockSignature&&, Stack&, ControlType&, Stack&);
 
     // Flush a value to its canonical slot.
     void flushValue(Value value);
@@ -2046,18 +2046,18 @@ public:
     void emitCCall(Func function, const Vector<Value, N>& arguments, Value& result);
 
     void emitTailCall(FunctionSpaceIndex, const TypeDefinition& signature, ArgumentList& arguments);
-    WARN_UNUSED_RETURN PartialResult addCall(unsigned, FunctionSpaceIndex, const TypeDefinition& signature, ArgumentList& arguments, ResultList& results, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addCall(unsigned, FunctionSpaceIndex, const TypeDefinition& signature, ArgumentList& arguments, ResultList& results, CallType = CallType::Call);
 
     void emitIndirectCall(const char* opcode, unsigned callProfileIndex, const Value& callee, GPRReg importableFunction, const TypeDefinition& signature, ArgumentList& arguments, ResultList& results);
     void emitIndirectTailCall(const char* opcode, const Value& callee, GPRReg importableFunction, const TypeDefinition& signature, ArgumentList& arguments);
 
-    WARN_UNUSED_RETURN PartialResult addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType = CallType::Call);
 
-    WARN_UNUSED_RETURN PartialResult addCallRef(unsigned, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addCallRef(unsigned, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType = CallType::Call);
 
-    WARN_UNUSED_RETURN PartialResult addUnreachable();
+    [[nodiscard]] PartialResult addUnreachable();
 
-    WARN_UNUSED_RETURN PartialResult addCrash();
+    [[nodiscard]] PartialResult addCrash();
 
     ALWAYS_INLINE void willParseOpcode();
 
@@ -2111,7 +2111,7 @@ public:
 
     void emitVectorMul(SIMDInfo info, Location left, Location right, Location result);
 
-    WARN_UNUSED_RETURN PartialResult fixupOutOfBoundsIndicesForSwizzle(Location a, Location b, Location result);
+    [[nodiscard]] PartialResult fixupOutOfBoundsIndicesForSwizzle(Location a, Location b, Location result);
 
     PartialResult addSIMDV_VV(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, ExpressionType&);
 

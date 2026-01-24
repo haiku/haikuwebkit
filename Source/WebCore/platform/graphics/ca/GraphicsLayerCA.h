@@ -245,6 +245,8 @@ public:
     WEBCORE_EXPORT void purgeFrontBufferForTesting() override;
     WEBCORE_EXPORT void purgeBackBufferForTesting() override;
 
+    WEBCORE_EXPORT void setShadowPath(const Path&) override;
+
 private:
     bool isGraphicsLayerCA() const override { return true; }
 
@@ -539,6 +541,7 @@ private:
     void updateBackdropFilters(CommitState&);
     void updateBackdropFiltersRect();
     void updateBackdropRoot();
+    void updateShadowPath();
 
     void updateBlendMode();
 
@@ -591,7 +594,7 @@ private:
             return std::nullopt;
         }
 
-        RefPtr<PlatformCAAnimation> m_animation;
+        const Ref<PlatformCAAnimation> m_animation;
         String m_name;
         AnimatedProperty m_property;
         int m_index;
@@ -682,6 +685,7 @@ private:
         DrawsHDRContentChanged                  = 1LLU << 47,
         TonemappingEnabledChanged               = 1LLU << 48,
 #endif
+        ShadowPathChanged                       = 1LLU << 49,
     };
     typedef uint64_t LayerChangeFlags;
     static ASCIILiteral layerChangeAsString(LayerChange);

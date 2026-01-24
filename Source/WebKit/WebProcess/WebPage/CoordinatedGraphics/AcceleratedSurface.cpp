@@ -823,8 +823,22 @@ AcceleratedSurface::RenderTarget* AcceleratedSurface::SwapChain::nextTarget()
 
     if (m_freeTargets.isEmpty()) {
         ASSERT(m_lockedTargets.size() < s_maximumBuffers);
-        m_lockedTargets.insert(0, createTarget());
-        return m_lockedTargets[0].get();
+
+        if (m_lockedTargets.isEmpty()) [[unlikely]] {
+            // Initial setup.
+#if ENABLE(WPE_PLATFORM)
+            WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidChangeBufferConfiguration(s_initialBuffers), m_surfaceID);
+#endif
+            for (unsigned i = 0; i < s_initialBuffers; ++i)
+                m_freeTargets.append(createTarget());
+        } else {
+            // Additional buffers creted on demand.
+#if ENABLE(WPE_PLATFORM)
+            WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidChangeBufferConfiguration(m_lockedTargets.size() + 1), m_surfaceID);
+#endif
+            m_lockedTargets.insert(0, createTarget());
+            return m_lockedTargets[0].get();
+        }
     }
 
     auto target = m_freeTargets.takeLast();
@@ -850,6 +864,10 @@ void AcceleratedSurface::SwapChain::releaseTarget(uint64_t targetID, UnixFileDes
 
 void AcceleratedSurface::SwapChain::reset()
 {
+#if ENABLE(WPE_PLATFORM)
+    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidChangeBufferConfiguration(0), m_surfaceID);
+#endif
+
     m_lockedTargets.clear();
     m_freeTargets.clear();
 }
@@ -858,6 +876,10 @@ void AcceleratedSurface::SwapChain::releaseUnusedBuffers()
 {
 #if USE(WPE_RENDERER)
     ASSERT(m_type != Type::WPEBackend);
+#endif
+
+#if ENABLE(WPE_PLATFORM)
+    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidChangeBufferConfiguration(m_lockedTargets.size()), m_surfaceID);
 #endif
 
     m_freeTargets.clear();
@@ -1006,7 +1028,10 @@ void AcceleratedSurface::willRenderFrame(const IntSize& size)
 
     if (sizeDidChange)
         glViewport(0, 0, size.width(), size.height());
+}
 
+void AcceleratedSurface::clear()
+{
     if (!m_isOpaque) {
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -1048,7 +1073,7 @@ void AcceleratedSurface::setFrameDamage(Damage&& damage)
         m_frameDamage = std::nullopt;
 }
 
-const std::optional<Damage>& AcceleratedSurface::frameDamageSinceLastUse()
+const std::optional<Damage>& AcceleratedSurface::renderTargetDamage()
 {
     m_swapChain.addDamage(m_frameDamage);
     ASSERT(m_target);

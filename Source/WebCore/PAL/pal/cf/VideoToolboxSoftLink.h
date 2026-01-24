@@ -24,6 +24,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 #include <wtf/Platform.h>
 
 #if USE(AVFOUNDATION)
@@ -77,3 +80,5 @@ SOFT_LINK_FUNCTION_FOR_HEADER(PAL, VideoToolbox, VTGetDefaultColorAttributesWith
 SOFT_LINK_FUNCTION_MAY_FAIL_FOR_HEADER(PAL, VideoToolbox, VTRestrictVideoDecoders, OSStatus, (VTVideoDecoderRestrictions restrictionFlags, const CMVideoCodecType* allowedCodecTypeList, CMItemCount allowedCodecTypeCount), (restrictionFlags, allowedCodecTypeList, allowedCodecTypeCount));
 
 #endif // USE(AVFOUNDATION)
+
+#endif // !__has_feature(modules)

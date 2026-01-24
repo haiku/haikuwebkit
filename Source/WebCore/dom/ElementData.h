@@ -217,7 +217,7 @@ inline const ImmutableStyleProperties* ElementData::presentationalHintStyle() co
     return nullptr;
 }
 
-inline std::span<const Attribute> ElementData::attributes() const
+inline std::span<const Attribute> ElementData::attributes() const LIFETIME_BOUND
 {
     if (isUnique())
         return uncheckedDowncast<UniqueElementData>(*this).attributes();

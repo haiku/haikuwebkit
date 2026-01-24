@@ -68,11 +68,16 @@ private:
     XRViewImpl& operator=(XRViewImpl&&) = delete;
 
     WGPUXRView backing() const { return m_backing.get(); }
+    bool isXRViewImpl() const final { return true; }
 
     WebGPUPtr<WGPUXRView> m_backing;
     const Ref<ConvertToBackingContext> m_convertToBackingContext;
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::XRViewImpl)
+    static bool isType(const WebCore::WebGPU::XRView& xrView) { return xrView.isXRViewImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

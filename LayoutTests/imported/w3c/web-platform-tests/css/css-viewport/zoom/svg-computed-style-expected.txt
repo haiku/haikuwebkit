@@ -49,6 +49,10 @@ PASS Property padding value '20px 40px 60px 80px' no zoom
 PASS Property padding value 'inherit' no zoom
 PASS Property padding value '20px 40px 60px 80px' zoom: 2
 PASS Property padding value 'inherit' zoom: 2
+PASS Property scroll-padding value '20px 40px 60px 80px' no zoom
+PASS Property scroll-padding value 'inherit' no zoom
+PASS Property scroll-padding value '20px 40px 60px 80px' zoom: 2
+PASS Property scroll-padding value 'inherit' zoom: 2
 PASS Property scroll-margin value '20px 40px 60px 80px' no zoom
 PASS Property scroll-margin value 'inherit' no zoom
 PASS Property scroll-margin value '20px 40px 60px 80px' zoom: 2

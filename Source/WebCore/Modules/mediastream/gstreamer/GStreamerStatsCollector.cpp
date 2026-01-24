@@ -41,6 +41,14 @@ GST_DEBUG_CATEGORY(webkit_webrtc_stats_debug);
 
 namespace WebCore {
 
+GStreamerStatsCollector::GStreamerStatsCollector()
+{
+    static std::once_flag debugRegisteredFlag;
+    std::call_once(debugRegisteredFlag, [] {
+        GST_DEBUG_CATEGORY_INIT(webkit_webrtc_stats_debug, "webkitwebrtcstats", 0, "WebKit WebRTC Stats");
+    });
+}
+
 RTCStatsReport::Stats::Stats(Type type, const GstStructure* structure)
     : type(type)
     , id(gstStructureGetString(structure, "id"_s).span())
@@ -134,7 +142,9 @@ RTCStatsReport::InboundRtpStreamStats::InboundRtpStreamStats(const GstStructure*
     pliCount = gstStructureGet<unsigned>(structure, "pli-count"_s);
     nackCount = gstStructureGet<unsigned>(structure, "nack-count"_s);
 
-    decoderImplementation = "GStreamer"_s;
+    // This should be exposed only if allowed (due to fingerprinting).
+    // if (kind == "video"_s)
+    //     decoderImplementation = gstStructureGetString(structure, "decoder-implementation"_s).span();
 
     framesPerSecond = gstStructureGet<double>(structure, "frames-per-second"_s);
     totalDecodeTime = gstStructureGet<double>(structure, "total-decode-time"_s);
@@ -450,54 +460,26 @@ static gboolean fillReportCallback(const GValue* value, Ref<ReportHolder>& repor
 }
 
 struct CallbackHolder {
-    RefPtr<GStreamerStatsCollector> collector;
-    GStreamerStatsCollector::CollectorCallback callback;
+    GStreamerStatsCollector::StatsCallback callback;
     GStreamerStatsCollector::PreprocessCallback preprocessCallback;
     GRefPtr<GstPad> pad;
 };
 
 WEBKIT_DEFINE_ASYNC_DATA_STRUCT(CallbackHolder)
 
-void GStreamerStatsCollector::getStats(CollectorCallback&& callback, const GRefPtr<GstPad>& pad, PreprocessCallback&& preprocessCallback)
+void GStreamerStatsCollector::gatherStats(StatsCallback&& callback, const GRefPtr<GstPad>& pad, PreprocessCallback&& preprocessCallback)
 {
-    static auto s_maximumReportAge = 300_ms;
-    static std::once_flag debugRegisteredFlag;
-    std::call_once(debugRegisteredFlag, [] {
-        GST_DEBUG_CATEGORY_INIT(webkit_webrtc_stats_debug, "webkitwebrtcstats", 0, "WebKit WebRTC Stats");
-        auto expirationTime = StringView::fromLatin1(std::getenv("WEBKIT_GST_WEBRTC_STATS_CACHE_EXPIRATION_TIME_MS"));
-        if (expirationTime.isEmpty())
-            return;
-
-        if (auto milliseconds = WTF::parseInteger<int>(expirationTime))
-            s_maximumReportAge = Seconds::fromMilliseconds(*milliseconds);
-    });
-
-    if (!m_webrtcBin) {
+    auto webrtcBin = m_webrtcBin.get();
+    if (!webrtcBin) {
         callback(nullptr);
         return;
     }
 
-    auto now = MonotonicTime::now();
-    if (!pad) {
-        if (m_cachedGlobalReport && (now - m_cachedGlobalReport->generationTime < s_maximumReportAge)) {
-            GST_TRACE_OBJECT(m_webrtcBin.get(), "Returning cached global stats report");
-            callback(m_cachedGlobalReport->report.get());
-            return;
-        }
-    } else if (auto report = m_cachedReportsPerPad.getOptional(pad)) {
-        if (now - report->generationTime < s_maximumReportAge) {
-            GST_TRACE_OBJECT(m_webrtcBin.get(), "Returning cached stats report for pad %" GST_PTR_FORMAT, pad.get());
-            callback(report->report.get());
-            return;
-        }
-    }
-
     auto* holder = createCallbackHolder();
-    holder->collector = this;
     holder->callback = WTF::move(callback);
     holder->preprocessCallback = WTF::move(preprocessCallback);
     holder->pad = pad;
-    g_signal_emit_by_name(m_webrtcBin.get(), "get-stats", pad.get(), gst_promise_new_with_change_func([](GstPromise* rawPromise, gpointer userData) mutable {
+    g_signal_emit_by_name(webrtcBin.get(), "get-stats", pad.get(), gst_promise_new_with_change_func([](GstPromise* rawPromise, gpointer userData) mutable {
         auto promise = adoptGRef(rawPromise);
         auto* holder = static_cast<CallbackHolder*>(userData);
         if (gst_promise_wait(promise.get()) != GST_PROMISE_RESULT_REPLIED) {
@@ -519,26 +501,66 @@ void GStreamerStatsCollector::getStats(CollectorCallback&& callback, const GRefP
             return;
         }
 
-        callOnMainThreadAndWait([holder, stats] mutable {
-            auto preprocessedStats = holder->preprocessCallback(holder->pad, stats);
-            if (!preprocessedStats)
-                return;
-            auto report = RTCStatsReport::create([stats = WTF::move(preprocessedStats)](auto& mapAdapter) mutable {
-                auto holder = adoptRef(*new ReportHolder(&mapAdapter));
-                gstStructureForeach(stats.get(), [&](auto, const auto value) -> bool {
-                    return fillReportCallback(value, holder);
-                });
-            });
-            CachedReport cachedReport;
-            cachedReport.generationTime = MonotonicTime::now();
-            cachedReport.report = report.ptr();
-            if (holder->pad)
-                holder->collector->m_cachedReportsPerPad.set(holder->pad, WTF::move(cachedReport));
-            else
-                holder->collector->m_cachedGlobalReport = WTF::move(cachedReport);
-            holder->callback(WTF::move(report));
+        callOnMainThreadAndWait([holder, stats] {
+            holder->callback(holder->preprocessCallback(holder->pad, stats));
         });
     }, holder, reinterpret_cast<GDestroyNotify>(destroyCallbackHolder)));
+}
+
+void GStreamerStatsCollector::getStats(CollectorCallback&& callback, const GRefPtr<GstPad>& pad, PreprocessCallback&& preprocessCallback)
+{
+    static auto s_maximumReportAge = 300_ms;
+    static std::once_flag onceFlag;
+    std::call_once(onceFlag, [] {
+        auto expirationTime = StringView::fromLatin1(std::getenv("WEBKIT_GST_WEBRTC_STATS_CACHE_EXPIRATION_TIME_MS"));
+        if (expirationTime.isEmpty())
+            return;
+
+        if (auto milliseconds = WTF::parseInteger<int>(expirationTime))
+            s_maximumReportAge = Seconds::fromMilliseconds(*milliseconds);
+    });
+
+    auto webrtcBin = m_webrtcBin.get();
+    if (!webrtcBin) {
+        callback(nullptr);
+        return;
+    }
+
+    auto now = MonotonicTime::now();
+    if (!pad) {
+        if (m_cachedGlobalReport && (now - m_cachedGlobalReport->generationTime < s_maximumReportAge)) {
+            GST_TRACE_OBJECT(webrtcBin.get(), "Returning cached global stats report");
+            callback(m_cachedGlobalReport->report.get());
+            return;
+        }
+    } else if (auto report = m_cachedReportsPerPad.getOptional(pad)) {
+        if (now - report->generationTime < s_maximumReportAge) {
+            GST_TRACE_OBJECT(webrtcBin.get(), "Returning cached stats report for pad %" GST_PTR_FORMAT, pad.get());
+            callback(report->report.get());
+            return;
+        }
+    }
+
+    gatherStats([this, pad = GRefPtr(pad), callback = WTF::move(callback)](auto&& stats) mutable {
+        if (!stats) {
+            callback(nullptr);
+            return;
+        }
+        auto report = RTCStatsReport::create([stats = WTF::move(stats)](auto& mapAdapter) mutable {
+            auto holder = adoptRef(*new ReportHolder(&mapAdapter));
+            gstStructureForeach(stats.get(), [&](auto, const auto value) -> bool {
+                return fillReportCallback(value, holder);
+            });
+        });
+        CachedReport cachedReport;
+        cachedReport.generationTime = MonotonicTime::now();
+        cachedReport.report = report.ptr();
+        if (pad)
+            m_cachedReportsPerPad.set(pad, WTF::move(cachedReport));
+        else
+            m_cachedGlobalReport = WTF::move(cachedReport);
+        callback(WTF::move(report));
+    }, pad, WTF::move(preprocessCallback));
 }
 
 void GStreamerStatsCollector::invalidateCache()
@@ -546,6 +568,37 @@ void GStreamerStatsCollector::invalidateCache()
     ASSERT(isMainThread());
     m_cachedGlobalReport = std::nullopt;
     m_cachedReportsPerPad.clear();
+}
+
+void GStreamerStatsCollector::gatherDecoderImplementationName(const GRefPtr<GstPad>& pad, PreprocessCallback&& preprocessCallback, Function<void(String&&)>&& callback)
+{
+    gatherStats([callback = WTF::move(callback)](auto&& stats) mutable {
+        if (!stats) {
+            callback({ });
+            return;
+        }
+        auto decoderImplementation = emptyString();
+        gstStructureForeach(stats.get(), [&](auto, const auto value) -> bool {
+            if (!GST_VALUE_HOLDS_STRUCTURE(value)) [[unlikely]]
+                return true;
+
+            const GstStructure* structure = gst_value_get_structure(value);
+            GstWebRTCStatsType statsType;
+            if (!gst_structure_get(structure, "type", GST_TYPE_WEBRTC_STATS_TYPE, &statsType, nullptr)) [[unlikely]]
+                return true;
+
+            if (statsType != GST_WEBRTC_STATS_INBOUND_RTP)
+                return true;
+
+            auto kind = gstStructureGetString(structure, "kind"_s);
+            if (kind != "video"_s)
+                return true;
+
+            decoderImplementation = gstStructureGetString(structure, "decoder-implementation"_s).span();
+            return false;
+        });
+        callback(WTF::move(decoderImplementation));
+    }, pad, WTF::move(preprocessCallback));
 }
 
 #undef GST_CAT_DEFAULT

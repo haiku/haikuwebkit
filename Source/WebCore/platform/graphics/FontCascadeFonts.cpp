@@ -371,7 +371,7 @@ GlyphData FontCascadeFonts::glyphDataForSystemFallback(char32_t character, const
 
     StringBuilder stringBuilder;
     stringBuilder.append(character);
-    auto systemFallbackFont = font->systemFallbackFontForCharacterCluster(stringBuilder, description, resolvedEmojiPolicy, m_isForPlatformFont ? IsForPlatformFont::Yes : IsForPlatformFont::No);
+    RefPtr systemFallbackFont = font->systemFallbackFontForCharacterCluster(stringBuilder, description, resolvedEmojiPolicy, m_isForPlatformFont ? IsForPlatformFont::Yes : IsForPlatformFont::No);
     if (!systemFallbackFont)
         return GlyphData();
 
@@ -394,7 +394,7 @@ GlyphData FontCascadeFonts::glyphDataForSystemFallback(char32_t character, const
 
     // Keep the system fallback fonts we use alive.
     if (fallbackGlyphData.isValid())
-        m_systemFallbackFontSet.add(WTF::move(systemFallbackFont));
+        m_systemFallbackFontSet.add(systemFallbackFont.releaseNonNull());
 
     return fallbackGlyphData;
 }

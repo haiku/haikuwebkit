@@ -49,7 +49,10 @@ static double networkLoadTimeToDOMHighResTimeStamp(MonotonicTime timeOrigin, Mon
     ASSERT(timeOrigin);
     if (timeStamp <= timeOrigin)
         return 0.0;
-    return Performance::reduceTimeResolution(timeStamp - timeOrigin).milliseconds();
+    auto result = Performance::reduceTimeResolution(timeStamp - timeOrigin);
+    if (!result)
+        result = Performance::timeResolution();
+    return result.milliseconds();
 }
 
 static double fetchStart(MonotonicTime timeOrigin, const ResourceTiming& resourceTiming)
@@ -337,6 +340,26 @@ uint64_t PerformanceResourceTiming::decodedBodySize() const
         return 0;
 
     return decodedBodySize;
+}
+
+double PerformanceResourceTiming::workerRouterEvaluationStart() const
+{
+    return networkLoadTimeToDOMHighResTimeStamp(m_timeOrigin, m_resourceTiming.networkLoadMetrics().workerRouterEvaluationStart);
+}
+
+double PerformanceResourceTiming::workerCacheLookupStart() const
+{
+    return networkLoadTimeToDOMHighResTimeStamp(m_timeOrigin, m_resourceTiming.networkLoadMetrics().workerCacheLookupStart);
+}
+
+const String& PerformanceResourceTiming::workerMatchedRouterSource() const
+{
+    return m_resourceTiming.networkLoadMetrics().workerMatchedRouterSource;
+}
+
+const String& PerformanceResourceTiming::workerFinalRouterSource() const
+{
+    return m_resourceTiming.networkLoadMetrics().workerFinalRouterSource;
 }
 
 } // namespace WebCore

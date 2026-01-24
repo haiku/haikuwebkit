@@ -44,8 +44,8 @@ static RetainPtr<CFStringRef> createKeyForPreferences(const String& key)
 static String loadSetting(const String& key)
 {
     auto value = adoptCF(CFPreferencesCopyAppValue(createKeyForPreferences(key).get(), kCFPreferencesCurrentApplication));
-    if (auto string = dynamic_cf_cast<CFStringRef>(value.get()))
-        return string;
+    if (RetainPtr string = dynamic_cf_cast<CFStringRef>(value.get()))
+        return string.get();
     if (value == kCFBooleanTrue)
         return "true"_s;
     if (value == kCFBooleanFalse)

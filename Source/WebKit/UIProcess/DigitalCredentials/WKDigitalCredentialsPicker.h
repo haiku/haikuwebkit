@@ -24,7 +24,7 @@
  */
 #pragma once
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 
 #import "WKIdentityDocumentPresentmentDelegate.h"
 
@@ -64,4 +64,4 @@ struct ExceptionData;
 - (void)dismissWithCompletionHandler:(CompletionHandler<void(bool)>&&)completionHandler;
 @end
 
-#endif // HAVE(DIGITAL_CREDENTIALS_UI)
+#endif // ENABLE(WEB_AUTHN)

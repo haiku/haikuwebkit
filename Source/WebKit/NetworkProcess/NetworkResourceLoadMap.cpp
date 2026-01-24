@@ -41,7 +41,7 @@ NetworkResourceLoadMap::~NetworkResourceLoadMap()
     clear();
 }
 
-NetworkResourceLoadMap::MapType::AddResult NetworkResourceLoadMap::add(WebCore::ResourceLoaderIdentifier identifier, Ref<NetworkResourceLoader>&& loader)
+NetworkResourceLoadMap::MapType::AddResult NetworkResourceLoadMap::add(WebCore::ResourceLoaderIdentifier identifier, Ref<NetworkResourceLoader>&& loader) LIFETIME_BOUND
 {
     ASSERT(!m_loaders.contains(identifier));
     bool hasUpload = loader->originalRequest().hasUpload();
@@ -74,7 +74,7 @@ RefPtr<NetworkResourceLoader> NetworkResourceLoadMap::take(WebCore::ResourceLoad
     return loader;
 }
 
-NetworkResourceLoader* NetworkResourceLoadMap::get(WebCore::ResourceLoaderIdentifier identifier) const
+NetworkResourceLoader* NetworkResourceLoadMap::get(WebCore::ResourceLoaderIdentifier identifier) const LIFETIME_BOUND
 {
     return m_loaders.get(identifier);
 }

@@ -136,9 +136,9 @@ public:
         return *this;
     }
 
-    WARN_UNUSED_RETURN inline constexpr RegisterSet buildAndValidate() const;
-    WARN_UNUSED_RETURN inline constexpr RegisterSet buildWithLowerBits() const;
-    WARN_UNUSED_RETURN inline constexpr ScalarRegisterSet buildScalarRegisterSet() const;
+    [[nodiscard]] inline constexpr RegisterSet buildAndValidate() const;
+    [[nodiscard]] inline constexpr RegisterSet buildWithLowerBits() const;
+    [[nodiscard]] inline constexpr ScalarRegisterSet buildScalarRegisterSet() const;
     inline constexpr size_t numberOfSetRegisters() const;
     inline size_t numberOfSetGPRs() const;
     inline size_t numberOfSetFPRs() const;
@@ -314,7 +314,7 @@ public:
         return *this;
     }
 
-    WARN_UNUSED_RETURN inline constexpr ScalarRegisterSet buildScalarRegisterSet() const;
+    [[nodiscard]] inline constexpr ScalarRegisterSet buildScalarRegisterSet() const;
 
     template<typename Func>
     inline constexpr void forEach(const Func& func) const
@@ -478,7 +478,7 @@ public:
     inline uint64_t bitsForDebugging() const { return m_bits.storage()[0]; }
     friend constexpr bool operator==(const ScalarRegisterSet&, const ScalarRegisterSet&) = default;
 
-    WARN_UNUSED_RETURN inline constexpr RegisterSet toRegisterSet() const
+    [[nodiscard]] inline constexpr RegisterSet toRegisterSet() const
     {
         RegisterSet result;
         m_bits.forEachSetBit(

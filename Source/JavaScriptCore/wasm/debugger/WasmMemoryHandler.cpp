@@ -131,7 +131,7 @@ bool MemoryHandler::readMemoryData(VirtualAddress address, size_t length, String
     }
 
     void* memoryBase = jsInstance->cachedMemory();
-    size_t size = jsInstance->memory()->memory().size();
+    size_t size = jsInstance->cachedMemorySize();
     if (!memoryBase || offset + length > size) {
         dataLogLnIf(Options::verboseWasmDebugger(), "[MemoryHandler] - memory access out of bounds. Instance ID: ", instanceId, " offset: ", offset, " size: ", length, " memory size: ", size);
         return false;
@@ -188,7 +188,7 @@ void MemoryHandler::handleWasmMemoryRegionInfo(VirtualAddress address, uint32_t 
 {
     JSWebAssemblyInstance* instance = m_debugServer.m_moduleManager->jsInstance(instanceId);
     if (instance) {
-        size_t memorySize = instance->memory()->memory().size();
+        size_t memorySize = instance->cachedMemorySize();
         if (offset < memorySize) {
             // Address is within WASM memory - return the memory region
             uint32_t moduleId = instance->moduleInformation().debugInfo->id;

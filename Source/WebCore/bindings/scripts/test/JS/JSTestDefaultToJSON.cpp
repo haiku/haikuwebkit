@@ -419,7 +419,7 @@ static inline bool setJSTestDefaultToJSON_thirdUnJSONableAttributeSetter(JSGloba
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setThirdUnJSONableAttribute(*nativeValueConversionResult.releaseReturnValue());
+        return impl.setThirdUnJSONableAttribute(nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -551,7 +551,7 @@ static inline bool setJSTestDefaultToJSON_seventhDirectlyToJSONableAttributeSett
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setSeventhDirectlyToJSONableAttribute(*nativeValueConversionResult.releaseReturnValue());
+        return impl.setSeventhDirectlyToJSONableAttribute(nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }
@@ -584,7 +584,7 @@ static inline bool setJSTestDefaultToJSON_eighthIndirectlyAttributeSetter(JSGlob
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setEighthIndirectlyAttribute(*nativeValueConversionResult.releaseReturnValue());
+        return impl.setEighthIndirectlyAttribute(nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }

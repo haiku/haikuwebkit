@@ -276,7 +276,7 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
 
 - (id)initWithAccessibilityObject:(AccessibilityObject&)axObject
 {
-    ASSERT(isMainThread());
+    AX_ASSERT(isMainThread());
 
     if (!(self = [super init]))
         return nil;
@@ -289,15 +289,15 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
     // Once a wrapper becomes associated with an object, it shouldn't ever be associated with any other one.
     // The only acceptable scenario is when a new instance of the "same" object (as determined by the objectID)
     // is created and attached to this wrapper, replacing it.
-    ASSERT(!m_axObject || m_axObject->objectID() == axObject.objectID());
+    AX_ASSERT(!m_axObject || m_axObject->objectID() == axObject.objectID());
     m_axObject = axObject;
 }
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 - (void)attachIsolatedObject:(AXIsolatedObject&)newObject
 {
-    ASSERT(!isMainThread());
-    ASSERT(!m_isolatedObject || m_isolatedObject->objectID() == newObject.objectID());
+    AX_ASSERT(!isMainThread());
+    AX_ASSERT(!m_isolatedObject || m_isolatedObject->objectID() == newObject.objectID());
 
     m_isolatedObject = newObject;
     m_isolatedObjectInitialized = true;
@@ -311,7 +311,7 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
 
 - (void)detach
 {
-    ASSERT(isMainThread());
+    AX_ASSERT(isMainThread());
     m_axObject = nullptr;
 }
 
@@ -395,10 +395,10 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
         return m_axObject.get();
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    AX_DEBUG_ASSERT(AXObjectCache::isIsolatedTreeEnabled());
+    AX_ASSERT(AXObjectCache::isIsolatedTreeEnabled());
     return m_isolatedObject.get();
 #else
-    ASSERT_NOT_REACHED();
+    AX_ASSERT_NOT_REACHED();
     return nullptr;
 #endif
 }
@@ -514,7 +514,7 @@ static void convertPathToScreenSpaceFunction(PathConversionInfo& conversion, con
 // advancing forward by line from top and backwards by line from the bottom, until we have a visible range.
 - (NSRange)accessibilityVisibleCharacterRange
 {
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     if (AXObjectCache::useAXThreadTextApis()) {
         RefPtr<AXCoreObject> backingObject = self.baseUpdateBackingStore;
         if (!backingObject)
@@ -522,7 +522,7 @@ static void convertPathToScreenSpaceFunction(PathConversionInfo& conversion, con
         std::optional range = backingObject->visibleCharacterRange();
         return range ? *range : NSMakeRange(NSNotFound, 0);
     }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif
 
     return Accessibility::retrieveValueFromMainThread<NSRange>([protectedSelf = retainPtr(self)] () -> NSRange {
         RefPtr<AXCoreObject> backingObject = protectedSelf.get().baseUpdateBackingStore;
@@ -543,7 +543,7 @@ static void convertPathToScreenSpaceFunction(PathConversionInfo& conversion, con
 
 - (id)_accessibilityWebDocumentView
 {
-    ASSERT_NOT_REACHED();
+    AX_ASSERT_NOT_REACHED();
     // Overridden by sub-classes
     return nil;
 }
@@ -568,7 +568,7 @@ NSRange makeNSRange(std::optional<SimpleRange> range)
         return NSMakeRange(NSNotFound, 0);
 
     RefPtr rootEditableElement = frame->selection().selection().rootEditableElement();
-    RefPtr scope = rootEditableElement ? rootEditableElement : document->documentElement();
+    RefPtr scope = rootEditableElement ? rootEditableElement : RefPtr { document->documentElement() };
     if (!scope)
         return NSMakeRange(NSNotFound, 0);
 
@@ -593,7 +593,7 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
     // to use the root editable element of the selection start as the positional base.
     // That fits with AppKit's idea of an input context.
     RefPtr selectionRoot = document->frame()->selection().selection().rootEditableElement();
-    RefPtr scope = selectionRoot ? selectionRoot : document->documentElement();
+    RefPtr scope = selectionRoot ? selectionRoot : RefPtr { document->documentElement() };
     if (!scope)
         return std::nullopt;
 
@@ -616,7 +616,7 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
 
 - (NSArray<NSDictionary *> *)lineRectsAndText
 {
-    ASSERT(isMainThread());
+    AX_ASSERT(isMainThread());
 
     RefPtr backingObject = dynamicDowncast<AccessibilityObject>(self.baseUpdateBackingStore);
     if (!backingObject)
@@ -713,13 +713,13 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
 
 - (NSString *)accessibilityPlatformMathSubscriptKey
 {
-    ASSERT_NOT_REACHED();
+    AX_ASSERT_NOT_REACHED();
     return nil;
 }
 
 - (NSString *)accessibilityPlatformMathSuperscriptKey
 {
-    ASSERT_NOT_REACHED();
+    AX_ASSERT_NOT_REACHED();
     return nil;
 }
 
@@ -749,7 +749,7 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
 {
     // We're only going to behave properly in this method if we're on the main-thread, since
     // that's the only time casting to AccessibilityObject is going to be successful.
-    ASSERT(isMainThread());
+    AX_ASSERT(isMainThread());
 
     RefPtr axObject = dynamicDowncast<AccessibilityObject>(self.axBackingObject);
     if (!axObject)
@@ -798,7 +798,7 @@ static bool isValueTypeSupported(id value)
 
 static NSArray *arrayRemovingNonSupportedTypes(NSArray *array)
 {
-    ASSERT([array isKindOfClass:[NSArray class]]);
+    AX_ASSERT([array isKindOfClass:[NSArray class]]);
     auto mutableArray = adoptNS([array mutableCopy]);
     for (NSUInteger i = 0; i < [mutableArray count];) {
         id value = [mutableArray objectAtIndex:i];
@@ -819,7 +819,7 @@ static NSDictionary *dictionaryRemovingNonSupportedTypes(NSDictionary *dictionar
 {
     if (!dictionary)
         return nil;
-    ASSERT([dictionary isKindOfClass:[NSDictionary class]]);
+    AX_ASSERT([dictionary isKindOfClass:[NSDictionary class]]);
     auto mutableDictionary = adoptNS([dictionary mutableCopy]);
     for (NSString *key in dictionary) {
         id value = [dictionary objectForKey:key];
@@ -836,7 +836,7 @@ static NSDictionary *dictionaryRemovingNonSupportedTypes(NSDictionary *dictionar
 - (void)accessibilityPostedNotification:(NSString *)notificationName userInfo:(NSDictionary *)userInfo
 {
     if (accessibilityShouldRepostNotifications) {
-        ASSERT(notificationName);
+        AX_ASSERT(notificationName);
         userInfo = dictionaryRemovingNonSupportedTypes(userInfo);
         NSDictionary *info = [NSDictionary dictionaryWithObjectsAndKeys:notificationName, @"notificationName", userInfo, @"userInfo", nil];
         [[NSNotificationCenter defaultCenter] postNotificationName:NSAccessibilityDRTNotificationNotification object:self userInfo:info];

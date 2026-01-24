@@ -78,7 +78,7 @@ private:
     AccessibilityObject* scrollBar(AccessibilityOrientation) final;
     void addChildren() final;
     void clearChildren() final;
-    AccessibilityObject* accessibilityHitTest(const IntPoint&) const final;
+    RefPtr<AXCoreObject> accessibilityHitTest(const IntPoint&) const final;
     void updateChildrenIfNecessary() final;
     void updateScrollbars();
     void setFocused(bool) final;
@@ -94,7 +94,7 @@ private:
     AccessibilityObject* parentObject() const final;
     RefPtr<AccessibilityObject> protectedHorizontalScrollbar() const { return m_horizontalScrollbar; }
     RefPtr<AccessibilityObject> protectedVerticalScrollbar() const { return m_verticalScrollbar; }
-    RefPtr<HTMLFrameOwnerElement> protectedFrameOwnerElement() const { return m_frameOwnerElement.get(); }
+    RefPtr<HTMLFrameOwnerElement> protectedFrameOwnerElement() const { return m_frameOwnerElement; }
 
     AccessibilityObject* firstChild() const final { return webAreaObject(); }
     AccessibilityScrollbar* addChildScrollbar(Scrollbar*);

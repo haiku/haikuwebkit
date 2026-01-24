@@ -81,7 +81,8 @@ JSWindowProxy& JSWindowProxy::create(VM& vm, DOMWindow& window, DOMWrapperWorld&
 
 void JSWindowProxy::destroy(JSCell* cell)
 {
-    static_cast<JSWindowProxy*>(cell)->JSWindowProxy::~JSWindowProxy();
+    // We cannot rely on jsCast() during JSObject destruction.
+    SUPPRESS_MEMORY_UNSAFE_CAST static_cast<JSWindowProxy*>(cell)->JSWindowProxy::~JSWindowProxy();
 }
 
 void JSWindowProxy::setWindow(VM& vm, JSDOMGlobalObject& window)

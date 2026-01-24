@@ -89,7 +89,7 @@ FrameLoader::SubframeLoader::SubframeLoader(LocalFrame& frame)
 
 Ref<LocalFrame> FrameLoader::SubframeLoader::protectedFrame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 void FrameLoader::SubframeLoader::clear()
@@ -99,7 +99,7 @@ void FrameLoader::SubframeLoader::clear()
 
 bool FrameLoader::SubframeLoader::canCreateSubFrame() const
 {
-    Ref frame = m_frame.get();
+    Ref frame = m_frame;
     if (!frame->page() || frame->protectedPage()->subframeCount() >= Page::maxNumberOfFrames)
         return false;
 
@@ -302,7 +302,7 @@ LocalFrame* FrameLoader::SubframeLoader::loadOrRedirectSubframe(HTMLFrameOwnerEl
 
 RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerElement& ownerElement, const URL& url, const AtomString& name, const URL& referrer)
 {
-    Ref frame = m_frame.get();
+    Ref frame = m_frame;
     Ref document = ownerElement.document();
 
     if (!document->protectedSecurityOrigin()->canDisplay(url, OriginAccessPatternsForWebProcess::singleton())) {
@@ -407,7 +407,7 @@ RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerEleme
 
 bool FrameLoader::SubframeLoader::shouldUsePlugin(const URL& url, const String& mimeType, bool hasFallback, bool& useFallback)
 {
-    Ref frame = m_frame.get();
+    Ref frame = m_frame;
 
     ObjectContentType objectType = frame->loader().client().objectContentType(url, mimeType);
     // If an object's content can't be handled and it has no fallback, let

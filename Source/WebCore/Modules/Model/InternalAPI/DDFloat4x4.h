@@ -77,6 +77,14 @@ struct DDFloat4x4 {
     DDFloat4x4()
     {
     }
+
+    bool operator==(const DDFloat4x4& a) const
+    {
+        return m00 == a.m00 && m01 == a.m01 && m02 == a.m02 && m03 == a.m03
+            && m10 == a.m10 && m11 == a.m11 && m12 == a.m12 && m13 == a.m13
+            && m20 == a.m20 && m21 == a.m21 && m22 == a.m22 && m23 == a.m23
+            && m30 == a.m30 && m31 == a.m31 && m32 == a.m32 && m33 == a.m33;
+    }
 };
 
 #if PLATFORM(COCOA)

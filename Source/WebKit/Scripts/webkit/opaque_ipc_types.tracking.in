@@ -373,6 +373,8 @@
 
 [UnsafeWrapper] RetainPtr<NSData> {
     [Legacy] StructureParam WebCore::TextRecognitionResult.imageAnalysisData
+    [NeedsReview] StructureParam WebKit::CoreIPCPKPaymentMerchantSessionData.signature
+    [NeedsReview] StructureParam WebKit::CoreIPCPKPaymentMerchantSessionData.ampEnrollmentPinning
 }
 
 [UnsafeWrapper] std::span<const char> {

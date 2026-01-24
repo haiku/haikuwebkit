@@ -32,6 +32,7 @@
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 #include "ExecutionHandlerTest.h"
+#include "GDBPacketParserTest.h"
 #include "InitializeThreading.h"
 #include "Options.h"
 #include "TestUtilities.h"
@@ -290,6 +291,9 @@ static int runAllTests()
 {
     dataLogLn("Starting WASM Debugger Test Suite");
     dataLogLn("===============================================");
+
+    dataLogLn("\n--- GDB Packet Parser Tests ---");
+    testGDBPacketParser();
 
     dataLogLn("\n--- VirtualAddress Infrastructure Tests ---");
     testWASMVirtualAddressConstants();

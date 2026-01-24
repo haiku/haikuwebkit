@@ -1044,9 +1044,21 @@
       "emails" : [
          "a_panta@apple.com"
       ],
-      "expertise" : "Web Inspector",
+      "expertise" : "Web Inspector, WebDriver, Developer Tools",
       "github" : "anujpanta1",
-      "name" : "Anuj Panta"
+      "name" : "Anuj Panta",
+      "nicks" : [
+         "anuj"
+      ],
+      "status" : "committer"
+   },
+   {
+      "emails" : [
+         "sear-browser-bot@apple.com"
+      ],
+      "github" : "apple-security-bot",
+      "name" : "Apple (SEAR) Security Bot",
+      "status" : "bot"
    },
    {
       "emails" : [
@@ -4558,7 +4570,8 @@
          "jonbutler@apple.com"
       ],
       "github" : "jon-b-apple",
-      "name" : "Jon Butler"
+      "name" : "Jon Butler",
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -6005,8 +6018,8 @@
    },
    {
       "emails" : [
-         "mcatanzaro@redhat.com",
          "mcatanzaro@gnome.org",
+         "mcatanzaro@redhat.com",
          "mcatanzaro@igalia.com"
       ],
       "expertise" : "WebKitGTK, Epiphany",

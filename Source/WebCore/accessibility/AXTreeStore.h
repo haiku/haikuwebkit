@@ -25,6 +25,7 @@
 #pragma once
 
 #include <WebCore/AXCoreObject.h>
+#include <WebCore/AXLoggerBase.h>
 #include <WebCore/ActivityState.h>
 #include <wtf/HashMap.h>
 #include <wtf/Lock.h>
@@ -93,7 +94,7 @@ private:
 template<typename T>
 inline AXID AXTreeStore<T>::generateNewID()
 {
-    ASSERT(isMainThread());
+    AX_ASSERT(isMainThread());
 
     std::optional<AXID> axID;
     do {

@@ -226,7 +226,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'trigger-crash-log-submission',
             'set-build-summary'
         ],
-        'macOS-Sonoma-Release-Build-EWS': [
+        'macOS-Sequoia-Release-Build-EWS': [
             'configure-build',
             'validate-change',
             'configuration',
@@ -243,7 +243,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'validate-change',
             'compile-webkit'
         ],
-        'macOS-Sonoma-Release-WK1-Tests-EWS': [
+        'macOS-Sequoia-Release-WK1-Tests-EWS': [
             'configure-build',
             'check-change-relevance',
             'validate-change',
@@ -269,7 +269,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'trigger-crash-log-submission',
             'set-build-summary'
         ],
-        'macOS-Sonoma-Release-WK2-Tests-EWS': [
+        'macOS-Sequoia-Release-WK2-Tests-EWS': [
             'configure-build',
             'validate-change',
             'configuration',
@@ -294,7 +294,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'trigger-crash-log-submission',
             'set-build-summary'
         ],
-        'macOS-Sonoma-Release-WK2-Intel-Tests-EWS': [
+        'macOS-Sequoia-Release-WK2-Intel-Tests-EWS': [
             'configure-build',
             'validate-change',
             'configuration',
@@ -596,7 +596,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'layout-tests',
             'set-build-summary'
         ],
-        'JSC-Tests-arm64-EWS': [
+        'JSC-Tests-O3-Debug-arm64-EWS': [
             'configure-build',
             'check-change-relevance',
             'validate-change',
@@ -612,6 +612,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'checkout-pull-request',
             'kill-old-processes',
             'validate-change',
+            'set-o3-optimization-level',
             'compile-jsc',
             'jscore-test'
         ],

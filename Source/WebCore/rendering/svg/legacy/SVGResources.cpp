@@ -27,7 +27,6 @@
 #include "LegacyRenderSVGResourceMaskerInlines.h"
 #include "LegacyRenderSVGRoot.h"
 #include "PathOperation.h"
-#include "ReferenceFilterOperation.h"
 #include "RenderElementInlines.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGFilterElement.h"
@@ -240,17 +239,17 @@ std::unique_ptr<SVGResources> SVGResources::buildCachedResources(const RenderEle
             [&](const auto&) { }
         );
 
-        if (style.hasFilter()) {
-            const auto& filterOperations = style.filter();
-            if (filterOperations.size() == 1) {
-                if (RefPtr referenceFilterOperation = dynamicDowncast<Style::ReferenceFilterOperation>(filterOperations[0].platform())) {
-                    auto id = referenceFilterOperation->fragment();
+        if (style.filter().size() == 1) {
+            WTF::switchOn(style.filter().first(),
+                [&](const Style::FilterReference& filterReference) {
+                    auto& id = filterReference.cachedFragment;
                     if (auto* filter = getRenderSVGResourceById<LegacyRenderSVGResourceFilter>(treeScope, id))
                         ensureResources(foundResources).setFilter(filter);
                     else
                         treeScope->addPendingSVGResource(id, element);
-                }
-            }
+                },
+                []<CSSValueID C, typename T>(const FunctionNotation<C, T>&) { }
+            );
         }
 
         if (style.hasPositionedMask()) {

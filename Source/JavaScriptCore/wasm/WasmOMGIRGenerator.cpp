@@ -50,6 +50,10 @@
 #include "B3VariableValue.h"
 #include "B3WasmAddressValue.h"
 #include "B3WasmBoundsCheckValue.h"
+#include "B3WasmRefTypeCheckValue.h"
+#include "B3WasmStructGetValue.h"
+#include "B3WasmStructNewValue.h"
+#include "B3WasmStructSetValue.h"
 #include "CompilerTimingScope.h"
 #include "FunctionAllowlist.h"
 #include "JSCJSValueInlines.h"
@@ -200,34 +204,34 @@ public:
     static constexpr bool validateFunctionBodySize = true;
 
     struct ControlData {
-        ControlData(Procedure& proc, Origin origin, BlockSignature signature, BlockType type, BasicBlock* continuation, BasicBlock* special = nullptr)
+        ControlData(Procedure& proc, Origin origin, BlockSignature&& signature, BlockType type, BasicBlock* continuation, BasicBlock* special = nullptr)
             : controlBlockType(type)
-            , m_signature(signature)
+            , m_signature(WTF::move(signature))
             , continuation(continuation)
             , special(special)
         {
             ASSERT(type != BlockType::Try && type != BlockType::Catch);
 
             if (type == BlockType::Loop) {
-                for (unsigned i = 0; i < signature.m_signature->argumentCount(); ++i)
-                    phis.append(proc.add<Value>(Phi, toB3Type(signature.m_signature->argumentType(i)), origin));
+                for (unsigned i = 0; i < m_signature.argumentCount(); ++i)
+                    phis.append(proc.add<Value>(Phi, toB3Type(m_signature.argumentType(i)), origin));
             } else {
-                for (unsigned i = 0; i < signature.m_signature->returnCount(); ++i)
-                    phis.append(proc.add<Value>(Phi, toB3Type(signature.m_signature->returnType(i)), origin));
+                for (unsigned i = 0; i < m_signature.returnCount(); ++i)
+                    phis.append(proc.add<Value>(Phi, toB3Type(m_signature.returnType(i)), origin));
             }
         }
 
-        ControlData(Procedure& proc, Origin origin, BlockSignature signature, BlockType type, BasicBlock* continuation, unsigned tryStart, unsigned tryDepth)
+        ControlData(Procedure& proc, Origin origin, BlockSignature&& signature, BlockType type, BasicBlock* continuation, unsigned tryStart, unsigned tryDepth)
             : controlBlockType(type)
-            , m_signature(signature)
+            , m_signature(WTF::move(signature))
             , continuation(continuation)
             , special(nullptr)
             , m_tryStart(tryStart)
             , m_tryCatchDepth(tryDepth)
         {
             ASSERT(type == BlockType::Try || type == BlockType::TryTable);
-            for (unsigned i = 0; i < signature.m_signature->returnCount(); ++i)
-                phis.append(proc.add<Value>(Phi, toB3Type(signature.m_signature->returnType(i)), origin));
+            for (unsigned i = 0; i < m_signature.returnCount(); ++i)
+                phis.append(proc.add<Value>(Phi, toB3Type(m_signature.returnType(i)), origin));
         }
 
         ControlData()
@@ -286,9 +290,9 @@ public:
 
         BlockType blockType() const { return controlBlockType; }
 
-        BlockSignature signature() const { return m_signature; }
+        const BlockSignature& signature() const { return m_signature; }
 
-        bool hasNonVoidresult() const { return m_signature.m_signature->returnsVoid(); }
+        bool hasNonVoidresult() const { return m_signature.returnCount() > 0; }
 
         BasicBlock* targetBlockForBranch()
         {
@@ -344,16 +348,16 @@ public:
         FunctionArgCount branchTargetArity() const
         {
             if (blockType() == BlockType::Loop)
-                return m_signature.m_signature->argumentCount();
-            return m_signature.m_signature->returnCount();
+                return m_signature.argumentCount();
+            return m_signature.returnCount();
         }
 
         Type branchTargetType(unsigned i) const
         {
             ASSERT(i < branchTargetArity());
             if (blockType() == BlockType::Loop)
-                return m_signature.m_signature->argumentType(i);
-            return m_signature.m_signature->returnType(i);
+                return m_signature.argumentType(i);
+            return m_signature.returnType(i);
         }
 
         unsigned tryStart() const
@@ -425,7 +429,7 @@ public:
     enum class CastKind { Cast, Test };
 
     template <typename ...Args>
-    WARN_UNUSED_RETURN NEVER_INLINE UnexpectedResult fail(Args... args) const
+    [[nodiscard]] NEVER_INLINE UnexpectedResult fail(Args... args) const
     {
         using namespace FailureHelper; // See ADL comment in WasmParser.h.
         return UnexpectedResult(makeString("WebAssembly.Module failed compiling: "_s, makeString(args)...));
@@ -477,19 +481,19 @@ public:
     // SIMD
     bool usesSIMD() { return m_info.usesSIMD(m_functionIndex); }
     void notifyFunctionUsesSIMD() { ASSERT(m_info.usesSIMD(m_functionIndex)); }
-    WARN_UNUSED_RETURN PartialResult addSIMDLoad(ExpressionType pointer, uint32_t offset, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addSIMDStore(ExpressionType value, ExpressionType pointer, uint32_t offset);
-    WARN_UNUSED_RETURN PartialResult addSIMDSplat(SIMDLane, ExpressionType scalar, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addSIMDShuffle(v128_t imm, ExpressionType a, ExpressionType b, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addSIMDShift(SIMDLaneOperation, SIMDInfo, ExpressionType v, ExpressionType shift, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addSIMDExtmul(SIMDLaneOperation, SIMDInfo, ExpressionType lhs, ExpressionType rhs, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addSIMDLoadSplat(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addSIMDLoadLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addSIMDStoreLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex);
-    WARN_UNUSED_RETURN PartialResult addSIMDLoadExtend(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addSIMDLoadPad(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDLoad(ExpressionType pointer, uint32_t offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDStore(ExpressionType value, ExpressionType pointer, uint32_t offset);
+    [[nodiscard]] PartialResult addSIMDSplat(SIMDLane, ExpressionType scalar, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDShuffle(v128_t imm, ExpressionType a, ExpressionType b, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDShift(SIMDLaneOperation, SIMDInfo, ExpressionType v, ExpressionType shift, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDExtmul(SIMDLaneOperation, SIMDInfo, ExpressionType lhs, ExpressionType rhs, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDLoadSplat(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDLoadLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDStoreLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex);
+    [[nodiscard]] PartialResult addSIMDLoadExtend(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDLoadPad(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
 
-    WARN_UNUSED_RETURN ExpressionType addConstant(v128_t value)
+    [[nodiscard]] ExpressionType addConstant(v128_t value)
     {
         return push(constant(B3::V128, value));
     }
@@ -695,153 +699,153 @@ public:
         return { };
     }
 
-    WARN_UNUSED_RETURN PartialResult addDrop(ExpressionType);
-    WARN_UNUSED_RETURN PartialResult addInlinedArguments(const TypeDefinition&);
-    WARN_UNUSED_RETURN PartialResult addArguments(const TypeDefinition&);
-    WARN_UNUSED_RETURN PartialResult addLocal(Type, uint32_t);
+    [[nodiscard]] PartialResult addDrop(ExpressionType);
+    [[nodiscard]] PartialResult addInlinedArguments(const TypeDefinition&);
+    [[nodiscard]] PartialResult addArguments(const TypeDefinition&);
+    [[nodiscard]] PartialResult addLocal(Type, uint32_t);
     ExpressionType addConstant(Type, uint64_t);
 
     // References
-    WARN_UNUSED_RETURN PartialResult addRefIsNull(ExpressionType value, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addRefFunc(FunctionSpaceIndex index, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addRefAsNonNull(TypedExpression, ExpressionType&);
-    WARN_UNUSED_RETURN PartialResult addRefEq(ExpressionType, ExpressionType, ExpressionType&);
+    [[nodiscard]] PartialResult addRefIsNull(ExpressionType value, ExpressionType& result);
+    [[nodiscard]] PartialResult addRefFunc(FunctionSpaceIndex index, ExpressionType& result);
+    [[nodiscard]] PartialResult addRefAsNonNull(TypedExpression, ExpressionType&);
+    [[nodiscard]] PartialResult addRefEq(ExpressionType, ExpressionType, ExpressionType&);
 
     // Tables
-    WARN_UNUSED_RETURN PartialResult addTableGet(unsigned, ExpressionType index, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addTableSet(unsigned, ExpressionType index, ExpressionType value);
-    WARN_UNUSED_RETURN PartialResult addTableInit(unsigned, unsigned, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
-    WARN_UNUSED_RETURN PartialResult addElemDrop(unsigned);
-    WARN_UNUSED_RETURN PartialResult addTableSize(unsigned, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addTableGrow(unsigned, ExpressionType fill, ExpressionType delta, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addTableFill(unsigned, ExpressionType offset, ExpressionType fill, ExpressionType count);
-    WARN_UNUSED_RETURN PartialResult addTableCopy(unsigned, unsigned, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
+    [[nodiscard]] PartialResult addTableGet(unsigned, ExpressionType index, ExpressionType& result);
+    [[nodiscard]] PartialResult addTableSet(unsigned, ExpressionType index, ExpressionType value);
+    [[nodiscard]] PartialResult addTableInit(unsigned, unsigned, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
+    [[nodiscard]] PartialResult addElemDrop(unsigned);
+    [[nodiscard]] PartialResult addTableSize(unsigned, ExpressionType& result);
+    [[nodiscard]] PartialResult addTableGrow(unsigned, ExpressionType fill, ExpressionType delta, ExpressionType& result);
+    [[nodiscard]] PartialResult addTableFill(unsigned, ExpressionType offset, ExpressionType fill, ExpressionType count);
+    [[nodiscard]] PartialResult addTableCopy(unsigned, unsigned, ExpressionType dstOffset, ExpressionType srcOffset, ExpressionType length);
 
     // Locals
-    WARN_UNUSED_RETURN PartialResult getLocal(uint32_t index, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult setLocal(uint32_t index, ExpressionType value);
-    WARN_UNUSED_RETURN PartialResult teeLocal(uint32_t, ExpressionType, ExpressionType& result);
+    [[nodiscard]] PartialResult getLocal(uint32_t index, ExpressionType& result);
+    [[nodiscard]] PartialResult setLocal(uint32_t index, ExpressionType value);
+    [[nodiscard]] PartialResult teeLocal(uint32_t, ExpressionType, ExpressionType& result);
 
     // Globals
-    WARN_UNUSED_RETURN PartialResult getGlobal(uint32_t index, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult setGlobal(uint32_t index, ExpressionType value);
+    [[nodiscard]] PartialResult getGlobal(uint32_t index, ExpressionType& result);
+    [[nodiscard]] PartialResult setGlobal(uint32_t index, ExpressionType value);
 
     // Memory
-    WARN_UNUSED_RETURN PartialResult load(LoadOpType, ExpressionType pointer, ExpressionType& result, uint32_t offset);
-    WARN_UNUSED_RETURN PartialResult store(StoreOpType, ExpressionType pointer, ExpressionType value, uint32_t offset);
-    WARN_UNUSED_RETURN PartialResult addGrowMemory(ExpressionType delta, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addCurrentMemory(ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addMemoryFill(ExpressionType dstAddress, ExpressionType targetValue, ExpressionType count);
-    WARN_UNUSED_RETURN PartialResult addMemoryCopy(ExpressionType dstAddress, ExpressionType srcAddress, ExpressionType count);
-    WARN_UNUSED_RETURN PartialResult addMemoryInit(unsigned, ExpressionType dstAddress, ExpressionType srcAddress, ExpressionType length);
-    WARN_UNUSED_RETURN PartialResult addDataDrop(unsigned);
+    [[nodiscard]] PartialResult load(LoadOpType, ExpressionType pointer, ExpressionType& result, uint32_t offset);
+    [[nodiscard]] PartialResult store(StoreOpType, ExpressionType pointer, ExpressionType value, uint32_t offset);
+    [[nodiscard]] PartialResult addGrowMemory(ExpressionType delta, ExpressionType& result);
+    [[nodiscard]] PartialResult addCurrentMemory(ExpressionType& result);
+    [[nodiscard]] PartialResult addMemoryFill(ExpressionType dstAddress, ExpressionType targetValue, ExpressionType count);
+    [[nodiscard]] PartialResult addMemoryCopy(ExpressionType dstAddress, ExpressionType srcAddress, ExpressionType count);
+    [[nodiscard]] PartialResult addMemoryInit(unsigned, ExpressionType dstAddress, ExpressionType srcAddress, ExpressionType length);
+    [[nodiscard]] PartialResult addDataDrop(unsigned);
 
     // Atomics
-    WARN_UNUSED_RETURN PartialResult atomicLoad(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType& result, uint32_t offset);
-    WARN_UNUSED_RETURN PartialResult atomicStore(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, uint32_t offset);
-    WARN_UNUSED_RETURN PartialResult atomicBinaryRMW(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
-    WARN_UNUSED_RETURN PartialResult atomicCompareExchange(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset);
+    [[nodiscard]] PartialResult atomicLoad(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType& result, uint32_t offset);
+    [[nodiscard]] PartialResult atomicStore(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, uint32_t offset);
+    [[nodiscard]] PartialResult atomicBinaryRMW(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
+    [[nodiscard]] PartialResult atomicCompareExchange(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset);
 
-    WARN_UNUSED_RETURN PartialResult atomicWait(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType timeout, ExpressionType& result, uint32_t offset);
-    WARN_UNUSED_RETURN PartialResult atomicNotify(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
-    WARN_UNUSED_RETURN PartialResult atomicFence(ExtAtomicOpType, uint8_t flags);
+    [[nodiscard]] PartialResult atomicWait(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType timeout, ExpressionType& result, uint32_t offset);
+    [[nodiscard]] PartialResult atomicNotify(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
+    [[nodiscard]] PartialResult atomicFence(ExtAtomicOpType, uint8_t flags);
 
     // Saturated truncation.
-    WARN_UNUSED_RETURN PartialResult truncSaturated(Ext1OpType, ExpressionType operand, ExpressionType& result, Type returnType, Type operandType);
+    [[nodiscard]] PartialResult truncSaturated(Ext1OpType, ExpressionType operand, ExpressionType& result, Type returnType, Type operandType);
 
     // GC
-    WARN_UNUSED_RETURN PartialResult addRefI31(ExpressionType value, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addI31GetS(TypedExpression ref, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addI31GetU(TypedExpression ref, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addArrayNew(uint32_t index, ExpressionType size, ExpressionType value, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addArrayNewDefault(uint32_t index, ExpressionType size, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addArrayNewFixed(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addArrayGet(ExtGCOpType arrayGetKind, uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addArraySet(uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
-    WARN_UNUSED_RETURN PartialResult addArrayLen(TypedExpression arrayref, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addArrayFill(uint32_t, TypedExpression, ExpressionType, ExpressionType, ExpressionType);
-    WARN_UNUSED_RETURN PartialResult addArrayCopy(uint32_t, TypedExpression, ExpressionType, uint32_t, TypedExpression, ExpressionType, ExpressionType);
-    WARN_UNUSED_RETURN PartialResult addArrayInitElem(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
-    WARN_UNUSED_RETURN PartialResult addArrayInitData(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
-    WARN_UNUSED_RETURN PartialResult addStructNew(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addStructNewDefault(uint32_t index, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addStructGet(ExtGCOpType structGetKind, TypedExpression structReference, const StructType&, uint32_t fieldIndex, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addStructSet(TypedExpression structReference, const StructType&, uint32_t fieldIndex, ExpressionType value);
-    WARN_UNUSED_RETURN PartialResult addRefTest(TypedExpression reference, bool allowNull, int32_t heapType, bool shouldNegate, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addRefCast(TypedExpression reference, bool allowNull, int32_t heapType, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addAnyConvertExtern(ExpressionType reference, ExpressionType& result);
-    WARN_UNUSED_RETURN PartialResult addExternConvertAny(ExpressionType reference, ExpressionType& result);
+    [[nodiscard]] PartialResult addRefI31(ExpressionType value, ExpressionType& result);
+    [[nodiscard]] PartialResult addI31GetS(TypedExpression ref, ExpressionType& result);
+    [[nodiscard]] PartialResult addI31GetU(TypedExpression ref, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNew(uint32_t index, ExpressionType size, ExpressionType value, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewDefault(uint32_t index, ExpressionType size, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewFixed(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayGet(ExtGCOpType arrayGetKind, uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addArraySet(uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
+    [[nodiscard]] PartialResult addArrayLen(TypedExpression arrayref, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayFill(uint32_t, TypedExpression, ExpressionType, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayCopy(uint32_t, TypedExpression, ExpressionType, uint32_t, TypedExpression, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayInitElem(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayInitData(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addStructNew(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
+    [[nodiscard]] PartialResult addStructNewDefault(uint32_t index, ExpressionType& result);
+    [[nodiscard]] PartialResult addStructGet(ExtGCOpType structGetKind, TypedExpression structReference, const StructType&, const RTT&, uint32_t fieldIndex, ExpressionType& result);
+    [[nodiscard]] PartialResult addStructSet(TypedExpression structReference, const StructType&, const RTT&, uint32_t fieldIndex, ExpressionType value);
+    [[nodiscard]] PartialResult addRefTest(TypedExpression reference, bool allowNull, int32_t heapType, bool shouldNegate, ExpressionType& result);
+    [[nodiscard]] PartialResult addRefCast(TypedExpression reference, bool allowNull, int32_t heapType, ExpressionType& result);
+    [[nodiscard]] PartialResult addAnyConvertExtern(ExpressionType reference, ExpressionType& result);
+    [[nodiscard]] PartialResult addExternConvertAny(ExpressionType reference, ExpressionType& result);
 
     // Basic operators
 #define X(name, opcode, short, idx, ...) \
-    WARN_UNUSED_RETURN PartialResult add##name(ExpressionType arg, ExpressionType& result);
+    [[nodiscard]] PartialResult add##name(ExpressionType arg, ExpressionType& result);
     FOR_EACH_WASM_UNARY_OP(X)
 #undef X
 #define X(name, opcode, short, idx, ...) \
-    WARN_UNUSED_RETURN PartialResult add##name(ExpressionType left, ExpressionType right, ExpressionType& result);
+    [[nodiscard]] PartialResult add##name(ExpressionType left, ExpressionType right, ExpressionType& result);
     FOR_EACH_WASM_BINARY_OP(X)
 #undef X
 
-    WARN_UNUSED_RETURN PartialResult addSelect(ExpressionType condition, ExpressionType nonZero, ExpressionType zero, ExpressionType& result);
+    [[nodiscard]] PartialResult addSelect(ExpressionType condition, ExpressionType nonZero, ExpressionType zero, ExpressionType& result);
 
     // Control flow
-    WARN_UNUSED_RETURN ControlData addTopLevel(BlockSignature);
-    WARN_UNUSED_RETURN PartialResult addBlock(BlockSignature, Stack& enclosingStack, ControlType& newBlock, Stack& newStack);
-    WARN_UNUSED_RETURN PartialResult addLoop(BlockSignature, Stack& enclosingStack, ControlType& block, Stack& newStack, uint32_t loopIndex);
-    WARN_UNUSED_RETURN PartialResult addIf(ExpressionType condition, BlockSignature, Stack& enclosingStack, ControlType& result, Stack& newStack);
-    WARN_UNUSED_RETURN PartialResult addElse(ControlData&, const Stack&);
-    WARN_UNUSED_RETURN PartialResult addElseToUnreachable(ControlData&);
+    [[nodiscard]] ControlData addTopLevel(BlockSignature&&);
+    [[nodiscard]] PartialResult addBlock(BlockSignature&&, Stack& enclosingStack, ControlType& newBlock, Stack& newStack);
+    [[nodiscard]] PartialResult addLoop(BlockSignature&&, Stack& enclosingStack, ControlType& block, Stack& newStack, uint32_t loopIndex);
+    [[nodiscard]] PartialResult addIf(ExpressionType condition, BlockSignature&&, Stack& enclosingStack, ControlType& result, Stack& newStack);
+    [[nodiscard]] PartialResult addElse(ControlData&, const Stack&);
+    [[nodiscard]] PartialResult addElseToUnreachable(ControlData&);
 
-    WARN_UNUSED_RETURN PartialResult addTry(BlockSignature, Stack& enclosingStack, ControlType& result, Stack& newStack);
-    WARN_UNUSED_RETURN PartialResult addTryTable(BlockSignature, Stack& enclosingStack, const Vector<CatchHandler>& targets, ControlType& result, Stack& newStack);
-    WARN_UNUSED_RETURN PartialResult addCatch(unsigned exceptionIndex, const TypeDefinition&, Stack&, ControlType&, ResultList&);
-    WARN_UNUSED_RETURN PartialResult addCatchToUnreachable(unsigned exceptionIndex, const TypeDefinition&, ControlType&, ResultList&);
-    WARN_UNUSED_RETURN PartialResult addCatchAll(Stack&, ControlType&);
-    WARN_UNUSED_RETURN PartialResult addCatchAllToUnreachable(ControlType&);
-    WARN_UNUSED_RETURN PartialResult addDelegate(ControlType&, ControlType&);
-    WARN_UNUSED_RETURN PartialResult addDelegateToUnreachable(ControlType&, ControlType&);
-    WARN_UNUSED_RETURN PartialResult addThrow(unsigned exceptionIndex, ArgumentList& args, Stack&);
-    WARN_UNUSED_RETURN PartialResult addRethrow(unsigned, ControlType&);
-    WARN_UNUSED_RETURN PartialResult addThrowRef(TypedExpression exception, Stack&);
+    [[nodiscard]] PartialResult addTry(BlockSignature&&, Stack& enclosingStack, ControlType& result, Stack& newStack);
+    [[nodiscard]] PartialResult addTryTable(BlockSignature&&, Stack& enclosingStack, const Vector<CatchHandler>& targets, ControlType& result, Stack& newStack);
+    [[nodiscard]] PartialResult addCatch(unsigned exceptionIndex, const TypeDefinition&, Stack&, ControlType&, ResultList&);
+    [[nodiscard]] PartialResult addCatchToUnreachable(unsigned exceptionIndex, const TypeDefinition&, ControlType&, ResultList&);
+    [[nodiscard]] PartialResult addCatchAll(Stack&, ControlType&);
+    [[nodiscard]] PartialResult addCatchAllToUnreachable(ControlType&);
+    [[nodiscard]] PartialResult addDelegate(ControlType&, ControlType&);
+    [[nodiscard]] PartialResult addDelegateToUnreachable(ControlType&, ControlType&);
+    [[nodiscard]] PartialResult addThrow(unsigned exceptionIndex, ArgumentList& args, Stack&);
+    [[nodiscard]] PartialResult addRethrow(unsigned, ControlType&);
+    [[nodiscard]] PartialResult addThrowRef(TypedExpression exception, Stack&);
 
-    WARN_UNUSED_RETURN PartialResult addInlinedReturn(const auto& returnValues);
+    [[nodiscard]] PartialResult addInlinedReturn(const auto& returnValues);
 
-    WARN_UNUSED_RETURN PartialResult addReturn(const ControlData&, const Stack& returnValues);
-    WARN_UNUSED_RETURN PartialResult addBranch(ControlData&, ExpressionType condition, const Stack& returnValues);
-    WARN_UNUSED_RETURN PartialResult addBranchNull(ControlType&, ExpressionType, const Stack&, bool, ExpressionType&);
-    WARN_UNUSED_RETURN PartialResult addBranchCast(ControlType&, TypedExpression, const Stack&, bool, int32_t, bool);
-    WARN_UNUSED_RETURN PartialResult addSwitch(ExpressionType condition, const Vector<ControlData*>& targets, ControlData& defaultTargets, const Stack& expressionStack);
-    WARN_UNUSED_RETURN PartialResult endBlock(ControlEntry&, Stack& expressionStack);
-    WARN_UNUSED_RETURN PartialResult addEndToUnreachable(ControlEntry&, const Stack& = { });
+    [[nodiscard]] PartialResult addReturn(const ControlData&, const Stack& returnValues);
+    [[nodiscard]] PartialResult addBranch(ControlData&, ExpressionType condition, const Stack& returnValues);
+    [[nodiscard]] PartialResult addBranchNull(ControlType&, ExpressionType, const Stack&, bool, ExpressionType&);
+    [[nodiscard]] PartialResult addBranchCast(ControlType&, TypedExpression, const Stack&, bool, int32_t, bool);
+    [[nodiscard]] PartialResult addSwitch(ExpressionType condition, const Vector<ControlData*>& targets, ControlData& defaultTargets, const Stack& expressionStack);
+    [[nodiscard]] PartialResult endBlock(ControlEntry&, Stack& expressionStack);
+    [[nodiscard]] PartialResult addEndToUnreachable(ControlEntry&, const Stack& = { });
 
-    WARN_UNUSED_RETURN PartialResult endTopLevel(BlockSignature, const Stack&) { return { }; }
+    [[nodiscard]] PartialResult endTopLevel(const Stack&) { return { }; }
 
     // Fused comparison stubs (B3 will do this for us later).
-    WARN_UNUSED_RETURN PartialResult addFusedBranchCompare(OpType, ControlType&, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
-    WARN_UNUSED_RETURN PartialResult addFusedBranchCompare(OpType, ControlType&, ExpressionType, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
-    WARN_UNUSED_RETURN PartialResult addFusedIfCompare(OpType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
-    WARN_UNUSED_RETURN PartialResult addFusedIfCompare(OpType, ExpressionType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    [[nodiscard]] PartialResult addFusedBranchCompare(OpType, ControlType&, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    [[nodiscard]] PartialResult addFusedBranchCompare(OpType, ControlType&, ExpressionType, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    [[nodiscard]] PartialResult addFusedIfCompare(OpType, ExpressionType, BlockSignature&&, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    [[nodiscard]] PartialResult addFusedIfCompare(OpType, ExpressionType, ExpressionType, BlockSignature&&, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
 
     // Calls
-    WARN_UNUSED_RETURN PartialResult addCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
-    WARN_UNUSED_RETURN PartialResult addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
-    WARN_UNUSED_RETURN PartialResult addCallRef(unsigned, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
-    WARN_UNUSED_RETURN PartialResult addUnreachable();
-    WARN_UNUSED_RETURN PartialResult addCrash();
+    [[nodiscard]] PartialResult addCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addCallRef(unsigned, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addUnreachable();
+    [[nodiscard]] PartialResult addCrash();
 
     using ValueResults = Vector<Value*, 16>;
     void fillCallResults(Value* callResult, const TypeDefinition& signature, ValueResults&);
-    WARN_UNUSED_RETURN PartialResult emitDirectCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
-    WARN_UNUSED_RETURN PartialResult emitIndirectCall(Value* calleeInstance, Value* calleeCode, Value* boxedCalleeCallee, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
+    [[nodiscard]] PartialResult emitDirectCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
+    [[nodiscard]] PartialResult emitIndirectCall(Value* calleeInstance, Value* calleeCode, Value* boxedCalleeCallee, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
 
     Vector<ConstrainedValue> createCallConstrainedArgs(BasicBlock*, const CallInformation& wasmCalleeInfo, const ArgumentList&);
     auto createCallPatchpoint(BasicBlock*, const TypeDefinition&, const CallInformation&, const ArgumentList& tmpArgs) -> CallPatchpointData;
     auto createTailCallPatchpoint(BasicBlock*, const TypeDefinition&, const CallInformation& wasmCallerInfoAsCallee, const CallInformation& wasmCalleeInfoAsCallee, const ArgumentList& tmpArgSourceLocations, Vector<B3::ConstrainedValue> patchArgs) -> CallPatchpointData;
 
     InliningNode* canInline(FunctionSpaceIndex functionIndexSpace, unsigned callProfileIndex) const;
-    WARN_UNUSED_RETURN PartialResult emitInlineDirectCall(InliningNode*, FunctionCodeIndex calleeIndex, const TypeDefinition&, const ArgumentList& args, ValueResults&);
+    [[nodiscard]] PartialResult emitInlineDirectCall(InliningNode*, FunctionCodeIndex calleeIndex, const TypeDefinition&, const ArgumentList& args, ValueResults&);
 
     void dump(const ControlStack&, const Stack* expressionStack);
     void setParser(FunctionParser<OMGIRGenerator>* parser) { m_parser = parser; };
@@ -929,7 +933,6 @@ private:
     Value* allocateWasmGCHeapCell(Value* allocator, BasicBlock* slowPath);
     Value* allocateWasmGCObject(Value* allocator, Value* structureID, Value* typeInfo, BasicBlock* slowPath);
     Value* allocateWasmGCArrayUninitialized(uint32_t typeIndex, Value* size);
-    Value* allocateWasmGCStructUninitialized(uint32_t typeIndex);
 
     void mutatorFence();
 
@@ -940,22 +943,25 @@ private:
     void emitArraySetUnchecked(uint32_t, Value*, Value*, Value*);
     bool emitArraySetUncheckedWithoutWriteBarrier(uint32_t, Value*, Value*, Value*);
     // Returns true if a writeBarrier/mutatorFence is needed.
-    WARN_UNUSED_RETURN bool emitStructSet(bool canTrap, Value*, uint32_t, const StructType&, Value*);
-    WARN_UNUSED_RETURN Value* allocateWasmGCArray(uint32_t typeIndex, Value* initValue, Value* size);
+    [[nodiscard]] bool emitStructSet(bool canTrap, Value*, uint32_t, const StructType&, const RTT&, Value*);
+    [[nodiscard]] Value* allocateWasmGCArray(uint32_t typeIndex, Value* initValue, Value* size);
     using ArraySegmentOperation = EncodedJSValue SYSV_ABI (&)(JSC::JSWebAssemblyInstance*, uint32_t, uint32_t, uint32_t, uint32_t);
-    WARN_UNUSED_RETURN ExpressionType pushArrayNewFromSegment(ArraySegmentOperation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType);
+    [[nodiscard]] ExpressionType pushArrayNewFromSegment(ArraySegmentOperation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType);
     void emitRefTestOrCast(CastKind, TypedExpression, bool, int32_t, bool, ExpressionType&);
-    template <typename Generator>
-    void emitCheckOrBranchForCast(CastKind, Value*, const Generator&, BasicBlock*);
     Value* emitLoadRTTFromObject(Value*);
+
+    const B3::AbstractHeap* structFieldHeap(const RTT& rtt, uint32_t fieldIndex)
+    {
+        return &m_heaps.JSWebAssemblyStruct_fields[rtt.fieldHeapKey(fieldIndex)];
+    }
 
     void unify(Value* phi, const ExpressionType& source);
     void unifyValuesWithBlock(const Stack& resultStack, const ControlData& block);
 
     void emitChecksForModOrDiv(B3::Opcode, Value* left, Value* right);
 
-    WARN_UNUSED_RETURN int32_t fixupPointerPlusOffset(Value*&, uint32_t);
-    WARN_UNUSED_RETURN Value* fixupPointerPlusOffsetForAtomicOps(ExtAtomicOpType, Value*, uint32_t);
+    [[nodiscard]] int32_t fixupPointerPlusOffset(Value*&, uint32_t);
+    [[nodiscard]] Value* fixupPointerPlusOffsetForAtomicOps(ExtAtomicOpType, Value*, uint32_t);
 
     void restoreWasmContextInstance(BasicBlock*, Value*);
     void restoreWebAssemblyGlobalState(const MemoryInformation&, Value* instance, BasicBlock*);
@@ -2935,59 +2941,21 @@ Value* OMGIRGenerator::emitAtomicCompareExchange(ExtAtomicOpType op, Type valueT
     return sanitizeAtomicResult(op, valueType, atomic);
 }
 
-WARN_UNUSED_RETURN bool OMGIRGenerator::emitStructSet(bool canTrap, Value* structValue, uint32_t fieldIndex, const StructType& structType, Value* argument)
+[[nodiscard]] bool OMGIRGenerator::emitStructSet(bool canTrap, Value* structValue, uint32_t fieldIndex, const StructType& structType, const RTT& rtt, Value* argument)
 {
     structValue = pointerOfWasmRef(structValue);
     auto fieldType = structType.field(fieldIndex).type;
-    int32_t fieldOffset = fixupPointerPlusOffset(structValue, JSWebAssemblyStruct::offsetOfData() + structType.offsetOfFieldInPayload(fieldIndex));
 
-    auto wrapTrapping = [&](auto input) -> B3::Kind {
-        if (canTrap)
-            return trapping(input);
-        return input;
-    };
+    const RTT& definingRTT = rtt.definingRTTForField(fieldIndex);
+    uint64_t fieldHeapKey = definingRTT.fieldHeapKey(fieldIndex);
 
-    if (fieldType.is<PackedType>()) {
-        switch (fieldType.as<PackedType>()) {
-        case PackedType::I8: {
-            auto* store = m_currentBlock->appendNew<MemoryValue>(m_proc, wrapTrapping(Store8), origin(), argument, structValue, fieldOffset);
-            m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_i8[fieldIndex], store);
-            return false;
-        }
-        case PackedType::I16: {
-            auto* store = m_currentBlock->appendNew<MemoryValue>(m_proc, wrapTrapping(Store16), origin(), argument, structValue, fieldOffset);
-            m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_i16[fieldIndex], store);
-            return false;
-        }
-        }
-    }
+    B3::Kind kind = canTrap ? trapping(WasmStructSet) : WasmStructSet;
+    Value* storeValue = m_currentBlock->appendNew<WasmStructSetValue>(m_proc, kind, origin(), structValue, argument, Ref { rtt }, &structType, fieldIndex, fieldHeapKey);
 
-    ASSERT(fieldType.is<Type>());
-    auto resultType = fieldType.unpacked();
-    auto* store = m_currentBlock->appendNew<MemoryValue>(m_proc, wrapTrapping(Store), origin(), argument, structValue, fieldOffset);
-    switch (resultType.kind) {
-    case TypeKind::I32:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_i32[fieldIndex], store);
-        break;
-    case TypeKind::F32:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_f32[fieldIndex], store);
-        break;
-    case TypeKind::I64:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_i64[fieldIndex], store);
-        break;
-    case TypeKind::F64:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_f64[fieldIndex], store);
-        break;
-    case TypeKind::V128:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_v128[fieldIndex], store);
-        break;
-    default:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_ref[fieldIndex], store);
-        break;
-    }
+    m_heaps.decorateWasmStructSet(structFieldHeap(definingRTT, fieldIndex), storeValue);
 
     // FIXME: We should be able elide this write barrier if we know we're storing jsNull();
-    return isRefType(resultType);
+    return fieldType.is<Type>() && isRefType(fieldType.unpacked());
 }
 
 auto OMGIRGenerator::atomicCompareExchange(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset) -> PartialResult
@@ -3845,21 +3813,43 @@ auto OMGIRGenerator::addArrayInitData(uint32_t, TypedExpression dst, ExpressionT
 
 auto OMGIRGenerator::addStructNew(uint32_t typeIndex, ArgumentList& args, ExpressionType& result) -> PartialResult
 {
-    Value* structValue = allocateWasmGCStructUninitialized(typeIndex);
     const auto& structType = *m_info.typeSignatures[typeIndex]->expand().template as<StructType>();
+    const RTT& rtt = m_info.rtts[typeIndex].get();
+
+    int32_t structureIDOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfGCObjectStructureID(m_info, typeIndex));
+    MemoryValue* structureID = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, Int32, origin(), instanceValue(), structureIDOffset);
+    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyInstance_gcObjectStructureIDs[typeIndex], structureID);
+    structureID->setReadsMutability(B3::Mutability::Immutable);
+    structureID->setControlDependent(false);
+
+    int32_t allocatorsBaseOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfAllocatorForGCObject(m_info, 0));
+
+    auto* structNew = m_currentBlock->appendNew<WasmStructNewValue>(m_proc, origin(), wasmRefType(), Ref { rtt }, &structType, typeIndex, allocatorsBaseOffset, instanceValue(), structureID);
+
     for (uint32_t i = 0; i < args.size(); ++i) {
-        bool needsWriteBarrier = emitStructSet(/* canTrap */ false, structValue, i, structType, get(args[i]));
+        bool needsWriteBarrier = emitStructSet(/* canTrap */ false, structNew, i, structType, rtt, get(args[i]));
         UNUSED_VARIABLE(needsWriteBarrier);
     }
     mutatorFence();
-    result = push(structValue);
+    result = push(structNew);
     return { };
 }
 
 auto OMGIRGenerator::addStructNewDefault(uint32_t typeIndex, ExpressionType& result) -> PartialResult
 {
-    Value* structValue = allocateWasmGCStructUninitialized(typeIndex);
     const auto& structType = *m_info.typeSignatures[typeIndex]->expand().template as<StructType>();
+    const RTT& rtt = m_info.rtts[typeIndex].get();
+
+    int32_t structureIDOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfGCObjectStructureID(m_info, typeIndex));
+    MemoryValue* structureID = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, Int32, origin(), instanceValue(), structureIDOffset);
+    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyInstance_gcObjectStructureIDs[typeIndex], structureID);
+    structureID->setReadsMutability(B3::Mutability::Immutable);
+    structureID->setControlDependent(false);
+
+    int32_t allocatorsBaseOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfAllocatorForGCObject(m_info, 0));
+
+    auto* structNew = m_currentBlock->appendNew<WasmStructNewValue>(m_proc, origin(), wasmRefType(), Ref { rtt }, &structType, typeIndex, allocatorsBaseOffset, instanceValue(), structureID);
+
     for (StructFieldCount i = 0; i < structType.fieldCount(); ++i) {
         Value* initValue;
         if (Wasm::isRefType(structType.field(i).type))
@@ -3869,105 +3859,64 @@ auto OMGIRGenerator::addStructNewDefault(uint32_t typeIndex, ExpressionType& res
         else
             initValue = constant(Int64, 0);
         // We know all the values here are not cells so we don't need a writeBarrier.
-        bool needsWriteBarrier = emitStructSet(/* canTrap */ false, structValue, i, structType, initValue);
+        bool needsWriteBarrier = emitStructSet(/* canTrap */ false, structNew, i, structType, rtt, initValue);
         UNUSED_VARIABLE(needsWriteBarrier);
     }
     mutatorFence();
-    result = push(structValue);
+    result = push(structNew);
     return { };
 }
 
-auto OMGIRGenerator::addStructGet(ExtGCOpType structGetKind, TypedExpression structReference, const StructType& structType, uint32_t fieldIndex, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addStructGet(ExtGCOpType structGetKind, TypedExpression structReference, const StructType& structType, const RTT& rtt, uint32_t fieldIndex, ExpressionType& result) -> PartialResult
 {
-    auto fieldType = structType.field(fieldIndex).type;
-    auto mutability = structType.field(fieldIndex).mutability;
+    auto field = structType.field(fieldIndex);
+    auto fieldType = field.type;
     auto resultType = fieldType.unpacked();
 
     Value* structValue = get(structReference);
 
-    int32_t fieldOffset = fixupPointerPlusOffset(structValue, JSWebAssemblyStruct::offsetOfData() + structType.offsetOfFieldInPayload(fieldIndex));
+    ASSERT(fieldIndex <= maxStructFieldCount);
+    int32_t fieldOffset = JSWebAssemblyStruct::offsetOfData() + structType.offsetOfFieldInPayload(fieldIndex);
+
     bool canTrap = false;
     if (structReference.type().isNullable())
         canTrap = emitNullCheckBeforeAccess(structValue, fieldOffset);
-    auto wrapTrapping = [&](auto input) -> B3::Kind {
-        if (canTrap)
-            return trapping(input);
-        return input;
-    };
-    structValue = pointerOfWasmRef(structValue);
 
-    if (fieldType.is<PackedType>()) {
-        MemoryValue* load;
-        switch (fieldType.as<PackedType>()) {
-        case PackedType::I8:
-            load = m_currentBlock->appendNew<MemoryValue>(m_proc, wrapTrapping(Load8Z), Int32, origin(), structValue, fieldOffset);
-            m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_i8[fieldIndex], load);
-            break;
-        case PackedType::I16:
-            load = m_currentBlock->appendNew<MemoryValue>(m_proc, wrapTrapping(Load16Z), Int32, origin(), structValue, fieldOffset);
-            m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_i16[fieldIndex], load);
-            break;
-        }
-        if (mutability == Mutability::Immutable)
-            load->setReadsMutability(B3::Mutability::Immutable);
-        Value* postProcess = load;
-        switch (structGetKind) {
-        case ExtGCOpType::StructGetU:
-            break;
-        case ExtGCOpType::StructGetS: {
-            uint8_t bitShift = (sizeof(uint32_t) - fieldType.elementSize()) * 8;
-            Value* shiftLeft = m_currentBlock->appendNew<Value>(m_proc, B3::Shl, origin(), postProcess, constant(Int32, bitShift));
-            postProcess = m_currentBlock->appendNew<Value>(m_proc, B3::SShr, origin(), shiftLeft, constant(Int32, bitShift));
-            break;
-        }
-        default:
-            RELEASE_ASSERT_NOT_REACHED();
-            return { };
-        }
-        result = push(postProcess);
-        return { };
+    const RTT& definingRTT = rtt.definingRTTForField(fieldIndex);
+    uint64_t fieldHeapKey = definingRTT.fieldHeapKey(fieldIndex);
+
+    B3::Mutability mutability = field.mutability == Wasm::Mutability::Mutable ? B3::Mutability::Mutable : B3::Mutability::Immutable;
+
+    B3::Kind kind = canTrap ? trapping(WasmStructGet) : WasmStructGet;
+    Value* loadValue = m_currentBlock->appendNew<WasmStructGetValue>(m_proc, kind, origin(), toB3Type(resultType), structValue, Ref { rtt }, &structType, fieldIndex, fieldHeapKey, mutability);
+
+    m_heaps.decorateWasmStructGet(structFieldHeap(definingRTT, fieldIndex), loadValue);
+
+    // For StructGetS (signed extension of packed types), apply sign extension as post-process.
+    Value* postProcess = loadValue;
+    if (fieldType.is<PackedType>() && structGetKind == ExtGCOpType::StructGetS) {
+        uint8_t bitShift = (sizeof(uint32_t) - fieldType.elementSize()) * 8;
+        Value* shiftLeft = m_currentBlock->appendNew<Value>(m_proc, B3::Shl, origin(), postProcess, constant(Int32, bitShift));
+        postProcess = m_currentBlock->appendNew<Value>(m_proc, B3::SShr, origin(), shiftLeft, constant(Int32, bitShift));
     }
 
-    ASSERT(fieldType.is<Type>());
-    auto* load = m_currentBlock->appendNew<MemoryValue>(m_proc, wrapTrapping(Load), toB3Type(resultType), origin(), structValue, fieldOffset);
-    switch (resultType.kind) {
-    case TypeKind::I32:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_i32[fieldIndex], load);
-        break;
-    case TypeKind::F32:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_f32[fieldIndex], load);
-        break;
-    case TypeKind::I64:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_i64[fieldIndex], load);
-        break;
-    case TypeKind::F64:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_f64[fieldIndex], load);
-        break;
-    case TypeKind::V128:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_v128[fieldIndex], load);
-        break;
-    default:
-        m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_ref[fieldIndex], load);
-        break;
-    }
-    if (mutability == Mutability::Immutable)
-        load->setReadsMutability(B3::Mutability::Immutable);
-    result = push(load);
-
+    result = push(postProcess);
     return { };
 }
 
-auto OMGIRGenerator::addStructSet(TypedExpression structReference, const StructType& structType, uint32_t fieldIndex, ExpressionType value) -> PartialResult
+auto OMGIRGenerator::addStructSet(TypedExpression structReference, const StructType& structType, const RTT& rtt, uint32_t fieldIndex, ExpressionType value) -> PartialResult
 {
     Value* structValue = get(structReference);
     Value* valueValue = get(value);
 
-    int32_t fieldOffset = fixupPointerPlusOffset(structValue, JSWebAssemblyStruct::offsetOfData() + structType.offsetOfFieldInPayload(fieldIndex));
+    ASSERT(fieldIndex <= maxStructFieldCount);
+    int32_t fieldOffset = JSWebAssemblyStruct::offsetOfData() + structType.offsetOfFieldInPayload(fieldIndex);
+
     bool canTrap = false;
     if (structReference.type().isNullable())
         canTrap = emitNullCheckBeforeAccess(structValue, fieldOffset);
 
-    bool needsWriteBarrier = emitStructSet(canTrap, structValue, fieldIndex, structType, valueValue);
+    bool needsWriteBarrier = emitStructSet(canTrap, structValue, fieldIndex, structType, rtt, valueValue);
     if (needsWriteBarrier)
         emitWriteBarrier(pointerOfWasmRef(structValue), instanceValue());
     return { };
@@ -3988,277 +3937,33 @@ auto OMGIRGenerator::addRefCast(TypedExpression reference, bool allowNull, int32
 void OMGIRGenerator::emitRefTestOrCast(CastKind castKind, TypedExpression reference, bool allowNull, int32_t toHeapType, bool shouldNegate, ExpressionType& result)
 {
     Value* value = get(reference);
-    if (castKind == CastKind::Cast)
-        result = push(value);
 
-    BasicBlock* continuation = m_proc.addBlock();
-    BasicBlock* trueBlock = nullptr;
-    BasicBlock* falseBlock = nullptr;
-    if (castKind == CastKind::Test) {
-        trueBlock = m_proc.addBlock();
-        falseBlock = m_proc.addBlock();
+    RefPtr<const Wasm::RTT> targetRTT;
+    if (!typeIndexIsType(static_cast<Wasm::TypeIndex>(toHeapType))) {
+        targetRTT = m_info.rtts[toHeapType].ptr();
+        toHeapType = 0;
+        ASSERT(!typeIndexIsType(static_cast<Wasm::TypeIndex>(toHeapType)));
     }
 
-    auto castFailure = [this, origin = this->origin()] (CCallHelpers& jit, const B3::StackmapGenerationParams&) {
-        this->emitExceptionCheck(jit, origin, ExceptionType::CastFailure);
-    };
-
-    auto castAccessOffset = [&] -> std::optional<ptrdiff_t> {
-        if (castKind == CastKind::Test)
-            return std::nullopt;
-
-        if (allowNull)
-            return std::nullopt;
-
-        if (typeIndexIsType(static_cast<Wasm::TypeIndex>(toHeapType)))
-            return std::nullopt;
-
-        Wasm::TypeDefinition& signature = m_info.typeSignatures[toHeapType];
-        if (signature.expand().is<Wasm::FunctionSignature>())
-            return WebAssemblyFunctionBase::offsetOfRTT();
-
-        if (!reference.type().definitelyIsCellOrNull())
-            return std::nullopt;
-
-        if (!reference.type().definitelyIsWasmGCObjectOrNull())
-            return JSCell::typeInfoTypeOffset();
-        return JSCell::structureIDOffset();
-    };
-
-    bool canTrap = false;
-    auto wrapTrapping = [&](auto input) -> B3::Kind {
-        if (canTrap) {
-            canTrap = false;
-            return trapping(input);
-        }
-        return input;
-    };
-    // Ensure reference nullness agrees with heap type.
-    {
-        BasicBlock* nullCase = m_proc.addBlock();
-        BasicBlock* nonNullCase = m_proc.addBlock();
-
-        Value* isNull = nullptr;
-        if (reference.type().isNullable()) {
-            if (auto offset = castAccessOffset(); offset && offset.value() <= maxAcceptableOffsetForNullReference()) {
-                isNull = constant(Int32, 0);
-                canTrap = true;
-            } else
-                isNull = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), value, m_currentBlock->appendNew<WasmConstRefValue>(m_proc, origin(), JSValue::encode(jsNull())));
-        } else
-            isNull = constant(Int32, 0);
-
-        m_currentBlock->appendNewControlValue(m_proc, B3::Branch, origin(), isNull, FrequentedBlock(nullCase), FrequentedBlock(nonNullCase));
-        nullCase->addPredecessor(m_currentBlock);
-        nonNullCase->addPredecessor(m_currentBlock);
-
-        m_currentBlock = nullCase;
-        if (castKind == CastKind::Cast) {
-            if (!allowNull) {
-                B3::PatchpointValue* throwException = m_currentBlock->appendNew<B3::PatchpointValue>(m_proc, B3::Void, origin());
-                throwException->setGenerator(castFailure);
-            }
-            m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-            continuation->addPredecessor(m_currentBlock);
-        } else {
-            BasicBlock* nextBlock;
-            if (!allowNull)
-                nextBlock = falseBlock;
-            else
-                nextBlock = trueBlock;
-            m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), nextBlock);
-            nextBlock->addPredecessor(m_currentBlock);
-        }
-
-        m_currentBlock = nonNullCase;
+    OptionSet<B3::WasmRefTypeCheckFlag> flags;
+    if (allowNull) {
+        // If incoming type is not nullable, let's not allow null.
+        if (reference.type().isNullable())
+            flags.add(B3::WasmRefTypeCheckFlag::AllowNull);
     }
+    if (shouldNegate)
+        flags.add(B3::WasmRefTypeCheckFlag::ShouldNegate);
+    if (reference.type().isNullable())
+        flags.add(B3::WasmRefTypeCheckFlag::ReferenceIsNullable);
+    if (reference.type().definitelyIsCellOrNull())
+        flags.add(B3::WasmRefTypeCheckFlag::DefinitelyIsCellOrNull);
+    if (reference.type().definitelyIsWasmGCObjectOrNull())
+        flags.add(B3::WasmRefTypeCheckFlag::DefinitelyIsWasmGCObjectOrNull);
 
-    if (typeIndexIsType(static_cast<Wasm::TypeIndex>(toHeapType))) {
-        switch (static_cast<TypeKind>(toHeapType)) {
-        case Wasm::TypeKind::Funcref:
-        case Wasm::TypeKind::Externref:
-        case Wasm::TypeKind::Anyref:
-        case Wasm::TypeKind::Exnref:
-            // Casts to these types cannot fail as they are the top types of their respective hierarchies, and static type-checking does not allow cross-hierarchy casts.
-            break;
-        case Wasm::TypeKind::Noneref:
-        case Wasm::TypeKind::Nofuncref:
-        case Wasm::TypeKind::Noexternref:
-        case Wasm::TypeKind::Noexnref:
-            // Casts to any bottom type should always fail.
-            if (castKind == CastKind::Cast) {
-                B3::PatchpointValue* throwException = m_currentBlock->appendNew<B3::PatchpointValue>(m_proc, B3::Void, origin());
-                throwException->setGenerator(castFailure);
-            } else {
-                m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), falseBlock);
-                falseBlock->addPredecessor(m_currentBlock);
-                m_currentBlock = m_proc.addBlock();
-            }
-            break;
-        case Wasm::TypeKind::Eqref: {
-            auto nop = [] (CCallHelpers&, const B3::StackmapGenerationParams&) { };
-            BasicBlock* endBlock = castKind == CastKind::Cast ? continuation : trueBlock;
-            BasicBlock* checkObject = m_proc.addBlock();
-
-            // The eqref case chains together checks for i31, array, and struct with disjunctions so the control flow is more complicated, and requires some extra basic blocks to be created.
-            emitCheckOrBranchForCast(CastKind::Test, m_currentBlock->appendNew<Value>(m_proc, Below, origin(), value, constant(pointerType(), JSValue::NumberTag)), nop, checkObject);
-            Value* untagged = m_currentBlock->appendNew<Value>(m_proc, Trunc, origin(), value);
-            emitCheckOrBranchForCast(CastKind::Test, m_currentBlock->appendNew<Value>(m_proc, GreaterThan, origin(), untagged, constant(Int32, Wasm::maxI31ref)), nop, checkObject);
-            emitCheckOrBranchForCast(CastKind::Test, m_currentBlock->appendNew<Value>(m_proc, LessThan, origin(), untagged, constant(Int32, Wasm::minI31ref)), nop, checkObject);
-            m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), endBlock);
-            checkObject->addPredecessor(m_currentBlock);
-            endBlock->addPredecessor(m_currentBlock);
-
-            m_currentBlock = checkObject;
-            if (!reference.type().definitelyIsCellOrNull())
-                emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, BitAnd, origin(), value, constant(pointerType(), JSValue::NotCellMask)), castFailure, falseBlock);
-            if (!reference.type().definitelyIsWasmGCObjectOrNull()) {
-                auto* jsType = m_currentBlock->appendNew<MemoryValue>(m_proc, Load8Z, Int32, origin(), value, safeCast<int32_t>(JSCell::typeInfoTypeOffset()));
-                m_heaps.decorateMemory(&m_heaps.JSCell_typeInfoType, jsType);
-
-                emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, NotEqual, origin(), jsType, constant(Int32, JSType::WebAssemblyGCObjectType)), castFailure, falseBlock);
-            }
-            break;
-        }
-        case Wasm::TypeKind::I31ref: {
-            emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, Below, origin(), value, constant(pointerType(), JSValue::NumberTag)), castFailure, falseBlock);
-            Value* untagged = m_currentBlock->appendNew<Value>(m_proc, Trunc, origin(), value);
-            emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, GreaterThan, origin(), untagged, constant(Int32, Wasm::maxI31ref)), castFailure, falseBlock);
-            emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, LessThan, origin(), untagged, constant(Int32, Wasm::minI31ref)), castFailure, falseBlock);
-            break;
-        }
-        case Wasm::TypeKind::Arrayref:
-        case Wasm::TypeKind::Structref: {
-            if (!reference.type().definitelyIsCellOrNull())
-                emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, BitAnd, origin(), value, constant(pointerType(), JSValue::NotCellMask)), castFailure, falseBlock);
-            if (!reference.type().definitelyIsWasmGCObjectOrNull()) {
-                auto* jsType = m_currentBlock->appendNew<MemoryValue>(m_proc, Load8Z, Int32, origin(), value, safeCast<int32_t>(JSCell::typeInfoTypeOffset()));
-                m_heaps.decorateMemory(&m_heaps.JSCell_typeInfoType, jsType);
-
-                emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, NotEqual, origin(), jsType, constant(Int32, JSType::WebAssemblyGCObjectType)), castFailure, falseBlock);
-            }
-            Value* rtt = emitLoadRTTFromObject(pointerOfWasmRef(value));
-            auto* kind = m_currentBlock->appendNew<MemoryValue>(m_proc, Load8Z, origin(), rtt, safeCast<int32_t>(RTT::offsetOfKind()));
-            m_heaps.decorateMemory(&m_heaps.WasmRTT_kind, kind);
-            kind->setControlDependent(false);
-
-            emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, NotEqual, origin(), kind, constant(Int32, static_cast<uint8_t>(static_cast<TypeKind>(toHeapType) == Wasm::TypeKind::Arrayref ? RTTKind::Array : RTTKind::Struct))), castFailure, falseBlock);
-            break;
-        }
-        default:
-            RELEASE_ASSERT_NOT_REACHED();
-        }
-    } else {
-        Wasm::TypeDefinition& signature = m_info.typeSignatures[toHeapType];
-        Ref targetRTT = m_info.rtts[toHeapType];
-
-        ([&] {
-            Value* structure = nullptr;
-            MemoryValue* rtt;
-            if (signature.expand().is<Wasm::FunctionSignature>()) {
-                rtt = m_currentBlock->appendNew<MemoryValue>(m_proc, wrapTrapping(B3::Load), pointerType(), origin(), value, safeCast<int32_t>(WebAssemblyFunctionBase::offsetOfRTT()));
-                m_heaps.decorateMemory(&m_heaps.WebAssemblyFunctionBase_rtt, rtt);
-            } else {
-                // The cell check is only needed for non-functions, as the typechecker does not allow non-Cell values for funcref casts.
-                if (!reference.type().definitelyIsCellOrNull())
-                    emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, BitAnd, origin(), value, constant(Int64, JSValue::NotCellMask)), castFailure, falseBlock);
-
-                if (!reference.type().definitelyIsWasmGCObjectOrNull()) {
-                    auto* jsType = m_currentBlock->appendNew<MemoryValue>(m_proc, wrapTrapping(Load8Z), Int32, origin(), value, safeCast<int32_t>(JSCell::typeInfoTypeOffset()));
-                    m_heaps.decorateMemory(&m_heaps.JSCell_typeInfoType, jsType);
-                    emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, NotEqual, origin(), jsType, constant(Int32, JSType::WebAssemblyGCObjectType)), castFailure, falseBlock);
-                }
-                Value* structureID = m_currentBlock->appendNew<MemoryValue>(m_proc, wrapTrapping(B3::Load), Int32, origin(), value, safeCast<int32_t>(JSCell::structureIDOffset()));
-                m_heaps.decorateMemory(&m_heaps.JSCell_structureID, structureID);
-                structure = decodeNonNullStructure(structureID);
-                if (targetRTT->displaySizeExcludingThis() < WebAssemblyGCStructure::inlinedTypeDisplaySize) {
-                    auto* targetRTTPointer = constant(pointerType(), std::bit_cast<uintptr_t>(targetRTT.ptr()));
-                    auto* pointer = m_currentBlock->appendNew<MemoryValue>(m_proc, B3::Load, pointerType(), origin(), structure, safeCast<int32_t>(WebAssemblyGCStructure::offsetOfInlinedTypeDisplay() + targetRTT->displaySizeExcludingThis() * sizeof(RefPtr<const RTT>)));
-                    m_heaps.decorateMemory(&m_heaps.WebAssemblyGCStructure_inlinedTypeDisplays[targetRTT->displaySizeExcludingThis()], pointer);
-                    pointer->setReadsMutability(B3::Mutability::Immutable);
-                    pointer->setControlDependent(false);
-
-                    emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, NotEqual, origin(), pointer, targetRTTPointer), castFailure, falseBlock);
-                    return;
-                }
-
-                rtt = m_currentBlock->appendNew<MemoryValue>(m_proc, B3::Load, pointerType(), origin(), structure, safeCast<int32_t>(WebAssemblyGCStructure::offsetOfRTT()));
-                m_heaps.decorateMemory(&m_heaps.WebAssemblyGCStructure_rtt, rtt);
-                rtt->setControlDependent(false);
-            }
-
-            auto* targetRTTPointer = constant(pointerType(), std::bit_cast<uintptr_t>(targetRTT.ptr()));
-            BasicBlock* equalBlock;
-            if (castKind == CastKind::Cast)
-                equalBlock = continuation;
-            else
-                equalBlock = trueBlock;
-            BasicBlock* slowPath = m_proc.addBlock();
-            m_currentBlock->appendNewControlValue(m_proc, B3::Branch, origin(), m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), rtt, targetRTTPointer), FrequentedBlock(equalBlock), FrequentedBlock(slowPath));
-            equalBlock->addPredecessor(m_currentBlock);
-            slowPath->addPredecessor(m_currentBlock);
-
-            m_currentBlock = slowPath;
-            if (signature.isFinalType()) {
-                // If signature is final type and pointer equality failed, this value must not be a subtype.
-                emitCheckOrBranchForCast(castKind, constant(Int32, 1), castFailure, falseBlock);
-            } else {
-                auto* displaySizeExcludingThis = m_currentBlock->appendNew<MemoryValue>(m_proc, B3::Load, Int32, origin(), rtt, safeCast<int32_t>(RTT::offsetOfDisplaySizeExcludingThis()));
-                m_heaps.decorateMemory(&m_heaps.WasmRTT_displaySizeExcludingThis, displaySizeExcludingThis);
-                displaySizeExcludingThis->setControlDependent(false);
-
-                emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, BelowEqual, origin(), displaySizeExcludingThis, constant(Int32, targetRTT->displaySizeExcludingThis())), castFailure, falseBlock);
-
-                auto* pointer = m_currentBlock->appendNew<MemoryValue>(m_proc, B3::Load, pointerType(), origin(), rtt, safeCast<int32_t>(RTT::offsetOfData() + targetRTT->displaySizeExcludingThis() * sizeof(RefPtr<const RTT>)));
-                m_heaps.decorateMemory(&m_heaps.WasmRTT_data[targetRTT->displaySizeExcludingThis()], pointer);
-                pointer->setReadsMutability(B3::Mutability::Immutable);
-                pointer->setControlDependent(false);
-
-                emitCheckOrBranchForCast(castKind, m_currentBlock->appendNew<Value>(m_proc, NotEqual, origin(), pointer, targetRTTPointer), castFailure, falseBlock);
-            }
-        }());
-    }
-
-    if (castKind == CastKind::Cast) {
-        m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-        continuation->addPredecessor(m_currentBlock);
-        m_currentBlock = continuation;
-    } else {
-        m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), trueBlock);
-        trueBlock->addPredecessor(m_currentBlock);
-        m_currentBlock = trueBlock;
-        UpsilonValue* trueUpsilon = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), constant(B3::Int32, shouldNegate ? 0 : 1));
-        m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-        continuation->addPredecessor(m_currentBlock);
-
-        m_currentBlock = falseBlock;
-        UpsilonValue* falseUpsilon = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), constant(B3::Int32, shouldNegate ? 1 : 0));
-        m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-        continuation->addPredecessor(m_currentBlock);
-
-        m_currentBlock = continuation;
-        Value* phi = m_currentBlock->appendNew<Value>(m_proc, Phi, B3::Int32, origin());
-        trueUpsilon->setPhi(phi);
-        falseUpsilon->setPhi(phi);
-        result = push(phi);
-    }
-}
-
-template <typename Generator>
-void OMGIRGenerator::emitCheckOrBranchForCast(CastKind kind, Value* condition, const Generator& generator, BasicBlock* falseBlock)
-{
-    if (kind == CastKind::Cast) {
-        CheckValue* check = m_currentBlock->appendNew<CheckValue>(m_proc, Check, origin(), condition);
-        check->setGenerator(generator);
-    } else {
-        ASSERT(falseBlock);
-        BasicBlock* success = m_proc.addBlock();
-        m_currentBlock->appendNewControlValue(m_proc, B3::Branch, origin(), condition,
-            FrequentedBlock(falseBlock), FrequentedBlock(success));
-        falseBlock->addPredecessor(m_currentBlock);
-        success->addPredecessor(m_currentBlock);
-        m_currentBlock = success;
-    }
+    auto type = castKind == CastKind::Cast ? Int64 : Int32;
+    auto kind = castKind == CastKind::Cast ? trapping(WasmRefCast) : WasmRefTest;
+    auto* castValue = m_currentBlock->appendNew<B3::WasmRefTypeCheckValue>(m_proc, kind, type, origin(), toHeapType, flags, WTF::move(targetRTT), value);
+    result = push(castValue);
 }
 
 Value* OMGIRGenerator::decodeNonNullStructure(Value* structureID)
@@ -4300,7 +4005,6 @@ Value* OMGIRGenerator::allocatorForWasmGCHeapCellSize(Value* sizeInBytes, BasicB
         m_currentBlock->appendNew<Value>(m_proc, Mul, origin(), sizeClassIndex, constant(pointerType(), sizeof(Allocator))));
 
     auto* result = m_currentBlock->appendNew<MemoryValue>(m_proc, B3::Load, pointerType(), origin(), address);
-    result->setReadsMutability(B3::Mutability::Immutable);
     result->setControlDependent(false);
     return result;
 }
@@ -4408,44 +4112,6 @@ Value* OMGIRGenerator::allocateWasmGCArrayUninitialized(uint32_t typeIndex, Valu
 
     auto* arraySizeStore = m_currentBlock->appendNew<B3::MemoryValue>(m_proc, B3::Store, origin(), size, pointerOfWasmRef(result), safeCast<int32_t>(JSWebAssemblyArray::offsetOfSize()));
     m_heaps.decorateMemory(&m_heaps.JSWebAssemblyArray_size, arraySizeStore);
-    return result;
-}
-
-Value* OMGIRGenerator::allocateWasmGCStructUninitialized(uint32_t typeIndex)
-{
-    auto* slowPath = m_proc.addBlock();
-    auto* continuation = m_proc.addBlock();
-
-    auto* structureID = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, Int32, origin(), instanceValue(), safeCast<int32_t>(JSWebAssemblyInstance::offsetOfGCObjectStructureID(m_info, typeIndex)));
-    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyInstance_gcObjectStructureIDs[typeIndex], structureID);
-    structureID->setReadsMutability(B3::Mutability::Immutable);
-    structureID->setControlDependent(false);
-
-    const StructType* typeDefinition = m_info.typeSignatures[typeIndex]->expand().template as<StructType>();
-    Value* sizeInBytes = constant(pointerType(), JSWebAssemblyStruct::allocationSize(typeDefinition->instancePayloadSize()));
-    auto* allocator = allocatorForWasmGCHeapCellSize(sizeInBytes, slowPath);
-    auto* typeInfo = constant(Int32, JSWebAssemblyStruct::typeInfoBlob().blob());
-    auto* cell = allocateWasmGCObject(allocator, structureID, typeInfo, slowPath);
-    auto* fastValue = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), wasmRefOfCell(cell));
-    m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-    continuation->addPredecessor(m_currentBlock);
-
-    m_currentBlock = slowPath;
-    const auto type = Type { TypeKind::Ref, m_info.typeSignatures[typeIndex]->index() };
-    auto* slowResult = callWasmOperation(m_currentBlock, toB3Type(type), operationWasmStructNewEmpty,
-        instanceValue(), constant(Int32, typeIndex));
-    emitNullCheck(slowResult, ExceptionType::BadStructNew);
-    auto* slowValue = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), slowResult);
-    m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-    continuation->addPredecessor(m_currentBlock);
-
-    m_currentBlock = continuation;
-    auto* result = m_currentBlock->appendNew<Value>(m_proc, Phi, wasmRefType(), origin());
-    fastValue->setPhi(result);
-    slowValue->setPhi(result);
-
-    auto* size = m_currentBlock->appendNew<B3::MemoryValue>(m_proc, B3::Store, origin(), constant(Int32, typeDefinition->instancePayloadSize()), pointerOfWasmRef(result), safeCast<int32_t>(JSWebAssemblyStruct::offsetOfSize()));
-    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyStruct_size, size);
     return result;
 }
 
@@ -4827,21 +4493,21 @@ void OMGIRGenerator::connectValuesAtEntrypoint(unsigned& indexInBuffer, Value* p
     }
 };
 
-auto OMGIRGenerator::addLoop(BlockSignature signature, Stack& enclosingStack, ControlType& block, Stack& newStack, uint32_t loopIndex) -> PartialResult
+auto OMGIRGenerator::addLoop(BlockSignature&& signature, Stack& enclosingStack, ControlType& block, Stack& newStack, uint32_t loopIndex) -> PartialResult
 {
-    TRACE_CF("LOOP: entering loop index: ", loopIndex, " signature: ", *signature.m_signature);
+    TRACE_CF("LOOP: entering loop index: ", loopIndex, " signature: ", signature);
     BasicBlock* body = m_proc.addBlock();
     BasicBlock* continuation = m_proc.addBlock();
 
-    block = ControlData(m_proc, origin(), signature, BlockType::Loop, continuation, body);
+    block = ControlData(m_proc, origin(), WTF::move(signature), BlockType::Loop, continuation, body);
 
-    unsigned offset = enclosingStack.size() - signature.m_signature->argumentCount();
-    for (unsigned i = 0; i < signature.m_signature->argumentCount(); ++i) {
+    unsigned offset = enclosingStack.size() - block.signature().argumentCount();
+    for (unsigned i = 0; i < block.signature().argumentCount(); ++i) {
         TypedExpression value = enclosingStack.at(offset + i);
         Value* phi = block.phis[i];
         m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), get(value), phi);
         body->append(phi);
-        newStack.constructAndAppend(signature.m_signature->argumentType(i), phi);
+        newStack.constructAndAppend(block.signature().argumentType(i), phi);
     }
     enclosingStack.shrink(offset);
 
@@ -4891,23 +4557,24 @@ auto OMGIRGenerator::addLoop(BlockSignature signature, Stack& enclosingStack, Co
     return { };
 }
 
-OMGIRGenerator::ControlData OMGIRGenerator::addTopLevel(BlockSignature signature)
+OMGIRGenerator::ControlData OMGIRGenerator::addTopLevel(BlockSignature&& signature)
 {
-    TRACE_CF("TopLevel: ", *signature.m_signature);
-    return ControlData(m_proc, Origin(), signature, BlockType::TopLevel, m_proc.addBlock());
+    TRACE_CF("TopLevel: ", signature);
+    ControlData topLevel = ControlData(m_proc, Origin(), WTF::move(signature), BlockType::TopLevel, m_proc.addBlock());
+    return topLevel;
 }
 
-auto OMGIRGenerator::addBlock(BlockSignature signature, Stack& enclosingStack, ControlType& newBlock, Stack& newStack) -> PartialResult
+auto OMGIRGenerator::addBlock(BlockSignature&& signature, Stack& enclosingStack, ControlType& newBlock, Stack& newStack) -> PartialResult
 {
-    TRACE_CF("Block: ", *signature.m_signature);
+    TRACE_CF("Block: ", signature);
     BasicBlock* continuation = m_proc.addBlock();
 
     splitStack(signature, enclosingStack, newStack);
-    newBlock = ControlData(m_proc, origin(), signature, BlockType::Block, continuation);
+    newBlock = ControlData(m_proc, origin(), WTF::move(signature), BlockType::Block, continuation);
     return { };
 }
 
-auto OMGIRGenerator::addIf(ExpressionType condition, BlockSignature signature, Stack& enclosingStack, ControlType& result, Stack& newStack) -> PartialResult
+auto OMGIRGenerator::addIf(ExpressionType condition, BlockSignature&& signature, Stack& enclosingStack, ControlType& result, Stack& newStack) -> PartialResult
 {
     // FIXME: This needs to do some kind of stack passing.
 
@@ -4937,7 +4604,7 @@ auto OMGIRGenerator::addIf(ExpressionType condition, BlockSignature signature, S
     m_currentBlock = taken;
     TRACE_CF("IF");
     splitStack(signature, enclosingStack, newStack);
-    result = ControlData(m_proc, origin(), signature, BlockType::If, continuation, notTaken);
+    result = ControlData(m_proc, origin(), WTF::move(signature), BlockType::If, continuation, notTaken);
     return { };
 }
 
@@ -4957,7 +4624,7 @@ auto OMGIRGenerator::addElseToUnreachable(ControlData& data) -> PartialResult
     return { };
 }
 
-auto OMGIRGenerator::addTry(BlockSignature signature, Stack& enclosingStack, ControlType& result, Stack& newStack) -> PartialResult
+auto OMGIRGenerator::addTry(BlockSignature&& signature, Stack& enclosingStack, ControlType& result, Stack& newStack) -> PartialResult
 {
     ++m_tryCatchDepth;
     TRACE_CF("TRY");
@@ -4965,11 +4632,11 @@ auto OMGIRGenerator::addTry(BlockSignature signature, Stack& enclosingStack, Con
     BasicBlock* continuation = m_proc.addBlock();
     splitStack(signature, enclosingStack, newStack);
     materializeExpressionStackIntoVariables();
-    result = ControlData(m_proc, origin(), signature, BlockType::Try, continuation, advanceCallSiteIndex(), m_tryCatchDepth);
+    result = ControlData(m_proc, origin(), WTF::move(signature), BlockType::Try, continuation, advanceCallSiteIndex(), m_tryCatchDepth);
     return { };
 }
 
-auto OMGIRGenerator::addTryTable(BlockSignature signature, Stack& enclosingStack, const Vector<CatchHandler>& targets, ControlType& result, Stack& newStack) -> PartialResult
+auto OMGIRGenerator::addTryTable(BlockSignature&& signature, Stack& enclosingStack, const Vector<CatchHandler>& targets, ControlType& result, Stack& newStack) -> PartialResult
 {
     ++m_tryCatchDepth;
     TRACE_CF("TRY");
@@ -4988,7 +4655,7 @@ auto OMGIRGenerator::addTryTable(BlockSignature signature, Stack& enclosingStack
     BasicBlock* continuation = m_proc.addBlock();
     splitStack(signature, enclosingStack, newStack);
     materializeExpressionStackIntoVariables();
-    result = ControlData(m_proc, origin(), signature, BlockType::TryTable, continuation, advanceCallSiteIndex(), m_tryCatchDepth);
+    result = ControlData(m_proc, origin(), WTF::move(signature), BlockType::TryTable, continuation, advanceCallSiteIndex(), m_tryCatchDepth);
     result.setTryTableTargets(WTF::move(targetList));
 
     return { };
@@ -5333,7 +5000,7 @@ auto OMGIRGenerator::addThrow(unsigned exceptionIndex, ArgumentList& args, Stack
     return { };
 }
 
-WARN_UNUSED_RETURN auto OMGIRGenerator::addThrowRef(TypedExpression exnref, Stack&) -> PartialResult
+[[nodiscard]] auto OMGIRGenerator::addThrowRef(TypedExpression exnref, Stack&) -> PartialResult
 {
     TRACE_CF("THROW_REF");
 
@@ -5406,7 +5073,11 @@ auto OMGIRGenerator::addReturn(const ControlData&, const Stack& returnValues) ->
     if (m_returnContinuation)
         return addInlinedReturn(returnValues);
 
-    CallInformation wasmCallInfo = wasmCallingConvention().callInformationFor(m_parser->signature(), CallRole::Callee);
+    // Use the function signature from the parser
+    ASSERT(m_parser);
+    const FunctionSignature& functionSignature = *m_parser->signature().template as<FunctionSignature>();
+
+    CallInformation wasmCallInfo = wasmCallingConvention().callInformationFor(functionSignature, CallRole::Callee);
     PatchpointValue* patch = m_proc.add<PatchpointValue>(B3::Void, origin());
     patch->setGenerator([] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
         params.code().emitEpilogue(jit);
@@ -5425,7 +5096,7 @@ auto OMGIRGenerator::addReturn(const ControlData&, const Stack& returnValues) ->
             patch->append(get(returnValues[offset + i]), rep);
         }
 
-        TRACE_VALUE(m_parser->signature().as<FunctionSignature>()->returnType(i), get(returnValues[offset + i]), "put to return value ", i);
+        TRACE_VALUE(functionSignature.returnType(i), get(returnValues[offset + i]), "put to return value ", i);
     }
 
     m_currentBlock->append(patch);
@@ -5511,7 +5182,7 @@ auto OMGIRGenerator::endBlock(ControlEntry& entry, Stack& expressionStack) -> Pa
 {
     ControlData& data = entry.controlData;
 
-    ASSERT(expressionStack.size() == data.signature().m_signature->returnCount());
+    ASSERT(expressionStack.size() == data.signature().returnCount());
     if (data.blockType() != BlockType::Loop)
         unifyValuesWithBlock(expressionStack, data);
 
@@ -5540,19 +5211,19 @@ auto OMGIRGenerator::addEndToUnreachable(ControlEntry& entry, const Stack& expre
         --m_tryCatchDepth;
     }
 
-    auto blockSignature = data.signature();
+    const auto& blockSignature = data.signature();
     if (data.blockType() != BlockType::Loop) {
-        for (unsigned i = 0; i < blockSignature.m_signature->returnCount(); ++i) {
+        for (unsigned i = 0; i < blockSignature.returnCount(); ++i) {
             Value* result = data.phis[i];
             m_currentBlock->append(result);
-            entry.enclosedExpressionStack.constructAndAppend(blockSignature.m_signature->returnType(i), push(result));
+            entry.enclosedExpressionStack.constructAndAppend(blockSignature.returnType(i), push(result));
         }
     } else {
-        for (unsigned i = 0; i < blockSignature.m_signature->returnCount(); ++i) {
+        for (unsigned i = 0; i < blockSignature.returnCount(); ++i) {
             if (i < expressionStack.size()) {
                 entry.enclosedExpressionStack.append(expressionStack[i]);
             } else {
-                Type returnType = blockSignature.m_signature->returnType(i);
+                Type returnType = blockSignature.returnType(i);
                 entry.enclosedExpressionStack.constructAndAppend(returnType, push(constant(toB3Type(returnType), 0xbbadbeef)));
             }
         }
@@ -5560,7 +5231,7 @@ auto OMGIRGenerator::addEndToUnreachable(ControlEntry& entry, const Stack& expre
 
     if constexpr (WasmOMGIRGeneratorInternal::traceStackValues) {
         m_parser->expressionStack().swap(entry.enclosedExpressionStack);
-        TRACE_CF("END: ", *blockSignature.m_signature, " block type ", (int) data.blockType());
+        TRACE_CF("END: ", blockSignature, " block type ", (int) data.blockType());
         m_parser->expressionStack().swap(entry.enclosedExpressionStack);
     }
 

@@ -30,6 +30,13 @@
 #include "CryptoKeyEC.h"
 #include <pal/PALSwift.h>
 
+#if !defined(CLANG_WEBKIT_BRANCH)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#include "PALSwift-Generated.h"
+#pragma clang diagnostic pop
+#endif // !defined(CLANG_WEBKIT_BRANCH)
+
 namespace WebCore {
 
 static std::optional<Vector<uint8_t>> platformDeriveBitsCryptoKit(const CryptoKeyEC& baseKey, const CryptoKeyEC& publicKey)

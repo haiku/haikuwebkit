@@ -64,19 +64,18 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteImageDecoderAVFProxy);
 
 void RemoteImageDecoderAVFProxy::createDecoder(const IPC::SharedBufferReference& data, const String& mimeType, CompletionHandler<void(std::optional<ImageDecoderIdentifier>&&)>&& completionHandler)
 {
-    auto imageDecoder = ImageDecoderAVFObjC::create(data.isNull() ? SharedBuffer::create() : data.unsafeBuffer().releaseNonNull(), mimeType, AlphaOption::Premultiplied, GammaAndColorProfileOption::Ignored, m_resourceOwner);
+    RefPtr imageDecoder = ImageDecoderAVFObjC::create(data.isNull() ? SharedBuffer::create() : data.unsafeBuffer().releaseNonNull(), mimeType, AlphaOption::Premultiplied, GammaAndColorProfileOption::Ignored, m_resourceOwner);
 
     std::optional<ImageDecoderIdentifier> imageDecoderIdentifier;
     if (!imageDecoder)
         return completionHandler(WTF::move(imageDecoderIdentifier));
 
     auto identifier = ImageDecoderIdentifier::generate();
-    m_imageDecoders.add(identifier, imageDecoder.copyRef());
-
-    imageDecoder->setEncodedDataStatusChangeCallback([proxy = WeakPtr { *this },  identifier](auto) mutable {
-        if (RefPtr protectedProxy = proxy.get())
-            protectedProxy->encodedDataStatusChanged(identifier);
+    imageDecoder->setEncodedDataStatusChangeCallback([weakThis = WeakPtr { *this }, identifier](auto) mutable {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->encodedDataStatusChanged(identifier);
     });
+    m_imageDecoders.add(identifier, imageDecoder.releaseNonNull());
 
     imageDecoderIdentifier = identifier;
     completionHandler(WTF::move(imageDecoderIdentifier));

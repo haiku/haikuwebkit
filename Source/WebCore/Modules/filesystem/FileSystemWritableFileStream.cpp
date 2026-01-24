@@ -89,17 +89,12 @@ void FileSystemWritableFileStream::write(JSC::JSGlobalObject& lexicalGlobalObjec
         return promise.reject(Exception { ExceptionCode::UnknownError, "Failed to complete write operation"_s });
 
     Ref domPromise = DOMPromise::create(*globalObject, *jsPromise);
-    domPromise->whenSettled([domPromise, promise = WTF::move(promise)]() mutable {
-        switch (domPromise->status()) {
-        case DOMPromise::Status::Fulfilled:
+    domPromise->whenSettledWithResult([promise = WTF::move(promise)](auto*, bool isFulfilled, auto result) mutable {
+        if (isFulfilled)
             return promise.resolve();
-        case DOMPromise::Status::Rejected:
-            return promise.rejectWithCallback([&](auto&) {
-                return domPromise->result();
-            });
-        case DOMPromise::Status::Pending:
-            RELEASE_ASSERT_NOT_REACHED();
-        }
+        return promise.rejectWithCallback([&result](auto&) {
+            return result;
+        });
     });
 }
 

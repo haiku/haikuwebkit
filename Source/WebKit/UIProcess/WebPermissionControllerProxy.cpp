@@ -67,7 +67,7 @@ void WebPermissionControllerProxy::deref() const
 
 void WebPermissionControllerProxy::query(const WebCore::ClientOrigin& clientOrigin, const WebCore::PermissionDescriptor& descriptor, std::optional<WebPageProxyIdentifier> identifier, WebCore::PermissionQuerySource source, CompletionHandler<void(std::optional<WebCore::PermissionState>)>&& completionHandler)
 {
-    auto webPageProxy = identifier ? m_process->webPage(identifier.value()) : mostReasonableWebPageProxy(clientOrigin.topOrigin, source);
+    auto webPageProxy = identifier ? RefPtr { m_process->webPage(identifier.value()) } : mostReasonableWebPageProxy(clientOrigin.topOrigin, source);
 
     if (!webPageProxy) {
         completionHandler(WebCore::PermissionState::Prompt);

@@ -271,6 +271,16 @@ bool TestRunner::shouldDumpFrameLoadCallbacks()
     return postSynchronousMessageReturningBoolean("GetDumpFrameLoadCallbacks");
 }
 
+bool TestRunner::globalFlag() const
+{
+    return postSynchronousMessageReturningBoolean("GetGlobalFlag");
+}
+
+void TestRunner::setGlobalFlag(bool value)
+{
+    postSynchronousMessage("SetGlobalFlag", value);
+}
+
 unsigned TestRunner::imageCountInGeneralPasteboard() const
 {
     return InjectedBundle::singleton().imageCountInGeneralPasteboard();

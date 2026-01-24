@@ -193,6 +193,7 @@ private:
 #if USE(GTK4)
         GRefPtr<GdkTexture> m_texture;
 #else
+        GRefPtr<GdkGLContext> m_gdkGLContext;
         unsigned m_textureID { 0 };
 #endif
         uint32_t m_fourcc { 0 };

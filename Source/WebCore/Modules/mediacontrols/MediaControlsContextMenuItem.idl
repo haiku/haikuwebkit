@@ -26,7 +26,8 @@
 [
     Conditional=MEDIA_CONTROLS_CONTEXT_MENUS,
     JSGenerateToJSObject,
-    EnabledBySetting=MediaControlsContextMenusEnabled
+    EnabledBySetting=MediaControlsContextMenusEnabled,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary MediaControlsContextMenuItem {
     unsigned long long id;
     DOMString title;

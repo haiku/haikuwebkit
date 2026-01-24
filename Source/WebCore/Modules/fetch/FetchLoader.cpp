@@ -40,6 +40,7 @@
 #include "ResourceError.h"
 #include "ResourceRequest.h"
 #include "ScriptExecutionContext.h"
+#include "ScriptTrackingPrivacyCategory.h"
 #include "SecurityOrigin.h"
 #include "SharedBuffer.h"
 #include "TextResourceDecoder.h"
@@ -102,6 +103,12 @@ void FetchLoader::start(ScriptExecutionContext& context, const FetchRequest& req
     options.shouldEnableContentExtensionsCheck = request.shouldEnableContentExtensionsCheck() ? ShouldEnableContentExtensionsCheck::Yes : ShouldEnableContentExtensionsCheck::No;
 
     ResourceRequest fetchRequest = request.resourceRequest();
+
+    if (context.requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory::NetworkRequests)) {
+        if (RefPtr client = m_client.get())
+            client->didFail({ errorDomainWebKitInternal, 0, fetchRequest.url(), "Blocked by script tracking privacy protection"_s, ResourceError::Type::AccessControl });
+        return;
+    }
 
     ASSERT(context.contentSecurityPolicy());
     {

@@ -204,7 +204,7 @@
 #import <pal/spi/cocoa/AVKitSPI.h>
 #endif
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 #import "WKDigitalCredentialsPicker.h"
 #endif
 
@@ -2606,7 +2606,7 @@ static inline WebCore::FloatSize tapHighlightBorderRadius(WebCore::FloatSize bor
         [_tapHighlightView setQuads:WTF::move(inflatedHighlightQuads) boundaryRect:_page->exposedContentRect()];
     }
 
-    [_tapHighlightView setCornerRadii:WebCore::FloatRoundedRect::Radii {
+    [_tapHighlightView setCornerRadii:WebCore::CornerRadii {
         tapHighlightBorderRadius(_tapHighlightInformation.topLeftRadius, selfScale),
         tapHighlightBorderRadius(_tapHighlightInformation.topRightRadius, selfScale),
         tapHighlightBorderRadius(_tapHighlightInformation.bottomLeftRadius, selfScale),
@@ -6228,9 +6228,7 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 
 - (void)accessoryViewDone:(WKFormAccessoryView *)view
 {
-    if ([_webView _resetFocusPreservationCount])
-        RELEASE_LOG_ERROR(ViewState, "Keyboard dismissed with nonzero focus preservation count; check for unbalanced calls to -_incrementFocusPreservationCount");
-
+    [_webView _resetFocusPreservationCountAndReleaseActiveFocusState];
     [self stopRelinquishingFirstResponderToFocusedElement];
     [self endEditingAndUpdateFocusAppearanceWithReason:EndEditingReasonAccessoryDone];
     _page->setIsShowingInputViewForFocusedElement(false);
@@ -7839,11 +7837,12 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
     if (_focusedElementInformation.elementType == WebKit::InputType::Select)
         return NO;
 
-    if (!self.webView.scrollView.scrollEnabled)
+    UIScrollView *scrollView = animator.scrollView ?: self.webView.scrollView;
+    if (!scrollView.scrollEnabled)
         return NO;
 
 #if HAVE(UISCROLLVIEW_ALLOWS_KEYBOARD_SCROLLING)
-    if (!self.webView.scrollView.allowsKeyboardScrolling)
+    if (!scrollView.allowsKeyboardScrolling)
         return NO;
 #endif
 
@@ -8447,7 +8446,7 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
         return;
     }
 
-    [_webView _resetFocusPreservationCount];
+    [_webView _resetFocusPreservationCountAndReleaseActiveFocusState];
 
     _focusRequiresStrongPasswordAssistance = NO;
     _additionalContextForStrongPasswordAssistance = nil;
@@ -8620,7 +8619,7 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
 {
     SetForScope isBlurringFocusedElementForScope { _isBlurringFocusedElement, YES };
 
-    [_webView _resetFocusPreservationCount];
+    [_webView _resetFocusPreservationCountAndReleaseActiveFocusState];
 
     [self _endEditing];
 
@@ -9763,7 +9762,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
 
 #endif // HAVE(SHARE_SHEET_UI)
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 - (void)_showDigitalCredentialsPicker:(const WebCore::DigitalCredentialsRequestData&)requestData completionHandler:(WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&)completionHandler
 {
     _digitalCredentialsPicker = adoptNS([[WKDigitalCredentialsPicker alloc] initWithView:self.webView page:_page.get()]);
@@ -9779,7 +9778,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
     }
     [_digitalCredentialsPicker dismissWithCompletionHandler:WTF::move(completionHandler)];
 }
-#endif // HAVE(DIGITAL_CREDENTIALS_UI)
+#endif // ENABLE(WEB_AUTHN)
 
 - (void)_showContactPicker:(const WebCore::ContactsRequestData&)requestData completionHandler:(WTF::CompletionHandler<void(std::optional<Vector<WebCore::ContactInfo>>&&)>&&)completionHandler
 {
@@ -14079,13 +14078,13 @@ inline static NSString *extendSelectionCommand(UITextLayoutDirection direction)
     // Store this completion handler so that it can be called after the execution of the next
     // call to replace the text and eventually use this completion handler to pass the
     // text indicator to UIKit.
-    _page->storeDestinationCompletionHandlerForAnimationID(*animationUUID, [protectedSelf = retainPtr(self), completionHandler = makeBlockPtr(completionHandler)] (auto&& textIndicatorData) {
-        if (!textIndicatorData) {
+    _page->storeDestinationCompletionHandlerForAnimationID(*animationUUID, [protectedSelf = retainPtr(self), completionHandler = makeBlockPtr(completionHandler)](RefPtr<WebCore::TextIndicator>&& textIndicator) {
+        if (!textIndicator) {
             completionHandler(nil);
             return;
         }
 
-        RetainPtr targetedPreview = [protectedSelf _createTargetedPreviewFromTextIndicator:WebCore::TextIndicator::create(*textIndicatorData) previewContainer:[protectedSelf containerForContextMenuHintPreviews]];
+        RetainPtr targetedPreview = [protectedSelf _createTargetedPreviewFromTextIndicator:WTF::move(textIndicator) previewContainer:[protectedSelf containerForContextMenuHintPreviews]];
         completionHandler(targetedPreview.get());
     });
 

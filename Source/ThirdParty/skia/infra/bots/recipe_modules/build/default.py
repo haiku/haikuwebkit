@@ -105,17 +105,11 @@ def get_compile_flags(api, checkout_root, out_dir, workdir):
       env['MACOSX_DEPLOYMENT_TARGET'] = '11.0'
 
   # ccache + clang-tidy.sh chokes on the argument list.
-  if (api.vars.is_linux or os == 'Mac') and 'Tidy' not in extra_tokens:
-    if api.vars.is_linux:
-      ccache = workdir.joinpath('ccache_linux', 'bin', 'ccache')
-      # As of 2020-02-07, the sum of each Debian10-Clang-x86
-      # non-flutter/android/chromebook build takes less than 75G cache space.
-      env['CCACHE_MAXSIZE'] = '75G'
-    else:
-      ccache = workdir.joinpath('ccache_mac', 'bin', 'ccache')
-      # As of 2020-02-10, the sum of each Build-Mac-Clang- non-android build
-      # takes ~30G cache space.
-      env['CCACHE_MAXSIZE'] = '50G'
+  if api.vars.is_linux and 'Tidy' not in extra_tokens:
+    ccache = workdir.joinpath('ccache_linux', 'bin', 'ccache')
+    # As of 2020-02-07, the sum of each Debian10-Clang-x86
+    # non-flutter/android/chromebook build takes less than 75G cache space.
+    env['CCACHE_MAXSIZE'] = '75G'
 
     args['cc_wrapper'] = '"%s"' % ccache
 
@@ -228,8 +222,6 @@ def get_compile_flags(api, checkout_root, out_dir, workdir):
     args['skia_enable_precompile'] = 'false'
   if 'Graphite' in extra_tokens:
     args['skia_enable_graphite'] = 'true'
-  if 'Vello' in extra_tokens:
-    args['skia_enable_vello_shaders'] = 'true'
   if 'Fontations' in extra_tokens:
     args['skia_use_fontations'] = 'true'
     args['skia_use_freetype'] = 'true' # we compare with freetype in tests
@@ -239,6 +231,8 @@ def get_compile_flags(api, checkout_root, out_dir, workdir):
     args['skia_use_rust_png_encode'] = 'true'
     args['skia_use_libpng_decode'] = 'false'
     # TODO(b/356875275) set skia_use_libpng_encode to false also
+  if 'RustBMP' in extra_tokens:
+    args['skia_use_rust_bmp_decode'] = 'true'
   if 'FreeType' in extra_tokens:
     args['skia_use_freetype'] = 'true'
     args['skia_use_system_freetype2'] = 'false'

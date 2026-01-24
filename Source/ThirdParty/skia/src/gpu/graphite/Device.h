@@ -325,8 +325,13 @@ private:
     std::pair<const Renderer*, PathAtlas*> chooseRenderer(const Transform& localToDevice,
                                                           const Geometry&,
                                                           const SkStrokeRec&,
-                                                          const Rect& drawBounds,
-                                                          bool requireMSAA) const;
+                                                          const Rect& drawBounds) const;
+
+    // Ignoring specialized Shape renderers and the selected PathRendererStrategy, choose a
+    // MSAA-requiring tessellation-based renderer for the shape and style.
+    const Renderer* chooseMSAARenderer(const Shape&,
+                                       const SkStrokeRec&,
+                                       const Rect& drawBounds) const;
 
     bool needsFlushBeforeDraw(int numNewRenderSteps, DstReadStrategy);
 
@@ -356,8 +361,6 @@ private:
     // The max depth value sent to the DrawContext, incremented so each draw has a unique value.
     PaintersDepth fCurrentDepth;
 
-    // The DrawContext's target supports MSAA
-    bool fMSAASupported = false;
     // Even when MSAA is supported, small paths may be sent to the atlas for higher quality and to
     // avoid triggering MSAA overhead on a render pass. However, the number of paths is capped
     // per Device flush.
@@ -368,12 +371,12 @@ private:
     // tracked devices for dependencies.
     bool fMustFlushDependencies = false;
 
-    // TODO(b/330864257): Clean up once flushPendingWorkToRecorder() doesn't have to be re-entrant
-    bool fIsFlushing = false;
-
     const sktext::gpu::SubRunControl fSubRunControl;
 
 #if defined(SK_DEBUG)
+    // Tracks the flushing state to ensure recursive flushing does not occur.
+    bool fIsFlushing = false;
+
     // When not 0, this Device is an unregistered scratch device that is intended to go out of
     // scope before the Recorder is snapped. Assuming controlling code is valid, that means the
     // Device's recorder's next recording ID should still be the the recording ID at the time the

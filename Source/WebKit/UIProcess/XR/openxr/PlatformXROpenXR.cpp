@@ -957,6 +957,7 @@ PlatformXR::FrameData OpenXRCoordinator::populateFrameData(Box<RenderState> rend
     if (!frameData.shouldRender)
         return frameData;
 
+    // First locate the views in the local space. These will be used only by OpenXR later to render the layers.
     XrViewLocateInfo viewLocateInfo = createOpenXRStruct<XrViewLocateInfo, XR_TYPE_VIEW_LOCATE_INFO>();
     viewLocateInfo.viewConfigurationType = m_currentViewConfiguration;
     viewLocateInfo.displayTime = renderState->frameState.predictedDisplayTime;
@@ -970,8 +971,15 @@ PlatformXR::FrameData OpenXRCoordinator::populateFrameData(Box<RenderState> rend
     CHECK_XRCMD(xrLocateViews(m_session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, m_views.mutableSpan().data()));
     ASSERT(viewCountOutput == viewCapacityInput);
 
-    for (auto& view : m_views)
-        frameData.views.append(XrViewToView(view));
+    // Then get the pose of each view in the viewer space as this is what WebXR code expects. WebXR will compute the pose of each view in the local space by multiplying this with frameData.origin.
+    Vector<XrView> viewerViews(viewCountOutput);
+    viewerViews.fill(createOpenXRStruct<XrView, XR_TYPE_VIEW>(), viewCountOutput);
+    viewLocateInfo.space = m_viewerSpace;
+    CHECK_XRCMD(xrLocateViews(m_session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, viewerViews.mutableSpan().data()));
+
+    frameData.views = viewerViews.map([](auto& xrView) {
+        return XrViewToView(xrView);
+    });
 
     frameData.isTrackingValid = viewState.viewStateFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
     frameData.isPositionValid = viewState.viewStateFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT;
@@ -979,7 +987,10 @@ PlatformXR::FrameData OpenXRCoordinator::populateFrameData(Box<RenderState> rend
 
     frameData.inputSources = m_input->collectInputSources(renderState->frameState, m_localSpace);
 
-    frameData.origin = XrIdentityPose();
+    // FrameData::origin expects the position of the camera (viewer) in world (local) coordinates.
+    XrSpaceLocation originLocation = createOpenXRStruct<XrSpaceLocation, XR_TYPE_SPACE_LOCATION>();
+    CHECK_XRCMD(xrLocateSpace(m_viewerSpace, m_localSpace, renderState->frameState.predictedDisplayTime, &originLocation));
+    frameData.origin = XrPosefToPose(originLocation.pose);
 
     if (m_floorSpace != XR_NULL_HANDLE) {
         XrSpaceLocation floorLocation = createOpenXRStruct<XrSpaceLocation, XR_TYPE_SPACE_LOCATION>();

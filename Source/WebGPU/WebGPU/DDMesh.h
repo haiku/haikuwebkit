@@ -36,6 +36,7 @@ typedef struct CF_BRIDGED_TYPE(id) __CVBuffer* CVPixelBufferRef;
 struct WGPUDDMeshImpl {
 };
 
+@class DDBridgeImageAsset;
 @class DDBridgeReceiver;
 @class DDBridgeUpdateMaterial;
 @class DDBridgeUpdateMesh;
@@ -69,10 +70,12 @@ public:
     void render() const;
     void setTransform(const simd_float4x4&);
     void setCameraDistance(float);
+    void setEnvironmentMap(DDBridgeImageAsset *);
 
 private:
     DDMesh(const WGPUDDCreateMeshDescriptor&, Instance&);
     DDMesh(Instance&);
+    void processUpdates() const;
 
     const Ref<Instance> m_instance;
     WGPUDDCreateMeshDescriptor m_descriptor;
@@ -81,9 +84,11 @@ private:
 #if ENABLE(GPU_PROCESS_MODEL)
     DDBridgeReceiver* m_ddReceiver;
     simd_float4x4 m_transform { matrix_identity_float4x4 };
-#endif
     NSUUID* m_ddMeshIdentifier;
     mutable uint32_t m_currentTexture { 0 };
+    mutable bool m_meshDataExists { false };
+    mutable NSMutableDictionary<NSString *, DDBridgeUpdateMesh *> *m_batchedUpdates;
+#endif
 };
 
 } // namespace WebGPU

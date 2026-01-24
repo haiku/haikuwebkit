@@ -31,6 +31,7 @@
 #include <WebCore/GUniquePtrRice.h>
 #include <WebCore/RTCIceComponent.h>
 #include <WebCore/RTCIceProtocol.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
 #include <WebCore/SharedMemory.h>
 #include <wtf/Expected.h>
 #include <wtf/Forward.h>
@@ -39,9 +40,12 @@
 #include <wtf/RefCounted.h>
 #include <wtf/RunLoop.h>
 #include <wtf/TZoneMalloc.h>
+#include <wtf/ThreadSafeRefCounted.h>
+#include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/URL.h>
 #include <wtf/URLHash.h>
 #include <wtf/Vector.h>
+#include <wtf/glib/GUniquePtr.h>
 #include <wtf/text/WTFString.h>
 
 namespace IPC {
@@ -58,14 +62,14 @@ struct RiceBackendIdentifierType;
 
 using RiceBackendIdentifier = ObjectIdentifier<RiceBackendIdentifierType>;
 
-class RiceBackend : public RefCounted<RiceBackend>, public IPC::MessageReceiver, public IPC::MessageSender, public Identified<RiceBackendIdentifier> {
+class RiceBackend : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<RiceBackend, WTF::DestructionThread::Main>, public IPC::MessageReceiver, public IPC::MessageSender, public Identified<RiceBackendIdentifier> {
     WTF_MAKE_TZONE_ALLOCATED(RiceBackend);
 public:
     static void initialize(NetworkConnectionToWebProcess&, WebKit::WebPageProxyIdentifier&&, CompletionHandler<void(RefPtr<RiceBackend>&&)>&&);
     ~RiceBackend();
 
-    void ref() const final { RefCounted::ref(); }
-    void deref() const final { RefCounted::deref(); }
+    void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
+    void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
 
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&);
     void didReceiveSyncMessage(IPC::Connection&, IPC::Decoder&, UniqueRef<IPC::Encoder>&);
@@ -77,7 +81,8 @@ public:
     void sendData(unsigned, WebCore::RTCIceProtocol, String, String, WebCore::SharedMemory::Handle&&);
     void finalizeStream(unsigned);
 
-    void gatherSocketAddresses(unsigned, CompletionHandler<void(Vector<String> &&)>&&);
+    using GatherSocketAddressesCallback = CompletionHandler<void(HashMap<std::pair<String, WebCore::RTCIceProtocol>, String>&&)>;
+    void gatherSocketAddresses(WebCore::ScriptExecutionContextIdentifier, unsigned, GatherSocketAddressesCallback&&);
 
     GRefPtr<RiceSockets> getSocketsForStream(unsigned);
     GRefPtr<GSource> getRecvSourceForStream(unsigned);

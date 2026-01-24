@@ -85,7 +85,7 @@ void DownloadManager::dataTaskBecameDownloadTask(DownloadID downloadID, Ref<Down
     m_downloads.add(downloadID, WTF::move(download));
 }
 
-void DownloadManager::convertNetworkLoadToDownload(DownloadID downloadID, Ref<NetworkLoad>&& networkLoad, ResponseCompletionHandler&& completionHandler, Vector<RefPtr<WebCore::BlobDataFileReference>>&& blobFileReferences, const ResourceRequest& request, const ResourceResponse& response)
+void DownloadManager::convertNetworkLoadToDownload(DownloadID downloadID, Ref<NetworkLoad>&& networkLoad, ResponseCompletionHandler&& completionHandler, Vector<Ref<WebCore::BlobDataFileReference>>&& blobFileReferences, const ResourceRequest& request, const ResourceResponse& response)
 {
     ASSERT(!m_pendingDownloads.contains(downloadID));
     m_pendingDownloads.add(downloadID, PendingDownload::create(protectedClient()->protectedParentProcessConnectionForDownloads().get(), WTF::move(networkLoad), WTF::move(completionHandler), downloadID, request, response));

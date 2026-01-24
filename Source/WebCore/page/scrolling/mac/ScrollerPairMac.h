@@ -114,7 +114,7 @@ public:
 
     NSScrollerImpPair *scrollerImpPair() const { return m_scrollerImpPair.get(); }
     void ensureOnMainThreadWithProtectedThis(Function<void(ScrollerPairMac&)>&&);
-    RefPtr<ScrollingTreeScrollingNode> protectedNode() const { return m_scrollingNode.get(); }
+    RefPtr<ScrollingTreeScrollingNode> protectedNode() const { return m_scrollingNode; }
 
     bool mouseInContentArea() const { return m_mouseInContentArea; }
 

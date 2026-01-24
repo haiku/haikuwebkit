@@ -308,7 +308,7 @@ private:
 
     RefPtr<ScrollingTreeFrameScrollingNode> m_rootNode;
 
-    using ScrollingTreeNodeMap = HashMap<ScrollingNodeID, RefPtr<ScrollingTreeNode>>;
+    using ScrollingTreeNodeMap = HashMap<ScrollingNodeID, Ref<ScrollingTreeNode>>;
     ScrollingTreeNodeMap m_nodeMap;
 
     Lock m_frameIDMapLock;

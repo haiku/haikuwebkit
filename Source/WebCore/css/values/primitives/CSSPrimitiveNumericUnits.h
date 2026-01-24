@@ -150,6 +150,7 @@ struct ValueLiteral {
     inline namespace Literals { \
         consteval ValueLiteral<type> operator""_css_##name(long double value) { return ValueLiteral<type> { static_cast<double>(value) }; } \
         consteval ValueLiteral<type> operator""_css_##name(unsigned long long value) { return ValueLiteral<type> { static_cast<double>(value) }; } \
+        consteval ValueLiteral<type> name(double value) { return ValueLiteral<type> { value }; } \
     }
 
 // MARK: - Unit Cast

@@ -44,6 +44,11 @@
 		0D30F93729F1F94A0055D9F1 /* ExternalTexture.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0D30F93629F1F94A0055D9F1 /* ExternalTexture.mm */; };
 		0D30F93929F1FAC50055D9F1 /* ExternalTexture.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D30F93829F1FAC50055D9F1 /* ExternalTexture.h */; };
 		0D30F93B29F1FBE40055D9F1 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D30F93A29F1FBE40055D9F1 /* CoreVideo.framework */; };
+		0D3CAF8E2EF0DCDE008C5E2D /* ModelRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3CAF8D2EF0DCDE008C5E2D /* ModelRenderer.swift */; };
+		0D3CAF902EF0DDC9008C5E2D /* ModelIBLTextures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3CAF8F2EF0DDC9008C5E2D /* ModelIBLTextures.swift */; };
+		0D3CAF922EF0DE63008C5E2D /* ModelBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3CAF912EF0DE63008C5E2D /* ModelBridge.swift */; };
+		0D3CAF942EF0E149008C5E2D /* ModelParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3CAF932EF0E149008C5E2D /* ModelParameters.swift */; };
+		0D3CAF962EF0E6BA008C5E2D /* ModelUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3CAF952EF0E6BA008C5E2D /* ModelUtils.swift */; };
 		0D509DCD29CAB6EC00546D84 /* MetalSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D509DCC29CAB6EC00546D84 /* MetalSPI.h */; };
 		0D6D0AAE2C6BA0400073F63D /* XRView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D6D0AAC2C6BA0400073F63D /* XRView.h */; };
 		0D6D0AAF2C6BA0400073F63D /* XRView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0D6D0AAD2C6BA0400073F63D /* XRView.mm */; };
@@ -338,6 +343,11 @@
 		0D30F93629F1F94A0055D9F1 /* ExternalTexture.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ExternalTexture.mm; sourceTree = "<group>"; };
 		0D30F93829F1FAC50055D9F1 /* ExternalTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExternalTexture.h; sourceTree = "<group>"; };
 		0D30F93A29F1FBE40055D9F1 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
+		0D3CAF8D2EF0DCDE008C5E2D /* ModelRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelRenderer.swift; sourceTree = "<group>"; };
+		0D3CAF8F2EF0DDC9008C5E2D /* ModelIBLTextures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelIBLTextures.swift; sourceTree = "<group>"; };
+		0D3CAF912EF0DE63008C5E2D /* ModelBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelBridge.swift; sourceTree = "<group>"; };
+		0D3CAF932EF0E149008C5E2D /* ModelParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelParameters.swift; sourceTree = "<group>"; };
+		0D3CAF952EF0E6BA008C5E2D /* ModelUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelUtils.swift; sourceTree = "<group>"; };
 		0D4D2E80294A89CF0000A1AB /* BindableResource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BindableResource.h; sourceTree = "<group>"; };
 		0D509DCC29CAB6EC00546D84 /* MetalSPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetalSPI.h; sourceTree = "<group>"; };
 		0D6D0AAC2C6BA0400073F63D /* XRView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XRView.h; sourceTree = "<group>"; };
@@ -431,16 +441,8 @@
 		1CEBD8302716CB3800A5254D /* libicucore.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libicucore.tbd; path = usr/lib/libicucore.tbd; sourceTree = SDKROOT; };
 		2B1B1C5E2E3A874700D7D9ED /* ForwardDeclCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = ForwardDeclCheckerExpectations; sourceTree = "<group>"; };
 		2B1B1C5F2E3A874700D7D9ED /* MemoryUnsafeCastCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = MemoryUnsafeCastCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C602E3A874700D7D9ED /* NoUncheckedPtrMemberCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = NoUncheckedPtrMemberCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C612E3A874700D7D9ED /* NoUncountedMemberCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = NoUncountedMemberCheckerExpectations; sourceTree = "<group>"; };
 		2B1B1C622E3A874700D7D9ED /* NoUnretainedMemberCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = NoUnretainedMemberCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C632E3A874700D7D9ED /* RefCntblBaseVirtualDtorExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = RefCntblBaseVirtualDtorExpectations; sourceTree = "<group>"; };
-		2B1B1C642E3A874700D7D9ED /* RetainPtrCtorAdoptCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = RetainPtrCtorAdoptCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C652E3A874700D7D9ED /* UncheckedCallArgsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncheckedCallArgsCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C662E3A874700D7D9ED /* UncheckedLocalVarsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncheckedLocalVarsCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C672E3A874700D7D9ED /* UncountedCallArgsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncountedCallArgsCheckerExpectations; sourceTree = "<group>"; };
 		2B1B1C682E3A874700D7D9ED /* UncountedLambdaCapturesCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncountedLambdaCapturesCheckerExpectations; sourceTree = "<group>"; };
-		2B1B1C692E3A874700D7D9ED /* UncountedLocalVarsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UncountedLocalVarsCheckerExpectations; sourceTree = "<group>"; };
 		2B1B1C6A2E3A874700D7D9ED /* UnretainedCallArgsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UnretainedCallArgsCheckerExpectations; sourceTree = "<group>"; };
 		2B1B1C6B2E3A874700D7D9ED /* UnretainedLambdaCapturesCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UnretainedLambdaCapturesCheckerExpectations; sourceTree = "<group>"; };
 		2B1B1C6C2E3A874700D7D9ED /* UnretainedLocalVarsCheckerExpectations */ = {isa = PBXFileReference; lastKnownFileType = text; path = UnretainedLocalVarsCheckerExpectations; sourceTree = "<group>"; };
@@ -708,6 +710,11 @@
 				1C5ACA92273A41C20095F8D5 /* Instance.mm */,
 				1C33755D27FA23B8002F1644 /* IsValidToUseWith.h */,
 				0D509DCC29CAB6EC00546D84 /* MetalSPI.h */,
+				0D3CAF912EF0DE63008C5E2D /* ModelBridge.swift */,
+				0D3CAF8F2EF0DDC9008C5E2D /* ModelIBLTextures.swift */,
+				0D3CAF932EF0E149008C5E2D /* ModelParameters.swift */,
+				0D3CAF8D2EF0DCDE008C5E2D /* ModelRenderer.swift */,
+				0D3CAF952EF0E6BA008C5E2D /* ModelUtils.swift */,
 				973F784529C8A78200166C66 /* Pipeline.h */,
 				973F784629C8A78200166C66 /* Pipeline.mm */,
 				1C5ACADA273A4E710095F8D5 /* PipelineLayout.h */,
@@ -866,16 +873,8 @@
 			children = (
 				2B1B1C5E2E3A874700D7D9ED /* ForwardDeclCheckerExpectations */,
 				2B1B1C5F2E3A874700D7D9ED /* MemoryUnsafeCastCheckerExpectations */,
-				2B1B1C602E3A874700D7D9ED /* NoUncheckedPtrMemberCheckerExpectations */,
-				2B1B1C612E3A874700D7D9ED /* NoUncountedMemberCheckerExpectations */,
 				2B1B1C622E3A874700D7D9ED /* NoUnretainedMemberCheckerExpectations */,
-				2B1B1C632E3A874700D7D9ED /* RefCntblBaseVirtualDtorExpectations */,
-				2B1B1C642E3A874700D7D9ED /* RetainPtrCtorAdoptCheckerExpectations */,
-				2B1B1C652E3A874700D7D9ED /* UncheckedCallArgsCheckerExpectations */,
-				2B1B1C662E3A874700D7D9ED /* UncheckedLocalVarsCheckerExpectations */,
-				2B1B1C672E3A874700D7D9ED /* UncountedCallArgsCheckerExpectations */,
 				2B1B1C682E3A874700D7D9ED /* UncountedLambdaCapturesCheckerExpectations */,
-				2B1B1C692E3A874700D7D9ED /* UncountedLocalVarsCheckerExpectations */,
 				2B1B1C6A2E3A874700D7D9ED /* UnretainedCallArgsCheckerExpectations */,
 				2B1B1C6B2E3A874700D7D9ED /* UnretainedLambdaCapturesCheckerExpectations */,
 				2B1B1C6C2E3A874700D7D9ED /* UnretainedLocalVarsCheckerExpectations */,
@@ -1406,6 +1405,11 @@
 				0D30F93729F1F94A0055D9F1 /* ExternalTexture.mm in Sources */,
 				1C0F41EE280940650005886D /* HardwareCapabilities.mm in Sources */,
 				1C5ACA94273A41C20095F8D5 /* Instance.mm in Sources */,
+				0D3CAF922EF0DE63008C5E2D /* ModelBridge.swift in Sources */,
+				0D3CAF902EF0DDC9008C5E2D /* ModelIBLTextures.swift in Sources */,
+				0D3CAF942EF0E149008C5E2D /* ModelParameters.swift in Sources */,
+				0D3CAF8E2EF0DCDE008C5E2D /* ModelRenderer.swift in Sources */,
+				0D3CAF962EF0E6BA008C5E2D /* ModelUtils.swift in Sources */,
 				973F784829C8A78200166C66 /* Pipeline.mm in Sources */,
 				1C5ACAE5273A55DD0095F8D5 /* PipelineLayout.mm in Sources */,
 				1C9F7CDF29762F51006B5BE9 /* PresentationContext.mm in Sources */,

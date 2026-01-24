@@ -164,6 +164,12 @@ static CacheStorageRecord toCacheStorageRecord(WebCore::DOMCacheEngine::CrossThr
 
 void CacheStorageCache::retrieveRecords(WebCore::RetrieveRecordsOptions&& options, WebCore::DOMCacheEngine::CrossThreadRecordsCallback&& callback)
 {
+    auto targetRecordInfos = findRecords(options);
+    retrieveRecords(targetRecordInfos, WTF::move(options), WTF::move(callback));
+}
+
+Vector<CacheStorageRecordInformation> CacheStorageCache::findRecords(const WebCore::RetrieveRecordsOptions& options)
+{
     ASSERT(m_isInitialized);
     assertIsOnCorrectQueue();
 
@@ -178,11 +184,11 @@ void CacheStorageCache::retrieveRecords(WebCore::RetrieveRecordsOptions&& option
         }
     } else {
         if (!options.ignoreMethod && options.request.httpMethod() != "GET"_s)
-            return callback({ });
+            return { };
 
         auto iterator = m_records.find(computeKeyURL(url));
         if (iterator == m_records.end())
-            return callback({ });
+            return { };
 
         WebCore::CacheQueryOptions queryOptions { options.ignoreSearch, options.ignoreMethod, options.ignoreVary };
         for (auto& record : iterator->value) {
@@ -191,6 +197,11 @@ void CacheStorageCache::retrieveRecords(WebCore::RetrieveRecordsOptions&& option
         }
     }
 
+    return targetRecordInfos;
+}
+
+void CacheStorageCache::retrieveRecords(const Vector<CacheStorageRecordInformation>& targetRecordInfos, WebCore::RetrieveRecordsOptions&& options, WebCore::DOMCacheEngine::CrossThreadRecordsCallback&& callback)
+{
     if (targetRecordInfos.isEmpty())
         return callback({ });
     

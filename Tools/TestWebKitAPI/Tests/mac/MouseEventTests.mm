@@ -27,6 +27,7 @@
 
 #if PLATFORM(MAC)
 
+#import "ClassMethodSwizzler.h"
 #import "InstanceMethodSwizzler.h"
 #import "PlatformUtilities.h"
 #import "TestNavigationDelegate.h"
@@ -38,6 +39,22 @@
 #import <wtf/RunLoop.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/text/MakeString.h>
+
+@interface OverrideMouseLocation : NSObject
++ (NSPoint)overrideMouseLocation;
++ (void)setOverrideMouseLocation:(NSPoint)location;
+@end
+
+@implementation OverrideMouseLocation
+static NSPoint overrideMouseLocation = { 0, 0 };
++ (NSPoint)overrideMouseLocation {
+    return overrideMouseLocation;
+}
+
++ (void)setOverrideMouseLocation:(NSPoint)location {
+    overrideMouseLocation = location;
+}
+@end
 
 namespace TestWebKitAPI {
 
@@ -339,6 +356,50 @@ TEST(MouseEventTests, CmdShiftModifierIsKeptWhenJSInterceptsClick)
     runModifierIsKeptWhenJSInterceptsClickTest(NSEventModifierFlagCommand | NSEventModifierFlagShift);
 }
 
+static void runDispatchMouseLeaveEventOnWindowMoveTest(NSPoint initialMouseLocationInWindow, NSRect initialFrame, NSRect finalFrame, int expectedNumberOfMouseLeaveEvents)
+{
+    ClassMethodSwizzler swizzler([NSEvent class], @selector(mouseLocation), [OverrideMouseLocation methodForSelector:@selector(overrideMouseLocation)]);
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:initialFrame]);
+    [webView removeFromSuperview];
+    [webView addToTestWindow];
+
+    [webView synchronouslyLoadHTMLString:@"<!DOCTYPE html>"
+        "<html>"
+        "<head>"
+        "<style>"
+        "    body, html { margin: 0; width: 100%; height: 100%; }"
+        "    #target {width: 100px; height: 100px; background-color: red; position: absolute; bottom: 0; right: 0;}"
+        "</style>"
+        "</head>"
+        "<body>"
+        "<div id='target'></div>"
+        "<script>"
+        "    let mouseLeaveCount = 0;"
+        "    let target = document.getElementById('target');"
+        "    target.addEventListener('mouseleave', function() { mouseLeaveCount++ });"
+        "</script>"
+        "</body>"
+        "</html>"];
+
+    [webView mouseMoveToPoint:initialMouseLocationInWindow withFlags:0];
+    [OverrideMouseLocation setOverrideMouseLocation:initialMouseLocationInWindow];
+
+    [[webView window] setFrame:finalFrame display:YES];
+
+    [webView waitForPendingMouseEvents];
+
+    EXPECT_EQ([[webView objectByEvaluatingJavaScript:@"mouseLeaveCount"] intValue], expectedNumberOfMouseLeaveEvents);
+}
+
+TEST(MouseEventTests, WindowChangeShouldCauseMouseLeaveEvent)
+{
+    runDispatchMouseLeaveEventOnWindowMoveTest(NSMakePoint(350, 50), NSMakeRect(0, 0, 400, 400), NSMakeRect(100, 0, 400, 400), 1);
+}
+TEST(MouseEventTests, WindowChangeShouldNotCauseMouseLeaveEvent)
+{
+    runDispatchMouseLeaveEventOnWindowMoveTest(NSMakePoint(250, 50), NSMakeRect(0, 0, 400, 400), NSMakeRect(100, 0, 400, 400), 0);
+}
 } // namespace TestWebKitAPI
 
 #endif // PLATFORM(MAC)

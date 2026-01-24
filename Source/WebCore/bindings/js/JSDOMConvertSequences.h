@@ -67,7 +67,7 @@ struct GenericSequenceInnerConverter<IDLInterface<T>> {
         if (convertedValue.hasException(scope)) [[unlikely]]
             return;
 
-        result.append(Ref { *convertedValue.releaseReturnValue() });
+        result.append(Ref { convertedValue.releaseReturnValue() });
     }
 };
 

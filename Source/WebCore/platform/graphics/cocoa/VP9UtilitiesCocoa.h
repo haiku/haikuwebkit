@@ -29,11 +29,6 @@
 #if ENABLE(VP9) && PLATFORM(COCOA)
 
 #include <WebCore/VP9Utilities.h>
-#include <webm/dom_types.h>
-
-namespace vp9_parser {
-class Vp9HeaderParser;
-}
 
 namespace WebCore {
 
@@ -55,8 +50,6 @@ std::optional<MediaCapabilitiesInfo> validateVPParameters(const VPCodecConfigura
 std::optional<MediaCapabilitiesInfo> computeVPParameters(const VideoConfiguration&, bool vp9HardwareDecoderAvailable);
 bool isVPSoftwareDecoderSmooth(const VideoConfiguration&);
 
-Ref<VideoInfo> createVideoInfoFromVP9HeaderParser(const vp9_parser::Vp9HeaderParser&, const webm::Video&);
-
 struct VP8FrameHeader {
     bool keyframe { false };
     uint8_t version { 0 };
@@ -71,7 +64,6 @@ struct VP8FrameHeader {
 };
 
 std::optional<VP8FrameHeader> parseVP8FrameHeader(std::span<const uint8_t>);
-Ref<VideoInfo> createVideoInfoFromVP8Header(const VP8FrameHeader&, const webm::Video&);
 
 class VP9TestingOverrides {
 public:

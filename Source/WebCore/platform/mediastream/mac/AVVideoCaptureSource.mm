@@ -229,11 +229,11 @@ void AVVideoCaptureSource::setUseAVCaptureDeviceRotationCoordinatorAPI(bool valu
 
 CaptureSourceOrError AVVideoCaptureSource::create(const CaptureDevice& device, MediaDeviceHashSalts&& hashSalts, const MediaConstraints* constraints, std::optional<PageIdentifier> pageIdentifier)
 {
-    auto *avDevice = [PAL::getAVCaptureDeviceClassSingleton() deviceWithUniqueID:device.persistentId().createNSString().get()];
+    RetainPtr avDevice = [PAL::getAVCaptureDeviceClassSingleton() deviceWithUniqueID:device.persistentId().createNSString().get()];
     if (!avDevice)
         return CaptureSourceOrError({ "No AVVideoCaptureSource device"_s , MediaAccessDenialReason::PermissionDenied });
 
-    Ref<RealtimeMediaSource> source = adoptRef(*new AVVideoCaptureSource(avDevice, device, WTF::move(hashSalts), pageIdentifier));
+    Ref<RealtimeMediaSource> source = adoptRef(*new AVVideoCaptureSource(avDevice.get(), device, WTF::move(hashSalts), pageIdentifier));
 
     if (!source->capabilities().width().max() || !source->capabilities().height().max() || !source->capabilities().frameRate().max())
         return CaptureSourceOrError({ "AVVideoCaptureSource device has invalid width, height or frameRate capabilities"_s , MediaAccessDenialReason::PermissionDenied });
@@ -556,16 +556,16 @@ const RealtimeMediaSourceCapabilities& AVVideoCaptureSource::capabilities()
     capabilities.setDeviceId(hashedId());
     capabilities.setGroupId(hashedGroupId());
 
-    AVCaptureDevice *videoDevice = device();
-    if ([videoDevice position] == AVCaptureDevicePositionFront)
+    RetainPtr videoDevice = device();
+    if ([videoDevice.get() position] == AVCaptureDevicePositionFront)
         capabilities.addFacingMode(VideoFacingMode::User);
-    if ([videoDevice position] == AVCaptureDevicePositionBack)
+    if ([videoDevice.get() position] == AVCaptureDevicePositionBack)
         capabilities.addFacingMode(VideoFacingMode::Environment);
 
     auto supportedConstraints = settings().supportedConstraints();
 
 #if HAVE(AVCAPTUREDEVICE_MINFOCUSLENGTH)
-    double minimumFocusDistance = [videoDevice minimumFocusDistance];
+    double minimumFocusDistance = [videoDevice.get() minimumFocusDistance];
     if (minimumFocusDistance != -1.0) {
         ASSERT(minimumFocusDistance >= 0);
         supportedConstraints.setSupportsFocusDistance(true);
@@ -573,13 +573,13 @@ const RealtimeMediaSourceCapabilities& AVVideoCaptureSource::capabilities()
     }
 #endif // HAVE(AVCAPTUREDEVICE_MINFOCUSLENGTH)
 
-    auto whiteBalanceModes = supportedWhiteBalanceModes(videoDevice);
+    auto whiteBalanceModes = supportedWhiteBalanceModes(videoDevice.get());
     if (!whiteBalanceModes.isEmpty()) {
         supportedConstraints.setSupportsWhiteBalanceMode(true);
         capabilities.setWhiteBalanceModes(WTF::move(whiteBalanceModes));
     }
 
-    if ([videoDevice hasTorch]) {
+    if ([videoDevice.get() hasTorch]) {
         supportedConstraints.setSupportsTorch(true);
         capabilities.setTorch(true);
     }
@@ -938,13 +938,13 @@ void AVVideoCaptureSource::setSessionSizeFrameRateAndZoom()
         [device() setActiveFormat:m_currentPreset->format()];
 
 #if PLATFORM(MAC)
-        auto settingsDictionary = @{
+        RetainPtr settingsDictionary = @{
             (__bridge NSString *)kCVPixelBufferPixelFormatTypeKey: @(preferedPixelBufferFormat()),
             (__bridge NSString *)kCVPixelBufferWidthKey: @(m_currentPreset->size().width()),
             (__bridge NSString *)kCVPixelBufferHeightKey: @(m_currentPreset->size().height()),
             (__bridge NSString *)kCVPixelBufferIOSurfacePropertiesKey : @{ }
         };
-        [m_videoOutput setVideoSettings:settingsDictionary];
+        [m_videoOutput setVideoSettings:settingsDictionary.get()];
 #endif
 
         auto* frameRateRange = frameDurationForFrameRate(m_currentFrameRate);
@@ -960,8 +960,16 @@ void AVVideoCaptureSource::setSessionSizeFrameRateAndZoom()
 
             ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER, "setting frame rate to ", m_currentFrameRate, ", duration ", PAL::toMediaTime(frameDuration));
 
+#if PLATFORM(MAC)
+            AVCaptureConnection* captureConnection = [m_videoOutput connectionWithMediaType:AVMediaTypeVideo];
+            if (captureConnection.supportsVideoMinFrameDuration)
+                captureConnection.videoMinFrameDuration = frameDuration;
+            if (captureConnection.supportsVideoMaxFrameDuration)
+                captureConnection.videoMaxFrameDuration = frameDuration;
+#else
             [device() setActiveVideoMinFrameDuration: frameDuration];
             [device() setActiveVideoMaxFrameDuration: frameDuration];
+#endif
         } else
             ERROR_LOG_IF_POSSIBLE(LOGIDENTIFIER, "cannot find proper frame rate range for the selected preset\n");
 
@@ -1146,10 +1154,10 @@ AVFrameRateRange* AVVideoCaptureSource::frameDurationForFrameRate(double rate)
 {
     using namespace PAL; // For CMTIME_COMPARE_INLINE
 
-    AVFrameRateRange *bestFrameRateRange = nil;
+    RetainPtr<AVFrameRateRange> bestFrameRateRange;
     for (AVFrameRateRange *frameRateRange in [[device() activeFormat] videoSupportedFrameRateRanges]) {
         if (frameRateRangeIncludesRate({ [frameRateRange minFrameRate], [frameRateRange maxFrameRate] }, rate)) {
-            if (!bestFrameRateRange || CMTIME_COMPARE_INLINE([frameRateRange minFrameDuration], >, [bestFrameRateRange minFrameDuration]))
+            if (!bestFrameRateRange || CMTIME_COMPARE_INLINE([frameRateRange minFrameDuration], >, [bestFrameRateRange.get() minFrameDuration]))
                 bestFrameRateRange = frameRateRange;
         }
     }
@@ -1157,7 +1165,7 @@ AVFrameRateRange* AVVideoCaptureSource::frameDurationForFrameRate(double rate)
     if (!bestFrameRateRange)
         ERROR_LOG_IF_POSSIBLE(LOGIDENTIFIER, "no frame rate range for rate ", rate);
 
-    return bestFrameRateRange;
+    return bestFrameRateRange.autorelease();
 }
 
 bool AVVideoCaptureSource::setupCaptureSession()

@@ -574,12 +574,12 @@ bool NavigationScheduler::redirectScheduledDuringLoad()
 
 bool NavigationScheduler::locationChangePending()
 {
-    return m_redirect && m_redirect->isLocationChange() && m_redirect->targetIsCurrentFrame() && !m_redirect->isSameDocumentNavigation(m_frame.get());
+    return m_redirect && m_redirect->isLocationChange() && m_redirect->targetIsCurrentFrame() && !m_redirect->isSameDocumentNavigation(m_frame);
 }
 
 Ref<Frame> NavigationScheduler::protectedFrame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 void NavigationScheduler::clear()

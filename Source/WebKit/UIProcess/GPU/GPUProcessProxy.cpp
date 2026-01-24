@@ -843,13 +843,6 @@ void GPUProcessProxy::platformInitializeGPUProcessParameters(GPUProcessCreationP
 }
 #endif
 
-#if ENABLE(VIDEO)
-void GPUProcessProxy::requestBitmapImageForCurrentTime(ProcessIdentifier processIdentifier, MediaPlayerIdentifier playerIdentifier, CompletionHandler<void(std::optional<ShareableBitmap::Handle>&&)>&& completion)
-{
-    sendWithAsyncReply(Messages::GPUProcess::RequestBitmapImageForCurrentTime(processIdentifier, playerIdentifier), WTF::move(completion));
-}
-#endif
-
 #if ENABLE(MEDIA_STREAM)
 void GPUProcessProxy::voiceActivityDetected()
 {

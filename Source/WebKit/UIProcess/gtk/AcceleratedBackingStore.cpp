@@ -217,11 +217,8 @@ AcceleratedBackingStore::~AcceleratedBackingStore()
             legacyMainFrameProcess->removeMessageReceiver(Messages::AcceleratedBackingStore::messageReceiverName(), m_surfaceID);
     }
 
-    if (m_gdkGLContext) {
-        gdk_gl_context_make_current(m_gdkGLContext.get());
-        m_committedBuffer = nullptr;
+    if (m_gdkGLContext && m_gdkGLContext.get() == gdk_gl_context_get_current())
         gdk_gl_context_clear_current();
-    }
 }
 
 AcceleratedBackingStore::Buffer::Buffer(WebPageProxy& webPage, uint64_t id, uint64_t surfaceID, const IntSize& size, RendererBufferFormat::Usage usage)
@@ -450,8 +447,10 @@ AcceleratedBackingStore::BufferEGLImage::~BufferEGLImage()
         glDisplay->destroyImage(m_image);
 
 #if !USE(GTK4)
-    if (m_textureID)
+    if (m_textureID) {
+        gdk_gl_context_make_current(m_gdkGLContext.get());
         glDeleteTextures(1, &m_textureID);
+    }
 #endif
 }
 
@@ -494,6 +493,7 @@ void AcceleratedBackingStore::BufferEGLImage::didUpdateContents(Buffer*, const R
     if (m_textureID)
         return;
 
+    m_gdkGLContext = gdk_gl_context_get_current();
     glGenTextures(1, &m_textureID);
     glBindTexture(GL_TEXTURE_2D, m_textureID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -721,13 +721,10 @@ void AcceleratedBackingStore::realize()
 
 void AcceleratedBackingStore::unrealize()
 {
-    if (m_gdkGLContext) {
-        gdk_gl_context_make_current(m_gdkGLContext.get());
-        m_committedBuffer = nullptr;
+    m_committedBuffer = nullptr;
+
+    if (m_gdkGLContext && m_gdkGLContext.get() == gdk_gl_context_get_current())
         gdk_gl_context_clear_current();
-        m_gdkGLContext = nullptr;
-    } else
-        m_committedBuffer = nullptr;
 }
 
 void AcceleratedBackingStore::ensureGLContext()

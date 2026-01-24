@@ -190,7 +190,7 @@ bool HTTPCookieStore::isOptInCookiePartitioningEnabled() const
 {
 #if ENABLE(OPT_IN_PARTITIONED_COOKIES)
     if (RefPtr dataStore = m_owningDataStore.get())
-        return dataStore->isOptInCookiePartitioningEnabled();
+        return dataStore->computeIsOptInCookiePartitioningEnabled();
 #endif
     return false;
 }

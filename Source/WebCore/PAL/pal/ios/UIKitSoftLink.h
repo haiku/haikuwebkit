@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 #if PLATFORM(IOS_FAMILY)
 
 #import <pal/spi/ios/UIKitSPI.h>
@@ -89,3 +92,5 @@ SOFT_LINK_FUNCTION_FOR_HEADER(PAL, UIKit, UIImagePNGRepresentation, NSData *, (U
 #define UIImagePNGRepresentation PAL::softLink_UIKit_UIImagePNGRepresentation
 
 #endif
+
+#endif // !__has_feature(modules)

@@ -373,9 +373,6 @@ test/built-ins/TypedArray/prototype/set/array-arg-value-conversion-resizes-array
 test/built-ins/TypedArray/prototype/slice/speciesctor-return-same-buffer-with-offset.js:
   default: 'Test262Error: Actual [20, 30, 40, 60] and expected [20, 20, 20, 60] should have the same contents.  (Testing with Float64Array.)'
   strict mode: 'Test262Error: Actual [20, 30, 40, 60] and expected [20, 20, 20, 60] should have the same contents.  (Testing with Float64Array.)'
-test/built-ins/TypedArray/prototype/subarray/byteoffset-with-detached-buffer.js:
-  default: 'Test262Error: Expected SameValue(«8», «16») to be true (Testing with Float64Array.)'
-  strict mode: 'Test262Error: Expected SameValue(«8», «16») to be true (Testing with Float64Array.)'
 test/built-ins/TypedArrayConstructors/ctors/object-arg/iterated-array-changed-by-tonumber.js:
   default: 'Test262Error: Expected SameValue(«NaN», «2») to be true (Testing with Float64Array.)'
   strict mode: 'Test262Error: Expected SameValue(«NaN», «2») to be true (Testing with Float64Array.)'
@@ -749,12 +746,6 @@ test/staging/sm/RegExp/replace-sticky-lastIndex.js:
 test/staging/sm/RegExp/replace-sticky.js:
   default: 'Test262Error: Expected SameValue(«"ABCDEabcdeabcdefghij"», «"abcdeABCDEabcdefghij"») to be true'
   strict mode: 'Test262Error: Expected SameValue(«"ABCDEabcdeabcdefghij"», «"abcdeABCDEabcdefghij"») to be true'
-test/staging/sm/RegExp/split-limit.js:
-  default: 'Test262Error: Expected SameValue(«3», «1») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«3», «1») to be true'
-test/staging/sm/RegExp/split-trace.js:
-  default: 'Test262Error: Expected SameValue(«"get:constructor,get:species,get:flags,call:constructor,set:lastIndex,get:exec,call:exec,set:lastIndex,get:exec,call:exec,get:lastIndex,get:result[length],get:result[length],get:result[1],get:result[2],set:lastIndex,get:exec,call:exec,"», «"get:constructor,get:species,get:flags,call:constructor,set:lastIndex,get:exec,call:exec,set:lastIndex,get:exec,call:exec,get:lastIndex,get:result[length],get:result[1],get:result[2],set:lastIndex,get:exec,call:exec,"») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«"get:constructor,get:species,get:flags,call:constructor,set:lastIndex,get:exec,call:exec,set:lastIndex,get:exec,call:exec,get:lastIndex,get:result[length],get:result[length],get:result[1],get:result[2],set:lastIndex,get:exec,call:exec,"», «"get:constructor,get:species,get:flags,call:constructor,set:lastIndex,get:exec,call:exec,set:lastIndex,get:exec,call:exec,get:lastIndex,get:result[length],get:result[1],get:result[2],set:lastIndex,get:exec,call:exec,"») to be true'
 test/staging/sm/RegExp/unicode-braced.js:
   default: 'SyntaxError: Invalid regular expression: regular expression too large'
   strict mode: 'SyntaxError: Invalid regular expression: regular expression too large'
@@ -773,9 +764,6 @@ test/staging/sm/TypedArray/set-with-receiver.js:
 test/staging/sm/TypedArray/slice-memcpy.js:
   default: 'Test262Error: Actual [1, 2, 1, 2, 3, 4] and expected [1, 2, 1, 2, 1, 2] should have the same contents. '
   strict mode: 'Test262Error: Actual [1, 2, 1, 2, 3, 4] and expected [1, 2, 1, 2, 1, 2] should have the same contents. '
-test/staging/sm/TypedArray/subarray.js:
-  default: 'Test262Error: Expected SameValue(«0», «1») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«0», «1») to be true'
 test/staging/sm/class/defaultConstructorDerivedSpread.js:
   default: 'Error: unexpected call'
   strict mode: 'Error: unexpected call'

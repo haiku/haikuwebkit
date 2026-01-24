@@ -71,7 +71,7 @@ JSValue JSRTCRtpSFrameTransform::setEncryptionKey(JSGlobalObject& lexicalGlobalO
     RETURN_IF_EXCEPTION(throwScope, jsUndefined());
     throwScope.release();
 
-    wrapped().setEncryptionKey(*keyConversionResult.releaseReturnValue(), keyID, WTF::move(promise));
+    wrapped().setEncryptionKey(keyConversionResult.releaseReturnValue(), keyID, WTF::move(promise));
     return jsUndefined();
 }
 

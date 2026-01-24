@@ -61,9 +61,9 @@ public:
     SandboxExtensionImpl(std::span<const uint8_t>);
     ~SandboxExtensionImpl();
 
-    WARN_UNUSED_RETURN bool consume();
+    [[nodiscard]] bool consume();
     bool invalidate();
-    WARN_UNUSED_RETURN std::span<const uint8_t> getSerializedFormat();
+    [[nodiscard]] std::span<const uint8_t> getSerializedFormat();
 
     SandboxExtensionImpl(SandboxExtensionImpl&& other)
         : m_token(std::exchange(other.m_token, CString()))

@@ -156,6 +156,12 @@ public:
     WEBCORE_EXPORT virtual SecurityOrigin* frameDocumentSecurityOrigin() const = 0;
     WEBCORE_EXPORT virtual String frameURLProtocol() const = 0;
 
+    // Scale factor of this frame with respect to the container.
+    WEBCORE_EXPORT float frameScaleFactor() const;
+
+    // Scale factor of a child frame with respect to this frame.
+    virtual float usedZoomForChild(const Frame&) const = 0;
+
     WEBCORE_EXPORT virtual void setPrinting(bool printing, FloatSize pageSize, FloatSize originalPageSize, float maximumShrinkRatio, AdjustViewSize, NotifyUIProcess = NotifyUIProcess::Yes);
     WEBCORE_EXPORT bool isPrinting() const;
 
@@ -180,7 +186,7 @@ private:
     mutable UniqueRef<NavigationScheduler> m_navigationScheduler;
     WeakPtr<Frame> m_opener;
     WeakHashSet<Frame> m_openedFrames;
-    std::unique_ptr<OwnerPermissionsPolicyData> m_ownerPermisssionsPolicyOverride;
+    std::unique_ptr<OwnerPermissionsPolicyData> m_ownerPermissionsPolicyOverride;
     bool m_isPrinting { false };
 
     Ref<FrameTreeSyncData> m_frameTreeSyncData;

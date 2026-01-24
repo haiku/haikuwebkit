@@ -131,12 +131,12 @@ void SVGFilterPrimitiveStandardAttributes::markFilterEffectForRepaint()
         return;
 
     if (auto* filterPrimitiveRenderer = dynamicDowncast<RenderSVGResourceFilterPrimitive>(renderer.get())) {
-        filterPrimitiveRenderer->markFilterEffectForRepaint(m_effect.get());
+        filterPrimitiveRenderer->markFilterEffectForRepaint(m_effect);
         return;
     }
 
     if (auto* filterPrimitiveRenderer = dynamicDowncast<LegacyRenderSVGResourceFilterPrimitive>(renderer.get())) {
-        filterPrimitiveRenderer->markFilterEffectForRepaint(m_effect.get());
+        filterPrimitiveRenderer->markFilterEffectForRepaint(m_effect);
         return;
     }
 

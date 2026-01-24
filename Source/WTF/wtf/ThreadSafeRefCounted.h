@@ -98,11 +98,11 @@ public:
         if constexpr (destructionThread == DestructionThread::Any) {
             delete static_cast<const T*>(this);
         } else if constexpr (destructionThread == DestructionThread::Main) {
-            ensureOnMainThread([this] {
+            SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE ensureOnMainThread([this] {
                 delete static_cast<const T*>(this);
             });
         } else if constexpr (destructionThread == DestructionThread::MainRunLoop) {
-            ensureOnMainRunLoop([this] {
+            SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE ensureOnMainRunLoop([this] {
                 delete static_cast<const T*>(this);
             });
         } else

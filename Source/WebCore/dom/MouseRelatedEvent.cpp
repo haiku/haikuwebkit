@@ -28,6 +28,8 @@
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
+#include "MouseEventInit.h"
+#include "RenderBoxModelObjectInlines.h"
 #include "RenderLayer.h"
 #include "RenderLayerInlines.h"
 #include "RenderObject.h"
@@ -67,7 +69,7 @@ MouseRelatedEvent::MouseRelatedEvent(enum EventInterfaceType eventInterface, con
 {
 }
 
-MouseRelatedEvent::MouseRelatedEvent(enum EventInterfaceType eventInterface, const AtomString& eventType, const MouseRelatedEventInit& initializer, IsTrusted isTrusted)
+MouseRelatedEvent::MouseRelatedEvent(enum EventInterfaceType eventInterface, const AtomString& eventType, const MouseEventInit& initializer, IsTrusted isTrusted)
     : UIEventWithKeyState(eventInterface, eventType, initializer, isTrusted)
         , m_movementX(initializer.movementX)
         , m_movementY(initializer.movementY)
@@ -83,6 +85,12 @@ MouseRelatedEvent::MouseRelatedEvent(enum EventInterfaceType eventInterface, con
 
     setScreenLocation({ screenX, screenY });
 
+    init(false, DoublePoint::zero());
+}
+
+MouseRelatedEvent::MouseRelatedEvent(enum EventInterfaceType eventInterface, const AtomString& eventType, const EventModifierInit& initializer, IsTrusted isTrusted)
+    : UIEventWithKeyState(eventInterface, eventType, initializer, isTrusted)
+{
     init(false, DoublePoint::zero());
 }
 
@@ -198,6 +206,21 @@ void MouseRelatedEvent::computeRelativePosition()
     if (!targetNode)
         return;
 
+    // Find the target renderer, adjusting for SVG elements.
+    auto findTargetRendererAndAdjustedNode = [](const RefPtr<Node>& node) {
+        CheckedPtr renderer = node->renderer();
+        if (!renderer || !renderer->isSVGRenderer())
+            return std::pair { renderer, node };
+
+        // If this is an SVG node, compute the offset to the padding box of the
+        // outermost SVG root (== the closest ancestor that has a CSS layout box.).
+        while (!renderer->isRenderOrLegacyRenderSVGRoot())
+            renderer = renderer->parent();
+
+        // Update the target node to point to the SVG root.
+        return std::pair { renderer, renderer->protectedNode() };
+    };
+
     // Compute coordinates that are based on the target.
     m_layerLocation = LayoutPoint(m_pageLocation);
     m_offsetLocation = m_pageLocation;
@@ -205,9 +228,17 @@ void MouseRelatedEvent::computeRelativePosition()
     // Must have an updated render tree for this math to work correctly.
     targetNode->protectedDocument()->updateLayoutIgnorePendingStylesheets();
 
-    // Adjust offsetLocation to be relative to the target's position.
-    if (CheckedPtr renderer = targetNode->renderer()) {
+    // Adjust offsetLocation to be relative to the target's padding box.
+    auto [renderer, adjustedNode] = findTargetRendererAndAdjustedNode(targetNode);
+    if (targetNode != adjustedNode)
+        targetNode = WTF::move(adjustedNode);
+
+    if (renderer) {
         m_offsetLocation = renderer->absoluteToLocal(absoluteLocation(), UseTransforms);
+
+        if (CheckedPtr boxModel = dynamicDowncast<RenderBoxModelObject>(renderer.get()))
+            m_offsetLocation.move(-boxModel->borderLeft(), -boxModel->borderTop());
+
         float scaleFactor = 1 / documentToAbsoluteScaleFactor();
         if (scaleFactor != 1.0f)
             m_offsetLocation.scale(scaleFactor);
@@ -221,7 +252,7 @@ void MouseRelatedEvent::computeRelativePosition()
     while (node && !node->renderer())
         node = node->parentNode();
 
-    RenderLayer* layer;
+    CheckedPtr<RenderLayer> layer;
     if (node && (layer = node->renderer()->enclosingLayer())) {
         for (; layer; layer = layer->parent()) {
             m_layerLocation -= toLayoutSize(layer->location());

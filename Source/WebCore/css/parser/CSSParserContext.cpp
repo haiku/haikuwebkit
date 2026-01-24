@@ -100,9 +100,7 @@ CSSParserContext::CSSParserContext(const Settings& settings)
     , gridLanesEnabled { settings.gridLanesEnabled() }
     , cssAppearanceBaseEnabled { settings.cssAppearanceBaseEnabled() }
     , cssPaintingAPIEnabled { settings.cssPaintingAPIEnabled() }
-    , cssShapeFunctionEnabled { settings.cssShapeFunctionEnabled() }
     , cssTextDecorationLineErrorValues { settings.cssTextDecorationLineErrorValues() }
-    , cssBackgroundClipBorderAreaEnabled { settings.cssBackgroundClipBorderAreaEnabled() }
     , cssWordBreakAutoPhraseEnabled { settings.cssWordBreakAutoPhraseEnabled() }
     , popoverAttributeEnabled { settings.popoverAttributeEnabled() }
     , sidewaysWritingModesEnabled { settings.sidewaysWritingModesEnabled() }
@@ -112,9 +110,8 @@ CSSParserContext::CSSParserContext(const Settings& settings)
     , imageControlsEnabled { settings.imageControlsEnabled() }
 #endif
     , colorLayersEnabled { settings.cssColorLayersEnabled() }
-    , contrastColorEnabled { settings.cssContrastColorEnabled() }
     , targetTextPseudoElementEnabled { settings.targetTextPseudoElementEnabled() }
-    , cssProgressFunctionEnabled { settings.cssProgressFunctionEnabled() }
+    , htmlEnhancedSelectPseudoElementsEnabled { settings.htmlEnhancedSelectPseudoElementsEnabled() }
     , cssRandomFunctionEnabled { settings.cssRandomFunctionEnabled() }
     , cssTreeCountingFunctionsEnabled { settings.cssTreeCountingFunctionsEnabled() }
     , cssURLModifiersEnabled { settings.cssURLModifiersEnabled() }
@@ -125,51 +122,50 @@ CSSParserContext::CSSParserContext(const Settings& settings)
     , cssTextTransformMathAutoEnabled { settings.cssTextTransformMathAutoEnabled() }
     , cssInternalAutoBaseParsingEnabled { settings.cssInternalAutoBaseParsingEnabled() }
     , cssMathDepthEnabled { settings.cssMathDepthEnabled() }
+    , openPseudoClassEnabled { settings.openPseudoClassEnabled() }
     , propertySettings { CSSPropertySettings { settings } }
 {
 }
 
 void add(Hasher& hasher, const CSSParserContext& context)
 {
-    uint32_t bits = context.isHTMLDocument                  << 0
-        | context.hasDocumentSecurityOrigin                 << 1
-        | static_cast<bool>(context.loadedFromOpaqueSource) << 2
-        | context.useSystemAppearance                       << 3
-        | context.springTimingFunctionEnabled               << 4
+    auto bits = WTF::packBools(
+        context.isHTMLDocument,
+        context.hasDocumentSecurityOrigin,
+        static_cast<bool>(context.loadedFromOpaqueSource),
+        context.useSystemAppearance,
+        context.springTimingFunctionEnabled,
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
-        | context.cssTransformStyleSeparatedEnabled         << 5
+        context.cssTransformStyleSeparatedEnabled,
 #endif
-        | context.gridLanesEnabled                          << 6
-        | context.cssAppearanceBaseEnabled                  << 7
-        | context.cssPaintingAPIEnabled                     << 8
-        | context.cssShapeFunctionEnabled                   << 9
-        | context.cssBackgroundClipBorderAreaEnabled        << 10
-        | context.cssWordBreakAutoPhraseEnabled             << 11
-        | context.popoverAttributeEnabled                   << 12
-        | context.sidewaysWritingModesEnabled               << 13
-        | context.cssTextWrapPrettyEnabled                  << 14
-        | context.thumbAndTrackPseudoElementsEnabled        << 15
+        context.gridLanesEnabled,
+        context.cssAppearanceBaseEnabled,
+        context.cssPaintingAPIEnabled,
+        context.cssWordBreakAutoPhraseEnabled,
+        context.popoverAttributeEnabled,
+        context.sidewaysWritingModesEnabled,
+        context.cssTextWrapPrettyEnabled,
+        context.thumbAndTrackPseudoElementsEnabled,
 #if ENABLE(SERVICE_CONTROLS)
-        | context.imageControlsEnabled                      << 16
+        context.imageControlsEnabled,
 #endif
-        | context.colorLayersEnabled                        << 17
-        | context.contrastColorEnabled                      << 18
-        | context.targetTextPseudoElementEnabled            << 19
-        | context.cssProgressFunctionEnabled                << 20
-        | context.cssRandomFunctionEnabled                  << 21
-        | context.cssTreeCountingFunctionsEnabled           << 22
-        | context.cssURLModifiersEnabled                    << 23
-        | context.cssURLIntegrityModifierEnabled            << 24
-        | context.cssAxisRelativePositionKeywordsEnabled    << 25
-        | context.cssDynamicRangeLimitMixEnabled            << 26
-        | context.cssConstrainedDynamicRangeLimitEnabled    << 27
-        | context.cssTextDecorationLineErrorValues          << 28
-        | context.cssTextTransformMathAutoEnabled           << 29
-        | context.cssInternalAutoBaseParsingEnabled         << 30
-        | context.cssTextTransformMathAutoEnabled           << 31;
+        context.colorLayersEnabled,
+        context.targetTextPseudoElementEnabled,
+        context.cssRandomFunctionEnabled,
+        context.cssTreeCountingFunctionsEnabled,
+        context.cssURLModifiersEnabled,
+        context.cssURLIntegrityModifierEnabled,
+        context.cssAxisRelativePositionKeywordsEnabled,
+        context.cssDynamicRangeLimitMixEnabled,
+        context.cssConstrainedDynamicRangeLimitEnabled,
+        context.cssTextDecorationLineErrorValues,
+        context.cssTextTransformMathAutoEnabled,
+        context.cssInternalAutoBaseParsingEnabled,
+        context.cssMathDepthEnabled,
+        context.htmlEnhancedSelectPseudoElementsEnabled,
+        context.openPseudoClassEnabled
+    );
     add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits);
-    uint32_t bits2 =  context.cssMathDepthEnabled           << 0;
-    add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits, bits2);
 }
 
 void CSSParserContext::setUASheetMode()

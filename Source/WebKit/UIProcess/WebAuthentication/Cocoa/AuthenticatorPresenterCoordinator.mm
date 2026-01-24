@@ -295,14 +295,14 @@ void AuthenticatorPresenterCoordinator::setLAContext(LAContext *context)
 
 void AuthenticatorPresenterCoordinator::didSelectAssertionResponse(const String& credentialName, LAContext *context)
 {
-    auto response = m_credentials.take(credentialName);
+    RefPtr response = m_credentials.take(credentialName);
     if (!response)
         return;
 
     if (context)
         response->setLAContext(context);
 
-    m_responseHandler(response.get());
+    m_responseHandler(response);
 }
 
 void AuthenticatorPresenterCoordinator::setPin(const String& pin)

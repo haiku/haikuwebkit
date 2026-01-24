@@ -143,7 +143,7 @@ Ref<UniqueIDBDatabaseTransaction> UniqueIDBDatabaseConnection::createVersionChan
     IDBTransactionInfo info = IDBTransactionInfo::versionChange(m_connectionToClient, checkedDatabase()->info(), newVersion);
 
     Ref<UniqueIDBDatabaseTransaction> transaction = UniqueIDBDatabaseTransaction::create(*this, info);
-    m_transactionMap.set(transaction->info().identifier(), &transaction.get());
+    m_transactionMap.set(transaction->info().identifier(), transaction);
 
     return transaction;
 }
@@ -159,7 +159,7 @@ void UniqueIDBDatabaseConnection::establishTransaction(const IDBTransactionInfo&
     ASSERT(!m_closePending);
 
     Ref<UniqueIDBDatabaseTransaction> transaction = UniqueIDBDatabaseTransaction::create(*this, info);
-    m_transactionMap.set(transaction->info().identifier(), &transaction.get());
+    m_transactionMap.set(transaction->info().identifier(), transaction);
 
     ASSERT(m_database);
     checkedDatabase()->enqueueTransaction(WTF::move(transaction));

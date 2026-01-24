@@ -57,7 +57,7 @@ public:
     // DataTransfer owns DataTransferItemList, and DataTransfer is kept alive as long as DataTransferItemList is alive.
     void ref() const final { m_dataTransfer->ref(); }
     void deref() const final { m_dataTransfer->deref(); }
-    DataTransfer& dataTransfer() { return m_dataTransfer.get(); }
+    DataTransfer& dataTransfer() { return m_dataTransfer; }
 
     // DOM API
     unsigned length() const;

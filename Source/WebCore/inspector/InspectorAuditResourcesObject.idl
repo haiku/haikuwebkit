@@ -32,6 +32,7 @@
 
 [
     JSGenerateToJSObject,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary Resource {
     DOMString id;
     DOMString url;
@@ -40,6 +41,7 @@
 
 [
     JSGenerateToJSObject,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary ResourceContent {
     DOMString data;
     boolean base64Encoded;

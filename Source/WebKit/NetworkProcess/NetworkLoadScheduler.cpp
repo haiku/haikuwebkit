@@ -278,11 +278,11 @@ void NetworkLoadScheduler::setResourceLoadSchedulingMode(WebCore::PageIdentifier
     }
 }
 
-void NetworkLoadScheduler::prioritizeLoads(const Vector<RefPtr<NetworkLoad>>& loads)
+void NetworkLoadScheduler::prioritizeLoads(const Vector<Ref<NetworkLoad>>& loads)
 {
-    for (RefPtr load : loads) {
-        if (auto* context = contextForLoad(*load))
-            context->prioritize(*load);
+    for (Ref load : loads) {
+        if (auto* context = contextForLoad(load))
+            context->prioritize(load);
     }
 }
 

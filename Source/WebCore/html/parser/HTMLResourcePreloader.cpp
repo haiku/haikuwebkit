@@ -70,6 +70,7 @@ CachedResourceRequest PreloadRequest::resourceRequest(Document& document)
         options.referrerPolicy = m_referrerPolicy;
     options.fetchPriority = m_fetchPriority;
     options.nonce = m_nonceAttribute;
+    options.integrity = m_integrityAttribute;
     auto request = createPotentialAccessControlRequest(completeURL(document), WTF::move(options), document, crossOriginMode);
     request.setInitiatorType(m_initiatorType);
 

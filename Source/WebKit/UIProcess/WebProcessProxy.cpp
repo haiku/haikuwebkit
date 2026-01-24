@@ -1546,7 +1546,7 @@ RefPtr<API::UserInitiatedAction> WebProcessProxy::userInitiatedActivity(std::opt
     auto result = m_userInitiatedActionMap.ensure(*identifier, [] {
         return API::UserInitiatedAction::create();
     });
-    return result.iterator->value;
+    return result.iterator->value.ptr();
 }
 
 RefPtr<API::UserInitiatedAction> WebProcessProxy::userInitiatedActivity(PageIdentifier pageID, std::optional<WTF::UUID> authorizationToken, std::optional<UserGestureTokenIdentifier> identifier)
@@ -1562,7 +1562,7 @@ RefPtr<API::UserInitiatedAction> WebProcessProxy::userInitiatedActivity(PageIden
                 auto result = m_userInitiatedActionMap.ensure(*identifier, [it] {
                     return it->value;
                 });
-                return result.iterator->value;
+                return result.iterator->value.ptr();
             }
         }
     }

@@ -25,6 +25,8 @@
 
 #pragma once
 
+#ifdef __cplusplus
+
 #include <wtf/Compiler.h>
 #include <wtf/Platform.h>
 
@@ -183,3 +185,5 @@ WTF_EXTERN_C_END
 #define kAXClientTypeWebKitTesting 999999
 
 #endif // PLATFORM(MAC) || PLATFORM(MACCATALYST)
+
+#endif // __cplusplus

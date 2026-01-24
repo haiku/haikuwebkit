@@ -74,8 +74,8 @@ void WidgetHierarchyUpdatesSuspensionScope::moveWidgets()
     while (!widgetNewParentMap().isEmpty()) {
         auto map = std::exchange(widgetNewParentMap(), { });
         for (auto& entry : map) {
-            auto& child = *entry.key;
-            auto* currentParent = child.parent();
+            Ref child = entry.key;
+            auto* currentParent = child->parent();
             CheckedPtr newParent = entry.value.get();
             if (newParent != currentParent) {
                 if (currentParent)

@@ -59,7 +59,7 @@ public:
 
 private:
     struct SelectorData {
-        const CSSSelector* selector;
+        const CSSSelector& selector;
 #if ENABLE(CSS_SELECTOR_JIT)
         mutable CompiledSelector compiledSelector { };
 #endif

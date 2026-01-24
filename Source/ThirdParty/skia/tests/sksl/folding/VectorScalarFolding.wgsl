@@ -5,7 +5,7 @@ struct _GlobalUniforms {
   colorGreen: vec4<f32>,
   unknownInput: f32,
 };
-@binding(0) @group(0) var<uniform> _globalUniforms: _GlobalUniforms;
+@group(0) @binding(0) var<uniform> _globalUniforms : _GlobalUniforms;
 fn test_int_b() -> bool {
   {
     var ok: bool = true;
@@ -152,8 +152,7 @@ fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
     var _skTemp0: vec4<f32>;
     var _skTemp1: bool;
     if _0_ok {
-      let _skTemp2 = test_int_b();
-      _skTemp1 = _skTemp2;
+      _skTemp1 = test_int_b();
     } else {
       _skTemp1 = false;
     }

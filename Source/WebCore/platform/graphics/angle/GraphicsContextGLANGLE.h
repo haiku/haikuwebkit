@@ -362,7 +362,7 @@ protected:
     bool updateErrors();
 
     // Called once by all the public entry points that eventually call OpenGL.
-    WARN_UNUSED_RETURN bool makeContextCurrent();
+    [[nodiscard]] bool makeContextCurrent();
 
     // Initializes the instance. Returns false if the instance should not be used.
     bool initialize();
@@ -406,7 +406,7 @@ protected:
     virtual void invalidateKnownTextureContent(GCGLuint);
     bool supportsExtensionImpl(ASCIILiteral) const;
     // Enables extensions only if all are supported, returns true if all the extensions are supported. No changes if false is returned.
-    WARN_UNUSED_RETURN bool enableExtensionsImpl(std::initializer_list<ASCIILiteral>);
+    [[nodiscard]] bool enableExtensionsImpl(std::initializer_list<ASCIILiteral>);
     bool isExtensionEnabledImpl(ASCIILiteral) const;
 
     // Only for non-WebGL 2.0 contexts.

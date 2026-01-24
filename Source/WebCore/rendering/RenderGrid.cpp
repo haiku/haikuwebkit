@@ -1637,46 +1637,7 @@ void RenderGrid::layoutGridItems(GridLayoutState& gridLayoutState)
 
 void RenderGrid::layoutMasonryItems(GridLayoutState& gridLayoutState)
 {
-    populateGridPositionsForDirection(m_trackSizingAlgorithm, Style::GridTrackSizingDirection::Columns);
-    populateGridPositionsForDirection(m_trackSizingAlgorithm, Style::GridTrackSizingDirection::Rows);
-
-    for (auto& gridItem : childrenOfType<RenderBox>(*this)) {
-        if (currentGrid().orderIterator().shouldSkipChild(gridItem)) {
-            if (gridItem.isOutOfFlowPositioned())
-                prepareGridItemForPositionedLayout(gridItem);
-            continue;
-        }
-
-        auto* renderGrid = dynamicDowncast<RenderGrid>(gridItem);
-        if (renderGrid && (renderGrid->isSubgridColumns() || renderGrid->isSubgridRows()))
-            gridItem.setNeedsLayout(MarkOnlyThis);
-
-        // Setting the definite grid area's sizes. It may imply that the
-        // item must perform a layout if its area differs from the one
-        // used during the track sizing algorithm.
-        updateGridAreaIncludingAlignment(gridItem);
-
-        LayoutRect oldGridItemRect = gridItem.frameRect();
-
-        // Stretching logic might force a grid item layout, so we need to run it before the layoutIfNeeded
-        // call to avoid unnecessary relayouts. This might imply that grid item margins, needed to correctly
-        // determine the available space before stretching, are not set yet.
-        applyStretchAlignmentToGridItemIfNeeded(gridItem, gridLayoutState);
-        applySubgridStretchAlignmentToGridItemIfNeeded(gridItem);
-
-        gridItem.layoutIfNeeded();
-
-        // We need pending layouts to be done in order to compute auto-margins properly.
-        GridLayoutFunctions::updateAutoMarginsIfNeeded(gridItem, writingMode());
-
-        setLogicalPositionForGridItem(gridItem);
-
-        // If the grid item moved, we have to repaint it as well as any floating/positioned
-        // descendants. An exception is if we need a layout. In this case, we know we're going to
-        // repaint ourselves (and the grid item) anyway.
-        if (!selfNeedsLayout() && gridItem.checkForRepaintDuringLayout())
-            gridItem.repaintDuringLayoutIfMoved(oldGridItemRect);
-    }
+    layoutGridItems(gridLayoutState);
 }
 
 void RenderGrid::prepareGridItemForPositionedLayout(RenderBox& gridItem)
@@ -2269,7 +2230,15 @@ LayoutRange RenderGrid::gridAreaRangeForOutOfFlow(const RenderBox& gridItem, Sty
 {
     ASSERT(gridItem.isOutOfFlowPositioned());
     bool isRowAxis = direction == Style::GridTrackSizingDirection::Columns;
-    LayoutUnit borderEdge = isRowAxis ? borderStart() : borderBefore();
+    auto borderEdge = [&]() {
+        if (isRowAxis) {
+            if (writingMode().isHorizontal() && (writingMode().isInlineLeftToRight() == shouldPlaceVerticalScrollbarOnLeft()))
+                return borderStart() + scrollbarLogicalWidth();
+            return borderStart();
+        }
+        return borderBefore();
+    }();
+
     if (currentGrid().needsItemsPlacement()) {
         // Haven't completed in-flow placement and grid sizing yet.
         // Return something basic that doesn't access unbuilt data structures.
@@ -2439,9 +2408,9 @@ LayoutRect RenderGrid::contentOverflowRect() const
     LayoutRect contentArea;
     if (writingMode().isInlineFlipped()) {
         contentArea.shiftEdgesTo(
-            translateRTLCoordinate(m_columnPositions.first()),
-            m_rowPositions.first(),
             translateRTLCoordinate(m_columnPositions.last()),
+            m_rowPositions.first(),
+            translateRTLCoordinate(m_columnPositions.first()),
             m_rowPositions.last());
     } else {
         contentArea.shiftEdgesTo(
@@ -2449,6 +2418,8 @@ LayoutRect RenderGrid::contentOverflowRect() const
             m_rowPositions.first(),
             m_columnPositions.last(),
             m_rowPositions.last());
+        if (writingMode().isHorizontal() && shouldPlaceVerticalScrollbarOnLeft())
+            contentArea.move(verticalScrollbarWidth(), 0);
     }
 
     if (writingMode().isVertical())
@@ -2476,14 +2447,10 @@ LayoutUnit RenderGrid::translateRTLCoordinate(LayoutUnit coordinate) const
 {
     LayoutUnit width = borderLogicalLeft() + borderLogicalRight() + clientLogicalWidth();
 
-#if !PLATFORM(IOS_FAMILY)
-    // FIXME: Ideally scrollbarLogicalWidth() should return zero in iOS so we don't need this
-    // (see bug https://webkit.org/b/191857).
     // If we are in horizontal writing mode and RTL direction the scrollbar is painted on the left,
     // so we need to take into account when computing the position of the columns.
-    if (writingMode().isHorizontal())
-        width += scrollbarLogicalWidth();
-#endif
+    if (isHorizontalWritingMode() && shouldPlaceVerticalScrollbarOnLeft())
+        width += verticalScrollbarWidth();
 
     return width - coordinate;
 }
@@ -2506,6 +2473,9 @@ LayoutUnit RenderGrid::logicalOffsetForGridItem(const RenderBox& gridItem, Style
     // to translate positions from RTL to LTR, as it's more convenient for painting.
     if (writingMode().isInlineFlipped())
         rowAxisOffset = translateRTLCoordinate(rowAxisOffset) - (GridLayoutFunctions::isOrthogonalGridItem(*this, gridItem) ? gridItem.logicalHeight()  : gridItem.logicalWidth());
+    else if (writingMode().isHorizontal() && shouldPlaceVerticalScrollbarOnLeft())
+        rowAxisOffset += verticalScrollbarWidth();
+
     return rowAxisOffset;
 }
 

@@ -41,6 +41,7 @@
 
 [
     JSGenerateToJSObject,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary ComputedProperties {
     boolean? busy;
     DOMString? checked;

@@ -42,7 +42,7 @@ public:
 
     MediaDeviceSandboxExtensions(Vector<String> ids, Vector<SandboxExtension::Handle>&& handles, SandboxExtension::Handle&& machBootstrapHandle);
 
-    std::pair<String, RefPtr<SandboxExtension>> operator[](size_t i);
+    std::pair<String, Ref<SandboxExtension>> operator[](size_t i);
     size_t size() const;
 
     Vector<String> takeIDs() { return std::exchange(m_ids, { }); }

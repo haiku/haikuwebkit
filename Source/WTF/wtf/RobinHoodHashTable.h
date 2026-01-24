@@ -379,7 +379,7 @@ inline void RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, Key
 
 template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename SizePolicy, typename Malloc>
 template<typename HashTranslator, ShouldValidateKey shouldValidateKey, typename T>
-ALWAYS_INLINE auto RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, SizePolicy, Malloc>::add(T&& key, NOESCAPE const std::invocable<> auto& functor) -> AddResult
+ALWAYS_INLINE auto RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, SizePolicy, Malloc>::add(T&& key, NOESCAPE const std::invocable<> auto& functor) LIFETIME_BOUND -> AddResult
 {
     checkKey<HashTranslator, shouldValidateKey>(key);
 
@@ -469,7 +469,7 @@ ALWAYS_INLINE void RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Trai
 
 template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename SizePolicy, typename Malloc>
 template<typename HashTranslator, ShouldValidateKey shouldValidateKey, typename T>
-inline auto RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, SizePolicy, Malloc>::addPassingHashCode(T&& key, NOESCAPE const std::invocable<> auto& functor) -> AddResult
+inline auto RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, SizePolicy, Malloc>::addPassingHashCode(T&& key, NOESCAPE const std::invocable<> auto& functor) LIFETIME_BOUND -> AddResult
 {
     checkKey<HashTranslator, shouldValidateKey>(key);
 
@@ -563,7 +563,7 @@ inline void RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, Key
 
 template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename SizePolicy, typename Malloc>
 template <typename HashTranslator, ShouldValidateKey shouldValidateKey, typename T>
-auto RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, SizePolicy, Malloc>::find(const T& key) -> iterator
+auto RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, SizePolicy, Malloc>::find(const T& key) LIFETIME_BOUND -> iterator
 {
     if (!m_table)
         return end();
@@ -577,7 +577,7 @@ auto RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits,
 
 template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename SizePolicy, typename Malloc>
 template <typename HashTranslator, ShouldValidateKey shouldValidateKey, typename T>
-auto RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, SizePolicy, Malloc>::find(const T& key) const -> const_iterator
+auto RobinHoodHashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, SizePolicy, Malloc>::find(const T& key) const LIFETIME_BOUND -> const_iterator
 {
     if (!m_table)
         return end();

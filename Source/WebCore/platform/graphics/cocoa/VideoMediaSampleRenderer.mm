@@ -431,8 +431,8 @@ void VideoMediaSampleRenderer::enqueueSample(const MediaSample& sample, const Me
 #if ENABLE(VP9)
     if (!isUsingDecompressionSession() && !m_currentCodec) {
         // Only use a decompression session for vp8 or vp9 when software decoded.
-        CMVideoFormatDescriptionRef videoFormatDescription = PAL::CMSampleBufferGetFormatDescription(cmSampleBuffer.get());
-        auto fourCC = PAL::CMFormatDescriptionGetMediaSubType(videoFormatDescription);
+        RetainPtr videoFormatDescription = PAL::CMSampleBufferGetFormatDescription(cmSampleBuffer.get());
+        auto fourCC = PAL::CMFormatDescriptionGetMediaSubType(videoFormatDescription.get());
         needsDecompressionSession = fourCC == 'vp08' || (fourCC == 'vp09' && !vp9HardwareDecoderAvailableInProcess());
         m_currentCodec = fourCC;
     }
@@ -636,8 +636,8 @@ bool VideoMediaSampleRenderer::shouldDecodeSample(const MediaSample& sample)
         return true;
 
     for (CFIndex index = 0, count = CFArrayGetCount(attachments.get()); index < count; ++index) {
-        CFDictionaryRef attachmentDict = (CFDictionaryRef)CFArrayGetValueAtIndex(attachments.get(), index);
-        if (CFDictionaryGetValue(attachmentDict, PAL::kCMSampleAttachmentKey_IsDependedOnByOthers) == kCFBooleanFalse)
+        RetainPtr attachmentDict = (CFDictionaryRef)CFArrayGetValueAtIndex(attachments.get(), index);
+        if (CFDictionaryGetValue(attachmentDict.get(), PAL::kCMSampleAttachmentKey_IsDependedOnByOthers) == kCFBooleanFalse)
             return false;
     }
 
@@ -1026,8 +1026,8 @@ auto VideoMediaSampleRenderer::copyDisplayedPixelBuffer() -> DisplayedPixelBuffe
 
     if (!isUsingDecompressionSession()) {
         RetainPtr buffer = adoptCF([renderer() copyDisplayedPixelBuffer]);
-        if (auto surface = CVPixelBufferGetIOSurface(buffer.get()); surface && m_resourceOwner)
-            IOSurface::setOwnershipIdentity(surface, m_resourceOwner);
+        if (RetainPtr surface = CVPixelBufferGetIOSurface(buffer.get()); surface && m_resourceOwner)
+            IOSurface::setOwnershipIdentity(surface.get(), m_resourceOwner);
         return { WTF::move(buffer), MediaTime::invalidTime() };
     }
 
@@ -1155,8 +1155,8 @@ void VideoMediaSampleRenderer::assignResourceOwner(const MediaSample& sample)
         if (!imageBuffer || CFGetTypeID(imageBuffer) != CVPixelBufferGetTypeID())
             return;
 
-        if (auto surface = CVPixelBufferGetIOSurface(imageBuffer))
-            IOSurface::setOwnershipIdentity(surface, m_resourceOwner);
+        if (RetainPtr surface = CVPixelBufferGetIOSurface(imageBuffer))
+            IOSurface::setOwnershipIdentity(surface.get(), m_resourceOwner);
     };
 
     RetainPtr cmSample = sample.platformSample().cmSampleBuffer();

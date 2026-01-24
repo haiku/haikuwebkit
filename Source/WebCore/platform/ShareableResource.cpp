@@ -99,7 +99,7 @@ auto ShareableResource::createHandle() -> std::optional<Handle>
     return { Handle { WTF::move(*memoryHandle), m_offset, m_size } };
 }
 
-std::span<const uint8_t> ShareableResource::span() const
+std::span<const uint8_t> ShareableResource::span() const LIFETIME_BOUND
 {
     return m_sharedMemory->span().subspan(m_offset, m_size);
 }

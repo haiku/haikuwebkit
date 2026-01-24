@@ -62,7 +62,7 @@ public:
         return m_ptr;
     }
 
-    WARN_UNUSED_RETURN T* leakPtr()
+    [[nodiscard]] T* leakPtr()
     {
         return std::exchange(m_ptr, nullptr);
     }

@@ -484,7 +484,7 @@ void ShadowRoot::invalidatePartMappings()
 Vector<Ref<ShadowRoot>> assignedShadowRootsIfSlotted(const Node& node)
 {
     Vector<Ref<ShadowRoot>> result;
-    for (auto* slot = node.assignedSlot(); slot; slot = slot->assignedSlot()) {
+    for (CheckedPtr slot = node.assignedSlot(); slot; slot = slot->assignedSlot()) {
         ASSERT(slot->containingShadowRoot());
         result.append(*slot->containingShadowRoot());
     }

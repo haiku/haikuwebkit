@@ -70,6 +70,7 @@ struct TextExtractionTestOptions {
     bool mergeParagraphs { false };
     bool skipNearlyTransparentContent { false };
     JSRetainPtr<JSStringRef> outputFormat;
+    JSValueRef dataDetectorTypes { nullptr };
 };
 
 TextExtractionTestOptions* toTextExtractionTestOptions(JSContextRef, JSValueRef);

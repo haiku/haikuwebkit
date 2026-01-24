@@ -239,11 +239,7 @@ JSPromise* JSPromise::rejectWithCaughtException(JSGlobalObject* globalObject, Th
     VM& vm = globalObject->vm();
     Exception* exception = scope.exception();
     ASSERT(exception);
-    if (vm.isTerminationException(exception)) [[unlikely]] {
-        scope.release();
-        return this;
-    }
-    scope.clearException();
+    TRY_CLEAR_EXCEPTION(scope, nullptr);
     scope.release();
     reject(vm, globalObject, exception->value());
     return this;
@@ -377,7 +373,7 @@ void JSPromise::resolvePromise(JSGlobalObject* globalObject, JSValue resolution)
     JSValue then;
     JSValue error;
     {
-        auto catchScope = DECLARE_CATCH_SCOPE(vm);
+        auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
         then = resolutionObject->get(globalObject, vm.propertyNames->then);
         if (catchScope.exception()) [[unlikely]] {
             error = catchScope.exception()->value();
@@ -595,13 +591,13 @@ void JSPromise::resolveWithInternalMicrotaskForAsyncAwait(JSGlobalObject* global
 
     if (resolution.inherits<JSPromise>()) {
         auto* promise = jsCast<JSPromise*>(resolution);
-        if (promiseSpeciesWatchpointIsValid(vm, promise)) [[likely]]
+        if (promiseSpeciesWatchpointIsValid(promise)) [[likely]]
             return promise->performPromiseThenWithInternalMicrotask(vm, globalObject, task, jsUndefined(), context);
 
         JSValue constructor;
         JSValue error;
         {
-            auto catchScope = DECLARE_CATCH_SCOPE(vm);
+            auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
             constructor = promise->get(globalObject, vm.propertyNames->constructor);
             if (catchScope.exception()) [[unlikely]] {
                 error = catchScope.exception()->value();
@@ -646,7 +642,7 @@ void JSPromise::resolveWithInternalMicrotask(JSGlobalObject* globalObject, JSVal
     JSValue then;
     JSValue error;
     {
-        auto catchScope = DECLARE_CATCH_SCOPE(vm);
+        auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
         then = resolutionObject->get(globalObject, vm.propertyNames->then);
         if (catchScope.exception()) [[unlikely]] {
             error = catchScope.exception()->value();
@@ -705,7 +701,7 @@ JSObject* promiseSpeciesConstructor(JSGlobalObject* globalObject, JSObject* this
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     if (auto* promise = jsDynamicCast<JSPromise*>(thisObject)) [[likely]] {
-        if (promiseSpeciesWatchpointIsValid(vm, promise)) [[likely]]
+        if (promiseSpeciesWatchpointIsValid(promise)) [[likely]]
             return globalObject->promiseConstructor();
     }
 
@@ -753,7 +749,7 @@ JSObject* JSPromise::then(JSGlobalObject* globalObject, JSValue onFulfilled, JSV
 
     JSObject* resultPromise;
     JSValue resultPromiseCapability;
-    if (promiseSpeciesWatchpointIsValid(vm, this)) [[likely]] {
+    if (promiseSpeciesWatchpointIsValid(this)) [[likely]] {
         if (inherits<JSInternalPromise>())
             resultPromise = JSInternalPromise::create(vm, globalObject->internalPromiseStructure());
         else
@@ -782,7 +778,7 @@ JSObject* JSPromise::promiseResolve(JSGlobalObject* globalObject, JSObject* cons
 
     if (argument.inherits<JSPromise>()) {
         auto* promise = jsCast<JSPromise*>(argument);
-        if (promiseSpeciesWatchpointIsValid(vm, promise)) [[likely]]
+        if (promiseSpeciesWatchpointIsValid(promise)) [[likely]]
             return promise;
 
         auto property = promise->get(globalObject, vm.propertyNames->constructor);

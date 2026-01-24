@@ -38,7 +38,8 @@ typedef RTCRtpTransceiverDirection RtpTransceiverDirection;
 // https://w3c.github.io/webrtc-pc/#dom-rtcdatachannelinit
 [
     Conditional=WEB_RTC,
-    EnabledBySetting=PeerConnectionEnabled
+    EnabledBySetting=PeerConnectionEnabled,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary RTCDataChannelInit {
     boolean ordered = true;
     [EnforceRange] unsigned short maxPacketLifeTime;
@@ -51,7 +52,8 @@ typedef RTCRtpTransceiverDirection RtpTransceiverDirection;
 
 [
     Conditional=WEB_RTC,
-    EnabledBySetting=PeerConnectionEnabled
+    EnabledBySetting=PeerConnectionEnabled,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary RTCCertificateParameters {
     DOMString name;
     DOMString hash;
@@ -66,7 +68,8 @@ typedef (object or DOMString) AlgorithmIdentifier;
 [
     Conditional=WEB_RTC,
     EnabledBySetting=PeerConnectionEnabled,
-    ImplementedAs=RTCRtpTransceiverInit
+    ImplementedAs=RTCRtpTransceiverInit,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary RTCRtpTransceiverInit {
     RtpTransceiverDirection direction = "sendrecv";
     sequence<MediaStream> streams = [];

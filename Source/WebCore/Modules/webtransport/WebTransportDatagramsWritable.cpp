@@ -34,7 +34,7 @@
 
 namespace WebCore {
 
-ExceptionOr<Ref<WritableStream>> WebTransportDatagramsWritable::create(ScriptExecutionContext& context, RefPtr<WebTransport>&& transport, WebTransportSendOptions&& options)
+ExceptionOr<Ref<WebTransportDatagramsWritable>> WebTransportDatagramsWritable::create(ScriptExecutionContext& context, RefPtr<WebTransport>&& transport, WebTransportSendOptions&& options)
 {
     RefPtr sendGroup = options.sendGroup;
     if (sendGroup && sendGroup->transport().get() != transport.get())

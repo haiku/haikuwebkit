@@ -517,7 +517,7 @@ $(PROJECT_DIR)/Modules/geolocation/PositionOptions.idl
 $(PROJECT_DIR)/Modules/highlight/Highlight.idl
 $(PROJECT_DIR)/Modules/highlight/HighlightRegistry.idl
 $(PROJECT_DIR)/Modules/identity/DigitalCredential.idl
-$(PROJECT_DIR)/Modules/identity/DigitalCredentialRequest.idl
+$(PROJECT_DIR)/Modules/identity/DigitalCredentialGetRequest.idl
 $(PROJECT_DIR)/Modules/identity/DigitalCredentialRequestOptions.idl
 $(PROJECT_DIR)/Modules/identity/IdentityCredentialProtocol.idl
 $(PROJECT_DIR)/Modules/identity/protocols/ISO18013/MobileDocumentRequest.idl
@@ -1200,6 +1200,7 @@ $(PROJECT_DIR)/Scripts/SettingsTemplates/InternalSettingsGenerated.h.erb
 $(PROJECT_DIR)/Scripts/SettingsTemplates/InternalSettingsGenerated.idl.erb
 $(PROJECT_DIR)/Scripts/SettingsTemplates/Settings.cpp.erb
 $(PROJECT_DIR)/Scripts/SettingsTemplates/Settings.h.erb
+$(PROJECT_DIR)/Scripts/generate-log-declarations.py
 $(PROJECT_DIR)/Scripts/generate-process-sync-data.py
 $(PROJECT_DIR)/accessibility/AccessibilityRole.idl
 $(PROJECT_DIR)/accessibility/AriaAttributes.idl
@@ -1343,8 +1344,6 @@ $(PROJECT_DIR)/css/ElementCSSInlineStyle+Typedom.idl
 $(PROJECT_DIR)/css/ElementCSSInlineStyle.idl
 $(PROJECT_DIR)/css/FontFace.idl
 $(PROJECT_DIR)/css/FontFaceSet.idl
-$(PROJECT_DIR)/css/FontFaceSetLoadEvent.idl
-$(PROJECT_DIR)/css/FontFaceSetLoadEventInit.idl
 $(PROJECT_DIR)/css/FontFaceSource.idl
 $(PROJECT_DIR)/css/LinkStyle.idl
 $(PROJECT_DIR)/css/MediaList.idl

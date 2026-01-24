@@ -35,7 +35,7 @@ public:
     TryMallocReturnValue(void*);
     TryMallocReturnValue(TryMallocReturnValue&&);
     ~TryMallocReturnValue();
-    template<typename T> WARN_UNUSED_RETURN bool getValue(T*&);
+    template<typename T> [[nodiscard]] bool getValue(T*&);
 private:
     void operator=(TryMallocReturnValue&&) = delete;
     mutable void* m_data;

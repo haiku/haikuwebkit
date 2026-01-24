@@ -84,7 +84,6 @@ private:
 
     LiveRegionSnapshot buildLiveRegionSnapshot(AccessibilityObject&) const;
     bool shouldIncludeInSnapshot(AccessibilityObject&) const;
-    String textForObject(AccessibilityObject&) const;
     void postAnnouncementForChange(AccessibilityObject&, const LiveRegionSnapshot&, const LiveRegionSnapshot&);
     LiveRegionDiff computeChanges(const Vector<LiveRegionObject>&, const Vector<LiveRegionObject>&) const;
     AttributedString computeAnnouncement(const LiveRegionSnapshot&, const LiveRegionDiff&) const;

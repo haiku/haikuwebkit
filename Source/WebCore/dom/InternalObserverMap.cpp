@@ -102,7 +102,7 @@ private:
         // error handler.
         JSC::Exception* previousException = nullptr;
         {
-            auto catchScope = DECLARE_CATCH_SCOPE(vm);
+            auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
             auto result = protectedMapper()->invokeRethrowingException(value, m_idx);
             previousException = catchScope.exception();
             if (previousException) {

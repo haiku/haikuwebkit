@@ -30,8 +30,6 @@
 
 DECLARE_SYSTEM_HEADER
 
-#include <CoreVideo/CoreVideo.h>
-
 #if USE(APPLE_INTERNAL_SDK)
 #include <CoreVideo/CVPixelBufferPrivate.h>
 #else

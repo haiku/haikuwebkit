@@ -95,8 +95,8 @@ public:
 
     FloatRect getBBox(StyleUpdateStrategy = AllowStyleUpdate) final;
 
-    Ref<SVGPathSegList>& pathSegList() { return m_pathSegList->baseVal(); }
-    RefPtr<SVGPathSegList>& animatedPathSegList() { return m_pathSegList->animVal(); }
+    SVGPathSegList& pathSegList() { return m_pathSegList->baseVal(); }
+    SVGPathSegList& animatedPathSegList() { return m_pathSegList->animVal(); }
 
     const SVGPathByteStream& pathByteStream() const;
     Path path() const;

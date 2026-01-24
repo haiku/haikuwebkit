@@ -70,8 +70,6 @@ static bool isHostnamePatternIPv6(StringView hostname)
     return false;
 }
 
-URLPattern::URLPattern() = default;
-
 // https://urlpattern.spec.whatwg.org/#process-a-urlpatterninit
 static ExceptionOr<URLPatternInit> processInit(URLPatternInit&& init, BaseURLStringType type, String&& protocol = { }, String&& username = { }, String&& password = { }, String&& hostname = { }, String&& port = { }, String&& pathname = { }, String&& search = { }, String&& hash = { })
 {
@@ -260,9 +258,9 @@ ExceptionOr<Ref<URLPattern>> URLPattern::create(ScriptExecutionContext& context,
             processedInit.port = emptyString();
     }
 
-    Ref result = adoptRef(*new URLPattern);
+    Ref result = adoptRef(*new URLPattern(options.ignoreCase));
 
-    auto maybeCompileException = result->compileAllComponents(context, WTF::move(processedInit), options);
+    auto maybeCompileException = result->compileAllComponents(context, WTF::move(processedInit));
     if (maybeCompileException.hasException())
         return maybeCompileException.releaseException();
 
@@ -284,6 +282,8 @@ ExceptionOr<Ref<URLPattern>> URLPattern::create(ScriptExecutionContext& context,
     return switchOn(WTF::move(value), [&](RefPtr<URLPattern>&& pattern) -> ExceptionOr<Ref<URLPattern>> {
         return pattern.releaseNonNull();
     }, [&](URLPatternInit&& init) -> ExceptionOr<Ref<URLPattern>> {
+        if (init.baseURL.isNull())
+            init.baseURL = baseURL;
         return URLPattern::create(context, WTF::move(init), { }, { });
     }, [&](String&& string) -> ExceptionOr<Ref<URLPattern>> {
         return URLPattern::create(context, WTF::move(string), String { baseURL }, { });
@@ -314,7 +314,7 @@ ExceptionOr<std::optional<URLPatternResult>> URLPattern::exec(ScriptExecutionCon
     return match(context, WTF::move(*input), WTF::move(baseURL));
 }
 
-ExceptionOr<void> URLPattern::compileAllComponents(ScriptExecutionContext& context, URLPatternInit&& processedInit, const URLPatternOptions& options)
+ExceptionOr<void> URLPattern::compileAllComponents(ScriptExecutionContext& context, URLPatternInit&& processedInit)
 {
     Ref vm = context.vm();
     JSC::JSLockHolder lock(vm);
@@ -345,10 +345,10 @@ ExceptionOr<void> URLPattern::compileAllComponents(ScriptExecutionContext& conte
         return maybePortComponent.releaseException();
     m_portComponent = maybePortComponent.releaseReturnValue();
 
-    URLPatternUtilities::URLPatternStringOptions compileOptions { .ignoreCase = options.ignoreCase };
+    URLPatternUtilities::URLPatternStringOptions compileOptions { .ignoreCase = m_shouldIgnoreCase };
 
     auto maybePathnameComponent = m_protocolComponent.matchSpecialSchemeProtocol(context)
-    ? URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.pathname, EncodingCallbackType::Path, URLPatternUtilities::URLPatternStringOptions  { "/"_s, "/"_s, options.ignoreCase })
+    ? URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.pathname, EncodingCallbackType::Path, URLPatternUtilities::URLPatternStringOptions  { "/"_s, "/"_s, m_shouldIgnoreCase })
     : URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.pathname, EncodingCallbackType::OpaquePath, compileOptions);
     if (maybePathnameComponent.hasException())
         return maybePathnameComponent.releaseException();

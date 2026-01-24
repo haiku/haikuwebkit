@@ -14,6 +14,7 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
+/LayoutTests/imported/w3c/web-platform-tests/svg/pservers/reftests/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-currentcolor-1-expected.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-currentcolor-1.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-currentcolor-2-expected.svg

@@ -287,7 +287,7 @@ struct SpaceSeparatedEnumSet {
     static SpaceSeparatedEnumSet map(SizedRange&& range, NOESCAPE Mapper&& mapper)
     {
         Container result;
-        for (auto&& value : range)
+        for (auto& value : range)
             result.add(mapper(value));
         return result;
     }
@@ -521,6 +521,8 @@ template<typename T> inline constexpr auto SerializationSeparator<CommaSeparated
 // Wraps a variable number of elements of a single type, semantically marking them as serializing as "space separated".
 template<typename T, size_t inlineCapacity = 0> struct SpaceSeparatedVector {
     using Container = WTF::Vector<T, inlineCapacity>;
+    using iterator = typename Container::iterator;
+    using reverse_iterator = typename Container::reverse_iterator;
     using const_iterator = typename Container::const_iterator;
     using const_reverse_iterator = typename Container::const_reverse_iterator;
     using value_type = typename Container::value_type;
@@ -542,6 +544,11 @@ template<typename T, size_t inlineCapacity = 0> struct SpaceSeparatedVector {
     {
         return WTF::map<inlineCapacity>(std::forward<SizedRange>(range), std::forward<Mapper>(mapper));
     }
+
+    iterator begin() LIFETIME_BOUND { return value.begin(); }
+    iterator end() LIFETIME_BOUND { return value.end(); }
+    reverse_iterator rbegin() LIFETIME_BOUND { return value.rbegin(); }
+    reverse_iterator rend() LIFETIME_BOUND { return value.rend(); }
 
     const_iterator begin() const LIFETIME_BOUND { return value.begin(); }
     const_iterator end() const LIFETIME_BOUND { return value.end(); }
@@ -568,6 +575,8 @@ template<typename T, size_t N> inline constexpr auto SerializationSeparator<Spac
 // Wraps a variable number of elements of a single type, semantically marking them as serializing as "comma separated".
 template<typename T, size_t inlineCapacity = 0> struct CommaSeparatedVector {
     using Container = WTF::Vector<T, inlineCapacity>;
+    using iterator = typename Container::iterator;
+    using reverse_iterator = typename Container::reverse_iterator;
     using const_iterator = typename Container::const_iterator;
     using const_reverse_iterator = typename Container::const_reverse_iterator;
     using value_type = typename Container::value_type;
@@ -589,6 +598,11 @@ template<typename T, size_t inlineCapacity = 0> struct CommaSeparatedVector {
     {
         return WTF::map<inlineCapacity>(std::forward<SizedRange>(range), std::forward<Mapper>(mapper));
     }
+
+    iterator begin() LIFETIME_BOUND { return value.begin(); }
+    iterator end() LIFETIME_BOUND { return value.end(); }
+    reverse_iterator rbegin() LIFETIME_BOUND { return value.rbegin(); }
+    reverse_iterator rend() LIFETIME_BOUND { return value.rend(); }
 
     const_iterator begin() const LIFETIME_BOUND { return value.begin(); }
     const_iterator end() const LIFETIME_BOUND { return value.end(); }
@@ -615,6 +629,8 @@ template<typename T, size_t N> inline constexpr auto SerializationSeparator<Comm
 // Wraps a variable (though known at construction) number of elements of a single type, semantically marking them as serializing as "space separated".
 template<typename T> struct SpaceSeparatedFixedVector {
     using Container = WTF::FixedVector<T>;
+    using iterator = typename Container::iterator;
+    using reverse_iterator = typename Container::reverse_iterator;
     using const_iterator = typename Container::const_iterator;
     using const_reverse_iterator = typename Container::const_reverse_iterator;
     using value_type = typename Container::value_type;
@@ -648,6 +664,11 @@ template<typename T> struct SpaceSeparatedFixedVector {
         return Container::createWithSizeFromGenerator(size, std::forward<Generator>(generator));
     }
 
+    iterator begin() LIFETIME_BOUND { return value.begin(); }
+    iterator end() LIFETIME_BOUND { return value.end(); }
+    reverse_iterator rbegin() LIFETIME_BOUND { return value.rbegin(); }
+    reverse_iterator rend() LIFETIME_BOUND { return value.rend(); }
+
     const_iterator begin() const LIFETIME_BOUND { return value.begin(); }
     const_iterator end() const LIFETIME_BOUND { return value.end(); }
     const_reverse_iterator rbegin() const LIFETIME_BOUND { return value.rbegin(); }
@@ -676,6 +697,8 @@ template<typename T> inline constexpr auto SerializationSeparator<SpaceSeparated
 // Wraps a variable (though known at construction) number of elements of a single type, semantically marking them as serializing as "comma separated".
 template<typename T> struct CommaSeparatedFixedVector {
     using Container = WTF::FixedVector<T>;
+    using iterator = typename Container::iterator;
+    using reverse_iterator = typename Container::reverse_iterator;
     using const_iterator = typename Container::const_iterator;
     using const_reverse_iterator = typename Container::const_reverse_iterator;
     using value_type = typename Container::value_type;
@@ -709,6 +732,11 @@ template<typename T> struct CommaSeparatedFixedVector {
         return Container::createWithSizeFromGenerator(size, std::forward<Generator>(generator));
     }
 
+    iterator begin() LIFETIME_BOUND { return value.begin(); }
+    iterator end() LIFETIME_BOUND { return value.end(); }
+    reverse_iterator rbegin() LIFETIME_BOUND { return value.rbegin(); }
+    reverse_iterator rend() LIFETIME_BOUND { return value.rend(); }
+
     const_iterator begin() const LIFETIME_BOUND { return value.begin(); }
     const_iterator end() const LIFETIME_BOUND { return value.end(); }
     const_reverse_iterator rbegin() const LIFETIME_BOUND { return value.rbegin(); }
@@ -737,6 +765,8 @@ template<typename T> inline constexpr auto SerializationSeparator<CommaSeparated
 // Wraps a variable (though known at construction) number of elements of a single type in a reference counted container, semantically marking them as serializing as "space separated".
 template<typename T> struct SpaceSeparatedRefCountedFixedVector {
     using Container = WTF::RefCountedFixedVector<T>;
+    using iterator = typename Container::iterator;
+    using reverse_iterator = typename Container::reverse_iterator;
     using const_iterator = typename Container::const_iterator;
     using const_reverse_iterator = typename Container::const_reverse_iterator;
     using value_type = typename Container::value_type;
@@ -769,6 +799,11 @@ template<typename T> struct SpaceSeparatedRefCountedFixedVector {
         return Container::createWithSizeFromGenerator(size, std::forward<Generator>(generator));
     }
 
+    iterator begin() LIFETIME_BOUND { return value->begin(); }
+    iterator end() LIFETIME_BOUND { return value->end(); }
+    reverse_iterator rbegin() LIFETIME_BOUND { return value->rbegin(); }
+    reverse_iterator rend() LIFETIME_BOUND { return value->rend(); }
+
     const_iterator begin() const LIFETIME_BOUND { return value->begin(); }
     const_iterator end() const LIFETIME_BOUND { return value->end(); }
     const_reverse_iterator rbegin() const LIFETIME_BOUND { return value->rbegin(); }
@@ -795,6 +830,8 @@ template<typename T> inline constexpr auto SerializationSeparator<SpaceSeparated
 // Wraps a variable (though known at construction) number of elements of a single type in a reference counted container, semantically marking them as serializing as "comma separated".
 template<typename T> struct CommaSeparatedRefCountedFixedVector {
     using Container = WTF::RefCountedFixedVector<T>;
+    using iterator = typename Container::iterator;
+    using reverse_iterator = typename Container::reverse_iterator;
     using const_iterator = typename Container::const_iterator;
     using const_reverse_iterator = typename Container::const_reverse_iterator;
     using value_type = typename Container::value_type;
@@ -826,6 +863,11 @@ template<typename T> struct CommaSeparatedRefCountedFixedVector {
     {
         return Container::createWithSizeFromGenerator(size, std::forward<Generator>(generator));
     }
+
+    iterator begin() LIFETIME_BOUND { return value->begin(); }
+    iterator end() LIFETIME_BOUND { return value->end(); }
+    reverse_iterator rbegin() LIFETIME_BOUND { return value->rbegin(); }
+    reverse_iterator rend() LIFETIME_BOUND { return value->rend(); }
 
     const_iterator begin() const LIFETIME_BOUND { return value->begin(); }
     const_iterator end() const LIFETIME_BOUND { return value->end(); }
@@ -903,6 +945,8 @@ template<typename T> concept ValueOrKeywordDerived = WTF::IsBaseOfTemplate<Value
 // Wraps a list and enforces the invariant that it is either created with a non-empty value or `CSS::Keyword::None`.
 template<typename T> struct ListOrNone {
     using List = T;
+    using iterator = typename List::iterator;
+    using reverse_iterator = typename List::reverse_iterator;
     using const_iterator = typename List::const_iterator;
     using const_reverse_iterator = typename List::const_reverse_iterator;
     using value_type = typename List::value_type;
@@ -917,6 +961,11 @@ template<typename T> struct ListOrNone {
         : m_value { }
     {
     }
+
+    iterator begin() LIFETIME_BOUND { return m_value.begin(); }
+    iterator end() LIFETIME_BOUND { return m_value.end(); }
+    reverse_iterator rbegin() LIFETIME_BOUND { return m_value.rbegin(); }
+    reverse_iterator rend() LIFETIME_BOUND { return m_value.rend(); }
 
     const_iterator begin() const LIFETIME_BOUND { return m_value.begin(); }
     const_iterator end() const LIFETIME_BOUND { return m_value.end(); }
@@ -1054,6 +1103,8 @@ template<typename T> concept ListOrDefaultDerived = WTF::IsBaseOfTemplate<ListOr
 // Wraps a list and behaves as `optional-like`, using the `list.isEmpty()` as the nullopt state.
 template<typename T> struct ListOrNullopt {
     using List = T;
+    using iterator = typename List::iterator;
+    using reverse_iterator = typename List::reverse_iterator;
     using const_iterator = typename List::const_iterator;
     using const_reverse_iterator = typename List::const_reverse_iterator;
     using value_type = typename List::value_type;
@@ -1073,6 +1124,11 @@ template<typename T> struct ListOrNullopt {
         : m_value { }
     {
     }
+
+    iterator begin() LIFETIME_BOUND { return m_value.begin(); }
+    iterator end() LIFETIME_BOUND { return m_value.end(); }
+    reverse_iterator rbegin() LIFETIME_BOUND { return m_value.rbegin(); }
+    reverse_iterator rend() LIFETIME_BOUND { return m_value.rend(); }
 
     const_iterator begin() const LIFETIME_BOUND { return m_value.begin(); }
     const_iterator end() const LIFETIME_BOUND { return m_value.end(); }

@@ -691,8 +691,8 @@ void NetworkResourceLoader::transferToNewWebProcess(NetworkConnectionToWebProces
         if (RefPtr swConnection = newConnection.swConnection())
             swConnection->transferServiceWorkerLoadToNewWebProcess(*this, *serviceWorkerRegistration, parameters.request);
     }
-    if (m_workerStart)
-        send(Messages::WebResourceLoader::SetWorkerStart { m_workerStart }, coreIdentifier());
+    if (m_serviceWorkerTimingInfo)
+        send(Messages::WebResourceLoader::SetServiceWorkerTimingInfo { *m_serviceWorkerTimingInfo }, coreIdentifier());
     bool willWaitForContinueDidReceiveResponse = true;
     send(Messages::WebResourceLoader::DidReceiveResponse { m_response, m_privateRelayed, willWaitForContinueDidReceiveResponse, computeResponseMetrics(m_response) });
 }
@@ -832,7 +832,7 @@ std::optional<ResourceError> NetworkResourceLoader::doCrossOriginOpenerHandlingO
         m_currentCoopEnforcementResult = CrossOriginOpenerPolicyEnforcementResult::from(m_parameters.documentURL, WTF::move(sourceOrigin), m_parameters.sourceCrossOriginOpenerPolicy, m_parameters.navigationRequester, m_parameters.openerURL);
     }
 
-    m_currentCoopEnforcementResult = WebCore::doCrossOriginOpenerHandlingOfResponse(*this, response, m_parameters.navigationRequester, CheckedPtr { contentSecurityPolicy.get() }.get(), m_parameters.effectiveSandboxFlags, originalRequest().httpReferrer(), m_parameters.isDisplayingInitialEmptyDocument, *m_currentCoopEnforcementResult);
+    m_currentCoopEnforcementResult = WebCore::doCrossOriginOpenerHandlingOfResponse(*this, response, m_parameters.navigationRequester, CheckedPtr { contentSecurityPolicy.get() }, m_parameters.effectiveSandboxFlags, originalRequest().httpReferrer(), m_parameters.isDisplayingInitialEmptyDocument, *m_currentCoopEnforcementResult);
     if (!m_currentCoopEnforcementResult)
         return ResourceError { errorDomainWebKitInternal, 0, response.url(), "Navigation was blocked by Cross-Origin-Opener-Policy"_s, ResourceError::Type::AccessControl };
     return std::nullopt;
@@ -1074,6 +1074,9 @@ void NetworkResourceLoader::didReceiveResponse(ResourceResponse&& receivedRespon
 
 void NetworkResourceLoader::sendDidReceiveResponsePotentiallyInNewBrowsingContextGroup(const WebCore::ResourceResponse& response, PrivateRelayed privateRelayed, bool needsContinueDidReceiveResponseMessage)
 {
+    if (m_serviceWorkerTimingInfo)
+        send(Messages::WebResourceLoader::SetServiceWorkerTimingInfo { *m_serviceWorkerTimingInfo }, coreIdentifier());
+
     Ref connection = m_connection;
     auto browsingContextGroupSwitchDecision = connection->usesSingleWebProcess()? BrowsingContextGroupSwitchDecision::StayInGroup: toBrowsingContextGroupSwitchDecision(m_currentCoopEnforcementResult);
     if (browsingContextGroupSwitchDecision == BrowsingContextGroupSwitchDecision::StayInGroup) {
@@ -1489,6 +1492,7 @@ void NetworkResourceLoader::continueWillSendRequest(ResourceRequest&& newRequest
 
     if (shouldTryToMatchRegistrationOnRedirection(parameters().options, !!m_serviceWorkerFetchTask)) {
         m_serviceWorkerRegistration = { };
+        m_serviceWorkerTimingInfo = { };
         setWorkerStart({ });
         if (auto serviceWorkerFetchTask = protectedConnectionToWebProcess()->createFetchTask(*this, newRequest)) {
             LOADER_RELEASE_LOG("continueWillSendRequest: Created a ServiceWorkerFetchTask to handle the redirect (fetchIdentifier=%" PRIu64 ")", serviceWorkerFetchTask->fetchIdentifier().toUInt64());
@@ -2058,8 +2062,38 @@ bool NetworkResourceLoader::isCrossOriginPrefetch() const
 
 void NetworkResourceLoader::setWorkerStart(MonotonicTime value)
 {
-    m_workerStart = value;
-    send(Messages::WebResourceLoader::SetWorkerStart { m_workerStart }, coreIdentifier());
+    if (!m_serviceWorkerTimingInfo)
+        m_serviceWorkerTimingInfo = ServiceWorkerTimingInfo { };
+    m_serviceWorkerTimingInfo->workerStart = value;
+}
+
+void NetworkResourceLoader::setWorkerRouterEvaluationStart(MonotonicTime time)
+{
+    if (!m_serviceWorkerTimingInfo)
+        m_serviceWorkerTimingInfo = ServiceWorkerTimingInfo { };
+    m_serviceWorkerTimingInfo->workerRouterEvaluationStart = time;
+}
+
+void NetworkResourceLoader::setWorkerCacheLookupStart(MonotonicTime time)
+{
+    if (!m_serviceWorkerTimingInfo)
+        m_serviceWorkerTimingInfo = ServiceWorkerTimingInfo { };
+    m_serviceWorkerTimingInfo->workerCacheLookupStart = time;
+}
+
+void NetworkResourceLoader::setWorkerMatchedRouterSource(WebCore::RouterSourceEnum source)
+{
+    if (!m_serviceWorkerTimingInfo)
+        m_serviceWorkerTimingInfo = ServiceWorkerTimingInfo { };
+    m_serviceWorkerTimingInfo->workerMatchedRouterSource = source;
+}
+
+void NetworkResourceLoader::setWorkerFinalRouterSource(WebCore::RouterSourceEnum source)
+{
+    if (!m_serviceWorkerTimingInfo || !m_serviceWorkerTimingInfo->workerMatchedRouterSource)
+        return;
+
+    m_serviceWorkerTimingInfo->workerFinalRouterSource = source;
 }
 
 void NetworkResourceLoader::startWithServiceWorker()
@@ -2266,7 +2300,11 @@ void NetworkResourceLoader::sendDidReceiveDataMessage(const FragmentedSharedBuff
     updateBytesTransferredOverNetwork(bytesTransferredOverNetwork);
 #endif
 
-    send(Messages::WebResourceLoader::DidReceiveData(IPC::SharedBufferReference(buffer), bytesTransferredOverNetwork));
+    // Transfer memory footprint of the buffer to the receiving WebProcess. We have to use the
+    // default ledger rather than the network ledger here since the latter requires an entitlement.
+    auto data = IPC::SharedBufferReference { buffer };
+    data.transferOwnershipToReceiver(WebCore::MemoryLedger::Default);
+    send(Messages::WebResourceLoader::DidReceiveData(WTF::move(data), bytesTransferredOverNetwork));
 }
 
 #if ENABLE(CONTENT_EXTENSIONS)

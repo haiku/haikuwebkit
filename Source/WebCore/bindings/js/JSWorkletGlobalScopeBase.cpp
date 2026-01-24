@@ -103,7 +103,8 @@ DEFINE_VISIT_CHILDREN(JSWorkletGlobalScopeBase);
 
 void JSWorkletGlobalScopeBase::destroy(JSCell* cell)
 {
-    static_cast<JSWorkletGlobalScopeBase*>(cell)->JSWorkletGlobalScopeBase::~JSWorkletGlobalScopeBase();
+    // We cannot rely on jsCast() during JSObject destruction.
+    SUPPRESS_MEMORY_UNSAFE_CAST static_cast<JSWorkletGlobalScopeBase*>(cell)->JSWorkletGlobalScopeBase::~JSWorkletGlobalScopeBase();
 }
 
 ScriptExecutionContext* JSWorkletGlobalScopeBase::scriptExecutionContext() const

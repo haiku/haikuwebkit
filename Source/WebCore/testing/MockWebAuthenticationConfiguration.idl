@@ -70,6 +70,7 @@
 
 [
     Conditional=WEB_AUTHN,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary MockWebAuthenticationConfiguration {
     boolean silentFailure = false;
     MockLocalConfiguration local;
@@ -80,6 +81,7 @@
 
 [
     Conditional=WEB_AUTHN,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary MockLocalConfiguration {
     UserVerification userVerification = "no";
     boolean acceptAttestation = false;
@@ -91,6 +93,7 @@
 
 [
     Conditional=WEB_AUTHN,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary MockHidConfiguration {
     sequence<DOMString> payloadBase64;
     sequence<DOMString> expectedCommandsBase64;
@@ -113,6 +116,7 @@
 
 [
     Conditional=WEB_AUTHN,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary MockNfcConfiguration {
     MockNfcError error = "success";
     sequence<DOMString> payloadBase64;
@@ -122,6 +126,7 @@
 
 [
     Conditional=WEB_AUTHN,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary MockCcidConfiguration {
     sequence<DOMString> payloadBase64;
 };

@@ -54,7 +54,7 @@ public:
 
     mach_port_t sendRight() const LIFETIME_BOUND { return m_port; }
 
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE mach_port_t leakSendRight();
+    [[nodiscard]] WTF_EXPORT_PRIVATE mach_port_t leakSendRight();
 
 private:
     explicit MachSendRight(mach_port_t);

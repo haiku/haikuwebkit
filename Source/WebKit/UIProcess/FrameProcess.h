@@ -34,7 +34,7 @@ namespace WebKit {
 class BrowsingContextGroup;
 class WebPreferences;
 class WebProcessProxy;
-enum class InjectBrowsingContextIntoProcess : bool;
+enum class BrowsingContextGroupUpdate : uint8_t;
 enum class LoadedWebArchive : bool;
 
 // Note: This object should only be referenced by WebFrameProxy because its destructor is an
@@ -53,11 +53,11 @@ public:
 private:
     friend class BrowsingContextGroup; // FrameProcess should not be created except by BrowsingContextGroup.
     static Ref<FrameProcess> create(WebProcessProxy& process, BrowsingContextGroup& group, const std::optional<WebCore::Site>& site, const WebCore::Site& mainFrameSite,
-        const WebPreferences& preferences, LoadedWebArchive loadedWebArchive, InjectBrowsingContextIntoProcess injectBrowsingContextIntoProcess)
+        const WebPreferences& preferences, LoadedWebArchive loadedWebArchive, BrowsingContextGroupUpdate browsingContextGroupUpdate)
     {
-        return adoptRef(*new FrameProcess(process, group, site, mainFrameSite, preferences, loadedWebArchive, injectBrowsingContextIntoProcess));
+        return adoptRef(*new FrameProcess(process, group, site, mainFrameSite, preferences, loadedWebArchive, browsingContextGroupUpdate));
     }
-    FrameProcess(WebProcessProxy&, BrowsingContextGroup&, const std::optional<WebCore::Site>&, const WebCore::Site& mainFrameSite, const WebPreferences&, LoadedWebArchive, InjectBrowsingContextIntoProcess);
+    FrameProcess(WebProcessProxy&, BrowsingContextGroup&, const std::optional<WebCore::Site>&, const WebCore::Site& mainFrameSite, const WebPreferences&, LoadedWebArchive, BrowsingContextGroupUpdate);
 
     const Ref<WebProcessProxy> m_process;
     WeakPtr<BrowsingContextGroup> m_browsingContextGroup;

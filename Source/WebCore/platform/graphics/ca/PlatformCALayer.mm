@@ -205,7 +205,7 @@ void PlatformCALayer::moveToLayerPool()
 {
     ASSERT(!superlayer());
     if (auto pool = layerPool())
-        pool->addLayer(this);
+        pool->addLayer(*this);
 }
 
 LayerPool* PlatformCALayer::layerPool()

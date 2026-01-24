@@ -83,7 +83,7 @@ void CString::init(std::span<const char> string)
     memcpySpan(m_buffer->mutableSpan(), string);
 }
 
-std::span<char> CString::mutableSpan()
+std::span<char> CString::mutableSpan() LIFETIME_BOUND
 {
     copyBufferIfNeeded();
     if (!m_buffer)
@@ -91,7 +91,7 @@ std::span<char> CString::mutableSpan()
     return m_buffer->mutableSpan();
 }
 
-std::span<char> CString::mutableSpanIncludingNullTerminator()
+std::span<char> CString::mutableSpanIncludingNullTerminator() LIFETIME_BOUND
 {
     copyBufferIfNeeded();
     if (!m_buffer)

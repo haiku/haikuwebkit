@@ -94,17 +94,25 @@ Vector<PlatformXR::FrameData::HitTestResult> OpenXRHitTestManager::requestHitTes
     raycastInfo.space = space;
     raycastInfo.time = time;
 
-    XrRaycastHitResultANDROID xrResults[maxHitTestResults];
     auto xrHitResults = createOpenXRStruct<XrRaycastHitResultsANDROID, XR_TYPE_RAYCAST_HIT_RESULTS_ANDROID>();
-    xrHitResults.resultsCapacityInput = maxHitTestResults;
-    xrHitResults.results = xrResults;
+    xrHitResults.resultsCapacityInput = 0;
+    xrHitResults.resultsCountOutput = 0;
+    xrHitResults.results = nullptr;
+
+    CHECK_XRCMD(OpenXRExtensions::singleton().methods().xrRaycastANDROID(m_session, &raycastInfo, &xrHitResults));
+    if (!xrHitResults.resultsCountOutput)
+        return { };
+
+    Vector<XrRaycastHitResultANDROID> xrResults;
+    xrResults.resize(xrHitResults.resultsCountOutput);
+    xrHitResults.resultsCapacityInput = xrHitResults.resultsCountOutput;
+    xrHitResults.results = xrResults.mutableSpan().data();
 
     CHECK_XRCMD(OpenXRExtensions::singleton().methods().xrRaycastANDROID(m_session, &raycastInfo, &xrHitResults));
 
-    Vector<PlatformXR::FrameData::HitTestResult> results;
-    for (const auto xrResult : xrResults)
-        results.append(XrPosefToPose(xrResult.pose));
-    return results;
+    return xrResults.map([](auto& result) -> PlatformXR::FrameData::HitTestResult {
+        return { XrPosefToPose(result.pose) };
+    });
 #else
     return { };
 #endif

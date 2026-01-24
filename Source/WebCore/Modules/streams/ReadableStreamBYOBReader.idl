@@ -25,7 +25,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-dictionary ReadableStreamBYOBReaderReadOptions {
+[
+    LegacyNativeDictionaryRequiredInterfaceNullability,
+] dictionary ReadableStreamBYOBReaderReadOptions {
     [EnforceRange] unsigned long long min = 1;
 };
 

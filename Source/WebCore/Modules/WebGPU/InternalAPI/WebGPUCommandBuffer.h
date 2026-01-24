@@ -45,6 +45,7 @@ public:
     }
 
     virtual bool isRemoteCommandBufferProxy() const { return false; }
+    virtual bool isCommandBufferImpl() const { return false; }
 
 protected:
     CommandBuffer() = default;

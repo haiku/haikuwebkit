@@ -3,16 +3,16 @@
 PASS Type conversion happens on the data member of the DigitalCredentialGetRequest object.
 PASS Calling navigator.credentials.get() without a digital member same origin.
 PASS navigator.credentials.get() API rejects if there are no credential request.
-PASS navigator.credentials.get() API rejects if there are no credential request for same-origin iframe.
+FAIL navigator.credentials.get() API rejects if there are no credential request for same-origin iframe. promise_rejects_js: function "function() { throw e; }" threw object "NotAllowedError: The document is not focused." ("NotAllowedError") expected instance of function "function TypeError() {
+    [native code]
+}" ("TypeError")
 PASS navigator.credentials.get() API rejects if there are no credential request in cross-origin iframe.
 PASS navigator.credentials.get() promise is rejected if called with an aborted controller.
 PASS navigator.credentials.get() promise is rejected if called with an aborted controller in same-origin iframe.
 PASS navigator.credentials.get() promise is rejected if called with an aborted signal in cross-origin iframe.
 PASS navigator.credentials.get() promise is rejected if abort controller is aborted after call to get().
 PASS navigator.credentials.get() promise is rejected if abort controller is aborted after call to get() in cross-origin iframe.
-FAIL Mediation is implicitly required and hence ignored. Request is aborted regardless. promise_rejects_js: function "function() { throw e; }" threw object "InvalidStateError: A credential picker operation is already in progress." ("InvalidStateError") expected instance of function "function Error() {
-    [native code]
-}" ("Error")
+PASS Mediation is implicitly required and hence ignored. Request is aborted regardless.
 PASS Throws TypeError when request data is not JSON stringifiable.
 PASS `requests` field is required in the options object.
 

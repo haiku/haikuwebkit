@@ -25,6 +25,8 @@
 
 #pragma once
 
+#import <wtf/Platform.h>
+
 #if PLATFORM(IOS_FAMILY)
 
 #import "WKBrowserEngineDefinitions.h"

@@ -27,6 +27,7 @@
 #include "Event.h"
 #include "EventContext.h"
 #include "EventNames.h"
+#include "FocusEvent.h"
 #include "HTMLSlotElement.h"
 #include "LocalDOMWindow.h"
 #include "MouseEvent.h"
@@ -88,7 +89,7 @@ EventPath::EventPath(Node& originalTarget, Event& event)
 void EventPath::buildPath(Node& originalTarget, Event& event)
 {
     EventContext::Type contextType = [&]() {
-        if (is<MouseEvent>(event) || event.isFocusEvent())
+        if (is<MouseEvent>(event) || is<FocusEvent>(event))
             return EventContext::Type::MouseOrFocus;
 #if ENABLE(TOUCH_EVENTS)
         if (is<TouchEvent>(event))
@@ -190,7 +191,7 @@ void EventPath::setRelatedTarget(Node& origin, Node& relatedNode)
 void EventPath::adjustForDisabledFormControl()
 {
     for (unsigned i = 0; i < m_path.size(); ++i) {
-        auto* element = dynamicDowncast<Element>(m_path[i].node());
+        CheckedPtr element = dynamicDowncast<Element>(m_path[i].node());
         if (element && element->isDisabledFormControl()) {
             m_path.shrink(i);
             return;
@@ -311,10 +312,10 @@ EventPath::EventPath(EventTarget& target)
 
 static Node* moveOutOfAllShadowRoots(Node& startingNode)
 {
-    Node* node = &startingNode;
+    CheckedPtr node = &startingNode;
     while (node && node->isInShadowTree())
         node = downcast<ShadowRoot>(node->rootNode()).host();
-    return node;
+    return node.unsafeGet();
 }
 
 RelatedNodeRetargeter::RelatedNodeRetargeter(Ref<Node>&& relatedNode, Node& target)
@@ -358,9 +359,9 @@ RelatedNodeRetargeter::RelatedNodeRetargeter(Ref<Node>&& relatedNode, Node& targ
 
     bool lowestCommonAncestorIsDocumentScope = i + 1 == m_ancestorTreeScopes.size();
     if (lowestCommonAncestorIsDocumentScope && !m_relatedNode->isConnected() && !target.isConnected()) {
-        Node& relatedNodeAncestorInDocumentScope = i ? *downcast<ShadowRoot>(m_ancestorTreeScopes[i - 1]->rootNode()).shadowHost() : m_relatedNode.get();
-        Node& targetAncestorInDocumentScope = j ? *downcast<ShadowRoot>(targetTreeScopeAncestors[j - 1]->rootNode()).shadowHost() : target;
-        if (&targetAncestorInDocumentScope.rootNode() != &relatedNodeAncestorInDocumentScope.rootNode()) {
+        CheckedRef relatedNodeAncestorInDocumentScope = i ? *downcast<ShadowRoot>(m_ancestorTreeScopes[i - 1]->rootNode()).shadowHost() : m_relatedNode.get();
+        CheckedRef targetAncestorInDocumentScope = j ? *downcast<ShadowRoot>(targetTreeScopeAncestors[j - 1]->rootNode()).shadowHost() : target;
+        if (&targetAncestorInDocumentScope->rootNode() != &relatedNodeAncestorInDocumentScope->rootNode()) {
             m_hasDifferentTreeRoot = true;
             m_retargetedRelatedNode = moveOutOfAllShadowRoots(m_relatedNode);
             return;

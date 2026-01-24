@@ -121,8 +121,8 @@ void MediaKeySystemPermissionRequestManagerProxy::createRequestForFrame(MediaKey
 {
     ALWAYS_LOG(LOGIDENTIFIER, mediaKeySystemID.toUInt64());
     Ref page = m_page.get();
-    auto request = MediaKeySystemPermissionRequestProxy::create(*this, mediaKeySystemID, page->mainFrame()->frameID(), frameID, WTF::move(mediaKeyRequestOrigin), WTF::move(topLevelDocumentOrigin), keySystem);
-    m_pendingRequests.add(mediaKeySystemID, request.ptr());
+    Ref request = MediaKeySystemPermissionRequestProxy::create(*this, mediaKeySystemID, page->mainFrame()->frameID(), frameID, WTF::move(mediaKeyRequestOrigin), WTF::move(topLevelDocumentOrigin), keySystem);
+    m_pendingRequests.add(mediaKeySystemID, request);
 
     Ref mediaKeyRequestDocumentSecurityOrigin = request->mediaKeyRequestSecurityOrigin();
     Ref topLevelDocumentSecurityOrigin = request->topLevelDocumentSecurityOrigin();

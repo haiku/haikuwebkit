@@ -62,7 +62,7 @@ public:
     explicit ScrollAnimator(ScrollableArea&);
     virtual ~ScrollAnimator();
 
-    ScrollableArea& scrollableArea() const { return m_scrollableArea.get(); }
+    ScrollableArea& scrollableArea() const { return m_scrollableArea; }
     CheckedRef<ScrollableArea> checkedScrollableArea() const { return scrollableArea(); }
 
     KeyboardScrollingAnimator *keyboardScrollingAnimator() const final { return m_keyboardScrollingAnimator.ptr(); }

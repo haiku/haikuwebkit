@@ -138,10 +138,10 @@ Ref<DOMStringList> IDBTransaction::objectStoreNames() const
     return objectStoreNames;
 }
 
-IDBDatabase* IDBTransaction::db()
+IDBDatabase& IDBTransaction::db()
 {
     ASSERT(canCurrentThreadAccessThreadLocalData(m_database->originThread()));
-    return m_database.ptr();
+    return m_database;
 }
 
 DOMException* IDBTransaction::error() const

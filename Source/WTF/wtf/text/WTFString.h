@@ -195,27 +195,27 @@ public:
     bool endsWith(char character) const { return endsWith(static_cast<char16_t>(character)); }
     bool hasInfixEndingAt(StringView suffix, unsigned end) const;
 
-    WARN_UNUSED_RETURN String substring(unsigned position, unsigned length = MaxLength) const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String substringSharingImpl(unsigned position, unsigned length = MaxLength) const;
-    WARN_UNUSED_RETURN String left(unsigned length) const { return substring(0, length); }
-    WARN_UNUSED_RETURN String right(unsigned length) const { return substring(this->length() - length, length); }
+    [[nodiscard]] String substring(unsigned position, unsigned length = MaxLength) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String substringSharingImpl(unsigned position, unsigned length = MaxLength) const;
+    [[nodiscard]] String left(unsigned length) const { return substring(0, length); }
+    [[nodiscard]] String right(unsigned length) const { return substring(this->length() - length, length); }
 
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String convertToASCIILowercase() const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String convertToASCIIUppercase() const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String convertToLowercaseWithoutLocale() const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String convertToLowercaseWithoutLocaleStartingAtFailingIndex8Bit(unsigned) const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String convertToUppercaseWithoutLocale() const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String convertToLowercaseWithLocale(const AtomString& localeIdentifier) const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String convertToUppercaseWithLocale(const AtomString& localeIdentifier) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String convertToASCIILowercase() const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String convertToASCIIUppercase() const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String convertToLowercaseWithoutLocale() const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String convertToLowercaseWithoutLocaleStartingAtFailingIndex8Bit(unsigned) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String convertToUppercaseWithoutLocale() const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String convertToLowercaseWithLocale(const AtomString& localeIdentifier) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String convertToUppercaseWithLocale(const AtomString& localeIdentifier) const;
 
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String simplifyWhiteSpace(CodeUnitMatchFunction) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String simplifyWhiteSpace(CodeUnitMatchFunction) const;
 
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String trim(CodeUnitMatchFunction) const;
-    template<typename Predicate> WARN_UNUSED_RETURN String removeCharacters(const Predicate&) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String trim(CodeUnitMatchFunction) const;
+    template<typename Predicate> [[nodiscard]] String removeCharacters(const Predicate&) const;
 
     // Returns the string with case folded for case insensitive comparison.
     // Use convertToASCIILowercase instead if ASCII case insensitive comparison is desired.
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String foldCase() const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String foldCase() const;
 
     // Returns an uninitialized string. The characters needs to be written
     // into the buffer returned in data before the returned string is used.
@@ -225,18 +225,18 @@ public:
     using SplitFunctor = WTF::Function<void(StringView)>;
 
     WTF_EXPORT_PRIVATE void split(char16_t separator, NOESCAPE const SplitFunctor&) const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE Vector<String> split(char16_t separator) const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE Vector<String> split(StringView separator) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE Vector<String> split(char16_t separator) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE Vector<String> split(StringView separator) const;
 
     WTF_EXPORT_PRIVATE void splitAllowingEmptyEntries(char16_t separator, NOESCAPE const SplitFunctor&) const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE Vector<String> splitAllowingEmptyEntries(char16_t separator) const;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE Vector<String> splitAllowingEmptyEntries(StringView separator) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE Vector<String> splitAllowingEmptyEntries(char16_t separator) const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE Vector<String> splitAllowingEmptyEntries(StringView separator) const;
 
     WTF_EXPORT_PRIVATE double toDouble(bool* ok = nullptr) const;
     WTF_EXPORT_PRIVATE float toFloat(bool* ok = nullptr) const;
 
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String isolatedCopy() const &;
-    WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String isolatedCopy() &&;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String isolatedCopy() const &;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String isolatedCopy() &&;
 
     WTF_EXPORT_PRIVATE bool isSafeToSendToAnotherThread() const;
 
@@ -456,12 +456,12 @@ inline String::String(ASCIILiteral characters)
 {
 }
 
-template<> inline std::span<const Latin1Character> String::span<Latin1Character>() const
+template<> inline std::span<const Latin1Character> String::span<Latin1Character>() const LIFETIME_BOUND
 {
     return span8();
 }
 
-template<> inline std::span<const char16_t> String::span<char16_t>() const
+template<> inline std::span<const char16_t> String::span<char16_t>() const LIFETIME_BOUND
 {
     return span16();
 }
@@ -473,21 +473,21 @@ inline char16_t String::characterAt(unsigned index) const
     return m_impl->at(index);
 }
 
-WARN_UNUSED_RETURN inline String makeStringByReplacingAll(const String& string, char16_t target, char16_t replacement)
+[[nodiscard]] inline String makeStringByReplacingAll(const String& string, char16_t target, char16_t replacement)
 {
     if (auto impl = string.impl())
         return String { impl->replace(target, replacement) };
     return string;
 }
 
-WARN_UNUSED_RETURN ALWAYS_INLINE String makeStringByReplacingAll(const String& string, char16_t target, ASCIILiteral literal)
+[[nodiscard]] ALWAYS_INLINE String makeStringByReplacingAll(const String& string, char16_t target, ASCIILiteral literal)
 {
     if (auto impl = string.impl())
         return String { impl->replace(target, literal.span8()) };
     return string;
 }
 
-WARN_UNUSED_RETURN WTF_EXPORT_PRIVATE String makeStringByRemoving(const String&, unsigned position, unsigned lengthToRemove);
+[[nodiscard]] WTF_EXPORT_PRIVATE String makeStringByRemoving(const String&, unsigned position, unsigned lengthToRemove);
 
 WTF_EXPORT_PRIVATE String makeStringByJoining(std::span<const String> strings, const String& separator);
 

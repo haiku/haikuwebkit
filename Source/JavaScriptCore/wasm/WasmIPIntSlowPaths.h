@@ -123,6 +123,8 @@ WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(ref_cast, int32_t, bool, EncodedJSValue);
 
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(call_indirect, CallFrame* callFrame, Wasm::FunctionSpaceIndex* functionIndex, CallIndirectMetadata* call);
 
+WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(trace, CallFrame*, uint8_t*, uint8_t*);
+
 // We can't use FunctionSpaceIndex here since ARMv7 ABI always passes structs on th stack...
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(prepare_function_body, CallFrame*);
 WASM_IPINT_EXTERN_CPP_HIDDEN_DECL(prepare_call, CallFrame*, CallMetadata*, Register* callee);

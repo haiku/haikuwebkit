@@ -380,7 +380,7 @@ static void compare_bitmaps(skiatest::Reporter* reporter,
     REPORTER_ASSERT(reporter, 0 == pixelErrors);
 }
 
-static sk_sp<SkData> serialize_typeface_proc(SkTypeface* typeface, void* ctx) {
+static sk_sp<const SkData> serialize_typeface_proc(SkTypeface* typeface, void* ctx) {
     // Write out typeface ID followed by entire typeface.
     SkDynamicMemoryWStream stream;
     sk_sp<SkData> data(typeface->serialize(SkTypeface::SerializeBehavior::kDoIncludeData));
@@ -390,19 +390,13 @@ static sk_sp<SkData> serialize_typeface_proc(SkTypeface* typeface, void* ctx) {
     return stream.detachAsData();
 }
 
-static sk_sp<SkTypeface> deserialize_typeface_proc(const void* data, size_t length, void* ctx) {
-    SkStream* stream;
-    if (length < sizeof(stream)) {
-        return nullptr;
-    }
-    memcpy(&stream, data, sizeof(stream));
-
+static sk_sp<SkTypeface> deserialize_typeface_proc(SkStream& stream, void* ctx) {
     SkTypefaceID id;
-    if (!stream->read(&id, sizeof(id))) {
+    if (!stream.read(&id, sizeof(id))) {
         return nullptr;
     }
 
-    sk_sp<SkTypeface> typeface = SkTypeface::MakeDeserialize(stream, ToolUtils::TestFontMgr());
+    sk_sp<SkTypeface> typeface = SkTypeface::MakeDeserialize(&stream, ToolUtils::TestFontMgr());
     return typeface;
 }
 
@@ -833,7 +827,7 @@ DEF_TEST(Serialization, reporter) {
         // Serialize picture. The default typeface proc should result in a non-empty
         // typeface when deserializing.
         SkSerialProcs sProcs;
-        sProcs.fImageProc = [](SkImage* img, void*) -> sk_sp<SkData> {
+        sProcs.fImageProc = [](SkImage* img, void*) -> sk_sp<const SkData> {
 #if defined(SK_CODEC_ENCODES_PNG_WITH_RUST)
             return SkPngRustEncoder::Encode(nullptr, img, SkPngRustEncoder::Options{});
 #else
@@ -893,7 +887,7 @@ DEF_TEST(Serialization, reporter) {
     SkSerialProcs serial_procs;
     serial_procs.fTypefaceProc = serialize_typeface_proc;
     SkDeserialProcs deserial_procs;
-    deserial_procs.fTypefaceProc = deserialize_typeface_proc;
+    deserial_procs.fTypefaceStreamProc = deserialize_typeface_proc;
     TestPictureTypefaceSerialization(&serial_procs, &deserial_procs, reporter);
 }
 

@@ -88,8 +88,14 @@ RefPtr<Cache> Cache::open(NetworkProcess& networkProcess, const String& cachePat
     if (!FileSystem::makeAllDirectories(cachePath))
         return nullptr;
 
-    auto capacity = computeCapacity(networkProcess.cacheModel(), cachePath);
-    auto storage = Storage::open(cachePath, options.contains(CacheOption::TestingMode) ? Storage::Mode::AvoidRandomness : Storage::Mode::Normal, capacity);
+    auto cacheModel = networkProcess.cacheModel();
+    auto capacity = computeCapacity(cacheModel, cachePath);
+
+    // Cache a small number of recently used memory mapped main resource blobs to speed up hot loads of
+    // recently visited websites.
+    size_t mainResourceBlobMemoryCacheFileLimit = cacheModel == CacheModel::PrimaryWebBrowser ? 32 : 0;
+
+    auto storage = Storage::open(cachePath, options.contains(CacheOption::TestingMode) ? Storage::Mode::AvoidRandomness : Storage::Mode::Normal, capacity, mainResourceBlobMemoryCacheFileLimit);
 
     LOG(NetworkCache, "(NetworkProcess) opened cache storage, success %d", !!storage);
 

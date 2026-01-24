@@ -42,6 +42,7 @@
 #include "WebExtensionURLSchemeHandler.h"
 #include "WebProcessProxy.h"
 #include "WebUserContentControllerProxy.h"
+#include <WebCore/ContentRuleListResults.h>
 #include <WebCore/Timer.h>
 #include <wtf/Forward.h>
 #include <wtf/Identified.h>
@@ -260,7 +261,7 @@ private:
             // FIXME: <https://webkit.org/b/267514> Add support for changeInfo.
 
 #if PLATFORM(COCOA)
-            if (RefPtr extensionController = m_extensionController.get())
+            if (RefPtr extensionController = m_extensionController)
                 extensionController->cookiesDidChange(cookieStore);
 #endif
         }

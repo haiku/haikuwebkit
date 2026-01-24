@@ -154,9 +154,6 @@ public:
     void processIsStartingToCaptureAudio(GPUConnectionToWebProcess&);
 #endif
 
-#if ENABLE(VIDEO)
-    void requestBitmapImageForCurrentTime(WebCore::ProcessIdentifier, WebCore::MediaPlayerIdentifier, CompletionHandler<void(std::optional<WebCore::ShareableBitmap::Handle>&&)>&&);
-#endif
 #if ENABLE(WEBXR)
     std::optional<WebCore::ProcessIdentity> immersiveModeProcessIdentity() const;
 #endif

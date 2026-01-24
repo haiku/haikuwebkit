@@ -215,6 +215,9 @@ static std::optional<ResourceCryptographicDigest::Algorithm> findStrongestAlgori
 
 void reportHashesIfNeeded(const CachedResource& resource)
 {
+    if (!resource.isHashReportingNeeded())
+        return;
+
     RefPtr loader = resource.loader();
     if (!loader)
         return;

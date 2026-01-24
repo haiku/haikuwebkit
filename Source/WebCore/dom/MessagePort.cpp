@@ -264,7 +264,7 @@ void MessagePort::dispatchMessages()
         ASSERT(context->isContextThread());
         auto* globalObject = context->globalObject();
         Ref vm = globalObject->vm();
-        auto scope = DECLARE_CATCH_SCOPE(vm);
+        auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
         RefPtr workerGlobalScope = dynamicDowncast<WorkerGlobalScope>(*context);
         for (auto& message : messages) {

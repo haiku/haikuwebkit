@@ -580,6 +580,7 @@ JSC_DEFINE_JIT_OPERATION(operationWasmToJSExitMarshalReturnValues, void, (void* 
                             OPERATION_RETURN(scope);
                         }
                     }
+                    // Validation only: value not modified so write back not needed.
                 } else {
                     // operationConvertToAnyref
                     JSValue value = JSValue::decode(std::bit_cast<EncodedJSValue>(returned));
@@ -588,8 +589,8 @@ JSC_DEFINE_JIT_OPERATION(operationWasmToJSExitMarshalReturnValues, void, (void* 
                         throwTypeError(globalObject, scope, "Argument value did not match the reference type"_s);
                         OPERATION_RETURN(scope);
                     }
+                    *access.operator()<uint64_t>(registerSpace, 0) = std::bit_cast<uint64_t>(value);
                 }
-                // do nothing, the register is already there
             } else
                 RELEASE_ASSERT_NOT_REACHED();
         }
@@ -1718,7 +1719,9 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmRetrieveAndClearExceptionIfCatcha
     // We want to clear the exception here rather than in the catch prologue
     // JIT code because clearing it also entails clearing a bit in an Atomic
     // bit field in VMTraps.
-    throwScope.clearException();
+    bool didClear = throwScope.tryClearException();
+    // If we had a pending termination exception it should have propagated past any wasm catch handlers.
+    ASSERT_UNUSED(didClear, didClear);
 
     return { JSValue::encode(thrownValue), jumpTarget };
 }
@@ -1740,7 +1743,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmRetrieveAndClearExceptionIfCatcha
     // We want to clear the exception here rather than in the catch prologue
     // JIT code because clearing it also entails clearing a bit in an Atomic
     // bit field in VMTraps.
-    throwScope.clearException();
+    (void)throwScope.tryClearException();
 
     return jumpTarget;
 }

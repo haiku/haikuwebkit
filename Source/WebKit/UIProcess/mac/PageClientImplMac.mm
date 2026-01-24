@@ -92,7 +92,7 @@
 #import <WebCore/WebMediaSessionManager.h>
 #endif
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 #import <WebCore/DigitalCredentialsRequestData.h>
 #import <WebCore/DigitalCredentialsResponseData.h>
 #import <WebCore/ExceptionData.h>
@@ -674,15 +674,15 @@ bool PageClientImpl::showShareSheet(ShareDataWithParsedURL&& shareData, WTF::Com
     return true;
 }
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 void PageClientImpl::showDigitalCredentialsPicker(const WebCore::DigitalCredentialsRequestData& requestData, WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&& completionHandler)
 {
-    m_impl->showDigitalCredentialsPicker(requestData, WTF::move(completionHandler), webView().get());
+    checkedImpl()->showDigitalCredentialsPicker(requestData, WTF::move(completionHandler), webView().get());
 }
 
 void PageClientImpl::dismissDigitalCredentialsPicker(WTF::CompletionHandler<void(bool)>&& completionHandler)
 {
-    m_impl->dismissDigitalCredentialsPicker(WTF::move(completionHandler), webView().get());
+    checkedImpl()->dismissDigitalCredentialsPicker(WTF::move(completionHandler), webView().get());
 }
 #endif
 

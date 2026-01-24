@@ -97,22 +97,26 @@ InlineContentBuilder::InlineContentBuilder(const RenderBlockFlow& blockFlow)
 {
 }
 
-FloatRect InlineContentBuilder::build(Layout::InlineLayoutResult&& layoutResult, InlineContent& inlineContent, const Layout::InlineDamage* lineDamage) const
+FloatRect InlineContentBuilder::build(std::unique_ptr<Layout::InlineLayoutResult>&& layoutResult, InlineContent& inlineContent, const Layout::InlineDamage* lineDamage) const
 {
     inlineContent.releaseCaches();
     auto damageRect = FloatRect { };
 
-    if (layoutResult.range == Layout::InlineLayoutResult::Range::Full) {
+    if (!layoutResult || layoutResult->range == Layout::InlineLayoutResult::Range::Full) {
         for (auto& line : inlineContent.displayContent().lines)
             damageRect.unite(line.inkOverflow());
 
-        inlineContent.displayContent().set(WTF::move(layoutResult.displayContent));
+        if (layoutResult)
+            inlineContent.displayContent().set(WTF::move(layoutResult->displayContent));
+        else
+            inlineContent.displayContent().clear();
+
         adjustDisplayLines(inlineContent, 0);
 
         for (auto& line : inlineContent.displayContent().lines)
             damageRect.unite(line.inkOverflow());
     } else
-        damageRect = handlePartialDisplayContentUpdate(WTF::move(layoutResult), inlineContent, lineDamage);
+        damageRect = handlePartialDisplayContentUpdate(WTF::move(*layoutResult), inlineContent, lineDamage);
 
     computeIsFirstIsLastBoxAndBidiReorderingForInlineContent(inlineContent.displayContent().boxes);
     return damageRect;
@@ -144,7 +148,7 @@ void InlineContentBuilder::adjustDisplayLines(InlineContent& inlineContent, size
 
     for (size_t lineIndex = startIndex; lineIndex < lines.size(); ++lineIndex) {
         auto& line = lines[lineIndex];
-        auto lineScrollableOverflowRect = line.contentOverflow();
+        auto lineScrollableOverflowRect = line.scrollableOverflow();
         auto adjustOverflowLogicalWidthWithBlockFlowQuirk = [&] {
             auto scrollableOverflowLogicalWidth = isHorizontalWritingMode ? lineScrollableOverflowRect.width() : lineScrollableOverflowRect.height();
             if (!isLeftToRightInlineDirection && line.contentLogicalWidth() > scrollableOverflowLogicalWidth) {
@@ -287,17 +291,17 @@ FloatRect InlineContentBuilder::handlePartialDisplayContentUpdate(Layout::Inline
         auto& displayContentFromPreviousLayout = inlineContent.displayContent();
         if (!lineDamage || !lineDamage->layoutStartPosition() || !displayContentFromPreviousLayout.lines.size())
             return { };
-        auto canidateLineIndex = lineDamage->layoutStartPosition()->lineIndex;
-        if (canidateLineIndex >= displayContentFromPreviousLayout.lines.size()) {
+        auto candidateLineIndex = lineDamage->layoutStartPosition()->lineIndex;
+        if (candidateLineIndex >= displayContentFromPreviousLayout.lines.size()) {
             ASSERT_NOT_REACHED();
             return { };
         }
-        if (layoutResult.displayContent.boxes.size() && canidateLineIndex > layoutResult.displayContent.boxes[0].lineIndex()) {
+        if (layoutResult.displayContent.boxes.size() && candidateLineIndex > layoutResult.displayContent.boxes[0].lineIndex()) {
             // We should never generate lines _before_ the damaged line.
             ASSERT_NOT_REACHED();
             return { };
         }
-        return { canidateLineIndex };
+        return { candidateLineIndex };
     }();
 
     auto firstDamagedBoxIndex = [&]() -> std::optional<size_t> {
@@ -310,15 +314,15 @@ FloatRect InlineContentBuilder::handlePartialDisplayContentUpdate(Layout::Inline
             return { };
         auto& displayContentFromPreviousLayout = inlineContent.displayContent();
         ASSERT(layoutResult.range != Layout::InlineLayoutResult::Range::Full);
-        auto canidateLineCount = layoutResult.range == Layout::InlineLayoutResult::Range::FullFromDamage
+        auto candidateLineCount = layoutResult.range == Layout::InlineLayoutResult::Range::FullFromDamage
             ? displayContentFromPreviousLayout.lines.size() - *firstDamagedLineIndex
             : layoutResult.displayContent.lines.size();
 
-        if (*firstDamagedLineIndex + canidateLineCount > displayContentFromPreviousLayout.lines.size()) {
+        if (*firstDamagedLineIndex + candidateLineCount > displayContentFromPreviousLayout.lines.size()) {
             ASSERT_NOT_REACHED();
             return { };
         }
-        return { canidateLineCount };
+        return { candidateLineCount };
     }();
 
     auto numberOfDamagedBoxes = [&]() -> std::optional<size_t> {

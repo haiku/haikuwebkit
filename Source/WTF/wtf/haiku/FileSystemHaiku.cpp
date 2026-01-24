@@ -39,9 +39,9 @@ namespace FileSystemImpl {
 
 String localUserSpecificStorageDirectory()
 {
-	BPath path;
-	find_directory(B_USER_SETTINGS_DIRECTORY, &path);
-	return String::fromUTF8(path.Path());
+    BPath path;
+    find_directory(B_USER_SETTINGS_DIRECTORY, &path);
+    return String::fromUTF8(path.Path());
 }
 
 } // namespace FileSystemImpl

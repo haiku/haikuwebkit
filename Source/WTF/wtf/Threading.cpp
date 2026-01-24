@@ -26,6 +26,7 @@
 #include "config.h"
 #include <wtf/Threading.h>
 
+#include <bmalloc/BPlatform.h>
 #include <cstring>
 #include <wtf/DateMath.h>
 #include <wtf/Gigacage.h>
@@ -51,8 +52,6 @@
 #include <wtf/darwin/LibraryPathDiagnostics.h>
 #endif
 
-#if !USE(SYSTEM_MALLOC)
-#include <bmalloc/BPlatform.h>
 #if BENABLE(LIBPAS)
 #define USE_LIBPAS_THREAD_SUSPEND_LOCK 1
 #include <bmalloc/pas_thread_suspend_lock.h>
@@ -64,7 +63,6 @@
 #error USE(TZONE_MALLOC) requires BUSE(TZONE)
 #endif
 #endif // USE(TZONE_MALLOC)
-#endif // !USE(SYSTEM_MALLOC)
 
 namespace WTF {
 

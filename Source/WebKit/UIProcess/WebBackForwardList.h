@@ -26,9 +26,11 @@
 #pragma once
 
 #include "APIObject.h"
+#include "LoadedWebArchive.h"
 #include "MessageReceiver.h"
 #include "WebBackForwardListItem.h"
 #include <WebCore/BackForwardItemIdentifier.h>
+#include <WebCore/LocalFrameLoaderClient.h>
 #include <wtf/Ref.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakPtr.h>

@@ -322,13 +322,13 @@ void Frame::setOwnerElement(HTMLFrameOwnerElement* element)
 
 void Frame::setOwnerPermissionsPolicy(OwnerPermissionsPolicyData&& ownerPermissionsPolicy)
 {
-    m_ownerPermisssionsPolicyOverride = makeUnique<OwnerPermissionsPolicyData>(WTF::move(ownerPermissionsPolicy));
+    m_ownerPermissionsPolicyOverride = makeUnique<OwnerPermissionsPolicyData>(WTF::move(ownerPermissionsPolicy));
 }
 
 std::optional<OwnerPermissionsPolicyData> Frame::ownerPermissionsPolicy() const
 {
-    if (m_ownerPermisssionsPolicyOverride)
-        return *m_ownerPermisssionsPolicyOverride;
+    if (m_ownerPermissionsPolicyOverride)
+        return *m_ownerPermissionsPolicyOverride;
 
     RefPtr owner = ownerElement();
     if (!owner)
@@ -386,5 +386,35 @@ void Frame::setPrinting(bool printing, FloatSize pageSize, FloatSize originalPag
     if (notifyUIProcess == NotifyUIProcess::Yes && m_settings->siteIsolationEnabled())
         loaderClient().setPrinting(printing, pageSize, originalPageSize, maximumShrinkRatio, shouldAdjustViewSize);
 }
+
+float Frame::frameScaleFactor() const
+{
+    RefPtr page = this->page();
+
+    if (!page)
+        return 1.0;
+
+    // https://github.com/w3c/csswg-drafts/issues/9644
+    // Check if this frame's owner element (iframe) has CSS zoom applied.
+    if (!isMainFrame()) {
+        auto rootZoom = 1.0;
+
+        // FIXME: maybe pageZoomFactor should be available in remote frames?
+        if (RefPtr localMainFrame = dynamicDowncast<LocalFrame>(mainFrame()))
+            rootZoom = localMainFrame->pageZoomFactor();
+
+        if (RefPtr parentFrame = tree().parent())
+            rootZoom = parentFrame->usedZoomForChild(*this) / rootZoom;
+
+        return rootZoom;
+    }
+
+    // Main frame is scaled with respect to the container.
+    if (page->delegatesScaling())
+        return 1;
+
+    return page->pageScaleFactor();
+}
+
 
 } // namespace WebCore

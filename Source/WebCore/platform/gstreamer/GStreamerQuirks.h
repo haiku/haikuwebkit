@@ -71,7 +71,7 @@ public:
     GStreamerQuirk() = default;
     virtual ~GStreamerQuirk() = default;
 
-    virtual bool isPlatformSupported() const { return true; }
+    virtual bool isPlatformSupported() const = 0;
     virtual GstElement* createAudioSink() { return nullptr; }
     virtual GstElement* createWebAudioSink() { return nullptr; }
     virtual void configureElement(GstElement*, const OptionSet<ElementRuntimeCharacteristics>&) { }

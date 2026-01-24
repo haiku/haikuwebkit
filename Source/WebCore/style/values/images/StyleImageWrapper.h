@@ -51,7 +51,7 @@ template<> struct Serialize<ImageWrapper> { void operator()(StringBuilder&, cons
 // MARK: - Blending
 
 template<> struct Blending<ImageWrapper> {
-    auto blend(const ImageWrapper&, const ImageWrapper&, const BlendingContext&) -> ImageWrapper;
+    auto blend(const ImageWrapper&, const ImageWrapper&, const RenderStyle&, const RenderStyle&, const BlendingContext&) -> ImageWrapper;
 };
 
 // MARK: - Logging

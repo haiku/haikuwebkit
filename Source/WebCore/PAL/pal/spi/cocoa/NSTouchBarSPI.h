@@ -32,6 +32,8 @@ DECLARE_SYSTEM_HEADER
 
 #if PLATFORM(MAC) && HAVE(TOUCH_BAR)
 
+#import <AppKit/AppKit.h>
+
 #if USE(APPLE_INTERNAL_SDK)
 
 #import <AppKit/NSCandidateListTouchBarItem_Private.h>

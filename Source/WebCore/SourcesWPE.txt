@@ -103,6 +103,8 @@ platform/libwpe/PlatformPasteboardLibWPE.cpp
 platform/text/Hyphenation.cpp
 platform/text/LocaleICU.cpp
 
+platform/text/hyphen/HyphenationLibHyphen.cpp
+
 platform/android/SharedMemoryAndroid.cpp
 
 platform/unix/LoggingUnix.cpp

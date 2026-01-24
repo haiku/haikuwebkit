@@ -66,6 +66,7 @@
 #include "VMInspector.h"
 #include "VMTrapsInlines.h"
 #include "WasmCapabilities.h"
+#include <bmalloc/BPlatform.h>
 #include <unicode/uversion.h>
 #include <wtf/ApproximateTime.h>
 #include <wtf/Atomics.h>
@@ -79,15 +80,12 @@
 #include <wtf/WTFProcess.h>
 #include <wtf/unicode/icu/ICUHelpers.h>
 
-#if !USE(SYSTEM_MALLOC)
-#include <bmalloc/BPlatform.h>
 #if BUSE(LIBPAS)
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include <bmalloc/pas_debug_spectrum.h>
 #include <bmalloc/pas_fd_stream.h>
 #include <bmalloc/pas_heap_lock.h>
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-#endif
 #endif
 
 #if ENABLE(WEBASSEMBLY)
@@ -2307,7 +2305,7 @@ JSC_DEFINE_HOST_FUNCTION_WITH_ATTRIBUTES(functionCrash, NO_RETURN_DUE_TO_CRASH, 
     DollarVMAssertScope assertScope;
 
     VM& vm = globalObject->vm();
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
     if (callFrame->argumentCount()) {
         dataLogLn("Dumping ", callFrame->argumentCount(), " values before crashing:");
         const bool addLineFeed = true;
@@ -2329,7 +2327,7 @@ JSC_DEFINE_HOST_FUNCTION(functionBreakpoint, (JSGlobalObject* globalObject, Call
     DollarVMAssertScope assertScope;
     // Nothing should throw here but we might as well double check...
     VM& vm = globalObject->vm();
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
     UNUSED_PARAM(scope);
     if (!callFrame->argumentCount() || callFrame->argument(0).toBoolean(globalObject))
         WTFBreakpointTrap();
@@ -3301,8 +3299,7 @@ JSC_DEFINE_HOST_FUNCTION(functionCreateWasmStreamingCompilerForCompile, (JSGloba
     args.append(compiler);
     ASSERT(!args.hasOverflowed());
     call(globalObject, callback, jsUndefined(), args, "You shouldn't see this..."_s);
-    if (scope.exception()) [[unlikely]]
-        scope.clearException();
+    TRY_CLEAR_EXCEPTION(scope, { });
     compiler->streamingCompiler().finalize(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
     return JSValue::encode(compiler->promise());
@@ -3332,8 +3329,7 @@ JSC_DEFINE_HOST_FUNCTION(functionCreateWasmStreamingCompilerForInstantiate, (JSG
     args.append(compiler);
     ASSERT(!args.hasOverflowed());
     call(globalObject, callback, jsUndefined(), args, "You shouldn't see this..."_s);
-    if (scope.exception()) [[unlikely]]
-        scope.clearException();
+    TRY_CLEAR_EXCEPTION(scope, { });
     compiler->streamingCompiler().finalize(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
     return JSValue::encode(compiler->promise());
@@ -4108,13 +4104,11 @@ JSC_DEFINE_HOST_FUNCTION(functionIsPrivateSymbol, (JSGlobalObject*, CallFrame* c
 JSC_DEFINE_HOST_FUNCTION(functionDumpAndResetPasDebugSpectrum, (JSGlobalObject*, CallFrame*))
 {
     DollarVMAssertScope assertScope;
-#if !USE(SYSTEM_MALLOC)
 #if BUSE(LIBPAS)
     pas_heap_lock_lock();
     pas_debug_spectrum_dump(&pas_log_stream.base);
     pas_debug_spectrum_reset();
     pas_heap_lock_unlock();
-#endif
 #endif
     return JSValue::encode(jsUndefined());
 }

@@ -130,7 +130,7 @@ CSSTokenizer::CSSTokenizer(const String& string, CSSParserObserverWrapper* wrapp
     }
 }
 
-CSSParserTokenRange CSSTokenizer::tokenRange() const
+CSSParserTokenRange CSSTokenizer::tokenRange() const LIFETIME_BOUND
 {
     return m_tokens;
 }

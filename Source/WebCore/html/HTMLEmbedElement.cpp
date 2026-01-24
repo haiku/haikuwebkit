@@ -77,7 +77,7 @@ static inline RenderWidget* findWidgetRenderer(const Node* node)
 CheckedPtr<RenderWidget> HTMLEmbedElement::renderWidgetLoadingPlugin() const
 {
     CheckedPtr widget = HTMLPlugInElement::renderWidgetLoadingPlugin();
-    return widget ? widget : findWidgetRenderer(this);
+    return widget ? widget : CheckedPtr { findWidgetRenderer(this) };
 }
 
 void HTMLEmbedElement::collectPresentationalHintsForAttribute(const QualifiedName& name, const AtomString& value, MutableStyleProperties& style)

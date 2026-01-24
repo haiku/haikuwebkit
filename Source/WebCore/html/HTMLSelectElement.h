@@ -27,18 +27,29 @@
 
 #include <WebCore/HTMLFormControlElement.h>
 #include <WebCore/HTMLOptionElement.h>
+#include <WebCore/PopupMenuClient.h>
 #include <WebCore/TypeAhead.h>
 #include <wtf/CompletionHandler.h>
+
+#if PLATFORM(COCOA)
+#define POPUP_MENU_PULLS_DOWN 0
+#else
+#define POPUP_MENU_PULLS_DOWN 1
+#endif
 
 namespace WebCore {
 
 class HTMLOptionsCollection;
 
-class HTMLSelectElement : public HTMLFormControlElement, private TypeAheadDataSource {
+class HTMLSelectElement : public HTMLFormControlElement, public PopupMenuClient, private TypeAheadDataSource {
     WTF_MAKE_TZONE_ALLOCATED(HTMLSelectElement);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HTMLSelectElement);
 public:
     USING_CAN_MAKE_WEAKPTR(HTMLElement);
+
+    // PopupMenuClient ref-counting (disambiguate from FormAssociatedElement)
+    void ref() const final { HTMLFormControlElement::ref(); }
+    void deref() const final { HTMLFormControlElement::deref(); }
 
     static Ref<HTMLSelectElement> create(const QualifiedName&, Document&, HTMLFormElement*);
     static Ref<HTMLSelectElement> create(Document&);
@@ -92,13 +103,41 @@ public:
 
     ExceptionOr<void> showPicker();
 
+    // PopupMenuClient methods
+    void valueChanged(unsigned listIndex, bool fireOnChange = true) override;
+    void selectionChanged(unsigned, bool) override { }
+    void selectionCleared() override { }
+    String itemText(unsigned listIndex) const override;
+    String itemLabel(unsigned listIndex) const override;
+    String itemIcon(unsigned listIndex) const override;
+    String itemToolTip(unsigned listIndex) const override;
+    String itemAccessibilityText(unsigned listIndex) const override;
+    bool itemIsEnabled(unsigned listIndex) const override;
+    PopupMenuStyle itemStyle(unsigned listIndex) const override;
+    PopupMenuStyle menuStyle() const override;
+    int clientInsetLeft() const override;
+    int clientInsetRight() const override;
+    LayoutUnit clientPaddingLeft() const override;
+    LayoutUnit clientPaddingRight() const override;
+    int listSize() const override;
+    int popupSelectedIndex() const override;
+    void popupDidHide() override;
+    bool itemIsSeparator(unsigned listIndex) const override;
+    bool itemIsLabel(unsigned listIndex) const override;
+    bool itemIsSelected(unsigned listIndex) const override;
+    bool shouldPopOver() const override { return !POPUP_MENU_PULLS_DOWN; }
+    void setTextFromItem(unsigned listIndex) override;
+    void listBoxSelectItem(int listIndex, bool allowMultiplySelections, bool shift, bool fireOnChangeNow = true) override;
+    bool popupMultiple() const override { return multiple(); }
+    FontSelector* fontSelector() const override;
+    HostWindow* hostWindow() const override;
+    Ref<Scrollbar> createScrollbar(ScrollableArea&, ScrollbarOrientation, ScrollbarWidth) override;
+
     WEBCORE_EXPORT HTMLOptionElement* namedItem(const AtomString& name);
     WEBCORE_EXPORT HTMLOptionElement* item(unsigned index);
     bool isSupportedPropertyIndex(unsigned index);
 
     void scrollToSelection();
-
-    void listBoxSelectItem(int listIndex, bool allowMultiplySelections, bool shift, bool fireOnChangeNow = true);
 
     bool canSelectAll() const;
     void selectAll();

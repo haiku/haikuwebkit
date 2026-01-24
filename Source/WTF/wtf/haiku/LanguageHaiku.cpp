@@ -25,54 +25,54 @@
 
 
 #include "config.h"
-#include <wtf/text/WTFString.h>
 #include "Language.h"
 
 #include <Application.h>
 #include <LocaleRoster.h>
 #include <Message.h>
 #include <MessageFilter.h>
+#include <wtf/text/WTFString.h>
 
 
 namespace WTF {
 
 static filter_result languagePreferencesDidChange(BMessage*, BHandler**, BMessageFilter*)
 {
-	languageDidChange();
-	return B_DISPATCH_MESSAGE;
+    languageDidChange();
+    return B_DISPATCH_MESSAGE;
 }
 
 void listenForLanguageChangeNotifications()
 {
-	static std::once_flag addedListener;
-	std::call_once(addedListener, [&] {
-		if (be_app->Lock()) {
-			BMessageFilter* localeListener = new BMessageFilter(B_LOCALE_CHANGED, languagePreferencesDidChange);
-			be_app->AddCommonFilter(localeListener);
-			be_app->Unlock();
-		}
-	});
+    static std::once_flag addedListener;
+    std::call_once(addedListener, [&] {
+        if (be_app->Lock()) {
+            BMessageFilter* localeListener = new BMessageFilter(B_LOCALE_CHANGED, languagePreferencesDidChange);
+            be_app->AddCommonFilter(localeListener);
+            be_app->Unlock();
+        }
+    });
 }
 
 Vector<String> platformUserPreferredLanguages(WTF::ShouldMinimizeLanguages)
 {
-	BMessage languages;
-	int32 count = 0;
+    BMessage languages;
+    int32 count = 0;
 
-	BLocaleRoster::Default()->Refresh();
-	if (BLocaleRoster::Default()->GetPreferredLanguages(&languages) != B_OK
-			|| languages.GetInfo("language", NULL, &count) != B_OK
-			|| count == 0)
-		return { "en"_s };
+    BLocaleRoster::Default()->Refresh();
+    if (BLocaleRoster::Default()->GetPreferredLanguages(&languages) != B_OK
+        || languages.GetInfo("language", nullptr, &count) != B_OK
+        || !count)
+        return { "en"_s };
 
-	Vector<String> preferredLanguages(count, [&](size_t i) {
-		BString language;
-		languages.FindString("language", i, &language);
-		language.ReplaceAll('_', '-');
-		return String::fromUTF8(language.String());
-	});
+    Vector<String> preferredLanguages(count, [&](size_t i) {
+        BString language;
+        languages.FindString("language", i, &language);
+        language.ReplaceAll('_', '-');
+        return String::fromUTF8(language.String());
+    });
 
-	return preferredLanguages;
+    return preferredLanguages;
 }
 
 }

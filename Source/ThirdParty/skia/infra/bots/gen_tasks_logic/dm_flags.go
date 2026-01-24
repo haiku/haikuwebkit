@@ -591,6 +591,16 @@ func (b *TaskBuilder) dmFlags(internalHardwareLabel string) {
 						// VK_PIPELINE_COMPILE_REQUIRED from CreateGraphicsPipelines)
 						skip(ALL, "test", ALL, "PersistentPipelineStorageTest")
 					}
+
+					if b.MatchOs("Win11") &&
+						(b.GPU("RTX3060") || b.GPU("GTX1660") || b.GPU("IntelIrisXe")) {
+						// These 3 GPUs are failing this test on Win11 (b/462240488)
+						skip(ALL, "test", ALL, "PersistentPipelineStorageTest")
+					}
+					if b.MatchOs("Win11") && b.GPU("IntelIrisXe") {
+						// skbug.com/470073298
+						skip(ALL, "gm", ALL, "ycbcrimage")
+					}
 				}
 			}
 		} else {
@@ -606,19 +616,13 @@ func (b *TaskBuilder) dmFlags(internalHardwareLabel string) {
 
 		}
 
-		// ANGLE bot *only* runs the angle configs
+		// ANGLE bot *only* runs the angle ES3 configs
 		if b.ExtraConfig("ANGLE") {
 			if b.MatchOs("Win") {
-				configs = []string{"angle_d3d11_es2", "angle_d3d11_es3"}
+				configs = []string{"angle_d3d11_es3"}
 				if sampleCount > 0 {
-					configs = append(configs, fmt.Sprintf("angle_d3d11_es2_msaa%d", sampleCount))
-					configs = append(configs, fmt.Sprintf("angle_d3d11_es2_dmsaa"))
 					configs = append(configs, fmt.Sprintf("angle_d3d11_es3_msaa%d", sampleCount))
 					configs = append(configs, fmt.Sprintf("angle_d3d11_es3_dmsaa"))
-				}
-				if !b.MatchGpu("GTX", "Quadro", "GT610") {
-					// See skbug.com/40041499
-					configs = append(configs, "angle_d3d9_es2")
 				}
 				if b.Model("NUC5i7RYH") {
 					// skbug.com/40038570
@@ -633,7 +637,7 @@ func (b *TaskBuilder) dmFlags(internalHardwareLabel string) {
 					skip(ALL, "test", ALL, "FilterResult")
 				}
 			} else if b.MatchOs("Mac") {
-				configs = []string{"angle_mtl_es2", "angle_mtl_es3"}
+				configs = []string{"angle_mtl_es3"}
 
 				// anglebug.com/7245
 				skip("angle_mtl_es3", "gm", ALL, "runtime_intrinsics_common_es3")
@@ -1447,6 +1451,17 @@ func (b *TaskBuilder) dmFlags(internalHardwareLabel string) {
 		skip(ALL, "test", ALL, "VkYCbcrSampler_DrawImageWithYcbcrSampler") // skbug.com/40044345
 	}
 
+	if b.GPU("RadeonVega8") && b.ExtraConfig("ANGLE") {
+		// skbug.com/470037199
+		skip(ALL, "test", ALL, "TransferPixelsFromTextureTest")
+		skip(ALL, "test", ALL, "ES2BlendWithNoTexture")
+		skip(ALL, "test", ALL, "SkRuntimeBlender_Ganesh")
+		skip(ALL, "test", ALL, "SkImage_MakeCrossContextFromPixmapRelease")
+		skip(ALL, "test", ALL, "Programs")
+		skip(ALL, "test", ALL, "BlendRequiringDstReadWithLargeCoordinates")
+		skip(ALL, "test", ALL, "ColorTypeBackendAllocationTest")
+	}
+
 	match := []string{}
 
 	if b.ExtraConfig("Graphite") {
@@ -1562,6 +1577,26 @@ func (b *TaskBuilder) dmFlags(internalHardwareLabel string) {
 	if b.GPU("IntelIris6100", "IntelHD4400") && b.ExtraConfig("ANGLE") {
 		// skbug.com/40038077
 		skip("angle_d3d9_es2", "gm", ALL, "lighting")
+	}
+
+	if b.GPU("IntelHD4400") && b.ExtraConfig("ANGLE") {
+		// skbug.com/470037196
+		skip(ALL, "test", ALL, "BigImageTest_Ganesh")
+		skip(ALL, "test", ALL, "DDLMakeRenderTargetTest")
+		skip(ALL, "test", ALL, "DDLNonTextureabilityTest")
+		skip(ALL, "test", ALL, "DDLSurfaceCharacterizationTest")
+		skip(ALL, "test", ALL, "DefaultPathRendererTest")
+		skip(ALL, "test", ALL, "DMSAA_dst_read_with_existing_barrier")
+		skip(ALL, "test", ALL, "DMSAA_aa_dst_read_after_dmsaa")
+		skip(ALL, "test", ALL, "DMSAA_dst_read")
+		skip(ALL, "test", ALL, "DMSAA_preserve_contents")
+		skip(ALL, "test", ALL, "ES2BlendWithNoTexture")
+		skip(ALL, "test", ALL, "GrContext_colorTypeSupportedAsSurface")
+		skip(ALL, "test", ALL, "Programs")
+		skip(ALL, "test", ALL, "ReplaceSurfaceBackendTexture")
+		skip(ALL, "test", ALL, "ResourceCacheStencilBuffers")
+		skip(ALL, "test", ALL, "SurfaceAttachStencil_Gpu")
+		skip(ALL, "test", ALL, "SurfaceClear_Gpu")
 	}
 
 	if b.GPU("PowerVRGX6250") {

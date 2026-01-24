@@ -52,7 +52,7 @@ void BindGroupImpl::setLabelInternal(const String& label)
 
 bool BindGroupImpl::updateExternalTextures(ExternalTexture& externalTexture)
 {
-    return wgpuBindGroupUpdateExternalTextures(m_backing.get(), static_cast<const ExternalTextureImpl&>(externalTexture).backing());
+    return wgpuBindGroupUpdateExternalTextures(m_backing.get(), downcast<ExternalTextureImpl>(externalTexture).backing());
 }
 
 } // namespace WebCore::WebGPU

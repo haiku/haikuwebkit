@@ -40,7 +40,7 @@ public:
     void ref() const { }
     void deref() const { }
 
-    WARN_UNUSED_RETURN GRefPtr<GstSample> convert(const GRefPtr<GstSample>&, const GRefPtr<GstCaps>&);
+    [[nodiscard]] GRefPtr<GstSample> convert(const GRefPtr<GstSample>&, const GRefPtr<GstCaps>&);
 
 private:
     GStreamerVideoFrameConverter();

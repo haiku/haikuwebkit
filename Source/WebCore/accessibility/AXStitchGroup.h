@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/AXID.h>
+#include <WebCore/AXLoggerBase.h>
 #include <wtf/FixedVector.h>
 
 namespace WebCore {
@@ -50,14 +51,14 @@ public:
         : m_members(members)
         , m_representativeID(representativeID)
     {
-        ASSERT(isValid());
+        AX_ASSERT(isValid());
     }
 
     explicit AXStitchGroup(Vector<AXID>&& members, AXID representativeID)
         : m_members(WTF::move(members))
         , m_representativeID(representativeID)
     {
-        ASSERT(isValid());
+        AX_ASSERT(isValid());
     }
 
     bool isEmpty() const { return m_members.isEmpty(); }

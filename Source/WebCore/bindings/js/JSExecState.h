@@ -26,10 +26,10 @@
 
 #pragma once
 
-#include <JavaScriptCore/CatchScope.h>
 #include <JavaScriptCore/Completion.h>
 #include <JavaScriptCore/JSMicrotask.h>
 #include <JavaScriptCore/Microtask.h>
+#include <JavaScriptCore/TopExceptionScope.h>
 #include <WebCore/CustomElementReactionQueue.h>
 #include <WebCore/JSDOMBinding.h>
 #include <WebCore/ThreadGlobalData.h>
@@ -53,7 +53,7 @@ public:
     static JSC::JSValue call(JSC::JSGlobalObject* lexicalGlobalObject, JSC::JSValue functionObject, const JSC::CallData& callData, JSC::JSValue thisValue, const JSC::ArgList& args, NakedPtr<JSC::Exception>& returnedException)
     {
         JSC::VM& vm = JSC::getVM(lexicalGlobalObject);
-        auto scope = DECLARE_CATCH_SCOPE(vm);
+        auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
         JSC::JSValue returnValue;
         {
             JSExecState currentState(lexicalGlobalObject);
@@ -66,7 +66,7 @@ public:
     static JSC::JSValue evaluate(JSC::JSGlobalObject* lexicalGlobalObject, const JSC::SourceCode& source, JSC::JSValue thisValue, NakedPtr<JSC::Exception>& returnedException)
     {
         JSC::VM& vm = JSC::getVM(lexicalGlobalObject);
-        auto scope = DECLARE_CATCH_SCOPE(vm);
+        auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
         JSC::JSValue returnValue;
         {
             JSExecState currentState(lexicalGlobalObject);
@@ -85,7 +85,7 @@ public:
     static JSC::JSValue profiledCall(JSC::JSGlobalObject* lexicalGlobalObject, JSC::ProfilingReason reason, JSC::JSValue functionObject, const JSC::CallData& callData, JSC::JSValue thisValue, const JSC::ArgList& args, NakedPtr<JSC::Exception>& returnedException)
     {
         JSC::VM& vm = JSC::getVM(lexicalGlobalObject);
-        auto scope = DECLARE_CATCH_SCOPE(vm);
+        auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
         JSC::JSValue returnValue;
         {
             JSExecState currentState(lexicalGlobalObject);
@@ -98,7 +98,7 @@ public:
     static JSC::JSValue profiledEvaluate(JSC::JSGlobalObject* lexicalGlobalObject, JSC::ProfilingReason reason, const JSC::SourceCode& source, JSC::JSValue thisValue, NakedPtr<JSC::Exception>& returnedException)
     {
         JSC::VM& vm = JSC::getVM(lexicalGlobalObject);
-        auto scope = DECLARE_CATCH_SCOPE(vm);
+        auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
         JSC::JSValue returnValue;
         {
             JSExecState currentState(lexicalGlobalObject);
@@ -132,15 +132,14 @@ public:
     static JSC::JSValue linkAndEvaluateModule(JSC::JSGlobalObject& lexicalGlobalObject, const JSC::Identifier& moduleKey, JSC::JSValue scriptFetcher, NakedPtr<JSC::Exception>& returnedException)
     {
         JSC::VM& vm = JSC::getVM(&lexicalGlobalObject);
-        auto scope = DECLARE_CATCH_SCOPE(vm);
+        auto scope = DECLARE_THROW_SCOPE(vm);
         JSC::JSValue returnValue;
         {
             JSExecState currentState(&lexicalGlobalObject);
             returnValue = JSC::linkAndEvaluateModule(&lexicalGlobalObject, moduleKey, scriptFetcher);
             if (scope.exception()) [[unlikely]] {
                 returnedException = scope.exception();
-                if (!vm.hasPendingTerminationException())
-                    scope.clearException();
+                TRY_CLEAR_EXCEPTION(scope, JSC::jsUndefined());
                 return JSC::jsUndefined();
             }
         }
@@ -171,9 +170,8 @@ private:
 
         if (didExitJavaScript) {
             didLeaveScriptContext(lexicalGlobalObject);
-            // We need to clear any exceptions from microtask drain.
-            if (!vm.hasPendingTerminationException())
-                scope.clearException();
+            // We should only have a termination here.
+            scope.assertNoExceptionExceptTermination();
         }
     }
 

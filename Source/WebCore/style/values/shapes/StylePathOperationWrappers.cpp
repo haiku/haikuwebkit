@@ -54,7 +54,7 @@ RefPtr<PathOperation> CSSValueConversion<RefPtr<PathOperation>>::operator()(Buil
     if (RefPtr url = dynamicDowncast<CSSURLValue>(value)) {
         auto styleURL = toStyle(url->url(), state);
 
-        // FIXME: ReferencePathOperation are not hooked up to support remote URLs yet, so only works with document local references. To see an example of how this should work, see ReferenceFilterOperation which supports both document local and remote URLs.
+        // FIXME: ReferencePathOperation are not hooked up to support remote URLs yet, so only works with document local references. To see an example of how this should work, see Style::FilterReference which supports both document local and remote URLs.
 
         auto fragment = SVGURIReference::fragmentIdentifierFromIRIString(styleURL, state.document());
 

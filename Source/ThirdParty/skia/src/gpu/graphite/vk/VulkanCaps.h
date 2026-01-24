@@ -28,7 +28,7 @@ public:
                Protected);
     ~VulkanCaps() override;
 
-    bool isSampleCountSupported(TextureFormat, uint8_t requestedSampleCount) const override;
+    bool isSampleCountSupported(TextureFormat, SampleCount requestedSampleCount) const override;
     TextureFormat getDepthStencilFormat(SkEnumBitMask<DepthStencilFlags>) const override;
 
     TextureInfo getDefaultAttachmentTextureInfo(AttachmentDesc,
@@ -118,7 +118,6 @@ public:
     }
 
     bool mustLoadFullImageForMSAA() const { return fMustLoadFullImageForMSAA; }
-    bool avoidMSAA() const { return fAvoidMSAA; }
 
     bool supportsFrameBoundary() const { return fSupportsFrameBoundary; }
 
@@ -230,7 +229,7 @@ private:
                               VkFormat,
                               VkImageUsageFlags);
 
-        bool isSampleCountSupported(int requestedCount) const;
+        bool isSampleCountSupported(SampleCount requestedCount) const;
 
         VkSampleCountFlags fSampleCounts = 0;
     };
@@ -249,7 +248,7 @@ private:
         void init(const skgpu::VulkanInterface*, const VulkanCaps&, VkPhysicalDevice, VkFormat);
 
         bool isTexturable(VkImageTiling) const;
-        bool isRenderable(VkImageTiling, uint32_t sampleCount) const;
+        bool isRenderable(VkImageTiling, SampleCount sampleCount) const;
         bool isStorage(VkImageTiling) const;
         bool isTransferSrc(VkImageTiling) const;
         bool isTransferDst(VkImageTiling) const;
@@ -258,7 +257,7 @@ private:
         std::unique_ptr<ColorTypeInfo[]> fColorTypeInfos;
         int fColorTypeInfoCount = 0;
 
-        VkFormatProperties fFormatProperties;
+        VkFormatProperties fFormatProperties = {};
         SupportedSampleCounts fSupportedSampleCounts;
         /*
          * The VK_IMAGE_USAGE_HOST_TRANSFER_BIT flag may cause the image to be put in a suboptimal
@@ -277,7 +276,7 @@ private:
          *                                    VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
          *                                    VK_IMAGE_USAGE_TRANSFER_DST_BIT
          */
-        bool fIsEfficientWithHostImageCopy;
+        bool fIsEfficientWithHostImageCopy = false;
 
         // Indicates that a format is only supported if we are wrapping a texture with it.
         SkDEBUGCODE(bool fIsWrappedOnly = false;)
@@ -292,15 +291,15 @@ private:
     static const size_t kNumVkFormats = 24;
     FormatInfo fFormatTable[kNumVkFormats];
 
-    FormatInfo& getFormatInfo(VkFormat);
+    FormatInfo& getFormatInfoForInit(VkFormat);
     const FormatInfo& getFormatInfo(VkFormat) const;
 
     // A more lightweight equivalent to FormatInfo for depth/stencil VkFormats.
     struct DepthStencilFormatInfo {
         void init(const skgpu::VulkanInterface*, const VulkanCaps&, VkPhysicalDevice, VkFormat);
-        bool isDepthStencilSupported(VkFormatFeatureFlags) const;
+        bool isDepthStencilSupported() const;
 
-        VkFormatProperties fFormatProperties;
+        VkFormatProperties fFormatProperties = {};
         SupportedSampleCounts fSupportedSampleCounts;
     };
 
@@ -312,7 +311,7 @@ private:
     static const size_t kNumDepthStencilVkFormats = 5;
     DepthStencilFormatInfo fDepthStencilFormatTable[kNumDepthStencilVkFormats];
 
-    DepthStencilFormatInfo& getDepthStencilFormatInfo(VkFormat);
+    DepthStencilFormatInfo& getDepthStencilFormatInfoForInit(VkFormat);
     const DepthStencilFormatInfo& getDepthStencilFormatInfo(VkFormat) const;
 
     uint32_t fMaxVertexAttributes;
@@ -342,7 +341,6 @@ private:
 
     // Flags to enable workarounds for driver bugs
     bool fMustLoadFullImageForMSAA = false;
-    bool fAvoidMSAA = false;
 };
 
 } // namespace skgpu::graphite

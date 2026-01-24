@@ -29,6 +29,7 @@
 
 NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 
+@class WKFrameInfo;
 @class WKWebView;
 @class _WKJSHandle;
 
@@ -52,6 +53,17 @@ typedef NS_ENUM(NSInteger, _WKTextExtractionOutputFormat) {
     _WKTextExtractionOutputFormatHTML,
     _WKTextExtractionOutputFormatMarkdown,
     _WKTextExtractionOutputFormatJSON,
+} WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+
+#define WK_TEXT_EXTRACTION_HAS_DATA_DETECTOR_TYPES 1
+
+typedef NS_OPTIONS(NSUInteger, _WKTextExtractionDataDetectorTypes) {
+    _WKTextExtractionDataDetectorNone               = 0,
+    _WKTextExtractionDataDetectorMoney              = 1 << 0,
+    _WKTextExtractionDataDetectorAddress            = 1 << 1,
+    _WKTextExtractionDataDetectorCalendarEvent      = 1 << 2,
+    _WKTextExtractionDataDetectorTrackingNumber     = 1 << 3,
+    _WKTextExtractionDataDetectorAll                = NSUIntegerMax,
 } WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 
 WK_CLASS_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
@@ -132,6 +144,13 @@ WK_CLASS_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
 @property (nonatomic, copy) NSArray<_WKJSHandle *> *nodesToSkip;
 
 /*!
+ If specified, text extraction includes content from these frames in addition to
+ content in the main frame and same-origin subframes (which are included by default).
+ The default value is an empty array.
+ */
+@property (nonatomic, copy, null_resettable) NSArray<WKFrameInfo *> *additionalFrames;
+
+/*!
  Client-specified attributes and values to add when extracting DOM nodes.
  Will appear as "attribute=value" in text extraction output.
  */
@@ -156,6 +175,13 @@ WK_CLASS_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
  The default value is `NO`.
  */
 @property (nonatomic) BOOL shortenURLs;
+
+/*!
+ Automatically run data detectors for the given types, and limit extraction output
+ to text around the most prominent matches.
+ The default value is `.none`.
+ */
+@property (nonatomic) _WKTextExtractionDataDetectorTypes dataDetectorTypes;
 
 @end
 

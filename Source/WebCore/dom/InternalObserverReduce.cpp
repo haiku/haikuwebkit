@@ -67,7 +67,7 @@ private:
         Ref vm = globalObject->vm();
 
         JSC::JSLockHolder lock(vm);
-        auto scope = DECLARE_CATCH_SCOPE(vm);
+        auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
         auto result = protectedCallback()->invokeRethrowingException(m_accumulator.getValue(), value, m_index++);
 

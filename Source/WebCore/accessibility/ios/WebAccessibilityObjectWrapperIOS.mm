@@ -30,6 +30,7 @@
 
 #import "AXAttributeCacheScope.h"
 #import "AXLogger.h"
+#import "AXLoggerBase.h"
 #import "AXNotifications.h"
 #import "AXObjectCacheInlines.h"
 #import "AXSearchManager.h"
@@ -264,7 +265,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
 - (void)dealloc
 {
     // We should have been detached before deallocated.
-    ASSERT(!self.axBackingObject);
+    AX_ASSERT(!self.axBackingObject);
     [super dealloc];
 }
 
@@ -351,7 +352,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
         return nil;
 
     // Try a fuzzy hit test first to find an accessible element.
-    AXCoreObject *axObject = nullptr;
+    RefPtr<AXCoreObject> axObject = nullptr;
     {
         AXAttributeCacheScope enableCache(self.axBackingObject->axObjectCache());
         axObject = self.axBackingObject->accessibilityHitTest(IntPoint(point));
@@ -1073,7 +1074,7 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
         return false;
     }
 
-    ASSERT_NOT_REACHED();
+    AX_ASSERT_NOT_REACHED();
     return false;
 }
 
@@ -1085,7 +1086,7 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
     if (m_isAccessibilityElement == IsAccessibilityElement::Unknown)
         m_isAccessibilityElement = [self determineIsAccessibilityElement] ? IsAccessibilityElement::Yes : IsAccessibilityElement::No;
 
-    ASSERT(m_isAccessibilityElement != IsAccessibilityElement::Unknown);
+    AX_ASSERT(m_isAccessibilityElement != IsAccessibilityElement::Unknown);
     switch (m_isAccessibilityElement) {
     case IsAccessibilityElement::Yes:
         return YES;
@@ -1112,7 +1113,7 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
 
 static void appendStringToResult(NSMutableString *result, NSString *string)
 {
-    ASSERT(result);
+    AX_ASSERT(result);
     if (![string length])
         return;
     if ([result length])
@@ -1555,7 +1556,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
         case AccessibilityButtonState::Mixed:
             return @"2";
         }
-        ASSERT_NOT_REACHED();
+        AX_ASSERT_NOT_REACHED();
         return @"0";
     }
 
@@ -1564,10 +1565,12 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
 
     // If self has the header trait, value should be the heading level.
     if (self.accessibilityTraits & self._axHeaderTrait) {
-        auto* heading = Accessibility::findAncestor(backingObject.get(), true, [] (const auto& ancestor) {
+        RefPtr heading = Accessibility::findAncestor(backingObject.get(), true, [] (const auto& ancestor) {
             return ancestor.role() == AccessibilityRole::Heading;
         });
-        ASSERT(heading);
+        // If we have the header trait, we should either be a heading, or have a heading ancestor.
+        // Not finding one means our traits our stale.
+        AX_ASSERT(heading);
 
         if (heading)
             return [NSString stringWithFormat:@"%d", heading->headingLevel()];
@@ -1866,7 +1869,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
         return nil;
 
     // The only object without a parent wrapper at this point should be a scroll view.
-    ASSERT(self.axBackingObject->isScrollView());
+    AX_ASSERT(self.axBackingObject->isScrollView());
 
     // Verify this is the top document. If not, we might need to go through the platform widget.
     auto* frameView = self.axBackingObject->documentFrameView();
@@ -1912,7 +1915,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
     // The parentView should have an accessibilityContainer, if the UIKit accessibility bundle was loaded.
     // The exception is DRT, which tests accessibility without the entire system turning accessibility on. Hence,
     // this check should be valid for everything except DRT.
-    ASSERT([parentView accessibilityContainer] || WTF::CocoaApplication::isDumpRenderTree());
+    AX_ASSERT([parentView accessibilityContainer] || WTF::CocoaApplication::isDumpRenderTree());
 
     return [parentView accessibilityContainer];
 }
@@ -1990,7 +1993,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
 
     return createNSArray(self.axBackingObject->flowToObjects(), [] (auto&& child) -> id {
         auto wrapper = child->wrapper();
-        ASSERT(wrapper);
+        AX_ASSERT(wrapper);
 
         if (child->isAttachment()) {
             if (auto attachmentView = wrapper.attachmentView)
@@ -2022,7 +2025,7 @@ static NSArray *accessibleElementsForObjects(const AXCoreObject::AccessibilityCh
 
     return createNSArray(self.axBackingObject->detailedByObjects(), [] (auto&& detailedByObject) -> id {
         auto wrapper = detailedByObject->wrapper();
-        ASSERT(wrapper);
+        AX_ASSERT(wrapper);
         return wrapper;
     }).autorelease();
 }
@@ -2104,7 +2107,7 @@ static NSArray *accessibleElementsForObjects(const AXCoreObject::AccessibilityCh
     if (![self _prepareAccessibilityCall])
         return nil;
 
-    ASSERT([self isAttachment]);
+    AX_ASSERT([self isAttachment]);
     Widget* widget = self.axBackingObject->widgetForAttachmentView();
     if (!widget)
         return nil;

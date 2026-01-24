@@ -57,7 +57,7 @@ enum DeviceType {
     readonly attribute TextTrack captionMenuOnItem;
     readonly attribute DOMString captionDisplayMode;
     undefined setSelectedTextTrack(TextTrack? track);
-    readonly attribute HTMLElement textTrackContainer;
+    readonly attribute Element? textTrackContainer;
     readonly attribute boolean allowsInlineMediaPlayback;
     readonly attribute boolean supportsFullscreen;
     readonly attribute boolean isVideoLayerInline;

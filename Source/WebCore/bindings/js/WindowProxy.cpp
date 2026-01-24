@@ -76,7 +76,7 @@ WindowProxy::~WindowProxy()
 
 Frame* WindowProxy::frame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 void WindowProxy::detachFromFrame()
@@ -90,7 +90,7 @@ void WindowProxy::detachFromFrame()
         do {
             auto it = m_jsWindowProxies.begin();
             it->value->window()->setConsoleClient(nullptr);
-            destroyJSWindowProxy(*it->key);
+            destroyJSWindowProxy(it->key);
         } while (!m_jsWindowProxies.isEmpty());
         collectGarbageAfterWindowProxyDestruction();
     }
@@ -120,7 +120,7 @@ JSWindowProxy& WindowProxy::createJSWindowProxy(DOMWrapperWorld& world)
     VM& vm = world.vm();
 
     Strong<JSWindowProxy> jsWindowProxy(vm, &JSWindowProxy::create(vm, *m_frame->protectedWindow().get(), world));
-    m_jsWindowProxies.add(&world, jsWindowProxy);
+    m_jsWindowProxies.add(world, jsWindowProxy);
     world.didCreateWindowProxy(this);
     return *jsWindowProxy.get();
 }

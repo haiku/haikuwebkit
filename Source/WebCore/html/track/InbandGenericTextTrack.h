@@ -44,7 +44,7 @@ public:
 
 private:
     using CueToDataMap = HashMap<TextTrackCue*, InbandGenericCueIdentifier>;
-    using CueDataToCueMap = HashMap<InbandGenericCueIdentifier, RefPtr<TextTrackCueGeneric>>;
+    using CueDataToCueMap = HashMap<InbandGenericCueIdentifier, Ref<TextTrackCueGeneric>>;
 
     CueToDataMap m_cueToDataMap;
     CueDataToCueMap m_dataToCueMap;

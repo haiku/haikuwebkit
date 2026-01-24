@@ -28,6 +28,7 @@
 
 #if ENABLE(GPU_PROCESS_MODEL)
 
+#include <WebCore/DDImageAsset.h>
 #include <WebCore/Model.h>
 #include <WebCore/ModelPlayer.h>
 #include <WebCore/ModelPlayerClient.h>
@@ -40,6 +41,7 @@ OBJC_CLASS DDBridgeModelLoader;
 
 namespace WebCore::DDModel {
 class DDMesh;
+struct DDImageAsset;
 }
 
 namespace WebCore {
@@ -100,6 +102,7 @@ private:
     void ensureOnMainThreadWithProtectedThis(Function<void(Ref<DDModelPlayer>)>&& task);
     void setStageMode(WebCore::StageModeOperation) final;
     void notifyEntityTransformUpdated();
+    void setEnvironmentMap(Ref<WebCore::SharedBuffer>&&) final;
 
     WeakPtr<ModelPlayerClient> m_client;
 
@@ -120,6 +123,7 @@ private:
     };
     PauseState m_pauseState { PauseState::None };
     std::optional<LayoutPoint> m_currentPoint;
+    std::optional<WebCore::DDModel::DDImageAsset> m_environmentMap;
     float m_yawAcceleration { 0.f };
     float m_pitchAcceleration { 0.f };
     float m_yaw { 0.f };

@@ -19,4 +19,5 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/fetch/range/general.any.js
 /LayoutTests/imported/w3c/web-platform-tests/fetch/range/general.window.js
 /LayoutTests/imported/w3c/web-platform-tests/fetch/range/non-matching-range-response.html
+/LayoutTests/imported/w3c/web-platform-tests/fetch/range/sw-416.https.window.js
 /LayoutTests/imported/w3c/web-platform-tests/fetch/range/sw.https.window.js

@@ -29,7 +29,7 @@
 // FIXME: Should be USE(COREMEDIA), but this isn't currently defined on Windows.
 
 #include <CoreAudio/CoreAudioTypes.h>
-#include <CoreMedia/CMBufferQueue.h>
+#include <CoreMedia/CoreMedia.h>
 #include <CoreVideo/CoreVideo.h>
 #include <pal/spi/cf/CoreMediaSPI.h>
 #include <wtf/SoftLinking.h>

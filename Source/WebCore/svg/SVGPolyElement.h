@@ -34,7 +34,7 @@ public:
     const SVGPointList& points() const { return m_points->currentValue(); }
 
     SVGPointList& points() { return m_points->baseVal(); }
-    SVGPointList& animatedPoints() { return *m_points->animVal(); }
+    SVGPointList& animatedPoints() { return m_points->animVal(); }
 
     size_t approximateMemoryCost() const override;
 

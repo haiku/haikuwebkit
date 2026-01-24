@@ -46,7 +46,7 @@ public:
     {
         return adoptRef(*new AudioTrack(context, trackPrivate));
     }
-    virtual ~AudioTrack();
+    WEBCORE_EXPORT virtual ~AudioTrack();
 
     // AudioTrackPrivateClient.
     void ref() const final { MediaTrackBase::ref(); }

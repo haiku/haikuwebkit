@@ -203,9 +203,10 @@ enum class LinkTimeConstant : int32_t;
     macro(wrapForValidIteratorFieldIteratedNextMethod) \
     macro(regExpStringIteratorFieldRegExp) \
     macro(regExpStringIteratorFieldString) \
-    macro(regExpStringIteratorFieldGlobal) \
-    macro(regExpStringIteratorFieldFullUnicode) \
-    macro(regExpStringIteratorFieldDone) \
+    macro(regExpStringIteratorFieldFlags) \
+    macro(regExpStringIteratorFlagGlobal) \
+    macro(regExpStringIteratorFlagFullUnicode) \
+    macro(regExpStringIteratorFlagDone) \
     macro(disposableStackFieldState) \
     macro(disposableStackFieldCapability) \
     macro(DisposableStackStatePending) \

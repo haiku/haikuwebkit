@@ -31,10 +31,8 @@
 #include "ContainerNodeInlines.h"
 #include "DataListSuggestionPicker.h"
 #include "DateTimeChooser.h"
-#if HAVE(DIGITAL_CREDENTIALS_UI)
 #include "DigitalCredentialsRequestData.h"
 #include "DigitalCredentialsResponseData.h"
-#endif
 #include "DocumentType.h"
 #include "DocumentView.h"
 #include "DocumentWindow.h"
@@ -94,7 +92,7 @@ Chrome::~Chrome()
 
 Ref<Page> Chrome::protectedPage() const
 {
-    return m_page.get();
+    return m_page;
 }
 
 void Chrome::invalidateRootView(const IntRect& updateRect)
@@ -478,7 +476,7 @@ void Chrome::showContactPicker(ContactsRequestData&& requestData, CompletionHand
     m_client->showContactPicker(WTF::move(requestData), WTF::move(callback));
 }
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 void Chrome::showDigitalCredentialsPicker(const DigitalCredentialsRequestData& requestData, WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&& callback)
 {
     m_client->showDigitalCredentialsPicker(requestData, WTF::move(callback));

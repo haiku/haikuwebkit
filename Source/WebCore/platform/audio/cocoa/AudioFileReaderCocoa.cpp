@@ -64,7 +64,7 @@
 
 namespace WebCore {
 
-WARN_UNUSED_RETURN static AudioBufferList* tryCreateAudioBufferList(size_t numberOfBuffers)
+[[nodiscard]] static AudioBufferList* tryCreateAudioBufferList(size_t numberOfBuffers)
 {
     if (!numberOfBuffers)
         return nullptr;
@@ -289,13 +289,13 @@ std::optional<size_t> AudioFileReader::decodeWebMData(AudioBufferList& bufferLis
         PAL::AudioConverterDispose(converter);
     });
     ASSERT(m_webmData && !m_webmData->m_samples.isEmpty() && m_webmData->m_samples[0]->sampleBuffer(), "Structure integrity was checked in numberOfFrames");
-    auto formatDescription = PAL::CMSampleBufferGetFormatDescription(m_webmData->m_samples[0]->sampleBuffer());
+    RetainPtr formatDescription = PAL::CMSampleBufferGetFormatDescription(m_webmData->m_samples[0]->sampleBuffer());
     if (!formatDescription) {
         RELEASE_LOG_FAULT(WebAudio, "Unable to retrieve format description from first sample");
         return { };
     }
     size_t magicCookieSize = 0;
-    const void* magicCookie = PAL::CMAudioFormatDescriptionGetMagicCookie(formatDescription, &magicCookieSize);
+    const void* magicCookie = PAL::CMAudioFormatDescriptionGetMagicCookie(formatDescription.get(), &magicCookieSize);
     if (magicCookie && magicCookieSize)
         PAL::AudioConverterSetProperty(converter, kAudioConverterDecompressionMagicCookie, magicCookieSize, magicCookie);
 
@@ -322,13 +322,13 @@ std::optional<size_t> AudioFileReader::decodeWebMData(AudioBufferList& bufferLis
     OSStatus status;
     for (size_t i = 0; i < m_webmData->m_samples.size(); i++) {
         auto& sample = m_webmData->m_samples[i];
-        CMSampleBufferRef sampleBuffer = sample->sampleBuffer();
-        auto rawBuffer = PAL::CMSampleBufferGetDataBuffer(sampleBuffer);
-        RetainPtr<CMBlockBufferRef> buffer = rawBuffer;
+        RetainPtr sampleBuffer = sample->sampleBuffer();
+        RetainPtr rawBuffer = PAL::CMSampleBufferGetDataBuffer(sampleBuffer.get());
+        RetainPtr<CMBlockBufferRef> buffer = rawBuffer.get();
         // Make sure block buffer is contiguous.
-        if (!PAL::CMBlockBufferIsRangeContiguous(rawBuffer, 0, 0)) {
+        if (!PAL::CMBlockBufferIsRangeContiguous(rawBuffer.get(), 0, 0)) {
             CMBlockBufferRef contiguousBuffer = nullptr;
-            if (PAL::CMBlockBufferCreateContiguous(nullptr, rawBuffer, nullptr, nullptr, 0, 0, 0, &contiguousBuffer) != kCMBlockBufferNoErr) {
+            if (PAL::CMBlockBufferCreateContiguous(nullptr, rawBuffer.get(), nullptr, nullptr, 0, 0, 0, &contiguousBuffer) != kCMBlockBufferNoErr) {
                 RELEASE_LOG_FAULT(WebAudio, "failed to create contiguous block buffer");
                 return { };
             }
@@ -341,7 +341,7 @@ std::optional<size_t> AudioFileReader::decodeWebMData(AudioBufferList& bufferLis
             return { };
         }
 
-        auto descriptions = getPacketDescriptions(sampleBuffer);
+        auto descriptions = getPacketDescriptions(sampleBuffer.get());
         if (descriptions.isEmpty())
             return { };
 
@@ -441,23 +441,23 @@ ssize_t AudioFileReader::numberOfFrames() const
     // where a AudioStreamPacketDescriptions array is always provided even with
     // Constant bitrate and constant frames-per-packet audio.
     for (auto& sample : m_webmData->m_samples) {
-        auto sampleBuffer = sample->sampleBuffer();
+        RetainPtr sampleBuffer = sample->sampleBuffer();
         if (!sampleBuffer) {
             RELEASE_LOG_FAULT(WebAudio, "Impossible memory corruption encountered");
             return -1;
         }
-        const auto formatDescription = PAL::CMSampleBufferGetFormatDescription(sampleBuffer);
+        RetainPtr formatDescription = PAL::CMSampleBufferGetFormatDescription(sampleBuffer.get());
         if (!formatDescription) {
             RELEASE_LOG_FAULT(WebAudio, "Unable to retrieve format descriptiong from sample");
             return -1;
         }
-        const AudioStreamBasicDescription* const asbd = PAL::CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription);
+        const AudioStreamBasicDescription* const asbd = PAL::CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription.get());
         if (!asbd) {
             RELEASE_LOG_FAULT(WebAudio, "Unable to retrieve asbd from format description");
             return -1;
         }
 
-        auto descriptions = getPacketDescriptions(sampleBuffer);
+        auto descriptions = getPacketDescriptions(sampleBuffer.get());
         if (descriptions.isEmpty())
             return -1;
 
@@ -485,11 +485,11 @@ std::optional<AudioStreamBasicDescription> AudioFileReader::fileDataFormat() con
     if (m_webmData->m_samples.isEmpty())
         return { };
 
-    CMFormatDescriptionRef formatDescription = PAL::CMSampleBufferGetFormatDescription(m_webmData->m_samples[0]->sampleBuffer());
+    RetainPtr formatDescription = PAL::CMSampleBufferGetFormatDescription(m_webmData->m_samples[0]->sampleBuffer());
     if (!formatDescription)
         return { };
 
-    const AudioStreamBasicDescription* const asbd = PAL::CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription);
+    const AudioStreamBasicDescription* const asbd = PAL::CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription.get());
     return *asbd;
 }
 

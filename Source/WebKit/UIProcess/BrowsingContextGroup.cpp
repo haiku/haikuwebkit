@@ -83,7 +83,7 @@ void BrowsingContextGroup::sharedProcessForSite(WebsiteDataStore& websiteDataSto
 
         Ref process = pageConfiguration->protectedProcessPool()->processForSite(websiteDataStore.get(), WebProcessPool::IsSharedProcess::Yes, site, mainFrameSite, domainsWithUserInteraction, lockdownMode, enhancedSecurity, pageConfiguration.get(), ProcessSwapDisposition::Other);
         ASSERT(!process->isInProcessCache());
-        Ref frameProcess = FrameProcess::create(process, protectedThis, std::nullopt, mainFrameSite, preferences, LoadedWebArchive::No, InjectBrowsingContextIntoProcess::Yes);
+        Ref frameProcess = FrameProcess::create(process, protectedThis, std::nullopt, mainFrameSite, preferences, LoadedWebArchive::No, BrowsingContextGroupUpdate::AddProcessAndInjectBrowsingContext);
         ASSERT(frameProcess->isSharedProcess());
         ASSERT(frameProcess->process().isSharedProcess());
         frameProcess->process().addSharedProcessDomain(site.domain());
@@ -92,7 +92,7 @@ void BrowsingContextGroup::sharedProcessForSite(WebsiteDataStore& websiteDataSto
     });
 }
 
-Ref<FrameProcess> BrowsingContextGroup::ensureProcessForSite(const Site& site, const Site& mainFrameSite, WebProcessProxy& process, const WebPreferences& preferences, LoadedWebArchive loadedWebArchive, InjectBrowsingContextIntoProcess injectBrowsingContextIntoProcess)
+Ref<FrameProcess> BrowsingContextGroup::ensureProcessForSite(const Site& site, const Site& mainFrameSite, WebProcessProxy& process, const WebPreferences& preferences, LoadedWebArchive loadedWebArchive, BrowsingContextGroupUpdate browsingContextGroupUpdate)
 {
     if (preferences.siteIsolationEnabled()) {
         if ((m_sharedProcess && m_sharedProcessSites.contains(site)) || process.isSharedProcess()) {
@@ -105,7 +105,7 @@ Ref<FrameProcess> BrowsingContextGroup::ensureProcessForSite(const Site& site, c
         }
     }
 
-    return FrameProcess::create(process, *this, site, mainFrameSite, preferences, loadedWebArchive, injectBrowsingContextIntoProcess);
+    return FrameProcess::create(process, *this, site, mainFrameSite, preferences, loadedWebArchive, browsingContextGroupUpdate);
 }
 
 RefPtr<FrameProcess> BrowsingContextGroup::processForSite(const Site& site)
@@ -163,16 +163,24 @@ void BrowsingContextGroup::addFrameProcessAndInjectPageContextIf(FrameProcess& p
         }
         return;
     }
-    auto& site = *process.site();
-    if (m_processMap.get(site) == &process)
+    if (!addFrameProcessWithoutInjectingPageContext(process))
         return;
-    ASSERT(!m_processMap.get(site) || m_processMap.get(site)->process().state() == WebProcessProxy::State::Terminated);
-    m_processMap.set(site, process);
+    auto& site = *process.site();
     for (Ref page : m_pages) {
         if (site == Site(URL(page->currentURL())))
             continue;
         createRemotePageIfNeeded(page, site);
     }
+}
+
+bool BrowsingContextGroup::addFrameProcessWithoutInjectingPageContext(FrameProcess& process)
+{
+    auto& site = *process.site();
+    if (m_processMap.get(site) == &process)
+        return false;
+    ASSERT(!m_processMap.get(site) || m_processMap.get(site)->process().state() == WebProcessProxy::State::Terminated);
+    m_processMap.set(site, process);
+    return true;
 }
 
 void BrowsingContextGroup::removeFrameProcess(FrameProcess& process)

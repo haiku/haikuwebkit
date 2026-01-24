@@ -32,12 +32,12 @@ namespace WebCore {
 
 inline LocalFrame* FrameDestructionObserver::frame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 inline RefPtr<LocalFrame> FrameDestructionObserver::protectedFrame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 }

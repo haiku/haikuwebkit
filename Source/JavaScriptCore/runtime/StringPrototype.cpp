@@ -524,17 +524,6 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncCharCodeAt, (JSGlobalObject* globalObjec
     return JSValue::encode(jsNaN());
 }
 
-static inline char32_t codePointAt(const String& string, unsigned position, unsigned length)
-{
-    RELEASE_ASSERT(position < length);
-    if (string.is8Bit())
-        return string.span8()[position];
-    char32_t character;
-    auto characters = string.span16();
-    U16_NEXT(characters, position, length, character);
-    return character;
-}
-
 JSC_DEFINE_HOST_FUNCTION(stringProtoFuncCodePointAt, (JSGlobalObject* globalObject, CallFrame* callFrame))
 {
     VM& vm = globalObject->vm();

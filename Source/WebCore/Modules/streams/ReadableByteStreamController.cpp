@@ -648,7 +648,7 @@ void ReadableByteStreamController::error(JSDOMGlobalObject& globalObject, const 
 {
     auto& vm = globalObject.vm();
     JSC::JSLockHolder lock(vm);
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
     auto value = createDOMException(&globalObject, exception.code(), exception.message());
 
     if (scope.exception()) [[unlikely]] {
@@ -984,22 +984,15 @@ void ReadableByteStreamController::handleQueueDrain(JSDOMGlobalObject& globalObj
 
 void ReadableByteStreamController::handleSourcePromise(DOMPromise& algorithmPromise, Callback&& callback)
 {
-    algorithmPromise.whenSettled([promise = Ref { algorithmPromise }, callback = WTF::move(callback)]() mutable {
-        auto* globalObject = promise->globalObject();
-        if (!globalObject || promise->isSuspended())
+    algorithmPromise.whenSettledWithResult([callback = WTF::move(callback)](auto* globalObject, bool isFulfilled, auto result) mutable {
+        RefPtr context = globalObject ? globalObject->scriptExecutionContext() : nullptr;
+        if (!context || context->activeDOMObjectsAreSuspended() || context->activeDOMObjectsAreStopped())
             return;
-
-        switch (promise->status()) {
-        case DOMPromise::Status::Fulfilled:
-            callback(*globalObject, { });
-            break;
-        case DOMPromise::Status::Rejected:
-            callback(*globalObject, promise->result());
-            break;
-        case DOMPromise::Status::Pending:
-            ASSERT_NOT_REACHED();
-            break;
+        if (!isFulfilled) {
+            callback(*globalObject, result);
+            return;
         }
+        callback(*globalObject, { });
     });
 }
 

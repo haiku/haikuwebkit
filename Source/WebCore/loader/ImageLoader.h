@@ -68,9 +68,9 @@ public:
 
     void elementDidMoveToNewDocument(Document&);
 
-    Element& element() { return m_element.get(); }
-    const Element& element() const { return m_element.get(); }
-    Ref<Element> protectedElement() const { return m_element.get(); }
+    Element& element() { return m_element; }
+    const Element& element() const { return m_element; }
+    Ref<Element> protectedElement() const { return m_element; }
 
     bool shouldIgnoreCandidateWhenLoadingFromArchive(const ImageCandidate&) const;
 
@@ -140,7 +140,7 @@ private:
     RefPtr<Element> m_protectedElement;
     AtomString m_failedLoadURL;
     AtomString m_pendingURL;
-    Vector<RefPtr<DeferredPromise>> m_decodingPromises;
+    Vector<Ref<DeferredPromise>> m_decodingPromises;
     bool m_hasPendingBeforeLoadEvent : 1;
     bool m_hasPendingLoadEvent : 1;
     bool m_hasPendingErrorEvent : 1;

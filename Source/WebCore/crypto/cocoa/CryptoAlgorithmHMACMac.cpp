@@ -29,11 +29,7 @@
 #include "CryptoKeyHMAC.h"
 #include "CryptoUtilitiesCocoa.h"
 #include <CommonCrypto/CommonHMAC.h>
-
-#if HAVE(SWIFT_CPP_INTEROP)
 #include <pal/PALSwift.h>
-#endif
-
 #include <wtf/CryptographicUtilities.h>
 
 namespace WebCore {
@@ -43,7 +39,7 @@ static ExceptionOr<Vector<uint8_t>> platformSignCryptoKit(const CryptoKeyHMAC& k
 #if !defined(CLANG_WEBKIT_BRANCH)
     if (!isValidHashParameter(key.hashAlgorithmIdentifier()))
         return Exception { ExceptionCode::OperationError };
-    return PAL::HMAC::sign(key.key().span(), data.span(), std::to_underlying(toCKHashFunction(key.hashAlgorithmIdentifier())));
+    return pal::HMAC::sign(key.key().span(), data.span(), std::to_underlying(toCKHashFunction(key.hashAlgorithmIdentifier())));
 #else
     UNUSED_PARAM(key);
     UNUSED_PARAM(data);
@@ -56,7 +52,7 @@ static ExceptionOr<bool> platformVerifyCryptoKit(const CryptoKeyHMAC& key, const
 #if !defined(CLANG_WEBKIT_BRANCH)
     if (!isValidHashParameter(key.hashAlgorithmIdentifier()))
         return Exception { ExceptionCode::OperationError };
-    return PAL::HMAC::verify(signature.span(), key.key().span(), data.span(), std::to_underlying(toCKHashFunction(key.hashAlgorithmIdentifier())));
+    return pal::HMAC::verify(signature.span(), key.key().span(), data.span(), std::to_underlying(toCKHashFunction(key.hashAlgorithmIdentifier())));
 #else
     UNUSED_PARAM(key);
     UNUSED_PARAM(signature);

@@ -39,7 +39,7 @@ public:
     void ref() const final { ThreadSafeRefCounted::ref(); }
     void deref() const final { ThreadSafeRefCounted::deref(); }
 
-    virtual CallbackResult<WTF::RefPtr<DOMPromise>> invoke() = 0;
+    virtual CallbackResult<Ref<DOMPromise>> invoke() = 0;
 
 private:
     virtual bool hasCallback() const = 0;

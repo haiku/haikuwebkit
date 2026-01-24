@@ -759,6 +759,16 @@ private:
         });
     }
 
+    bool shouldSpillEverything()
+    {
+        if (!Options::airGreedyRegAllocSpillsEverything())
+            return false;
+
+        // You're meant to hack this so that you selectively spill everything depending on reasons.
+        // That's super useful for debugging.
+        return true;
+    }
+
     void buildRegisterSets()
     {
         forEachBank([&] (Bank bank) {
@@ -1552,7 +1562,8 @@ private:
                 return;
             }
             m_stats[bank].maxLiveRangeSize = std::max(m_stats[bank].maxLiveRangeSize, static_cast<unsigned>(tmpData.liveRange.size()));
-            setStageAndEnqueue(tmp, tmpData, Stage::TryAllocate);
+            Stage initialStage = shouldSpillEverything() ? Stage::Spill : Stage::TryAllocate;
+            setStageAndEnqueue(tmp, tmpData, initialStage);
         });
 
         do {

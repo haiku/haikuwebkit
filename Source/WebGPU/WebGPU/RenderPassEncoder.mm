@@ -606,13 +606,8 @@ bool RenderPassEncoder::executePreDrawCommands(uint32_t firstInstance, uint32_t 
 
     id<MTLRenderCommandEncoder> commandEncoder = renderCommandEncoder();
     auto pipelineIdentifier = pipeline->uniqueId();
-    for (auto& [groupIndex, weakBindGroup] : m_bindGroups) {
-        if (!weakBindGroup.get()) {
-            makeInvalid(@"Bind group is missing");
-            return false;
-        }
-
-        Ref group = *weakBindGroup.get();
+    for (auto& [groupIndex, bindGroup] : m_bindGroups) {
+        Ref group = bindGroup;
         if (passWasSplit) {
             for (const auto& resource : group->resources()) {
                 if ((resource.renderStages & (MTLRenderStageVertex | MTLRenderStageFragment)) && resource.mtlResources.size())
@@ -628,7 +623,7 @@ bool RenderPassEncoder::executePreDrawCommands(uint32_t firstInstance, uint32_t 
         }
 
         if (group->hasSamplers())
-            m_parentEncoder->rebindSamplersPreCommit(group.ptr());
+            m_parentEncoder->rebindSamplersPreCommit(group);
 
         if (!group->previouslyValidatedBindGroup(groupIndex, pipelineIdentifier, m_maxDynamicOffsetAtIndex[groupIndex])) {
             const Vector<uint32_t>* dynamicOffsets = nullptr;
@@ -1494,7 +1489,7 @@ void RenderPassEncoder::setBindGroup(uint32_t groupIndex, const BindGroup* group
         }
     }
 
-    m_bindGroups.set(groupIndex, &group);
+    m_bindGroups.set(groupIndex, group);
 }
 
 void RenderPassEncoder::setBlendConstant(const WGPUColor& color)

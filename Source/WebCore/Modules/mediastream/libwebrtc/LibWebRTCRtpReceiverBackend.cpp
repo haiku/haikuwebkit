@@ -108,7 +108,8 @@ Ref<RealtimeMediaSource> LibWebRTCRtpReceiverBackend::createSource(Document& doc
     case webrtc::MediaType::UNSUPPORTED:
         break;
     case webrtc::MediaType::AUDIO: {
-        webrtc::scoped_refptr<webrtc::AudioTrackInterface> audioTrack { static_cast<webrtc::AudioTrackInterface*>(rtcTrack.get()) };
+        // This is a cast from a webrtc type, not much we can do to make it safe.
+        SUPPRESS_MEMORY_UNSAFE_CAST webrtc::scoped_refptr<webrtc::AudioTrackInterface> audioTrack { static_cast<webrtc::AudioTrackInterface*>(rtcTrack.get()) };
         Ref source = RealtimeIncomingAudioSource::create(toRef(WTF::move(audioTrack)), fromStdString(rtcTrack->id()));
         if (document.page()) {
             auto& webRTCProvider = downcast<LibWebRTCProvider>(document.page()->webRTCProvider());
@@ -117,7 +118,8 @@ Ref<RealtimeMediaSource> LibWebRTCRtpReceiverBackend::createSource(Document& doc
         return source;
     }
     case webrtc::MediaType::VIDEO: {
-        webrtc::scoped_refptr<webrtc::VideoTrackInterface> videoTrack { static_cast<webrtc::VideoTrackInterface*>(rtcTrack.get()) };
+        // This is a cast from a webrtc type, not much we can do to make it safe.
+        SUPPRESS_MEMORY_UNSAFE_CAST webrtc::scoped_refptr<webrtc::VideoTrackInterface> videoTrack { static_cast<webrtc::VideoTrackInterface*>(rtcTrack.get()) };
         Ref source = RealtimeIncomingVideoSource::create(toRef(WTF::move(videoTrack)), fromStdString(rtcTrack->id()));
         if (document.settings().webRTCMediaPipelineAdditionalLoggingEnabled())
             source->enableFrameRatedMonitoring();

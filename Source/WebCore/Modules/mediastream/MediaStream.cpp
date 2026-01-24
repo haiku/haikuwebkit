@@ -219,7 +219,7 @@ void MediaStream::didAddTrack(MediaStreamTrackPrivate& trackPrivate)
     if (getTrackById(trackPrivate.id()))
         return;
 
-    auto track = MediaStreamTrack::create(*context, trackPrivate);
+    Ref track = MediaStreamTrack::create(*context, trackPrivate);
     internalAddTrack(track.copyRef());
     ASSERT(m_allowEventTracks == AllowEventTracks::Yes);
     dispatchEvent(MediaStreamTrackEvent::create(eventNames().addtrackEvent, Event::CanBubble::No, Event::IsCancelable::No, WTF::move(track)));
@@ -227,9 +227,9 @@ void MediaStream::didAddTrack(MediaStreamTrackPrivate& trackPrivate)
 
 void MediaStream::didRemoveTrack(MediaStreamTrackPrivate& trackPrivate)
 {
-    if (auto track = internalTakeTrack(trackPrivate.id())) {
+    if (RefPtr track = internalTakeTrack(trackPrivate.id())) {
         ASSERT(m_allowEventTracks == AllowEventTracks::Yes);
-        dispatchEvent(MediaStreamTrackEvent::create(eventNames().removetrackEvent, Event::CanBubble::No, Event::IsCancelable::No, WTF::move(track)));
+        dispatchEvent(MediaStreamTrackEvent::create(eventNames().removetrackEvent, Event::CanBubble::No, Event::IsCancelable::No, track.releaseNonNull()));
     }
 }
 

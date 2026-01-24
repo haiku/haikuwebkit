@@ -146,7 +146,7 @@ void HTMLFrameOwnerElement::scheduleInvalidateStyleAndLayerComposition()
 
 bool HTMLFrameOwnerElement::isProhibitedSelfReference(const URL& completeURL) const
 {
-    if (completeURL.isAboutBlank())
+    if (completeURL.isAboutBlank() || completeURL.isAboutSrcDoc())
         return false;
     // We allow one level of self-reference because some websites depend on that, but we don't allow more than one.
     bool foundOneSelfReference = false;

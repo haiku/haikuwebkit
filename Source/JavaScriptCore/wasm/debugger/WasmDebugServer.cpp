@@ -56,6 +56,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include <sys/socket.h>
 #include <unistd.h>
 #endif
+#include <wtf/ASCIICType.h>
 #include <wtf/Assertions.h>
 #include <wtf/DataLog.h>
 #include <wtf/HexNumber.h>
@@ -119,7 +120,7 @@ bool DebugServer::startRWI(Function<bool(const String&)>&& rwiResponseHandler)
 
     // RWI mode: No thread creation needed!
     // IPC messages are received by WasmDebuggerDispatcher on its WorkQueue thread
-    // and directly call handleRawPacket() on that thread
+    // and directly call handlePacket() on that thread
 
     setState(State::Running);
     dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Wasm Debug Server started in RWI mode (WorkQueue-based)");
@@ -304,6 +305,14 @@ void DebugServer::reset()
     m_executionHandler->reset();
     closeSocket(m_clientSocket);
     m_noAckMode = false;
+    m_packetParser.reset();
+}
+
+static void dumpReceivedBytes(std::span<const uint8_t> buffer)
+{
+    dataLog("[Debugger] recv() returned ", buffer.size(), " bytes: ");
+    GDBPacketParser::dumpBuffer(buffer);
+    dataLogLn();
 }
 
 void DebugServer::handleClient()
@@ -315,19 +324,43 @@ void DebugServer::handleClient()
     // Send initial acknowledgment - client expects this immediately.
     sendAck();
 
-    constexpr size_t INITIAL_RECV_BUFFER_SIZE = 4096;
-    auto receiveBuffer = makeUniqueArray<char>(INITIAL_RECV_BUFFER_SIZE);
+    m_packetParser.reset();
+
+    constexpr size_t RECV_BUFFER_SIZE = 4096;
+    std::array<char, RECV_BUFFER_SIZE> recvBuffer;
 
     while (true) {
-        auto bytesRead = recv(m_clientSocket, receiveBuffer.get(), INITIAL_RECV_BUFFER_SIZE - 1, 0);
+        auto bytesRead = recv(m_clientSocket, recvBuffer.data(), RECV_BUFFER_SIZE, 0);
         if (bytesRead <= 0) {
             dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Client disconnected (bytesRead=", bytesRead, ")");
             break;
         }
 
-        StringView rawPacket(receiveBuffer.get(), bytesRead, true);
-        handleRawPacket(rawPacket);
+        if (Options::verboseWasmDebugger())
+            dumpReceivedBytes({ byteCast<uint8_t>(recvBuffer.data()), static_cast<size_t>(bytesRead) });
+
+        for (std::ptrdiff_t i = 0; i < bytesRead; i++) {
+            auto result = m_packetParser.processByte(static_cast<uint8_t>(recvBuffer[i]));
+            switch (result) {
+            case GDBPacketParser::ParseResult::CompletePacket: {
+                StringView packet = m_packetParser.getCompletedPacket();
+                dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Complete packet received: ", packet);
+                handlePacket(packet);
+                break;
+            }
+            case GDBPacketParser::ParseResult::Error:
+                dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Parse error - disconnecting client");
+                goto clientDisconnect;
+            case GDBPacketParser::ParseResult::Incomplete:
+                break;
+            }
+        }
+
+        if (!m_packetParser.isIdle())
+            dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] After recv: incomplete packet (", m_packetParser, ")");
     }
+
+clientDisconnect:
 
     // FIXME: Currently client disconnect, kill, and quit commands just stop the client session only for easy debugging purposes.
     // Eventually we need to introduce various stop states, e.g., termination.
@@ -335,51 +368,26 @@ void DebugServer::handleClient()
     dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Client disconnected (TCP socket mode)");
 }
 
-void DebugServer::handleRawPacket(StringView rawPacket)
+void DebugServer::handlePacket(StringView packet)
 {
-    dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Processing raw data: ", rawPacket, " (", rawPacket.length(), " bytes)");
+    dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Processing packet: ", packet);
 
 #if ENABLE(REMOTE_INSPECTOR)
     if (isRWIMode())
         m_executionHandler->setDebugServerThreadId(Thread::currentSingleton().uid());
 #endif
 
-    // Handle single-byte control characters
-    if (rawPacket.length() == 1) {
-        // Handle interrupt character (Reference [1] in wasm/debugger/README.md)
-        if (rawPacket[0] == 0x03) {
-            dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Received Ctrl+C interrupt - triggering stack overflow");
-            m_executionHandler->interrupt();
-            return;
-        }
-
-        // Handle ACK/NACK characters (Reference [2] in wasm/debugger/README.md)
-        if (rawPacket[0] == '+' || rawPacket[0] == '-') {
-            dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Received ACK/NACK character, ignoring");
-            return;
-        }
-    }
-
-    // Handle packet format: $<data>#<checksum>
-    Vector<StringView> parts = splitWithDelimiters(rawPacket, "$#"_s);
-    if (parts.size() != 3) {
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Malformed packet, ignoring");
-        return;
-    }
-
-    // parts[0] = before $, parts[1] = command, parts[2] = after #
-    handlePacket(parts[1]);
-}
-
-void DebugServer::handlePacket(StringView packet)
-{
-    dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Processing packet: ", packet);
-
     sendAck();
 
     if (packet.isEmpty()) {
         dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Empty packet received");
         sendErrorReply(ProtocolError::InvalidPacket);
+        return;
+    }
+
+    if (packet.length() == 1 && packet[0] == 0x03) {
+        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Received Ctrl+C interrupt - triggering stack overflow");
+        m_executionHandler->interrupt();
         return;
     }
 
@@ -523,14 +531,6 @@ void DebugServer::trackInstance(JSWebAssemblyInstance* instance)
         UNUSED_VARIABLE(instanceId);
         // FIXME: Should notify LLDB with new module library.
     }
-}
-
-void DebugServer::untrackInstance(JSWebAssemblyInstance* instance)
-{
-    if (!m_moduleManager)
-        return;
-    dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Untracking WebAssembly instance: ", RawPointer(instance));
-    m_moduleManager->unregisterInstance(instance);
 }
 
 void DebugServer::trackModule(Module& module)

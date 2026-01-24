@@ -35,7 +35,9 @@
   readonly attribute NavigationHistoryEntry from;
 };
 
-dictionary NavigationCurrentEntryChangeEventInit : EventInit {
+[
+    LegacyNativeDictionaryRequiredInterfaceNullability,
+] dictionary NavigationCurrentEntryChangeEventInit : EventInit {
   NavigationNavigationType? navigationType = null;
   required NavigationHistoryEntry from;
 };

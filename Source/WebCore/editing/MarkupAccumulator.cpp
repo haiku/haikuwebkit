@@ -466,12 +466,9 @@ void MarkupAccumulator::appendAttributeValue(StringBuilder& result, const String
             return EntityMaskInAttributeValue;
         case SerializationSyntax::HTML:
             return EntityMaskInHTMLAttributeValue;
-        case SerializationSyntax::HTMLLegacyAttributeValue:
-            return EntityMaskInHTMLLegacyAttributeValue;
-        default:
-            ASSERT_NOT_REACHED();
-            return EntityMaskInAttributeValue;
         }
+        ASSERT_NOT_REACHED();
+        return EntityMaskInAttributeValue;
     }();
     appendCharactersReplacingEntities(result, attribute, entityMask);
 }
@@ -916,9 +913,7 @@ bool MarkupAccumulator::shouldExcludeElement(const Element& element)
 
 SerializationSyntax MarkupAccumulator::serializationSyntax(Document& document)
 {
-    if (!document.isHTMLDocument())
-        return SerializationSyntax::XML;
-    return document.settings().htmlLegacyAttributeValueSerializationEnabled() ? SerializationSyntax::HTMLLegacyAttributeValue : SerializationSyntax::HTML;
+    return document.isHTMLDocument() ? SerializationSyntax::HTML : SerializationSyntax::XML;
 }
 
 }

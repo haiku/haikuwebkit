@@ -54,9 +54,10 @@ CustomPropertyData::CustomPropertyData(const CustomPropertyData& other)
 
     // If there are mutations on multiple levels this constructs a linked list of property data objects.
     if (shouldReferenceAsParentValues)
-        m_parentValues = other;
+        lazyInitialize(m_parentValues, Ref { other });
     else {
-        m_parentValues = other.m_parentValues;
+        if (RefPtr otherParentValues = other.m_parentValues)
+            lazyInitialize(m_parentValues, otherParentValues.releaseNonNull());
         m_ownValues = other.m_ownValues;
     }
 
@@ -106,8 +107,8 @@ bool CustomPropertyData::operator==(const CustomPropertyData& other) const
             return false;
 
         for (auto& entry : m_ownValues) {
-            auto* otherValue = other.m_ownValues.get(entry.key);
-            if (!otherValue || *entry.value != *otherValue)
+            auto it = other.m_ownValues.find(entry.key);
+            if (it == other.m_ownValues.end() || entry.value.get() != it->value.get())
                 return false;
         }
         return true;
@@ -116,7 +117,7 @@ bool CustomPropertyData::operator==(const CustomPropertyData& other) const
     bool isEqual = true;
     forEachInternal([&](auto& entry) {
         auto* otherValue = other.get(entry.key);
-        if (!otherValue || *entry.value != *otherValue) {
+        if (!otherValue || entry.value.get() != *otherValue) {
             isEqual = false;
             return IterationStatus::Done;
         }
@@ -132,14 +133,14 @@ void CustomPropertyData::forEachInternal(Callback&& callback) const
     Vector<const CustomPropertyData*, maximumAncestorCount> descendants;
 
     auto isOverridenByDescendants = [&](auto& key) {
-        for (auto* descendant : descendants) {
+        for (RefPtr descendant : descendants) {
             if (descendant->m_ownValues.contains(key))
                 return true;
         }
         return false;
     };
 
-    auto* propertyData = this;
+    RefPtr propertyData = this;
     while (true) {
         for (auto& entry : propertyData->m_ownValues) {
             if (isOverridenByDescendants(entry.key))
@@ -150,12 +151,12 @@ void CustomPropertyData::forEachInternal(Callback&& callback) const
         }
         if (!propertyData->m_parentValues)
             return;
-        descendants.append(propertyData);
-        propertyData = propertyData->m_parentValues.get();
+        descendants.append(propertyData.get());
+        propertyData = propertyData->m_parentValues;
     }
 }
 
-void CustomPropertyData::forEach(NOESCAPE const Function<IterationStatus(const KeyValuePair<AtomString, RefPtr<const CustomProperty>>&)>& callback) const
+void CustomPropertyData::forEach(NOESCAPE const Function<IterationStatus(const KeyValuePair<AtomString, Ref<const CustomProperty>>&)>& callback) const
 {
     forEachInternal(callback);
 }

@@ -416,8 +416,8 @@ static void dispatchToAllFontCaches(F function)
 
     function(FontCache::forCurrentThread().get());
 
-    for (auto& thread : WorkerOrWorkletThread::workerOrWorkletThreads()) {
-        thread.runLoop().postTask([function](ScriptExecutionContext&) {
+    for (Ref thread : WorkerOrWorkletThread::workerOrWorkletThreads()) {
+        thread->runLoop().postTask([function](ScriptExecutionContext&) {
             if (CheckedPtr fontCache = FontCache::forCurrentThreadIfExists())
                 function(*fontCache);
         });
@@ -437,7 +437,7 @@ void FontCache::invalidateAllFontCaches(ShouldRunInvalidationCallback shouldRunI
 void FontCache::releaseNoncriticalMemory()
 {
     purgeInactiveFontData();
-    m_fontCascadeCache.clearWidthCaches();
+    m_fontCascadeCache.clearMeasurementCaches();
     platformReleaseNoncriticalMemory();
 }
 

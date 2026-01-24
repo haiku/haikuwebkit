@@ -85,8 +85,8 @@
 #include "UserGestureIndicator.h"
 #include "VoidCallback.h"
 #include "Widget.h"
-#include <JavaScriptCore/CatchScope.h>
 #include <JavaScriptCore/JSGlobalObjectInlines.h>
+#include <JavaScriptCore/TopExceptionScope.h>
 #include <wtf/TZoneMallocInlines.h>
 
 #if PLATFORM(COCOA)
@@ -164,7 +164,7 @@ JSC::Bindings::Instance* HTMLPlugInElement::bindingsInstance()
 
 PluginViewBase* HTMLPlugInElement::pluginWidget(PluginLoadingPolicy loadPolicy) const
 {
-    CheckedPtr renderWidget = loadPolicy == PluginLoadingPolicy::Load ? renderWidgetLoadingPlugin() : this->renderWidget();
+    CheckedPtr renderWidget = loadPolicy == PluginLoadingPolicy::Load ? renderWidgetLoadingPlugin() : CheckedPtr { this->renderWidget() };
     if (!renderWidget)
         return nullptr;
 

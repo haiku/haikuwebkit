@@ -342,9 +342,9 @@ public:
     Vector<String> determineDropEffects() const override { return { }; }
 
     // Called on the root AX object to return the deepest available element.
-    AccessibilityObject* accessibilityHitTest(const IntPoint&) const override { return nullptr; }
+    RefPtr<AXCoreObject> accessibilityHitTest(const IntPoint&) const override { return nullptr; }
     // Called on the AX object after the render tree determines which is the right AccessibilityRenderObject.
-    virtual AccessibilityObject* elementAccessibilityHitTest(const IntPoint&) const;
+    virtual RefPtr<AccessibilityObject> elementAccessibilityHitTest(const IntPoint&) const;
 
     AccessibilityObject* focusedUIElement() const final;
     AccessibilityObject* focusedUIElementInAnyLocalFrame() const final;
@@ -390,6 +390,8 @@ public:
     void accessibilityText(Vector<AccessibilityText>&) const override { };
     // A single method for getting a computed label for an AXObject. It condenses the nuances of accessibilityText. Used by Inspector.
     WEBCORE_EXPORT String computedLabel();
+    // Used by aria live regions for the text spoken via announcements.
+    String announcementText() const;
 
     // A programmatic way to set a name on an AccessibleObject.
     void setAccessibleName(const AtomString&) override { }
@@ -418,14 +420,14 @@ public:
     unsigned textLength() const final;
     String revealableText() const override { return nullString(); }
     bool isHiddenUntilFoundContainer() const override { return false; }
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     virtual AXTextRuns textRuns() { return { }; }
     bool hasTextRuns() final { return textRuns().size(); }
     TextEmissionBehavior textEmissionBehavior() const override { return TextEmissionBehavior::None; }
     AXTextRunLineID listMarkerLineID() const override { return { }; }
     String listMarkerText() const override { return { }; }
     FontOrientation fontOrientation() const final;
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
+#endif
 #if PLATFORM(COCOA)
     // Returns an array of strings and AXObject wrappers corresponding to the
     // textruns and replacement nodes included in the given range.

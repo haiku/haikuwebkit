@@ -111,11 +111,11 @@ ExceptionOr<void> GPUQueue::writeBuffer(
     const GPUBuffer& buffer,
     GPUSize64 bufferOffset,
     BufferSource&& data,
-    std::optional<GPUSize64> optionalDataOffset,
+    GPUSize64 optionalDataOffset,
     std::optional<GPUSize64> optionalSize)
 {
     auto elementSize = computeElementSize(data);
-    auto dataOffset = elementSize * optionalDataOffset.value_or(0);
+    auto dataOffset = elementSize * optionalDataOffset;
     auto dataSize = data.length();
     auto contentSize = optionalSize.has_value() ? (elementSize * optionalSize.value()) : (dataSize - dataOffset);
 

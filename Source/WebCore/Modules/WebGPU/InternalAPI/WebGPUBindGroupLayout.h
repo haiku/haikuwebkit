@@ -46,6 +46,7 @@ public:
     }
 
     virtual bool isRemoteBindGroupLayoutProxy() const { return false; }
+    virtual bool isBindGroupLayoutImpl() const { return false; }
 
 protected:
     BindGroupLayout() = default;

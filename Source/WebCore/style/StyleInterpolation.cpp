@@ -55,7 +55,7 @@ static void interpolateStandardProperty(CSSPropertyID property, RenderStyle& des
         return;
 
     auto isDiscrete = !wrapper->canInterpolate(from, to, compositeOperation);
-    Context context { property, progress, isDiscrete, compositeOperation, iterationCompositeOperation, currentIteration, from.color(), to.color(), client };
+    Context context { property, progress, isDiscrete, compositeOperation, iterationCompositeOperation, currentIteration, client };
     if (!CSSProperty::animationUsesNonNormalizedDiscreteInterpolation(property))
         context.normalizeProgress();
     wrapper->interpolate(destination, from, to, context);
@@ -181,7 +181,7 @@ static std::pair<const CustomProperty*, const CustomProperty*> customPropertyVal
 
 static void interpolateCustomProperty(const AtomString& customProperty, RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, double progress, CompositeOperation compositeOperation, IterationCompositeOperation iterationCompositeOperation, double currentIteration, const Client& client)
 {
-    Context context { customProperty, progress, false, compositeOperation, iterationCompositeOperation, currentIteration, from.color(), to.color(), client };
+    Context context { customProperty, progress, false, compositeOperation, iterationCompositeOperation, currentIteration, client };
 
     auto [fromValue, toValue] = customPropertyValuesForInterpolation(customProperty, from, to);
     if (!fromValue || !toValue)

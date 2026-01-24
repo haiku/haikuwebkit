@@ -642,19 +642,6 @@ void GPUProcess::processIsStartingToCaptureAudio(GPUConnectionToWebProcess& proc
 }
 #endif
 
-#if ENABLE(VIDEO)
-void GPUProcess::requestBitmapImageForCurrentTime(WebCore::ProcessIdentifier processIdentifier, WebCore::MediaPlayerIdentifier playerIdentifier, CompletionHandler<void(std::optional<WebCore::ShareableBitmap::Handle>&&)>&& completion)
-{
-    RefPtr connection = m_webProcessConnections.get(processIdentifier);
-    if (!connection) {
-        completion(std::nullopt);
-        return;
-    }
-
-    completion(connection->protectedRemoteMediaPlayerManagerProxy()->bitmapImageForCurrentTime(playerIdentifier));
-}
-#endif
-
 #if ENABLE(WEBXR)
 std::optional<WebCore::ProcessIdentity> GPUProcess::immersiveModeProcessIdentity() const
 {

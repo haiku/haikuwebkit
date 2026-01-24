@@ -2958,7 +2958,7 @@ void WebExtensionContext::loadInspectorBackgroundPage(WebInspectorUIProxy& inspe
         WeakPtr<WebExtensionContext> m_extensionContext;
     };
 
-    inspector.protectedExtensionController()->registerExtension(uniqueIdentifier(), uniqueIdentifier(), protectedExtension()->displayName(), [this, protectedThis = Ref { *this }, inspector = Ref { inspector }, tab = Ref { tab }](Expected<RefPtr<API::InspectorExtension>, Inspector::ExtensionError> result) {
+    inspector.protectedExtensionController()->registerExtension(uniqueIdentifier(), uniqueIdentifier(), protectedExtension()->displayName(), [this, protectedThis = Ref { *this }, inspector = Ref { inspector }, tab = Ref { tab }](Expected<Ref<API::InspectorExtension>, Inspector::ExtensionError> result) {
         if (!result) {
             RELEASE_LOG_ERROR(Extensions, "Failed to register Inspector extension (error %{public}hhu)", enumToUnderlyingType(result.error()));
             return;
@@ -2994,7 +2994,7 @@ void WebExtensionContext::loadInspectorBackgroundPage(WebInspectorUIProxy& inspe
             inspectorBackgroundWebView._page->setAlwaysUseRelatedPageProcess();
         }
 
-        Ref inspectorExtension = result.value().releaseNonNull();
+        Ref inspectorExtension = result.value();
         inspectorExtension->setClient(makeUniqueRef<InspectorExtensionClient>(inspectorExtension, *this));
 
         Ref process = inspectorBackgroundWebView._page->legacyMainFrameProcess();
@@ -3246,7 +3246,7 @@ void WebExtensionContext::loadDeclarativeNetRequestRules(CompletionHandler<void(
 
     auto addDynamicAndStaticRules = [this, protectedThis = Ref { *this }, addStaticRulesets = WTF::move(addStaticRulesets), allJSONData = RetainPtr { allJSONData }] () mutable {
         declarativeNetRequestDynamicRulesStore()->getRulesWithRuleIDs({ }, [this, protectedThis = Ref { *this }, addStaticRulesets = WTF::move(addStaticRulesets), allJSONData = RetainPtr { allJSONData }](RefPtr<JSON::Array> rules, const String& errorMessage) mutable {
-            if (!rules->length()) {
+            if (!rules || !rules->length()) {
                 m_dynamicRulesIDs.clear();
                 addStaticRulesets();
                 return;
@@ -3270,7 +3270,7 @@ void WebExtensionContext::loadDeclarativeNetRequestRules(CompletionHandler<void(
     };
 
     declarativeNetRequestSessionRulesStore()->getRulesWithRuleIDs({ }, [this, protectedThis = Ref { *this }, addDynamicAndStaticRules = WTF::move(addDynamicAndStaticRules), allJSONData = RetainPtr { allJSONData }](RefPtr<JSON::Array> rules, const String& errorMessage) mutable {
-        if (!rules->length()) {
+        if (!rules || !rules->length()) {
             m_sessionRulesIDs.clear();
             addDynamicAndStaticRules();
             return;

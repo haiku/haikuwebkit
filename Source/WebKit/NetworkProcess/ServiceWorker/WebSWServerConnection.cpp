@@ -35,6 +35,7 @@
 #include "NetworkProcessProxyMessages.h"
 #include "NetworkResourceLoader.h"
 #include "NetworkSession.h"
+#include "NetworkStorageManager.h"
 #include "RemoteWorkerType.h"
 #include "SharedBufferReference.h"
 #include "SharedPreferencesForWebProcess.h"
@@ -282,18 +283,41 @@ RefPtr<ServiceWorkerFetchTask> WebSWServerConnection::createFetchTask(NetworkRes
         return nullptr;
     }
 
-    // FIXME: Add support for cache route w/o cacheName, for now we go to fetch event.
+    if (worker->hasRouterRules())
+        loader.setWorkerRouterEvaluationStart(MonotonicTime::now());
+
+    bool shouldRaceNetworkAndFetchHandler = false;
+    String cacheName;
     auto routerSource = worker->getRouterSource(loader.parameters().options, request);
-    if (std::holds_alternative<RouterSourceEnum>(routerSource)) {
-        switch (std::get<RouterSourceEnum>(routerSource)) {
+    auto routerSourceOrDefault = routerSource.value_or(worker->defaultRouterSource());
+    if (auto* routerSourceEnum = std::get_if<RouterSourceEnum>(&routerSourceOrDefault)) {
+        if (routerSource)
+            loader.setWorkerMatchedRouterSource(*routerSourceEnum);
+        switch (*routerSourceEnum) {
         case RouterSourceEnum::Cache:
+            cacheName = emptyString();
+            if (registration->shouldSoftUpdate(loader.parameters().options))
+                registration->scheduleSoftUpdate(loader.isAppInitiated() ? WebCore::IsAppInitiated::Yes : WebCore::IsAppInitiated::No);
+            break;
         case RouterSourceEnum::FetchEvent:
             break;
+        case RouterSourceEnum::RaceNetworkAndFetchHandler:
+            shouldRaceNetworkAndFetchHandler = true;
+            break;
         case RouterSourceEnum::Network:
+            loader.setWorkerFinalRouterSource(RouterSourceEnum::Network);
             if (registration->shouldSoftUpdate(loader.parameters().options))
                 registration->scheduleSoftUpdate(loader.isAppInitiated() ? WebCore::IsAppInitiated::Yes : WebCore::IsAppInitiated::No);
             return nullptr;
         }
+    } else {
+        loader.setWorkerMatchedRouterSource(RouterSourceEnum::Cache);
+        cacheName = std::get<RouterSourceDict>(*routerSource).cacheName;
+    }
+
+    if (!cacheName.isNull()) {
+        Ref storageManager = session()->storageManager();
+        return ServiceWorkerFetchTask::fromCache(loader, storageManager.get(), ResourceRequest { request }, WTF::move(cacheName));
     }
 
     if (worker->hasTimedOutAnyFetchTasks()) {
@@ -302,7 +326,7 @@ RefPtr<ServiceWorkerFetchTask> WebSWServerConnection::createFetchTask(NetworkRes
     }
 
     bool isWorkerReady = worker->isRunning() && worker->state() == ServiceWorkerState::Activated;
-    Ref task = ServiceWorkerFetchTask::create(*this, loader, ResourceRequest { request }, identifier(), worker->identifier(), *registration, checkedSession().get(), isWorkerReady);
+    Ref task = ServiceWorkerFetchTask::create(*this, loader, ResourceRequest { request }, identifier(), worker->identifier(), *registration, checkedSession().get(), isWorkerReady, shouldRaceNetworkAndFetchHandler);
     startFetch(task, *worker);
     return task;
 }

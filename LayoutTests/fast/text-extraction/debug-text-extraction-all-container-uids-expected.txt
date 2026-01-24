@@ -18,4 +18,3 @@ root
         input,'text',uid=…,placeholder='Full name'
         'User Profile\n\n        \n\n            Username:'
         input,'text',uid=…,label='Username:'
-version=2

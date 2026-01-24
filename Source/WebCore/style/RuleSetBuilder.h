@@ -96,7 +96,7 @@ private:
     RuleSet::ContainerQueryIdentifier m_currentContainerQueryIdentifier { 0 };
     RuleSet::ScopeRuleIdentifier m_currentScopeIdentifier { 0 };
 
-    OptionSet<UsedRuleType> m_usedRuleTypes { };
+    IsStartingStyle m_isStartingStyle { IsStartingStyle::No };
 
     using FunctionDeclarationsList = Vector<Ref<const StyleRuleFunctionDeclarations>>;
     FunctionDeclarationsList m_currentFunctionDeclarationsList;

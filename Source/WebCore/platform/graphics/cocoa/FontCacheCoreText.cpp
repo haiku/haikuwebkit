@@ -83,21 +83,21 @@ VariationDefaultsMap defaultVariationValues(CTFontRef font, ShouldLocalizeAxisNa
         return result;
     auto size = CFArrayGetCount(axes.get());
     for (CFIndex i = 0; i < size; ++i) {
-        CFDictionaryRef axis = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(axes.get(), i));
-        CFNumberRef axisIdentifier = static_cast<CFNumberRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisIdentifierKey));
-        String axisName = static_cast<CFStringRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisNameKey));
-        CFNumberRef defaultValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisDefaultValueKey));
-        CFNumberRef minimumValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisMinimumValueKey));
-        CFNumberRef maximumValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisMaximumValueKey));
+        RetainPtr axis = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(axes.get(), i));
+        RetainPtr axisIdentifier = static_cast<CFNumberRef>(CFDictionaryGetValue(axis.get(), kCTFontVariationAxisIdentifierKey));
+        String axisName = static_cast<CFStringRef>(CFDictionaryGetValue(axis.get(), kCTFontVariationAxisNameKey));
+        RetainPtr defaultValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis.get(), kCTFontVariationAxisDefaultValueKey));
+        RetainPtr minimumValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis.get(), kCTFontVariationAxisMinimumValueKey));
+        RetainPtr maximumValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis.get(), kCTFontVariationAxisMaximumValueKey));
         uint32_t rawAxisIdentifier = 0;
-        Boolean success = CFNumberGetValue(axisIdentifier, kCFNumberSInt32Type, &rawAxisIdentifier);
+        Boolean success = CFNumberGetValue(axisIdentifier.get(), kCFNumberSInt32Type, &rawAxisIdentifier);
         ASSERT_UNUSED(success, success);
         float rawDefaultValue = 0;
         float rawMinimumValue = 0;
         float rawMaximumValue = 0;
-        CFNumberGetValue(defaultValue, kCFNumberFloatType, &rawDefaultValue);
-        CFNumberGetValue(minimumValue, kCFNumberFloatType, &rawMinimumValue);
-        CFNumberGetValue(maximumValue, kCFNumberFloatType, &rawMaximumValue);
+        CFNumberGetValue(defaultValue.get(), kCFNumberFloatType, &rawDefaultValue);
+        CFNumberGetValue(minimumValue.get(), kCFNumberFloatType, &rawMinimumValue);
+        CFNumberGetValue(maximumValue.get(), kCFNumberFloatType, &rawMaximumValue);
 
         if (rawMinimumValue > rawMaximumValue)
             std::swap(rawMinimumValue, rawMaximumValue);
@@ -203,16 +203,16 @@ Vector<String> FontCache::systemFontFamilies()
     auto availableFontFamilies = adoptCF(CTFontManagerCopyAvailableFontFamilyNames());
     CFIndex count = CFArrayGetCount(availableFontFamilies.get());
     for (CFIndex i = 0; i < count; ++i) {
-        auto fontName = dynamic_cf_cast<CFStringRef>(CFArrayGetValueAtIndex(availableFontFamilies.get(), i));
+        RetainPtr fontName = dynamic_cf_cast<CFStringRef>(CFArrayGetValueAtIndex(availableFontFamilies.get(), i));
         if (!fontName) {
             ASSERT_NOT_REACHED();
             continue;
         }
 
-        if (fontNameIsSystemFont(fontName))
+        if (fontNameIsSystemFont(fontName.get()))
             continue;
 
-        fontFamilies.append(fontName);
+        fontFamilies.append(fontName.get());
     }
 
     return fontFamilies;
@@ -319,12 +319,12 @@ struct VariationCapabilities {
 
 static std::optional<MinMax> extractVariationBounds(CFDictionaryRef axis)
 {
-    CFNumberRef minimumValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisMinimumValueKey));
-    CFNumberRef maximumValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisMaximumValueKey));
+    RetainPtr minimumValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisMinimumValueKey));
+    RetainPtr maximumValue = static_cast<CFNumberRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisMaximumValueKey));
     float rawMinimumValue = 0;
     float rawMaximumValue = 0;
-    CFNumberGetValue(minimumValue, kCFNumberFloatType, &rawMinimumValue);
-    CFNumberGetValue(maximumValue, kCFNumberFloatType, &rawMaximumValue);
+    CFNumberGetValue(minimumValue.get(), kCFNumberFloatType, &rawMinimumValue);
+    CFNumberGetValue(maximumValue.get(), kCFNumberFloatType, &rawMaximumValue);
     if (rawMinimumValue < rawMaximumValue)
         return {{ rawMinimumValue, rawMaximumValue }};
     return std::nullopt;
@@ -346,17 +346,17 @@ static VariationCapabilities variationCapabilitiesForFontDescriptor(CTFontDescri
         return result;
 
     for (CFIndex i = 0; i < axisCount; ++i) {
-        CFDictionaryRef axis = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(variations.get(), i));
-        CFNumberRef axisIdentifier = static_cast<CFNumberRef>(CFDictionaryGetValue(axis, kCTFontVariationAxisIdentifierKey));
+        RetainPtr axis = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(variations.get(), i));
+        RetainPtr axisIdentifier = static_cast<CFNumberRef>(CFDictionaryGetValue(axis.get(), kCTFontVariationAxisIdentifierKey));
         uint32_t rawAxisIdentifier = 0;
-        Boolean success = CFNumberGetValue(axisIdentifier, kCFNumberSInt32Type, &rawAxisIdentifier);
+        Boolean success = CFNumberGetValue(axisIdentifier.get(), kCFNumberSInt32Type, &rawAxisIdentifier);
         ASSERT_UNUSED(success, success);
         if (rawAxisIdentifier == 0x77676874) // 'wght'
-            result.weight = extractVariationBounds(axis);
+            result.weight = extractVariationBounds(axis.get());
         else if (rawAxisIdentifier == 0x77647468) // 'wdth'
-            result.width = extractVariationBounds(axis);
+            result.width = extractVariationBounds(axis.get());
         else if (rawAxisIdentifier == 0x736C6E74) // 'slnt'
-            result.slope = extractVariationBounds(axis);
+            result.slope = extractVariationBounds(axis.get());
     }
 
     bool optOutFromGXNormalization = CTFontDescriptorIsSystemUIFont(fontDescriptor);
@@ -409,10 +409,10 @@ FontSelectionCapabilities capabilitiesForFontDescriptor(CTFontDescriptorRef font
         auto traits = adoptCF(static_cast<CFDictionaryRef>(CTFontDescriptorCopyAttribute(fontDescriptor, kCTFontTraitsAttribute)));
         if (traits) {
             if (!variationCapabilities.slope) {
-                auto symbolicTraitsNumber = static_cast<CFNumberRef>(CFDictionaryGetValue(traits.get(), kCTFontSymbolicTrait));
+                RetainPtr symbolicTraitsNumber = static_cast<CFNumberRef>(CFDictionaryGetValue(traits.get(), kCTFontSymbolicTrait));
                 if (symbolicTraitsNumber) {
                     int32_t symbolicTraits;
-                    auto success = CFNumberGetValue(symbolicTraitsNumber, kCFNumberSInt32Type, &symbolicTraits);
+                    auto success = CFNumberGetValue(symbolicTraitsNumber.get(), kCFNumberSInt32Type, &symbolicTraits);
                     ASSERT_UNUSED(success, success);
                     auto slopeValue = static_cast<float>(symbolicTraits & kCTFontTraitItalic ? italicValue() : normalItalicValue());
                     variationCapabilities.slope = {{ slopeValue, slopeValue }};
@@ -816,14 +816,14 @@ RefPtr<Font> FontCache::systemFallbackForCharacterCluster(const FontDescription&
     // FontCascade::drawGlyphBuffer() requires that there are no duplicate Font objects which refer to the same thing. This is enforced in
     // FontCache::fontForPlatformData(), where our equality check is based on hashing the FontPlatformData, whose hash includes the raw CoreText
     // font pointer.
-    CTFontRef substituteFont = m_fallbackFonts.add(result).iterator->get();
+    RetainPtr substituteFont = m_fallbackFonts.add(result).iterator->get();
 
-    auto [syntheticBold, syntheticOblique] = computeNecessarySynthesis(substituteFont, description, { }, ShouldComputePhysicalTraits::No, isForPlatformFont == IsForPlatformFont::Yes).boldObliquePair();
+    auto [syntheticBold, syntheticOblique] = computeNecessarySynthesis(substituteFont.get(), description, { }, ShouldComputePhysicalTraits::No, isForPlatformFont == IsForPlatformFont::Yes).boldObliquePair();
 
     RefPtr<const FontCustomPlatformData> customPlatformData = nullptr;
-    if (safeCFEqual(platformData.ctFont(), substituteFont))
+    if (safeCFEqual(platformData.ctFont(), substituteFont.get()))
         customPlatformData = platformData.customPlatformData();
-    FontPlatformData alternateFont(substituteFont, platformData.size(), syntheticBold, syntheticOblique, platformData.orientation(), platformData.widthVariant(), platformData.textRenderingMode(), customPlatformData.get());
+    FontPlatformData alternateFont(substituteFont.get(), platformData.size(), syntheticBold, syntheticOblique, platformData.orientation(), platformData.widthVariant(), platformData.textRenderingMode(), customPlatformData.get());
 
     return fontForPlatformData(alternateFont);
 }

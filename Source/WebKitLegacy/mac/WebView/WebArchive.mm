@@ -209,11 +209,11 @@ static BOOL isArrayOfClass(id object, Class elementClass)
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder
-{    
-    WebResource *mainResource = nil;
-    NSArray *subresources = nil;
-    NSArray *subframeArchives = nil;
-    
+{
+    RetainPtr<WebResource> mainResource;
+    RetainPtr<NSArray> subresources;
+    RetainPtr<NSArray> subframeArchives;
+
     @try {
         id object = [decoder decodeObjectForKey:WebMainResourceKey];
         if ([object isKindOfClass:[WebResource class]])
@@ -229,7 +229,7 @@ static BOOL isArrayOfClass(id object, Class elementClass)
         return nil;
     }
 
-    return [self initWithMainResource:mainResource subresources:subresources subframeArchives:subframeArchives];
+    return [self initWithMainResource:mainResource.get() subresources:subresources.get() subframeArchives:subframeArchives.get()];
 }
 
 - (void)encodeWithCoder:(NSCoder *)encoder

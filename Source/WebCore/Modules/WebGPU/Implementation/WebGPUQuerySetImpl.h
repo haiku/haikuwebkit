@@ -57,6 +57,7 @@ private:
     QuerySetImpl& operator=(QuerySetImpl&&) = delete;
 
     WGPUQuerySet backing() const { return m_backing.get(); }
+    bool isQuerySetImpl() const final { return true; }
 
     void destroy() final;
 
@@ -67,5 +68,9 @@ private:
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::QuerySetImpl)
+    static bool isType(const WebCore::WebGPU::QuerySet& querySet) { return querySet.isQuerySetImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

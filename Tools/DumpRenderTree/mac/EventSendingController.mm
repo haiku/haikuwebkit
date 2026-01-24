@@ -151,7 +151,7 @@ static NSDraggingSession *drt_WebHTMLView_beginDraggingSessionWithItemsEventSour
 {
     ASSERT(!draggingInfo);
 
-    WebFrameView *webFrameView = ^ {
+    RetainPtr webFrameView = ^ {
         for (NSView *superview = self.superview; superview; superview = superview.superview) {
             if ([superview isKindOfClass:WebFrameView.class])
                 return (WebFrameView *)superview;
@@ -161,7 +161,7 @@ static NSDraggingSession *drt_WebHTMLView_beginDraggingSessionWithItemsEventSour
         return (WebFrameView *)nil;
     }();
 
-    WebView *webView = webFrameView.webFrame.webView;
+    WebView *webView = webFrameView.get().webFrame.webView;
 
     NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSDragPboard];
     for (NSDraggingItem *item in items)
@@ -725,9 +725,9 @@ static NSInteger swizzledEventButtonNumber()
                                                       location:lastMousePosition]);
 #endif
 
-    NSView *targetView = [[mainFrame webView] hitTest:[event locationInWindow]];
+    RetainPtr targetView = [[mainFrame webView] hitTest:[event locationInWindow]];
     // FIXME: Silly hack to teach DRT to respect capturing mouse events outside the WebView.
-    // The right solution is just to use NSApplication's built-in event sending methods, 
+    // The right solution is just to use NSApplication's built-in event sending methods,
     // instead of rolling our own algorithm for selecting an event target.
     targetView = targetView ? targetView : [[mainFrame frameView] documentView];
     assert(targetView);
@@ -736,7 +736,7 @@ static NSInteger swizzledEventButtonNumber()
 #endif
     {
 #if !PLATFORM(IOS_FAMILY)
-        auto eventPressedMouseButtonsSwizzler = eventPressedMouseButtonsSwizzlerForViewAndEvent(targetView, event.get());
+        auto eventPressedMouseButtonsSwizzler = eventPressedMouseButtonsSwizzlerForViewAndEvent(targetView.get(), event.get());
         auto eventButtonNumberSwizzler = makeUnique<InstanceMethodSwizzler>([NSEvent class], @selector(buttonNumber), reinterpret_cast<IMP>(swizzledEventButtonNumber));
 #endif
         [targetView mouseUp:event.get()];

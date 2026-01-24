@@ -362,6 +362,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) PKShippingMethod *shippingMethod;
 @end
 
+@interface PKPaymentMerchantSession () <NSSecureCoding>
+@end
+
 #if HAVE(PASSKIT_DEFAULT_SHIPPING_METHOD) && !USE(APPLE_INTERNAL_SDK)
 @interface PKShippingMethods : NSObject
 - (instancetype)initWithMethods:(NSArray<PKShippingMethod *> *)methods defaultMethod:(nullable PKShippingMethod *)defaultMethod;

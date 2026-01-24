@@ -32,12 +32,12 @@
 #if OS(DARWIN) && !PLATFORM(GTK)
 #include <WebCore/CommonCryptoUtilities.h>
 #if !defined(CLANG_WEBKIT_BRANCH)
-namespace PAL {
+namespace pal {
 class ECKey;
 }
 
 namespace WebCore {
-using PlatformECKeyContainer = UniqueRef<PAL::ECKey>;
+using PlatformECKeyContainer = UniqueRef<pal::ECKey>;
 }
 #else
 namespace WebCore {

@@ -50,7 +50,7 @@ public:
         return adoptRef(*new TouchEvent);
     }
 
-    struct Init : MouseRelatedEventInit {
+    struct Init : EventModifierInit {
         RefPtr<TouchList> touches;
         RefPtr<TouchList> targetTouches;
         RefPtr<TouchList> changedTouches;
@@ -68,8 +68,6 @@ public:
     void setTouches(RefPtr<TouchList>&& touches) { m_touches = touches; }
     void setTargetTouches(RefPtr<TouchList>&& targetTouches) { m_targetTouches = targetTouches; }
     void setChangedTouches(RefPtr<TouchList>&& changedTouches) { m_changedTouches = changedTouches; }
-
-    bool isTouchEvent() const override;
 
 private:
     TouchEvent();

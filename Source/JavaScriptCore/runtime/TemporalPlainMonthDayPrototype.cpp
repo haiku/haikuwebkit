@@ -166,7 +166,7 @@ JSC_DEFINE_HOST_FUNCTION(temporalPlainMonthDayPrototypeFuncEquals, (JSGlobalObje
     if (!monthDay) [[unlikely]]
         return throwVMTypeError(globalObject, scope, "Temporal.PlainMonthDay.prototype.equals called on value that's not a PlainMonthDay"_s);
 
-    auto* other = TemporalPlainMonthDay::from(globalObject, callFrame->argument(0), std::nullopt);
+    auto* other = TemporalPlainMonthDay::from(globalObject, callFrame->argument(0), jsUndefined());
     RETURN_IF_EXCEPTION(scope, { });
 
     if (monthDay->plainMonthDay() != other->plainMonthDay())

@@ -27,6 +27,8 @@
 #import "config.h"
 #import "DigitalCredentialsRequestValidatorBridge.h"
 
+#if ENABLE(WEB_AUTHN)
+
 #import "Logging.h"
 #import "WKIdentityDocumentRawRequestValidator.h"
 #import <Foundation/Foundation.h>
@@ -174,12 +176,11 @@ Vector<WebCore::ValidatedMobileDocumentRequest> DigitalCredentials::validateRequ
             if ([debugDescription length])
                 errorMessage = makeString(errorMessage, " ("_s, String(debugDescription.get()), ")"_s);
 
-            const_cast<Document&>(document).addConsoleMessage(makeUnique<Inspector::ConsoleMessage>(
+            const_cast<Document &>(document).addConsoleMessage(makeUnique<Inspector::ConsoleMessage>(
                 MessageSource::JS,
                 MessageType::Log,
                 MessageLevel::Warning,
-                errorMessage
-            ));
+                errorMessage));
 
             LOG(DigitalCredentials, "Validation failed for request: %@", error);
         }
@@ -188,4 +189,6 @@ Vector<WebCore::ValidatedMobileDocumentRequest> DigitalCredentials::validateRequ
     return validatedRequests;
 }
 
-}
+} // namespace WebKit
+
+#endif // ENABLE(WEB_AUTHN)

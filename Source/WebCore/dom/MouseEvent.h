@@ -31,7 +31,11 @@
 
 #include <wtf/Platform.h>
 #if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
+// FIXME: Properly support using WKA in modules.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnon-modular-include-in-module"
 #include <WebKitAdditions/PlatformTouchEventIOS.h>
+#pragma clang diagnostic pop
 #endif
 
 namespace JSC {
@@ -107,10 +111,10 @@ protected:
 
     MouseEvent(enum EventInterfaceType, const AtomString& type, const MouseEventInit&, IsTrusted);
 
-    MouseEvent(enum EventInterfaceType);
+    explicit MouseEvent(enum EventInterfaceType);
 
 private:
-    bool isMouseEvent() const final;
+    bool isMouseEvent() const final { return true; }
 
     void setRelatedTarget(RefPtr<EventTarget>&&) final;
 
@@ -126,4 +130,4 @@ private:
 
 } // namespace WebCore
 
-SPECIALIZE_TYPE_TRAITS_EVENT(MouseEvent)
+SPECIALIZE_TYPE_TRAITS_EVENT_POLYMORPHIC(MouseEvent)

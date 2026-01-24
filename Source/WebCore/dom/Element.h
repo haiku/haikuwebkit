@@ -894,7 +894,7 @@ public:
 
     virtual void updateUserAgentShadowTree() { }
 
-    StylePropertyMapReadOnly* computedStyleMap();
+    StylePropertyMapReadOnly& computedStyleMap();
 
     ExplicitlySetAttrElementsMap& explicitlySetAttrElementsMap();
     ExplicitlySetAttrElementsMap* explicitlySetAttrElementsMapIfExists() const;
@@ -954,8 +954,6 @@ private:
     LocalFrame* documentFrameWithNonNullView() const;
     void hideNonceSlow();
 
-    bool isTextNode() const;
-
     bool isUserActionElementInActiveChain() const;
     bool isUserActionElementActive() const;
     bool isUserActionElementFocused() const;
@@ -995,6 +993,8 @@ private:
     bool childTypeAllowed(NodeType) const final;
 
     void notifyAttributeChanged(const QualifiedName&, const AtomString& oldValue, const AtomString& newValue, AttributeModificationReason = AttributeModificationReason::Directly);
+    void parserNotifyAttributeAdded(const QualifiedName&, const AtomString& value, AttributeModificationReason = AttributeModificationReason::Directly);
+    void notifyAttributeChangedCommon(const QualifiedName&, const AtomString& oldValue, const AtomString& newValue, AttributeModificationReason);
     enum class InSynchronizationOfLazyAttribute : bool { No, Yes };
     void setAttributeInternal(unsigned index, const QualifiedName&, const AtomString& value, InSynchronizationOfLazyAttribute);
     void addAttributeInternal(const QualifiedName&, const AtomString& value, InSynchronizationOfLazyAttribute);

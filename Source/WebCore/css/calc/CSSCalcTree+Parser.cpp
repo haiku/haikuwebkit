@@ -884,9 +884,6 @@ static std::optional<TypedChild> consumeProgress(CSSParserTokenRange& tokens, in
 {
     // <progress()> = progress( <calc-sum>, <calc-sum>, <calc-sum> )
 
-    if (!state.propertyParserState.context.cssProgressFunctionEnabled)
-        return { };
-
     using Op = Progress;
 
     auto value = parseCalcSum(tokens, depth, state);

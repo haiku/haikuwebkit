@@ -965,7 +965,7 @@ private:
                                         ASSERT(isInlineOffset(knownPolyProtoOffset));
                                         m_insertionSet.insertNode(
                                             indexInBlock + 1, SpecNone, PutByOffset, origin, OpInfo(data),
-                                            Edge(node, KnownCellUse), Edge(node, KnownCellUse), Edge(prototypeNode, UntypedUse));
+                                            Edge(node, KnownStorageUse), Edge(node, KnownCellUse), Edge(prototypeNode, UntypedUse));
                                     }
                                     changed = true;
                                     break;
@@ -1908,6 +1908,7 @@ private:
             propertyStorage = Edge(m_insertionSet.insertNode(
                 indexInBlock, SpecNone, GetButterfly, node->origin, childEdge));
         }
+        propertyStorage.setUseKind(KnownStorageUse);
         
         StorageAccessData& data = *m_graph.m_storageAccessData.add();
         data.offset = offset;
@@ -1960,15 +1961,15 @@ private:
             ASSERT(variant.oldStructureForTransition()->outOfLineCapacity());
             ASSERT(variant.newStructure()->outOfLineCapacity() > variant.oldStructureForTransition()->outOfLineCapacity());
             ASSERT(!isInlineOffset(variant.offset()));
-
+            Node* butterfly = m_insertionSet.insertNode(indexInBlock, SpecNone, GetButterfly, origin, childEdge);
             Node* reallocatePropertyStorage = m_insertionSet.insertNode(
                 indexInBlock, SpecNone, ReallocatePropertyStorage, origin,
                 OpInfo(transition), childEdge,
-                Edge(m_insertionSet.insertNode(
-                    indexInBlock, SpecNone, GetButterfly, origin, childEdge)));
+                Edge(butterfly, KnownStorageUse));
             propertyStorage = Edge(reallocatePropertyStorage);
             didAllocateStorage = true;
         }
+        propertyStorage.setUseKind(KnownStorageUse);
 
         StorageAccessData& data = *m_graph.m_storageAccessData.add();
         data.offset = variant.offset();
@@ -2016,6 +2017,7 @@ private:
         else
             propertyStorage = Edge(m_insertionSet.insertNode(
                 indexInBlock, SpecNone, GetButterfly, origin, node->child1()));
+        propertyStorage.setUseKind(KnownStorageUse);
 
         StorageAccessData& data = *m_graph.m_storageAccessData.add();
         data.offset = variant.offset();

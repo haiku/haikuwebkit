@@ -862,9 +862,6 @@ bool HTMLImageElement::allowsAnimation() const
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
 void HTMLImageElement::setAllowsAnimation(std::optional<bool> allowsAnimation)
 {
-    if (!document().settings().imageAnimationControlEnabled())
-        return;
-
     if (RefPtr image = this->image()) {
         image->setAllowsAnimation(allowsAnimation);
         if (CheckedPtr renderer = this->renderer())

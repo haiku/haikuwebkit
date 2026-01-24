@@ -50,7 +50,7 @@ SVGAttributeAnimator* SVGAnimateElementBase::animator() const
     if (!m_animator)
         m_animator = protectedTargetElement()->createAnimator(attributeName(), animationMode(), calcMode(), isAccumulated(), isAdditive());
 
-    return m_animator.get();
+    return m_animator;
 }
 
 bool SVGAnimateElementBase::hasValidAttributeType() const

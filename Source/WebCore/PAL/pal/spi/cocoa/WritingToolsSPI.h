@@ -28,6 +28,8 @@
 #import <wtf/Compiler.h>
 #import <wtf/Platform.h>
 
+#if !__has_feature(modules) || !USE(APPLE_INTERNAL_SDK)
+
 DECLARE_SYSTEM_HEADER
 
 #if ENABLE(WRITING_TOOLS)
@@ -237,3 +239,5 @@ NS_ASSUME_NONNULL_END
 #endif
 
 #endif // ENABLE(WRITING_TOOLS)
+
+#endif // !__has_feature(modules)

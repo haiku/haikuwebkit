@@ -47,7 +47,8 @@
 [
     Conditional=DEVICE_ORIENTATION,
     JSGenerateToJSObject,
-    JSGenerateToNativeObject
+    JSGenerateToNativeObject,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary Acceleration {
     double? x;
     double? y;
@@ -57,7 +58,8 @@
 [
     Conditional=DEVICE_ORIENTATION,
     JSGenerateToJSObject,
-    JSGenerateToNativeObject
+    JSGenerateToNativeObject,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary RotationRate {
     double? alpha;
     double? beta;

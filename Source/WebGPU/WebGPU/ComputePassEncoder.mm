@@ -196,14 +196,9 @@ void ComputePassEncoder::executePreDispatchCommands(const Buffer* indirectBuffer
     auto pipelineIdentifier = pipeline->uniqueId();
     for (auto& kvp : m_bindGroups) {
         auto bindGroupIndex = kvp.key;
-
-        if (!kvp.value.get()) {
-            makeInvalid(@"bind group was deallocated");
-            return;
-        }
-        auto group = kvp.value;
+        Ref group = kvp.value;
         if (group->hasSamplers())
-            protectedParentEncoder()->rebindSamplersPreCommit(group.get());
+            protectedParentEncoder()->rebindSamplersPreCommit(group);
 
         if (!group->previouslyValidatedBindGroup(bindGroupIndex, pipelineIdentifier, m_maxDynamicOffsetAtIndex[bindGroupIndex])) {
             if (group->makeSubmitInvalid(ShaderStage::Compute, pipelineLayout->protectedOptionalBindGroupLayout(bindGroupIndex).get())) {
@@ -214,7 +209,7 @@ void ComputePassEncoder::executePreDispatchCommands(const Buffer* indirectBuffer
             const Vector<uint32_t>* dynamicOffsets = nullptr;
             if (auto it = m_bindGroupDynamicOffsets.find(bindGroupIndex); it != m_bindGroupDynamicOffsets.end())
                 dynamicOffsets = &it->value;
-            if (NSString* error = errorValidatingBindGroup(*group, pipeline->minimumBufferSizes(bindGroupIndex), dynamicOffsets)) {
+            if (NSString* error = errorValidatingBindGroup(group, pipeline->minimumBufferSizes(bindGroupIndex), dynamicOffsets)) {
                 makeInvalid(error);
                 return;
             }
@@ -503,7 +498,7 @@ void ComputePassEncoder::setBindGroup(uint32_t groupIndex, const BindGroup* grou
     }
 
     m_bindGroupResources.set(groupIndex, resourceList);
-    m_bindGroups.set(groupIndex, &group);
+    m_bindGroups.set(groupIndex, group);
 }
 
 void ComputePassEncoder::setPipeline(const ComputePipeline& pipeline)

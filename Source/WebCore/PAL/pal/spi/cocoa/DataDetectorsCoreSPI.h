@@ -92,6 +92,7 @@ typedef enum {
     DDResultCategoryAddress = 3,
     DDResultCategoryCalendarEvent = 4,
     DDResultCategoryMisc = 5,
+    DDResultCategoryMoney = 6,
 } DDResultCategory;
 
 typedef enum __DDTextFragmentType {

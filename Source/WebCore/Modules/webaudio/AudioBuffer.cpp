@@ -218,7 +218,7 @@ RefPtr<Float32Array> AudioBuffer::channelData(unsigned channelIndex)
     return m_channels[channelIndex].copyRef();
 }
 
-std::span<float> AudioBuffer::rawChannelData(unsigned channelIndex)
+std::span<float> AudioBuffer::rawChannelData(unsigned channelIndex) LIFETIME_BOUND
 {
     if (channelIndex >= m_channels.size())
         return { };

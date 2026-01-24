@@ -597,10 +597,6 @@
 #define ENABLE_WEBGL 0
 #endif
 
-#if !defined(ENABLE_WEBPROCESS_NSRUNLOOP)
-#define ENABLE_WEBPROCESS_NSRUNLOOP 0
-#endif
-
 #if !defined(ENABLE_WEB_ARCHIVE)
 #define ENABLE_WEB_ARCHIVE 0
 #endif

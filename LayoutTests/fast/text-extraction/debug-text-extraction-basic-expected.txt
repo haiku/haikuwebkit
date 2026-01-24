@@ -51,4 +51,3 @@ root
         'Footer content with',[…]
         role='img',aria-label='copyright symbol','©',[…]
         '2024',[…]
-version=2

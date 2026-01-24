@@ -250,61 +250,61 @@ RefPtr<ArchiveResource> LegacyWebArchive::createResource(CFDictionaryRef diction
     if (!dictionary)
         return nullptr;
 
-    auto resourceData = static_cast<CFDataRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceDataKey));
-    if (resourceData && CFGetTypeID(resourceData) != CFDataGetTypeID()) {
+    RetainPtr resourceData = static_cast<CFDataRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceDataKey));
+    if (resourceData && CFGetTypeID(resourceData.get()) != CFDataGetTypeID()) {
         LOG(Archives, "LegacyWebArchive - Resource data is not of type CFData, cannot create invalid resource");
         return nullptr;
     }
 
-    auto frameName = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceFrameNameKey));
-    if (frameName && CFGetTypeID(frameName) != CFStringGetTypeID()) {
+    RetainPtr frameName = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceFrameNameKey));
+    if (frameName && CFGetTypeID(frameName.get()) != CFStringGetTypeID()) {
         LOG(Archives, "LegacyWebArchive - Frame name is not of type CFString, cannot create invalid resource");
         return nullptr;
     }
 
-    auto mimeType = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceMIMETypeKey));
-    if (mimeType && CFGetTypeID(mimeType) != CFStringGetTypeID()) {
+    RetainPtr mimeType = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceMIMETypeKey));
+    if (mimeType && CFGetTypeID(mimeType.get()) != CFStringGetTypeID()) {
         LOG(Archives, "LegacyWebArchive - MIME type is not of type CFString, cannot create invalid resource");
         return nullptr;
     }
 
-    auto url = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceURLKey));
-    if (url && CFGetTypeID(url) != CFStringGetTypeID()) {
+    RetainPtr url = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceURLKey));
+    if (url && CFGetTypeID(url.get()) != CFStringGetTypeID()) {
         LOG(Archives, "LegacyWebArchive - URL is not of type CFString, cannot create invalid resource");
         return nullptr;
     }
 
-    auto textEncoding = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceTextEncodingNameKey));
-    if (textEncoding && CFGetTypeID(textEncoding) != CFStringGetTypeID()) {
+    RetainPtr textEncoding = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceTextEncodingNameKey));
+    if (textEncoding && CFGetTypeID(textEncoding.get()) != CFStringGetTypeID()) {
         LOG(Archives, "LegacyWebArchive - Text encoding is not of type CFString, cannot create invalid resource");
         return nullptr;
     }
 
     ResourceResponse response;
 
-    if (auto resourceResponseData = static_cast<CFDataRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceResponseKey))) {
-        if (CFGetTypeID(resourceResponseData) != CFDataGetTypeID()) {
+    if (RetainPtr resourceResponseData = static_cast<CFDataRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceResponseKey))) {
+        if (CFGetTypeID(resourceResponseData.get()) != CFDataGetTypeID()) {
             LOG(Archives, "LegacyWebArchive - Resource response data is not of type CFData, cannot create invalid resource");
             return nullptr;
         }
 
-        auto resourceResponseVersion = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceResponseVersionKey));
-        if (resourceResponseVersion && CFGetTypeID(resourceResponseVersion) != CFStringGetTypeID()) {
+        RetainPtr resourceResponseVersion = static_cast<CFStringRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceResponseVersionKey));
+        if (resourceResponseVersion && CFGetTypeID(resourceResponseVersion.get()) != CFStringGetTypeID()) {
             LOG(Archives, "LegacyWebArchive - Resource response version is not of type CFString, cannot create invalid resource");
             return nullptr;
         }
 
-        response = createResourceResponseFromPropertyListData(resourceResponseData, resourceResponseVersion);
+        response = createResourceResponseFromPropertyListData(resourceResponseData.get(), resourceResponseVersion.get());
     }
 
     auto filePathValue = CFDictionaryGetValue(dictionary, LegacyWebArchiveResourceFilePathKey);
-    auto filePath = dynamic_cf_cast<CFStringRef>(filePathValue);
+    RetainPtr filePath = dynamic_cf_cast<CFStringRef>(filePathValue);
     if (filePathValue && !filePath) {
         LOG(Archives, "LegacyWebArchive - File path is not of type CFString, cannot create invalid resource");
         return nullptr;
     }
 
-    return ArchiveResource::create(SharedBuffer::create(resourceData), URL { url }, mimeType, textEncoding, frameName, response, filePath);
+    return ArchiveResource::create(SharedBuffer::create(resourceData.get()), URL { url.get() }, mimeType.get(), textEncoding.get(), frameName.get(), response, filePath.get());
 }
 
 LegacyWebArchive::LegacyWebArchive(std::optional<FrameIdentifier> frameIdentifier, Vector<FrameIdentifier>&& subframeIdentifiers)
@@ -381,17 +381,17 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::create(CFDictionaryRef dictionary)
         return nullptr;
     }
 
-    CFDictionaryRef mainResourceDict = static_cast<CFDictionaryRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveMainResourceKey));
+    RetainPtr mainResourceDict = static_cast<CFDictionaryRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveMainResourceKey));
     if (!mainResourceDict) {
         LOG(Archives, "LegacyWebArchive - No main resource in archive, aborting invalid WebArchive");
         return nullptr;
     }
-    if (CFGetTypeID(mainResourceDict) != CFDictionaryGetTypeID()) {
+    if (CFGetTypeID(mainResourceDict.get()) != CFDictionaryGetTypeID()) {
         LOG(Archives, "LegacyWebArchive - Main resource is not the expected CFDictionary, aborting invalid WebArchive");
         return nullptr;
     }
 
-    RefPtr mainResource = createResource(mainResourceDict);
+    RefPtr mainResource = createResource(mainResourceDict.get());
     if (!mainResource) {
         LOG(Archives, "LegacyWebArchive - Failed to parse main resource from CFDictionary or main resource does not exist, aborting invalid WebArchive");
         return nullptr;

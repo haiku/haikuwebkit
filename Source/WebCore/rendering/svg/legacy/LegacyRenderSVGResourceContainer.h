@@ -104,4 +104,7 @@ Renderer* getRenderSVGResourceById(TreeScope& treeScope, const AtomString& id)
 
 } // namespace WebCore
 
-SPECIALIZE_TYPE_TRAITS_RENDER_OBJECT(LegacyRenderSVGResourceContainer, isLegacyRenderSVGResourceContainer())
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::LegacyRenderSVGResourceContainer)
+    static bool isType(const WebCore::RenderObject& renderer) { return renderer.isLegacyRenderSVGResourceContainer(); }
+    static bool isType(const WebCore::LegacyRenderSVGResource& resource) { return resource.resourceType() != WebCore::SolidColorResourceType; }
+SPECIALIZE_TYPE_TRAITS_END()

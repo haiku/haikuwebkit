@@ -7,7 +7,7 @@ struct _GlobalUniforms {
   colorGreen: vec4<f32>,
   colorRed: vec4<f32>,
 };
-@binding(0) @group(0) var<uniform> _globalUniforms: _GlobalUniforms;
+@group(0) @binding(0) var<uniform> _globalUniforms : _GlobalUniforms;
 fn switch_fallthrough_groups_bi(value: i32) -> bool {
   {
     var ok: bool = false;
@@ -53,8 +53,7 @@ fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
   {
     let x: i32 = i32(_globalUniforms.colorGreen.y);
     var _skTemp3: vec4<f32>;
-    let _skTemp4 = switch_fallthrough_groups_bi(x);
-    if _skTemp4 {
+    if switch_fallthrough_groups_bi(x) {
       _skTemp3 = _globalUniforms.colorGreen;
     } else {
       _skTemp3 = _globalUniforms.colorRed;

@@ -80,7 +80,7 @@ Inspector::Protocol::Page::ResourceType resourceTypeToProtocol(Inspector::Resour
     return Inspector::Protocol::Page::ResourceType::Other;
 }
 
-WARN_UNUSED_RETURN static bool decodeBuffer(std::span<const uint8_t> buffer, const String& textEncodingName, String* result)
+[[nodiscard]] static bool decodeBuffer(std::span<const uint8_t> buffer, const String& textEncodingName, String* result)
 {
     if (buffer.data()) {
         PAL::TextEncoding encoding(textEncodingName);

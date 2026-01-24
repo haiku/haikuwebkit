@@ -90,7 +90,7 @@ private:
         }
 
         // auto, auto-start-reverse, or unknown.
-        m_animatedPropertyAnimator1->m_animated->animVal()->value().setValue(0);
+        m_animatedPropertyAnimator1->m_animated->animVal().value().setValue(0);
 
         if (m_animatedPropertyAnimator2->m_function.m_from == SVGMarkerOrientAuto || m_animatedPropertyAnimator2->m_function.m_from == SVGMarkerOrientAutoStartReverse)
             m_animatedPropertyAnimator2->m_animated->setAnimVal(m_animatedPropertyAnimator2->m_function.m_from);

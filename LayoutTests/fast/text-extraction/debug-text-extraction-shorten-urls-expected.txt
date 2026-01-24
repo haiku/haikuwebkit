@@ -21,4 +21,3 @@ root
 		image,src='image.gif',alt='Image with high entropy name'
 		image,src='image2.gif',alt='Image with high entropy name 2'
 		image,src='image2.gif',alt='Image with high entropy name (duplicate)'
-version=2

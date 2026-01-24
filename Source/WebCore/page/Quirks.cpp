@@ -575,6 +575,17 @@ bool Quirks::inputMethodUsesCorrectKeyEventOrder() const
     return false;
 }
 
+bool Quirks::shouldIgnoreInputModeNone() const
+{
+#if PLATFORM(IOS_FAMILY)
+    QUIRKS_EARLY_RETURN_IF_DISABLED_WITH_VALUE(false);
+
+    return m_quirksData.quirkIsEnabled(QuirksData::SiteSpecificQuirk::ShouldIgnoreInputModeNone);
+#else
+    return false;
+#endif
+}
+
 // FIXME: Remove after the site is fixed, <rdar://problem/50374200>
 // mail.google.com rdar://49403416
 bool Quirks::needsGMailOverflowScrollQuirk() const
@@ -1691,7 +1702,7 @@ bool Quirks::needsIPhoneUserAgent(const URL& url)
     return false;
 }
 
-std::optional<String> Quirks::needsCustomUserAgentOverride(const URL& url, const String& applicationNameForUserAgent)
+std::optional<String> Quirks::needsCustomUserAgentOverride(const URL& url, const String& applicationNameForUserAgent, const String& currentUserAgent)
 {
     auto hostDomain = RegistrableDomain(url);
     auto firefoxUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:139.0) Gecko/20100101 Firefox/139.0"_s;
@@ -1713,10 +1724,13 @@ std::optional<String> Quirks::needsCustomUserAgentOverride(const URL& url, const
 
 #if PLATFORM(COCOA)
     // FIXME(rdar://148759791): Remove this once TikTok removes the outdated error message.
-    if (hostDomain.string() == "tiktok.com"_s)
-        return makeStringByReplacingAll(standardUserAgentWithApplicationName(applicationNameForUserAgent), "like Gecko"_s, "like Gecko, like Chrome/136."_s);
+    if (hostDomain.string() == "tiktok.com"_s) {
+        auto baseUA = currentUserAgent.isEmpty() ? standardUserAgentWithApplicationName(applicationNameForUserAgent) : currentUserAgent;
+        return makeStringByReplacingAll(baseUA, "like Gecko"_s, "like Gecko, like Chrome/136."_s);
+    }
 #else
     UNUSED_PARAM(applicationNameForUserAgent);
+    UNUSED_PARAM(currentUserAgent);
 #endif
     return { };
 }
@@ -2329,15 +2343,6 @@ bool Quirks::shouldDisableDOMAudioSessionQuirk() const
     return m_quirksData.quirkIsEnabled(QuirksData::SiteSpecificQuirk::ShouldDisableDOMAudioSession);
 }
 
-bool Quirks::shouldExposeCredentialsContainerQuirk() const
-{
-#if ENABLE(WEB_AUTHN)
-    if (m_document && m_document->settings().webAuthenticationEnabled())
-        return true;
-#endif
-    return needsQuirks() && m_quirksData.isGoogleAccounts;
-}
-
 #if ENABLE(PICTURE_IN_PICTURE_API)
 bool Quirks::shouldReportVisibleDueToActivePictureInPictureContent() const
 {
@@ -2875,6 +2880,8 @@ static void handleGoogleQuirks(QuirksData& quirksData, const URL& quirksURL, con
         // docs.google.com https://bugs.webkit.org/show_bug.cgi?id=199587
         bool needsDeferKeyDownAndKeyPressTimersUntilNextEditingCommandQuirk = startsWithLettersIgnoringASCIICase(topDocumentPath, "/spreadsheets/"_s);
         quirksData.setQuirkState(QuirksData::SiteSpecificQuirk::NeedsDeferKeyDownAndKeyPressTimersUntilNextEditingCommandQuirk, needsDeferKeyDownAndKeyPressTimersUntilNextEditingCommandQuirk);
+        bool needsIgnoringInputModeNoneQuirk = startsWithLettersIgnoringASCIICase(topDocumentPath, "/presentation/"_s);
+        quirksData.setQuirkState(QuirksData::SiteSpecificQuirk::ShouldIgnoreInputModeNone, needsIgnoringInputModeNoneQuirk);
     } else if (topDocumentHost == "mail.google.com"_s) {
         // mail.google.com rdar://49403416
         quirksData.enableQuirk(QuirksData::SiteSpecificQuirk::NeedsGMailOverflowScrollQuirk);
@@ -2901,7 +2908,6 @@ static void handleGoogleQuirks(QuirksData& quirksData, const URL& quirksURL, con
     bool shouldEnableEnumerateDeviceQuirk = topDocumentHost == "meet.google.com"_s;
     quirksData.setQuirkState(QuirksData::SiteSpecificQuirk::ShouldEnableEnumerateDeviceQuirk, shouldEnableEnumerateDeviceQuirk);
 #endif
-    quirksData.isGoogleAccounts = topDocumentHost == "accounts.google.com"_s;
 }
 
 static void handleHBOMaxQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL&  /* documentURL */)

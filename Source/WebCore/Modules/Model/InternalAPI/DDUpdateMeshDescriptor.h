@@ -25,11 +25,39 @@
 
 #pragma once
 
+#include <WebCore/DDFloat3.h>
 #include <WebCore/DDFloat4x4.h>
 #include <WebCore/DDMeshDescriptor.h>
 #include <WebCore/DDMeshPart.h>
 
 namespace WebCore::DDModel {
+
+struct DDSkinningData {
+    uint8_t influencePerVertexCount;
+    Vector<DDFloat4x4> jointTransforms;
+    Vector<DDFloat4x4> inverseBindPoses;
+    Vector<uint32_t> influenceJointIndices;
+    Vector<float> influenceWeights;
+    DDFloat4x4 geometryBindTransform;
+};
+
+struct DDBlendShapeData {
+    Vector<float> weights;
+    Vector<Vector<DDFloat3>> positionOffsets;
+    Vector<Vector<DDFloat3>> normalOffsets;
+};
+
+struct DDRenormalizationData {
+    Vector<uint32_t> vertexIndicesPerTriangle;
+    Vector<uint32_t> vertexAdjacencies;
+    Vector<uint32_t> vertexAdjacencyEndIndices;
+};
+
+struct DDDeformationData {
+    std::optional<DDSkinningData> skinningData;
+    std::optional<DDBlendShapeData> blendShapeData;
+    std::optional<DDRenormalizationData> renormalizationData;
+};
 
 struct DDUpdateMeshDescriptor {
     String identifier;
@@ -41,6 +69,7 @@ struct DDUpdateMeshDescriptor {
     DDFloat4x4 transform;
     Vector<DDFloat4x4> instanceTransforms;
     Vector<String> materialPrims;
+    std::optional<DDDeformationData> deformationData;
 };
 
 }

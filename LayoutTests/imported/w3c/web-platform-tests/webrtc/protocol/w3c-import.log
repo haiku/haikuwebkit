@@ -16,6 +16,7 @@ None
 List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/protocol/README.txt
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/protocol/RTCPeerConnection-payloadTypes.html
+/LayoutTests/imported/w3c/web-platform-tests/webrtc/protocol/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/protocol/additional-codecs.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/protocol/av1-profile-asymmetry.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webrtc/protocol/bundle.https.html

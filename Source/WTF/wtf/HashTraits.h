@@ -225,7 +225,7 @@ template<typename P, typename Q, typename R> struct HashTraits<RefPtr<P, Q, R>> 
     static bool isEmptyValue(const RefPtr<P, Q, R>& value) { return !value; }
 
     using PeekType = P*;
-    static PeekType peek(const RefPtr<P, Q, R>& value) { return value.get(); }
+    static PeekType peek(const RefPtr<P, Q, R>& value) { return value; }
     static PeekType peek(P* value) { return value; }
 
     static void customDeleteBucket(RefPtr<P, Q, R>& value)

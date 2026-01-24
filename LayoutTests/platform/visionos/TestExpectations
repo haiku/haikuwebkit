@@ -198,6 +198,8 @@ interaction-region/form-control-refresh/date-native-interaction-region.html [ Fa
 ###################################################################################################
 ### START OF Flaky tests
 
+# webkit.org/b/305613 overlay-region/clipping.html
+overlay-region/clipping.html [ Pass Failure ]
 
 ### END OF Flaky tests
 ###################################################################################################

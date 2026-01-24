@@ -162,6 +162,8 @@ enum TracePointCode {
     SyntheticMomentumEvent,
     RemoteLayerTreeScheduleRenderingUpdate,
     DisplayLinkUpdate,
+    ProcessInitializeStart,
+    ProcessInitializeEnd,
 
     UIProcessRange = 14000,
     CommitLayerTreeStart,

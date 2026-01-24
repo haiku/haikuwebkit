@@ -199,6 +199,9 @@ public:
     float cornerRadius() const override;
     void setCornerRadius(float) override;
 
+    WebCore::Path shadowPath() const override;
+    void setShadowPath(const WebCore::Path&) override;
+
     void setAntialiasesEdges(bool) override;
 
     WebCore::MediaPlayerVideoGravity videoGravity() const override;
@@ -311,7 +314,7 @@ private:
     LayerProperties m_properties;
     WebCore::PlatformCALayerList m_children;
     WeakPtr<PlatformCALayerRemote> m_superlayer;
-    HashMap<String, RefPtr<WebCore::PlatformCAAnimation>> m_animations;
+    HashMap<String, Ref<WebCore::PlatformCAAnimation>> m_animations;
 
     bool m_acceleratesDrawing { false };
     WeakPtr<RemoteLayerTreeContext> m_context;

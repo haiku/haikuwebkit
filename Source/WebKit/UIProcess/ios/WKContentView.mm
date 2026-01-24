@@ -44,6 +44,7 @@
 #import "UIKitSPI.h"
 #import "UIKitUtilities.h"
 #import "VisibleContentRectUpdateInfo.h"
+#import "WKAPICast.h"
 #import "WKBrowsingContextGroupPrivate.h"
 #import "WKInspectorHighlightView.h"
 #import "WKPreferencesInternal.h"

@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "ArgumentCoders.h"
 #include "Decoder.h"
 #include "Encoder.h"
 #include "StorageAccessStatus.h"
@@ -36,6 +35,7 @@
 #include <WebCore/IsLoggedIn.h>
 #include <WebCore/NetworkStorageSession.h>
 #include <WebCore/PageIdentifier.h>
+#include <WebCore/PermissionState.h>
 #include <WebCore/ResourceLoadObserver.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Condition.h>

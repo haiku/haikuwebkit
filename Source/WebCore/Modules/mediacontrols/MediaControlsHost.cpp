@@ -780,6 +780,9 @@ bool MediaControlsHost::showMediaControlsContextMenu(HTMLElement& target, String
 
         auto selectedItem = idMap.get(selectedItemID);
         WTF::switchOn(selectedItem,
+            [] (std::monostate) {
+                ASSERT_NOT_REACHED();
+            },
 #if ENABLE(VIDEO_PRESENTATION_MODE)
             [&] (PictureInPictureTag) {
                 // Media controls are not shown when in PiP so we can assume that we're not in PiP.

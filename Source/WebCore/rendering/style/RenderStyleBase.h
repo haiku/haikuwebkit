@@ -31,11 +31,18 @@
 namespace WebCore {
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(RenderStyleBase);
-class RenderStyleBase : public CanMakeCheckedPtr<RenderStyleBase, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
+class RenderStyleBase {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(RenderStyleBase, RenderStyleBase);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderStyleBase);
 public:
     ~RenderStyleBase() = default;
+
+    // Delegation to `Style::ComputedStyle` for `CheckedPtr` support.
+    ALWAYS_INLINE uint32_t checkedPtrCount() const { return m_computedStyle.checkedPtrCount(); }
+    ALWAYS_INLINE void incrementCheckedPtrCount() const { m_computedStyle.incrementCheckedPtrCount(); }
+    ALWAYS_INLINE void decrementCheckedPtrCount() const { m_computedStyle.decrementCheckedPtrCount(); }
+    ALWAYS_INLINE uint32_t checkedPtrCountWithoutThreadCheck() const { return m_computedStyle.checkedPtrCountWithoutThreadCheck(); }
+    ALWAYS_INLINE void setDidBeginCheckedPtrDeletion() { m_computedStyle.setDidBeginCheckedPtrDeletion(); }
 
     inline bool usesViewportUnits() const;
     inline void setUsesViewportUnits();
@@ -165,8 +172,8 @@ public:
     RenderStyle* getCachedPseudoStyle(const Style::PseudoElementIdentifier&) const;
     RenderStyle* addCachedPseudoStyle(std::unique_ptr<RenderStyle>);
 
-    bool hasCachedPseudoStyles() const { return m_computedStyle.m_cachedPseudoStyles && m_computedStyle.m_cachedPseudoStyles->styles.size(); }
-    const Style::PseudoStyleCache* cachedPseudoStyles() const { return m_computedStyle.m_cachedPseudoStyles.get(); }
+    bool hasCachedPseudoStyles() const { return m_computedStyle.hasCachedPseudoStyles(); }
+    const Style::PseudoStyleCache& cachedPseudoStyles() const { return m_computedStyle.cachedPseudoStyles(); }
 
     // MARK: - Custom properties
 

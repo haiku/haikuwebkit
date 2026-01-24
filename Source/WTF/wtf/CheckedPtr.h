@@ -112,6 +112,7 @@ public:
 
     ALWAYS_INLINE T* get() const LIFETIME_BOUND { return PtrTraits::unwrap(m_ptr); }
     ALWAYS_INLINE T* unsafeGet() const { return PtrTraits::unwrap(m_ptr); }
+    ALWAYS_INLINE operator T*() const LIFETIME_BOUND { return PtrTraits::unwrap(m_ptr); }
     ALWAYS_INLINE T& operator*() const LIFETIME_BOUND { RELEASE_ASSERT(m_ptr); return *get(); }
     ALWAYS_INLINE T* operator->() const LIFETIME_BOUND { RELEASE_ASSERT(m_ptr); return get(); }
 

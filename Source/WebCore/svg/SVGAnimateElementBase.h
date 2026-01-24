@@ -44,7 +44,7 @@ protected:
 
 private:
     SVGAttributeAnimator* animator() const;
-    SVGAttributeAnimator* animatorIfExists() const { return m_animator.get(); }
+    SVGAttributeAnimator* animatorIfExists() const { return m_animator; }
 
     void setTargetElement(SVGElement*) override;
     void setAttributeName(const QualifiedName&) override;

@@ -23,14 +23,18 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import "WKAPICast.h"
+#import <wtf/Platform.h>
 
 #if HAVE(SHARE_SHEET_UI)
+
+#include <optional>
+#include <wtf/CompletionHandler.h>
 
 @class WKWebView;
 @protocol WKShareSheetDelegate;
 
 namespace WebCore {
+class FloatRect;
 struct ShareDataWithParsedURL;
 }
 

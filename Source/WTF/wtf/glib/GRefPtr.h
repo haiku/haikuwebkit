@@ -132,13 +132,14 @@ public:
     }
 
     // Relinquishes the owned reference as a raw pointer. GRefPtr<T> is empty afterwards.
-    WARN_UNUSED_RETURN T* /* (transfer full) */ leakRef()
+    [[nodiscard]] T* /* (transfer full) */ leakRef()
     {
         return std::exchange(m_ptr, nullptr);
     }
 
     // Increments the reference count.
-    WARN_UNUSED_RETURN T* /* (transfer full) */ ref() {
+    [[nodiscard]] T* /* (transfer full) */ ref()
+    {
         return RefDerefTraits::refIfNotNull(m_ptr);
     }
 

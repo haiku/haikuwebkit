@@ -91,13 +91,13 @@ struct CFHolderForTesting {
 
     CFTypeRef valueAsCFType() const
     {
-        CFTypeRef result;
+        RetainPtr<CFTypeRef> result;
         WTF::switchOn(value, [&] (std::nullptr_t) {
             result = nullptr;
         }, [&](auto&& arg) {
             result = arg.get();
         });
-        return result;
+        return result.autorelease();
     }
 
     using ValueType = Variant<
@@ -418,13 +418,13 @@ struct ObjCHolderForTesting {
 
     id valueAsID() const
     {
-        id result;
+        RetainPtr<id> result;
         WTF::switchOn(value, [&] (std::nullptr_t) {
             result = nil;
         }, [&](auto&& arg) {
             result = arg.get();
         });
-        return result;
+        return result.autorelease();
     }
 
     typedef Variant<
@@ -1232,9 +1232,9 @@ TEST(IPCSerialization, Basic)
     auto items = adoptCF(itemsPtr);
     EXPECT_GT(CFArrayGetCount(items.get()), 0);
 
-    SecKeychainItemRef keychainItemRef = (SecKeychainItemRef)CFArrayGetValueAtIndex(items.get(), 0);
-    EXPECT_NOT_NULL(keychainItemRef);
-    runTestCF({ keychainItemRef });
+    RetainPtr keychainItemRef = (SecKeychainItemRef)CFArrayGetValueAtIndex(items.get(), 0);
+    EXPECT_NOT_NULL(keychainItemRef.get());
+    runTestCF({ keychainItemRef.get() });
 
     CFRelease(certData);
 

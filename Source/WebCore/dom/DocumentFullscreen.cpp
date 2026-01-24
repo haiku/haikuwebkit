@@ -492,15 +492,13 @@ static void clearFullscreenFlags(Element& element)
 // MARK: - Exit fullscreen.
 // https://fullscreen.spec.whatwg.org/#exit-fullscreen
 
-void DocumentFullscreen::exitFullscreen(Document& document, RefPtr<DeferredPromise>&& promise)
+void DocumentFullscreen::exitFullscreen(Document& document, Ref<DeferredPromise>&& promise)
 {
     if (!document.isFullyActive() || !document.protectedFullscreen()->fullscreenElement()) {
         promise->reject(Exception { ExceptionCode::TypeError, "Not in fullscreen"_s });
         return;
     }
-    document.protectedFullscreen()->exitFullscreen([promise = WTF::move(promise)] (auto result) {
-        if (!promise)
-            return;
+    document.protectedFullscreen()->exitFullscreen([promise = WTF::move(promise)](auto result) {
         if (result.hasException())
             promise->reject(result.releaseException());
         else

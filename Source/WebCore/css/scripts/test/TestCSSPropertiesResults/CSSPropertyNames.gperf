@@ -856,10 +856,11 @@ bool operator==(const CSSPropertySettings& a, const CSSPropertySettings& b)
 
 void add(Hasher& hasher, const CSSPropertySettings& settings)
 {
-    uint64_t bits = settings.cssDescriptorEnabled << 0
-        | settings.cssSettingsOneEnabled << 1
-        | settings.cssSettingsShorthandEnabled << 2;
-    add(hasher, bits);
+    add(hasher, WTF::packBools(
+        settings.cssDescriptorEnabled,
+        settings.cssSettingsOneEnabled,
+        settings.cssSettingsShorthandEnabled
+    ));
 }
 
 

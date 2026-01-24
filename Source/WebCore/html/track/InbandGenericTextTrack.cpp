@@ -46,7 +46,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(InbandGenericTextTrack);
 
 void GenericTextTrackCueMap::add(InbandGenericCueIdentifier inbandCueIdentifier, TextTrackCueGeneric& publicCue)
 {
-    m_dataToCueMap.add(inbandCueIdentifier, &publicCue);
+    m_dataToCueMap.add(inbandCueIdentifier, publicCue);
     m_cueToDataMap.add(&publicCue, inbandCueIdentifier);
 }
 

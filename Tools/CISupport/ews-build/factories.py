@@ -206,6 +206,16 @@ class JSCBuildAndTestsFactory(Factory):
             self.addStep(RunJavaScriptCoreTests())
 
 
+class JSCBuildO3AndTestsFactory(Factory):
+    def __init__(self, platform, configuration='debug', architectures=None, remotes=None, additionalArguments=None, runTests='true', **kwargs):
+        Factory.__init__(self, platform=platform, configuration=configuration, architectures=architectures, buildOnly=False, remotes=remotes, additionalArguments=additionalArguments, checkRelevance=True)
+        self.addStep(KillOldProcesses())
+        self.addStep(ValidateChange(addURLs=False))
+        self.addStep(SetO3OptimizationLevel())
+        self.addStep(CompileJSC(skipUpload=True))
+        self.addStep(RunJavaScriptCoreTests())
+
+
 class JSCTestsFactory(Factory):
     def __init__(self, platform, configuration='release', architectures=None, remotes=None, additionalArguments=None, **kwargs):
         Factory.__init__(self, platform=platform, configuration=configuration, architectures=architectures, buildOnly=False, remotes=remotes, additionalArguments=additionalArguments, checkRelevance=True)

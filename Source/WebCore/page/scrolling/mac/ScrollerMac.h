@@ -58,7 +58,7 @@ public:
 
     void attach();
 
-    RefPtr<ScrollerPairMac> pair() const { return m_pair.get(); }
+    RefPtr<ScrollerPairMac> pair() const { return m_pair; }
 
     ScrollbarOrientation orientation() const { return m_orientation; }
 

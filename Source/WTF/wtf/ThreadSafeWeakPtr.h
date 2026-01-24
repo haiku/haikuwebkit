@@ -35,8 +35,8 @@
 
 namespace WTF {
 
-template<typename T, typename = NoTaggingTraits<T>> class ThreadSafeWeakPtr;
-template<typename T, typename = NoTaggingTraits<T>> class ThreadSafeWeakRef;
+template<typename T, typename> class ThreadSafeWeakPtr;
+template<typename T, typename> class ThreadSafeWeakRef;
 template<typename> class ThreadSafeWeakHashSet;
 template<typename, DestructionThread> class ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr;
 
@@ -585,7 +585,7 @@ public:
         m_weak = nullptr;
         m_strong = WTF::move(strong);
         ASSERT(isStrong());
-        return m_strong.get();
+        return m_strong;
     }
 
     ThreadSafeWeakOrStrongPtr& operator=(const ThreadSafeWeakOrStrongPtr& other)

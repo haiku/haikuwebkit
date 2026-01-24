@@ -668,7 +668,8 @@ RTCStatsReport::VideoSourceStats::VideoSourceStats(const webrtc::RTCVideoSourceS
 template <typename T, typename PreciseType>
 void addToStatsMap(DOMMapAdapter& report, const webrtc::RTCStats& rtcStats)
 {
-    T stats { static_cast<const PreciseType&>(rtcStats) };
+    // This is a cast from a webrtc type, not much we can do to make it safe.
+    SUPPRESS_MEMORY_UNSAFE_CAST T stats { static_cast<const PreciseType&>(rtcStats) };
     String statsId = stats.id;
     report.set<IDLDOMString, IDLDictionary<T>>(WTF::move(statsId), WTF::move(stats));
 }

@@ -97,7 +97,7 @@ private:
 
     bool isWebXRWebGLLayer() const final { return true; }
 
-    void computeViewports();
+    void updateViewports();
     static IntSize computeNativeWebGLFramebufferResolution();
     static IntSize computeRecommendedWebGLFramebufferResolution();
 

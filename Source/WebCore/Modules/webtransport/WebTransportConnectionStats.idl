@@ -29,6 +29,7 @@ typedef double DOMHighResTimeStamp;
     EnabledBySetting=WebTransportEnabled,
     JSGenerateToJSObject,
     JSGenerateToNativeObject,
+    LegacyNativeDictionaryRequiredInterfaceNullability,
 ] dictionary WebTransportConnectionStats {
     unsigned long long bytesSent;
     unsigned long long packetsSent;

@@ -246,7 +246,7 @@ static inline bool setJSTestLegacyNoInterfaceObject_nodeAttributeSetter(JSGlobal
     if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
         return false;
     invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
-        return impl.setNodeAttribute(*nativeValueConversionResult.releaseReturnValue());
+        return impl.setNodeAttribute(nativeValueConversionResult.releaseReturnValue());
     });
     return true;
 }

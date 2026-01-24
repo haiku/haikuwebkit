@@ -478,6 +478,9 @@ void WebFrame::createProvisionalFrame(ProvisionalFrameCreationParameters&& param
         setLayerHostingContextIdentifier(*parameters.layerHostingContextIdentifier);
     if (parameters.initialRect)
         updateLocalFrameRect(localFrame, *parameters.initialRect);
+
+    if (parameters.commitTiming == CommitTiming::Immediately)
+        commitProvisionalFrame();
 }
 
 void WebFrame::destroyProvisionalFrame()
@@ -1127,7 +1130,8 @@ JSValueRef WebFrame::jsWrapperForWorld(InjectedBundleNodeHandle* nodeHandle, Inj
     auto* globalObject = localFrame->checkedScript()->globalObject(world->protectedCoreWorld());
 
     JSLockHolder lock(globalObject);
-    return toRef(globalObject, toJS(globalObject, globalObject, RefPtr { nodeHandle->coreNode() }.get()));
+    RefPtr coreNode = nodeHandle->coreNode();
+    return toRef(globalObject, coreNode ? toJS(globalObject, globalObject, coreNode.releaseNonNull()) : JSC::jsNull());
 }
 
 JSValueRef WebFrame::jsWrapperForWorld(InjectedBundleRangeHandle* rangeHandle, InjectedBundleScriptWorld* world)

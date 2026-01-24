@@ -131,12 +131,12 @@ void SVGTests::addSupportedAttributes(MemoryCompactLookupOnlyRobinHoodHashSet<Qu
 
 Ref<SVGElement> SVGTests::protectedContextElement() const
 {
-    return m_contextElement.get();
+    return m_contextElement;
 }
 
 SVGConditionalProcessingAttributes& SVGTests::conditionalProcessingAttributes()
 {
-    Ref<SVGElement> contextElement = m_contextElement.get();
+    Ref contextElement = m_contextElement;
     return contextElement->conditionalProcessingAttributes();
 }
 

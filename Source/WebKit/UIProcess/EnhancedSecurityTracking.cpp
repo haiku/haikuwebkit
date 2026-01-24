@@ -187,9 +187,16 @@ void EnhancedSecurityTracking::handleBackForwardNavigation(const API::Navigation
         enableFor(reasonForEnhancedSecurity(priorState), navigation);
 }
 
-void EnhancedSecurityTracking::trackNavigation(const API::Navigation& navigation)
+void EnhancedSecurityTracking::trackNavigation(const API::Navigation& navigation, bool hasOpenedPage)
 {
     auto lastNavigationAction = navigation.lastNavigationAction();
+    if (lastNavigationAction && lastNavigationAction->hasOpener)
+        return;
+
+    bool isRequestFromClientOrUserInput = navigation.isRequestFromClientOrUserInput() && !navigation.substituteData();
+
+    if (navigation.hasOpenedFrames() && hasOpenedPage && !isRequestFromClientOrUserInput)
+        return;
 
     bool isBackForward = lastNavigationAction && lastNavigationAction->navigationType == NavigationType::BackForward;
     bool isReload = lastNavigationAction && lastNavigationAction->navigationType == NavigationType::Reload;

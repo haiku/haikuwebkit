@@ -64,7 +64,7 @@ public:
 
     MutationObserver& observer() { return m_observer.get(); }
     Node& node() { return m_node; }
-    Ref<Node> protectedNode() { return m_node.get(); };
+    Ref<Node> protectedNode() { return m_node; };
     MutationRecordDeliveryOptions deliveryOptions() const { return m_options & MutationObserver::AllDeliveryFlags; }
     MutationObserverOptions mutationTypes() const { return m_options & MutationObserver::AllMutationTypes; }
 

@@ -254,7 +254,7 @@ private:
     unsigned m_indexEnd;
 };
 
-StringView::GraphemeClusters::Iterator::Iterator(StringView stringView, unsigned index)
+StringView::GraphemeClusters::Iterator::Iterator(StringView stringView LIFETIME_BOUND, unsigned index)
     : m_impl(makeUnique<Impl>(stringView, stringView.isNull() ? std::nullopt : std::optional<NonSharedCharacterBreakIterator>(NonSharedCharacterBreakIterator(stringView)), index))
 {
 }

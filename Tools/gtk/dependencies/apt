@@ -12,7 +12,6 @@ PACKAGES+=(
     libgl1-mesa-dev
     libgtk-3-dev
     libgudev-1.0-dev
-    libhyphen-dev
     libmount-dev
     libmpg123-dev
     libnotify-dev
@@ -40,12 +39,15 @@ PACKAGES+=(
     hunspell
     hunspell-en-gb
     hunspell-en-us
-    hyphen-en-gb
-    hyphen-en-us
     weston
     xvfb
     $(aptIfExists python-psutil)
     $(aptIfExists python-yaml)
+
+    # Icon themes needed by the MiniBrowser (generate-bundle needs this as well)
+    adwaita-icon-theme
+    gnome-icon-theme
+    hicolor-icon-theme
 
     # These are dependencies necessary for building the jhbuild.
     icon-naming-utils

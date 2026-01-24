@@ -693,7 +693,7 @@ private:
     std::optional<CrossOriginOpenerPolicy> m_responseCOOP;
     OptionSet<ClearSiteDataValue> m_responseClearSiteDataValues;
     
-    typedef HashMap<RefPtr<ResourceLoader>, RefPtr<SubstituteResource>> SubstituteResourceMap;
+    using SubstituteResourceMap = HashMap<Ref<ResourceLoader>, RefPtr<SubstituteResource>>;
     SubstituteResourceMap m_pendingSubstituteResources;
     Timer m_substituteResourceDeliveryTimer;
 
@@ -712,7 +712,7 @@ private:
     Markable<ResourceLoaderIdentifier> m_identifierForLoadWithoutResourceLoader;
 
     HashMap<uint64_t, LinkIcon> m_iconsPendingLoadDecision;
-    HashMap<RefPtr<IconLoader>, CompletionHandler<void(FragmentedSharedBuffer*)>> m_iconLoaders;
+    HashMap<Ref<IconLoader>, CompletionHandler<void(FragmentedSharedBuffer*)>> m_iconLoaders;
     Vector<LinkIcon> m_linkIcons;
 
 #if ENABLE(APPLICATION_MANIFEST)
@@ -738,7 +738,7 @@ private:
 #endif
 
 #if ENABLE(CONTENT_EXTENSIONS)
-    MemoryCompactRobinHoodHashMap<String, RefPtr<StyleSheetContents>> m_pendingNamedContentExtensionStyleSheets;
+    MemoryCompactRobinHoodHashMap<String, Ref<StyleSheetContents>> m_pendingNamedContentExtensionStyleSheets;
     MemoryCompactRobinHoodHashMap<String, Vector<std::pair<String, uint32_t>>> m_pendingContentExtensionDisplayNoneSelectors;
 #endif
     String m_customUserAgent;

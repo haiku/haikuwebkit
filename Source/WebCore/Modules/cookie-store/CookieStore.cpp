@@ -88,7 +88,7 @@ private:
     void ensureOnMainThread(Function<void(ScriptExecutionContext&)>&&);
     void ensureOnContextThread(Function<void(CookieStore&)>&&);
 
-    RefPtr<CookieStore> protectedCookieStore() const { return m_cookieStore.get(); }
+    RefPtr<CookieStore> protectedCookieStore() const { return m_cookieStore; }
     WeakPtr<CookieStore, WeakPtrImplWithEventTargetData> m_cookieStore;
     Markable<ScriptExecutionContextIdentifier> m_contextIdentifier;
 };

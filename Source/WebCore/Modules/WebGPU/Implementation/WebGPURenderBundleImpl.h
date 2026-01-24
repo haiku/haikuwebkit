@@ -57,6 +57,7 @@ private:
     RenderBundleImpl& operator=(RenderBundleImpl&&) = delete;
 
     WGPURenderBundle backing() const { return m_backing.get(); }
+    bool isRenderBundleImpl() const final { return true; }
 
     void setLabelInternal(const String&) final;
 
@@ -65,5 +66,9 @@ private:
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::RenderBundleImpl)
+    static bool isType(const WebCore::WebGPU::RenderBundle& bundle) { return bundle.isRenderBundleImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

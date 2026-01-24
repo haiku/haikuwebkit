@@ -30,6 +30,7 @@
 
 #import "APIFindClient.h"
 #import "FrontBoardServicesSPI.h"
+#import "ImageOptions.h"
 #import "LayerProperties.h"
 #import "NativeWebWheelEvent.h"
 #import "NavigationState.h"
@@ -46,6 +47,7 @@
 #import "VideoPresentationManagerProxy.h"
 #import "ViewGestureController.h"
 #import "VisibleContentRectUpdateInfo.h"
+#import "WKAPICast.h"
 #import "WKBackForwardListItemInternal.h"
 #import "WKColorExtensionView.h"
 #import "WKContentViewInteraction.h"
@@ -208,12 +210,10 @@ static WebCore::IntDegrees deviceOrientationForUIInterfaceOrientation(UIInterfac
     [_scrollView setBaseScrollViewDelegate:self];
     [_scrollView setBouncesZoom:YES];
 
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    if ([_scrollView respondsToSelector:@selector(_setAvoidsJumpOnInterruptedBounce:)]) {
-        [_scrollView setTracksImmediatelyWhileDecelerating:NO];
-        [_scrollView _setAvoidsJumpOnInterruptedBounce:YES];
-    }
-ALLOW_DEPRECATED_DECLARATIONS_END
+#if HAVE(UISCROLLVIEW_DECELERATION_TRACKING_BEHAVIOR)
+    if ([_scrollView respondsToSelector:@selector(_setDecelerationTrackingBehavior:)])
+        [_scrollView _setDecelerationTrackingBehavior:_UIScrollViewDecelerationTrackingBehaviorAdaptive];
+#endif
 
     _scrollViewDefaultAllowedTouchTypes = [_scrollView panGestureRecognizer].allowedTouchTypes;
 
@@ -340,9 +340,13 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         --_focusPreservationCount;
 }
 
-- (NSUInteger)_resetFocusPreservationCount
+- (void)_resetFocusPreservationCountAndReleaseActiveFocusState
 {
-    return std::exchange(_focusPreservationCount, 0);
+    if (std::exchange(_focusPreservationCount, 0))
+        RELEASE_LOG_ERROR(ViewState, "Keyboard dismissed with nonzero focus preservation count; check for unbalanced calls to -_incrementFocusPreservationCount");
+
+    if (std::exchange(_activeFocusedStateRetainCount, 0))
+        RELEASE_LOG_ERROR(ViewState, "Keyboard dismissed with nonzero active state retain count; make sure all callbacks returned from -_retainActiveFocusedState are invoked");
 }
 
 - (BOOL)_isRetainingActiveFocusedState
@@ -4671,10 +4675,10 @@ static std::optional<WebCore::ViewportArguments> viewportArgumentsFromDictionary
 - (void (^)(void))_retainActiveFocusedState
 {
     ++_activeFocusedStateRetainCount;
-
     // FIXME: Use something like CompletionHandlerCallChecker to ensure that the returned block is called before it's released.
     return adoptNS([[self] {
-        --_activeFocusedStateRetainCount;
+        if (_activeFocusedStateRetainCount)
+            --_activeFocusedStateRetainCount;
     } copy]).autorelease();
 }
 

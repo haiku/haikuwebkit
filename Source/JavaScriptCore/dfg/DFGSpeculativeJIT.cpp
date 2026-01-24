@@ -8963,6 +8963,8 @@ void SpeculativeJIT::compileSpread(Node* node)
 
     if (node->child1().useKind() == ArrayUse)
         speculateArray(node->child1(), argument);
+    else if (node->child1().useKind() == SetObjectUse)
+        speculateSetObject(node->child1(), argument);
 
     if (m_graph.canDoFastSpread(node, m_state.forNode(node->child1()))) {
 #if USE(JSVALUE64)
@@ -9052,6 +9054,88 @@ void SpeculativeJIT::compileSpread(Node* node)
         GPRFlushedCallResult result(this);
         GPRReg resultGPR = result.gpr();
         callOperation(operationSpreadFastArray, resultGPR, LinkableConstant::globalObject(*this, node), argument);
+        cellResult(resultGPR, node);
+#endif // USE(JSVALUE64)
+    } else if (node->child1().useKind() == SetObjectUse) {
+#if USE(JSVALUE64)
+        GPRTemporary result(this);
+        GPRTemporary scratch1(this);
+        GPRTemporary scratch2(this);
+        GPRTemporary length(this);
+
+        GPRReg resultGPR = result.gpr();
+        GPRReg scratch1GPR = scratch1.gpr();
+        GPRReg scratch2GPR = scratch2.gpr();
+        GPRReg lengthGPR = length.gpr();
+
+        JumpList slowPath;
+        JumpList done;
+
+        using Helper = JSSet::Helper;
+
+        // Load Set storage pointer.
+        loadPtr(Address(argument, JSSet::offsetOfStorage()), scratch1GPR);
+        slowPath.append(branchTestPtr(Zero, scratch1GPR));
+
+        // Get the data area of the storage JSCellButterfly.
+        addPtr(TrustedImm32(JSCellButterfly::offsetOfData()), scratch1GPR);
+
+        // Load aliveEntryCount and check storage is not obsolete (slot 0 must be Int32).
+        load64(Address(scratch1GPR, Helper::aliveEntryCountIndex() * sizeof(EncodedJSValue)), lengthGPR);
+        slowPath.append(branchIfNotInt32(JSValueRegs(lengthGPR)));
+        zeroExtend32ToWord(lengthGPR, lengthGPR);
+
+        // Load deletedEntryCount and check it's 0.
+        load32(Address(scratch1GPR, Helper::deletedEntryCountIndex() * sizeof(EncodedJSValue)), scratch2GPR);
+        slowPath.append(branchTest32(NonZero, scratch2GPR));
+
+        // Guard aliveEntryCount <= MAX_STORAGE_VECTOR_LENGTH.
+        slowPath.append(branch32(Above, lengthGPR, TrustedImm32(MAX_STORAGE_VECTOR_LENGTH)));
+
+        // Compute allocation size = aliveEntryCount * 8 + offsetOfData().
+        static_assert(sizeof(EncodedJSValue) == 8 && 1 << 3 == 8, "This is strongly assumed in the code below.");
+        lshift32(lengthGPR, TrustedImm32(3), scratch1GPR);
+        add32(TrustedImm32(JSCellButterfly::offsetOfData()), scratch1GPR);
+
+        // Inline allocate a JSCellButterfly (clobbers scratch1GPR and scratch2GPR).
+        emitAllocateVariableSizedCell<JSCellButterfly>(vm(), resultGPR, TrustedImmPtr(m_graph.registerStructure(vm().cellButterflyStructure(CopyOnWriteArrayWithContiguous))), scratch1GPR, scratch1GPR, scratch2GPR, slowPath, SlowAllocationResult::UndefinedBehavior);
+
+        // Store publicLength and vectorLength (both = aliveEntryCount).
+        static_assert(JSCellButterfly::offsetOfPublicLength() + static_cast<ptrdiff_t>(sizeof(uint32_t)) == JSCellButterfly::offsetOfVectorLength());
+        storePair32(lengthGPR, lengthGPR, resultGPR, TrustedImm32(JSCellButterfly::offsetOfPublicLength()));
+
+        // Reload storage and recompute source base pointer (scratches were clobbered by allocation).
+        loadPtr(Address(argument, JSSet::offsetOfStorage()), scratch1GPR);
+        addPtr(TrustedImm32(JSCellButterfly::offsetOfData()), scratch1GPR);
+        load32(Address(scratch1GPR, Helper::capacityIndex() * sizeof(EncodedJSValue)), scratch2GPR);
+        add32(TrustedImm32(Helper::hashTableStartIndex()), scratch2GPR);
+        // scratch1GPR += dataTableStartIndex * sizeof(EncodedJSValue)
+        lshiftPtr(TrustedImm32(3), scratch2GPR);
+        addPtr(scratch2GPR, scratch1GPR);
+        // Now scratch1GPR points to the first key in the data table.
+
+        // Copy loop: for i = length-1 down to 0, dest[i] = src[i * EntrySize].
+        static_assert(Helper::EntrySize == 2, "Set entries have stride 2 (key + chain).");
+        done.append(branchTest32(Zero, lengthGPR));
+        auto loopStart = label();
+        sub32(TrustedImm32(1), lengthGPR);
+        // Compute source index: lengthGPR * 2 (stride-2 access for Set entries).
+        add32(lengthGPR, lengthGPR, scratch2GPR);
+        load64(BaseIndex(scratch1GPR, scratch2GPR, TimesEight), scratch2GPR);
+        store64(scratch2GPR, BaseIndex(resultGPR, lengthGPR, TimesEight, JSCellButterfly::offsetOfData()));
+        branchTest32(NonZero, lengthGPR).linkTo(loopStart, this);
+
+        addSlowPathGenerator(slowPathCall(slowPath, this, operationSpreadSet, resultGPR, LinkableConstant::globalObject(*this, node), argument));
+
+        done.link(this);
+        mutatorFence(vm());
+        cellResult(resultGPR, node);
+#else
+        flushRegisters();
+
+        GPRFlushedCallResult result(this);
+        GPRReg resultGPR = result.gpr();
+        callOperation(operationSpreadSet, resultGPR, LinkableConstant::globalObject(*this, node), argument);
         cellResult(resultGPR, node);
 #endif // USE(JSVALUE64)
     } else {
@@ -12484,6 +12568,7 @@ void SpeculativeJIT::speculate(Node*, Edge edge)
     case MiscUse:
         speculateMisc(edge);
         break;
+    case KnownStorageUse:
     default:
         RELEASE_ASSERT_NOT_REACHED();
         break;

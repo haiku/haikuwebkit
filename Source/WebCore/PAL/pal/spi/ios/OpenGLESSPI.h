@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 DECLARE_SYSTEM_HEADER
 
 #import <Foundation/Foundation.h>
@@ -65,3 +68,5 @@ enum {
 #endif
 
 #endif // PLATFORM(IOS_FAMILY)
+
+#endif // !__has_feature(modules)

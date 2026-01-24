@@ -239,7 +239,7 @@ private:
     Vector<ScopeRuleIdentifier> m_scopeRuleIdentifierForRulePosition;
 
     // @position-try
-    HashMap<AtomString, RefPtr<const StyleRulePositionTry>> m_positionTryRules;
+    HashMap<AtomString, Ref<const StyleRulePositionTry>> m_positionTryRules;
 
     bool m_hasHostPseudoClassRulesMatchingInShadowTree { false };
     bool m_hasViewportDependentMediaQueries { false };

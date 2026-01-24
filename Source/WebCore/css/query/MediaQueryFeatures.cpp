@@ -196,11 +196,11 @@ private:
 
 static float deviceScaleFactor(const FeatureEvaluationContext& context)
 {
-    auto& frame = *context.document->frame();
-    auto mediaType = frame.view()->mediaType();
+    Ref frame = *context.document->frame();
+    auto mediaType = frame->protectedView()->mediaType();
     
     if (mediaType == screenAtom())
-        return frame.page() ? frame.page()->deviceScaleFactor() : 1;
+        return frame->page() ? frame->page()->deviceScaleFactor() : 1;
 
     if (mediaType == printAtom()) {
         // The resolution of images while printing should not depend on the dpi

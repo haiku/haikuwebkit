@@ -2173,7 +2173,7 @@ Ref<Inspector::Protocol::DOM::EventListener> InspectorDOMAgent::buildObjectForEv
             JSC::JSFunction* handlerFunction = JSC::jsDynamicCast<JSC::JSFunction*>(handlerObject);
 
             if (!handlerFunction) {
-                auto scope = DECLARE_CATCH_SCOPE(vm);
+                auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
                 // If the handler is not actually a function, see if it implements the EventListener interface and use that.
                 auto handleEventValue = handlerObject->get(globalObject, JSC::Identifier::fromString(vm, "handleEvent"_s));
@@ -3091,7 +3091,7 @@ RefPtr<Node> InspectorDOMAgent::nodeForPath(const String& path)
     if (!m_document)
         return nullptr;
 
-    RefPtr<Node> node = m_document.get();
+    RefPtr<Node> node = m_document;
     auto pathTokens = StringView(path).split(',');
     auto it = pathTokens.begin();
     if (it == pathTokens.end())
@@ -3175,7 +3175,9 @@ Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
 JSC::JSValue InspectorDOMAgent::nodeAsScriptValue(JSC::JSGlobalObject& state, Node* node)
 {
     JSC::JSLockHolder lock(&state);
-    return toJS(&state, deprecatedGlobalObjectForPrototype(&state), BindingSecurity::checkSecurityForNode(state, node));
+    if (auto* checked = BindingSecurity::checkSecurityForNode(state, node))
+        return toJS(&state, deprecatedGlobalObjectForPrototype(&state), *checked);
+    return JSC::jsNull();
 }
 
 Inspector::Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowTrees(bool allow)
@@ -3226,14 +3228,13 @@ Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::DOM::MediaStats>> In
 
     auto stats = Inspector::Protocol::DOM::MediaStats::create().release();
 
-    if (auto quality = mediaElement->getVideoPlaybackQuality()) {
-        auto jsonQuality = Inspector::Protocol::DOM::VideoPlaybackQuality::create()
-            .setTotalVideoFrames(quality->totalVideoFrames())
-            .setDroppedVideoFrames(quality->droppedVideoFrames())
-            .setDisplayCompositedVideoFrames(quality->displayCompositedVideoFrames())
-            .release();
-        stats->setQuality(WTF::move(jsonQuality));
-    }
+    auto quality = mediaElement->getVideoPlaybackQuality();
+    auto jsonQuality = Inspector::Protocol::DOM::VideoPlaybackQuality::create()
+        .setTotalVideoFrames(quality->totalVideoFrames())
+        .setDroppedVideoFrames(quality->droppedVideoFrames())
+        .setDisplayCompositedVideoFrames(quality->displayCompositedVideoFrames())
+        .release();
+    stats->setQuality(WTF::move(jsonQuality));
 
     auto sourceType = mediaElement->localizedSourceType();
     if (!sourceType.isEmpty())

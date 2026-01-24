@@ -28,10 +28,8 @@ set(DumpRenderTree_FRAMEWORKS
     WTF
     WebCore
     WebKitLegacy
+    bmalloc
 )
-if (NOT USE_SYSTEM_MALLOC)
-    list(APPEND WebKitTestRunner_FRAMEWORKS bmalloc)
-endif ()
 
 set(DumpRenderTree_PRIVATE_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}

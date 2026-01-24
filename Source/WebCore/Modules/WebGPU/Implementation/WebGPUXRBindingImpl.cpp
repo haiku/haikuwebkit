@@ -64,7 +64,7 @@ RefPtr<XRSubImage> XRBindingImpl::getSubImage(XRProjectionLayer&, WebCore::WebXR
 
 RefPtr<XRSubImage> XRBindingImpl::getViewSubImage(XRProjectionLayer& projectionLayer)
 {
-    auto& projectionLayerImpl = static_cast<XRProjectionLayerImpl&>(projectionLayer);
+    auto& projectionLayerImpl = downcast<XRProjectionLayerImpl>(projectionLayer);
     return XRSubImageImpl::create(adoptWebGPU(wgpuBindingGetViewSubImage(m_backing.get(), projectionLayerImpl.backing())), Ref { m_convertToBackingContext });
 }
 

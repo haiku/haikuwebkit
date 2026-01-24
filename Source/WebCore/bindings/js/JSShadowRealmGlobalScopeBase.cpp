@@ -116,7 +116,8 @@ const JSDOMGlobalObject* JSShadowRealmGlobalScopeBase::incubatingRealm() const
 
 void JSShadowRealmGlobalScopeBase::destroy(JSCell* cell)
 {
-    static_cast<JSShadowRealmGlobalScopeBase*>(cell)->JSShadowRealmGlobalScopeBase::~JSShadowRealmGlobalScopeBase();
+    // We cannot rely on jsCast() during JSObject destruction.
+    SUPPRESS_MEMORY_UNSAFE_CAST static_cast<JSShadowRealmGlobalScopeBase*>(cell)->JSShadowRealmGlobalScopeBase::~JSShadowRealmGlobalScopeBase();
 }
 
 bool JSShadowRealmGlobalScopeBase::supportsRichSourceInfo(const JSGlobalObject* object)

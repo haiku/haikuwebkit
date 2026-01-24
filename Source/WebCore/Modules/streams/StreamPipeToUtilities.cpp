@@ -69,6 +69,47 @@ public:
 
     void readableStreamIsClosing();
 
+    class AllPromise : public RefCounted<AllPromise> {
+    public:
+        static Ref<AllPromise> create(Ref<DeferredPromise>&& promise) { return adoptRef(*new AllPromise(WTF::move(promise))); }
+        void resolve()
+        {
+            ASSERT(m_waitCount);
+            if (m_promise && !--m_waitCount)
+                std::exchange(m_promise, { })->resolve();
+        }
+
+        void reject(JSC::JSValue result)
+        {
+            if (RefPtr promise = std::exchange(m_promise, { })) {
+                promise->rejectWithCallback([&result](auto&) {
+                    return result;
+                });
+            }
+        }
+
+        void waitFor(DOMPromise& promise)
+        {
+            ++m_waitCount;
+            promise.whenSettledWithResult([protectedThis = Ref { *this }](auto*, bool isFulfilled, auto result) {
+                if (!isFulfilled) {
+                    protectedThis->reject(result);
+                    return;
+                }
+                protectedThis->resolve();
+            });
+        }
+
+    private:
+        explicit AllPromise(Ref<DeferredPromise>&& promise)
+            : m_promise(WTF::move(promise))
+        {
+        }
+
+        RefPtr<DeferredPromise> m_promise;
+        size_t m_waitCount { 0 };
+    };
+
 private:
     StreamPipeToState(ScriptExecutionContext*, Ref<ReadableStream>&&, Ref<WritableStream>&&, Ref<ReadableStreamDefaultReader>&&, Ref<InternalWritableStreamWriter>&&, StreamPipeOptions&&, RefPtr<DeferredPromise>&&);
 
@@ -97,6 +138,7 @@ private:
     const StreamPipeOptions m_options;
     const RefPtr<DeferredPromise> m_promise;
 
+    bool m_readableIsClosing { false };
     bool m_shuttingDown { false };
     WeakPtr<PipeToDefaultReadRequest> m_pendingReadRequest;
     RefPtr<DOMPromise> m_pendingWritePromise;
@@ -268,32 +310,11 @@ void StreamPipeToState::handleSignal()
                 return nullptr;
 
             auto [result, deferred] = createPromiseAndWrapper(*globalObject);
-            if (promiseDestination) {
-                promiseDestination->whenSettled([promiseDestination, promiseSource, deferred] {
-                    if (promiseDestination->status() == DOMPromise::Status::Rejected) {
-                        deferred->rejectWithCallback([&](auto&) {
-                            return promiseDestination->result();
-                        }, RejectAsHandled::Yes);
-                        return;
-                    }
-                    if (promiseSource && promiseSource->status() != DOMPromise::Status::Fulfilled)
-                        return;
-                    deferred->resolve();
-                });
-            }
-            if (promiseSource) {
-                promiseSource->whenSettled([promiseDestination, promiseSource, deferred] {
-                    if (promiseSource->status() == DOMPromise::Status::Rejected) {
-                        deferred->rejectWithCallback([&](auto&) {
-                            return promiseSource->result();
-                        }, RejectAsHandled::Yes);
-                        return;
-                    }
-                    if (promiseDestination && promiseDestination->status() != DOMPromise::Status::Fulfilled)
-                        return;
-                    deferred->resolve();
-                });
-            }
+            Ref allPromise = AllPromise::create(WTF::move(deferred));
+            if (promiseDestination)
+                allPromise->waitFor(*promiseDestination);
+            if (promiseSource)
+                allPromise->waitFor(*promiseSource);
 
             return RefPtr { WTF::move(result) };
         }, [signal](auto&) { return signal->reason().getValue(); });
@@ -416,10 +437,10 @@ void StreamPipeToState::errorsMustBePropagatedBackward()
                 if (!cancelPromise)
                     deferred->rejectWithCallback(WTF::move(getError2), RejectAsHandled::Yes);
                 else {
-                    cancelPromise->whenSettled([deferred = WTF::move(deferred), cancelPromise, getError2 = WTF::move(getError2)]() mutable {
-                        if (cancelPromise->status() == DOMPromise::Status::Rejected) {
-                            deferred->rejectWithCallback([&](auto&) {
-                                return cancelPromise->result();
+                    cancelPromise->whenSettledWithResult([deferred = WTF::move(deferred), getError2 = WTF::move(getError2)](auto*, bool isFulfilled, auto result) mutable {
+                        if (!isFulfilled) {
+                            deferred->rejectWithCallback([&result](auto&) {
+                                return result;
                             }, RejectAsHandled::Yes);
                             return;
                         }
@@ -461,6 +482,9 @@ void StreamPipeToState::closingMustBePropagatedForward()
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
+
+        if (!protectedThis->m_shuttingDown)
+            protectedThis->m_readableIsClosing = true;
         if (!protectedThis->m_options.preventClose) {
             protectedThis->shutdownWithAction([protectedThis] -> RefPtr<DOMPromise> {
                 return writableStreamDefaultWriterCloseWithErrorPropagation(protectedThis->m_writer);
@@ -516,10 +540,10 @@ void StreamPipeToState::closingMustBePropagatedBackward()
                 deferred->rejectWithCallback(WTF::move(getError2), RejectAsHandled::Yes);
             else {
                 Ref cancelPromise = DOMPromise::create(*globalObject, *promise);
-                cancelPromise->whenSettled([deferred = WTF::move(deferred), cancelPromise, getError2 = WTF::move(getError2)]() mutable {
-                    if (cancelPromise->status() == DOMPromise::Status::Rejected) {
-                        deferred->rejectWithCallback([&](auto&) {
-                            return cancelPromise->result();
+                cancelPromise->whenSettledWithResult([deferred = WTF::move(deferred), getError2 = WTF::move(getError2)](auto*, bool isFulfilled, auto result) mutable {
+                    if (!isFulfilled) {
+                        deferred->rejectWithCallback([&result](auto&) {
+                            return result;
                         }, RejectAsHandled::Yes);
                         return;
                     }
@@ -550,18 +574,14 @@ RefPtr<DOMPromise> StreamPipeToState::waitForPendingReadAndWrite(Action&& action
                         deferred->resolve();
                         return;
                     }
-                    promise->whenSettled([deferred = WTF::move(deferred), promise] {
-                        switch (promise->status()) {
-                        case DOMPromise::Status::Rejected:
-                            deferred->rejectWithCallback([&](auto&) { return promise->result(); }, RejectAsHandled::Yes);
-                            return;
-                        case DOMPromise::Status::Fulfilled:
-                            deferred->resolve();
-                            return;
-                        case DOMPromise::Status::Pending:
-                            ASSERT_NOT_REACHED();
+                    promise->whenSettledWithResult([deferred = WTF::move(deferred)](auto*, bool isFulfilled, auto result) {
+                        if (!isFulfilled) {
+                            deferred->rejectWithCallback([&result](auto&) {
+                                return result;
+                            }, RejectAsHandled::Yes);
                             return;
                         }
+                        deferred->resolve();
                     });
                 };
 
@@ -576,14 +596,16 @@ RefPtr<DOMPromise> StreamPipeToState::waitForPendingReadAndWrite(Action&& action
                     return;
                 }
 
-                m_pendingWritePromise->whenSettled([waitForAction = WTF::move(waitForAction), pendingWritePromise = m_pendingWritePromise, deferred = WTF::move(deferred)]() mutable {
-                    ASSERT(pendingWritePromise->status() != DOMPromise::Status::Pending);
+                m_pendingWritePromise->whenSettled([waitForAction = WTF::move(waitForAction), deferred = WTF::move(deferred)]() mutable {
                     waitForAction(WTF::move(deferred));
                 });
             };
 
             auto [promise, deferred] = createPromiseAndWrapper(*globalObject);
-            if (RefPtr readRequest = m_pendingReadRequest.get()) {
+            // We only wait for the read request if the readable is closing as we know the read request is already fulfilled.
+            // The builtin implementation though may resolve the closed promise callback before the read request steps.
+            RefPtr readRequest = m_readableIsClosing ? m_pendingReadRequest.get() : nullptr;
+            if (readRequest) {
                 readRequest->whenSettled([handlePendingWritePromise = WTF::move(handlePendingWritePromise), deferred = WTF::move(deferred)]() mutable {
                     handlePendingWritePromise(WTF::move(deferred));
                 });

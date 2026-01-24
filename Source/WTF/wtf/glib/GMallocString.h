@@ -95,7 +95,7 @@ public:
 
     bool isNull() const { return m_spanWithNullTerminator.span().empty(); }
     const char* utf8() const LIFETIME_BOUND { return byteCast<char>(m_spanWithNullTerminator.span().data()); }
-    WARN_UNUSED_RETURN char* leakUTF8() { return byteCast<char>(m_spanWithNullTerminator.leakSpan().data()); }
+    [[nodiscard]] char* leakUTF8() { return byteCast<char>(m_spanWithNullTerminator.leakSpan().data()); }
     size_t lengthInBytes() const { return !m_spanWithNullTerminator.span().empty() ? m_spanWithNullTerminator.span().size() - 1 : 0; }
     std::span<const char8_t> span() const LIFETIME_BOUND { return m_spanWithNullTerminator.span().first(lengthInBytes()); }
     std::span<const char8_t> spanIncludingNullTerminator() const LIFETIME_BOUND { return m_spanWithNullTerminator.span(); }

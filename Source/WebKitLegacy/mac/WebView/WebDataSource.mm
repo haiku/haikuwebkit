@@ -380,8 +380,8 @@ void addTypesFromClass(NSMutableDictionary *allTypes, Class objCClass, NSArray *
         [self _setRepresentation:(id <WebDocumentRepresentation>)newRep.get()];
     }
 
-    id<WebDocumentRepresentation> representation = toPrivate(_private)->representation.get();
-    [representation setDataSource:self];
+    RetainPtr<id<WebDocumentRepresentation>> representation = toPrivate(_private)->representation.get();
+    [representation.get() setDataSource:self];
 #if PLATFORM(IOS_FAMILY)
     toPrivate(_private)->loader->setResponseMIMEType([self _responseMIMEType]);
 #endif

@@ -378,7 +378,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/highlight/HighlightRegistry.idl \
     $(WebCore)/Modules/highlight/Highlight.idl \
     $(WebCore)/Modules/identity/DigitalCredential.idl \
-    $(WebCore)/Modules/identity/DigitalCredentialRequest.idl \
+    $(WebCore)/Modules/identity/DigitalCredentialGetRequest.idl \
     $(WebCore)/Modules/identity/DigitalCredentialRequestOptions.idl \
     $(WebCore)/Modules/identity/IdentityCredentialProtocol.idl \
     $(WebCore)/Modules/identity/protocols/ISO18013/MobileDocumentRequest.idl \
@@ -646,7 +646,6 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/streams/TransformStream.idl \
     $(WebCore)/Modules/streams/TransformStreamDefaultController.idl \
     $(WebCore)/Modules/streams/UnderlyingSource.idl \
-    $(WebCore)/Modules/streams/UnderlyingSourceStartCallback.idl \
     $(WebCore)/Modules/streams/UnderlyingSourceCancelCallback.idl \
     $(WebCore)/Modules/streams/UnderlyingSourcePullCallback.idl \
     $(WebCore)/Modules/streams/UnderlyingSourceStartCallback.idl \
@@ -1055,8 +1054,6 @@ JS_BINDING_IDLS := \
     $(WebCore)/css/ElementCSSInlineStyle+Typedom.idl \
     $(WebCore)/css/FontFace.idl \
     $(WebCore)/css/FontFaceSet.idl \
-    $(WebCore)/css/FontFaceSetLoadEvent.idl \
-    $(WebCore)/css/FontFaceSetLoadEventInit.idl \
     $(WebCore)/css/FontFaceSource.idl \
     $(WebCore)/css/LinkStyle.idl \
     $(WebCore)/css/MediaList.idl \
@@ -2822,6 +2819,6 @@ WEBCORE_LOG_DECLARATIONS_FILES = \
     WebCoreLogDefinitions.h \
     WebCoreVirtualLogFunctions.h \
 
-$(WEBCORE_LOG_DECLARATIONS_FILES) : $(WebCore)/platform/LogMessages.in
+$(WEBCORE_LOG_DECLARATIONS_FILES) : $(WebCore)/platform/LogMessages.in $(WebCore)/Scripts/generate-log-declarations.py
 	@echo Creating WebCore log definitions $@
 	$(PYTHON) $(WebCore)/Scripts/generate-log-declarations.py $< $(WEBCORE_LOG_DECLARATIONS_FILES)

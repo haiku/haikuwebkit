@@ -156,7 +156,8 @@ void JSDOMWindowBase::finishCreation(VM& vm, JSWindowProxy* proxy)
 
 void JSDOMWindowBase::destroy(JSCell* cell)
 {
-    static_cast<JSDOMWindowBase*>(cell)->JSDOMWindowBase::~JSDOMWindowBase();
+    // We cannot rely on jsCast() during JSObject destruction.
+    SUPPRESS_MEMORY_UNSAFE_CAST static_cast<JSDOMWindowBase*>(cell)->JSDOMWindowBase::~JSDOMWindowBase();
 }
 
 void JSDOMWindowBase::updateDocument()
@@ -167,12 +168,13 @@ void JSDOMWindowBase::updateDocument()
     ASSERT(m_wrapped->documentIfLocal());
     JSGlobalObject* lexicalGlobalObject = this;
     VM& vm = lexicalGlobalObject->vm();
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     bool shouldThrowReadOnlyError = false;
     bool ignoreReadOnlyErrors = true;
     bool putResult = false;
-    symbolTablePutTouchWatchpointSet(this, lexicalGlobalObject, builtinNames(vm).documentPublicName(), toJS(lexicalGlobalObject, this, m_wrapped->documentIfLocal()), shouldThrowReadOnlyError, ignoreReadOnlyErrors, putResult);
+    RefPtr document = m_wrapped->documentIfLocal();
+    symbolTablePutTouchWatchpointSet(this, lexicalGlobalObject, builtinNames(vm).documentPublicName(), document ? toJS(lexicalGlobalObject, this, document.releaseNonNull()) : jsNull(), shouldThrowReadOnlyError, ignoreReadOnlyErrors, putResult);
     EXCEPTION_ASSERT_UNUSED(scope, !scope.exception());
 }
 
@@ -188,7 +190,7 @@ void JSDOMWindowBase::printErrorMessage(const String& message) const
 
 bool JSDOMWindowBase::supportsRichSourceInfo(const JSGlobalObject* object)
 {
-    const JSDOMWindowBase* thisObject = static_cast<const JSDOMWindowBase*>(object);
+    auto* thisObject = jsCast<const JSDOMWindowBase*>(object);
     auto* frame = thisObject->wrapped().frame();
     if (!frame)
         return false;
@@ -216,7 +218,7 @@ static inline bool shouldInterruptScriptToPreventInfiniteRecursionWhenClosingPag
 
 bool JSDOMWindowBase::shouldInterruptScript(const JSGlobalObject* object)
 {
-    const JSDOMWindowBase* thisObject = static_cast<const JSDOMWindowBase*>(object);
+    auto* thisObject = jsCast<const JSDOMWindowBase*>(object);
     ASSERT(thisObject->wrapped().frame());
     Page* page = thisObject->wrapped().frame()->page();
     return shouldInterruptScriptToPreventInfiniteRecursionWhenClosingPage(page);
@@ -224,7 +226,7 @@ bool JSDOMWindowBase::shouldInterruptScript(const JSGlobalObject* object)
 
 bool JSDOMWindowBase::shouldInterruptScriptBeforeTimeout(const JSGlobalObject* object)
 {
-    const JSDOMWindowBase* thisObject = static_cast<const JSDOMWindowBase*>(object);
+    auto* thisObject = jsCast<const JSDOMWindowBase*>(object);
     ASSERT(thisObject->wrapped().frame());
     Page* page = thisObject->wrapped().frame()->page();
 
@@ -241,7 +243,7 @@ bool JSDOMWindowBase::shouldInterruptScriptBeforeTimeout(const JSGlobalObject* o
 
 RuntimeFlags JSDOMWindowBase::javaScriptRuntimeFlags(const JSGlobalObject* object)
 {
-    const JSDOMWindowBase* thisObject = static_cast<const JSDOMWindowBase*>(object);
+    auto* thisObject = jsCast<const JSDOMWindowBase*>(object);
     auto* frame = thisObject->wrapped().frame();
     if (!frame)
         return RuntimeFlags();
@@ -284,27 +286,28 @@ WTF_MAKE_COMPACT_TZONE_ALLOCATED_IMPL(UserGestureInitiatedMicrotaskDispatcher);
 
 void JSDOMWindowBase::queueMicrotaskToEventLoop(JSGlobalObject& object, QueuedTask&& task)
 {
-    JSDOMWindowBase& thisObject = static_cast<JSDOMWindowBase&>(object);
+    auto& thisObject = *jsCast<JSDOMWindowBase*>(&object);
 
-    auto* objectScriptExecutionContext = thisObject.scriptExecutionContext();
-    auto& eventLoop = objectScriptExecutionContext->eventLoop();
+    CheckedPtr objectScriptExecutionContext = thisObject.scriptExecutionContext();
+    CheckedRef eventLoop = objectScriptExecutionContext->eventLoop();
     // Propagating media only user gesture for Fetch API's promise chain.
     auto userGestureToken = UserGestureIndicator::currentUserGestureForMainThread();
     if (userGestureToken && (!userGestureToken->shouldPropagateToMicroTask() || !objectScriptExecutionContext->settingsValues().userGesturePromisePropagationEnabled))
         userGestureToken = nullptr;
 
     if (!userGestureToken)
-        task.setDispatcher(eventLoop.jsMicrotaskDispatcher(task));
+        task.setDispatcher(eventLoop->jsMicrotaskDispatcher(task));
     else
-        task.setDispatcher(UserGestureInitiatedMicrotaskDispatcher::create(eventLoop, Ref { *userGestureToken }));
+        task.setDispatcher(UserGestureInitiatedMicrotaskDispatcher::create(eventLoop.get(), Ref { *userGestureToken }));
 
-    eventLoop.queueMicrotask(WTF::move(task));
+    eventLoop->queueMicrotask(WTF::move(task));
 }
 
 JSC::JSObject* JSDOMWindowBase::currentScriptExecutionOwner(JSGlobalObject* object)
 {
-    JSDOMWindowBase* thisObject = static_cast<JSDOMWindowBase*>(object);
-    return jsCast<JSObject*>(toJS(thisObject, thisObject, thisObject->wrapped().documentIfLocal()));
+    auto* thisObject = jsCast<JSDOMWindowBase*>(object);
+    RefPtr document = thisObject->wrapped().documentIfLocal();
+    return jsCast<JSObject*>(document ? toJS(thisObject, thisObject, document.releaseNonNull()) : jsNull());
 }
 
 JSC::ScriptExecutionStatus JSDOMWindowBase::scriptExecutionStatus(JSC::JSGlobalObject*, JSC::JSObject* owner)
@@ -314,14 +317,14 @@ JSC::ScriptExecutionStatus JSDOMWindowBase::scriptExecutionStatus(JSC::JSGlobalO
 
 void JSDOMWindowBase::reportViolationForUnsafeEval(JSGlobalObject* object, const String& source)
 {
-    const JSDOMWindowBase* thisObject = static_cast<const JSDOMWindowBase*>(object);
+    auto* thisObject = jsCast<const JSDOMWindowBase*>(object);
     CheckedPtr<ContentSecurityPolicy> contentSecurityPolicy;
     RefPtr localWindow = dynamicDowncast<LocalDOMWindow>(thisObject->wrapped());
-    if (auto* element = localWindow ? localWindow->frameElement() : nullptr)
+    if (CheckedPtr element = localWindow ? localWindow->frameElement() : nullptr)
         contentSecurityPolicy = element->document().contentSecurityPolicy();
 
     if (!contentSecurityPolicy) {
-        if (auto* document = localWindow ? localWindow->document() : nullptr)
+        if (CheckedPtr document = localWindow ? localWindow->document() : nullptr)
             contentSecurityPolicy = document->contentSecurityPolicy();
     }
 

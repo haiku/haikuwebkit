@@ -55,6 +55,7 @@ dictionary TextExtractionTestOptions {
     boolean mergeParagraphs = false;
     boolean skipNearlyTransparentContent = false;
     DOMString outputFormat;
+    object dataDetectorTypes;
 };
 
 dictionary TextExtractionInteractionOptions {

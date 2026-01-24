@@ -30,10 +30,10 @@
 
 DECLARE_SYSTEM_HEADER
 
-#if USE(APPLE_INTERNAL_SDK)
+// FIXME: (rdar://165507825) Remove the `__has_feature(modules)` condition when possible.
+#if USE(APPLE_INTERNAL_SDK) && !__has_feature(modules)
 
 #if HAVE(URL_FORMATTING)
-// FIXME: (rdar://165507825) This file is invalid in a module because URLFormatting has incorrect extern_c attributes in its dependencies.
 #import <URLFormatting/LPNSURLExtras.h>
 #else
 #import <LinkPresentation/LPNSURLExtras.h>

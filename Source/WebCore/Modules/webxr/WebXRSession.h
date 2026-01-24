@@ -54,7 +54,7 @@ class XRFrameRequestCallback;
 class WebCoreOpaqueRoot;
 class WebXRSystem;
 class WebXRView;
-class WebXRViewerSpace;
+class WebXRReferenceSpace;
 struct XRCanvasConfiguration;
 struct XRRenderStateInit;
 
@@ -83,7 +83,7 @@ public:
     XRVisibilityState visibilityState() const;
     const WebXRRenderState& renderState() const;
     const WebXRInputSourceArray& inputSources() const { return m_inputSources; }
-    RefPtr<PlatformXR::Device> device() const { return m_device.get(); }
+    RefPtr<PlatformXR::Device> device() const { return m_device; }
 
     const Vector<String> enabledFeatures() const;
 
@@ -114,7 +114,7 @@ public:
 
     const Vector<PlatformXR::Device::ViewData>& views() const { return m_views; }
     const PlatformXR::FrameData& frameData() const { return m_frameData; }
-    const WebXRViewerSpace& viewerReferenceSpace() const { return m_viewerReferenceSpace; }
+    const WebXRReferenceSpace& viewerReferenceSpace() const { return m_viewerReferenceSpace; }
     bool posesCanBeReported(const Document&) const;
     
 #if ENABLE(WEBXR_HANDS)
@@ -174,7 +174,7 @@ private:
     FeatureList m_requestedFeatures;
     RefPtr<WebXRRenderState> m_activeRenderState;
     RefPtr<WebXRRenderState> m_pendingRenderState;
-    const Ref<WebXRViewerSpace> m_viewerReferenceSpace;
+    const Ref<WebXRReferenceSpace> m_viewerReferenceSpace;
     MonotonicTime m_timeOrigin;
 
     unsigned m_nextCallbackId { 1 };

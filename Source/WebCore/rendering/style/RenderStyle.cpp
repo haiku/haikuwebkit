@@ -131,10 +131,7 @@ RenderStyle RenderStyle::replace(RenderStyle&& newStyle)
 
 void RenderStyle::copyPseudoElementsFrom(const RenderStyle& other)
 {
-    if (!other.m_computedStyle.m_cachedPseudoStyles)
-        return;
-
-    for (auto& [key, pseudoElementStyle] : other.m_computedStyle.m_cachedPseudoStyles->styles) {
+    for (auto& [key, pseudoElementStyle] : other.m_computedStyle.cachedPseudoStyles()) {
         if (!pseudoElementStyle) {
             ASSERT_NOT_REACHED();
             continue;

@@ -1449,7 +1449,7 @@ uint64_t BindGroup::makeEntryMapKey(uint32_t baseMipLevel, uint32_t baseArrayLay
     return (static_cast<uint64_t>(aspect) - 1) | (static_cast<uint64_t>(baseMipLevel) << 1) | (static_cast<uint64_t>(baseArrayLayer) << 32);
 }
 
-WARN_UNUSED_RETURN static bool setArgumentBuffer(id<MTLArgumentEncoder> encoder, id<MTLBuffer> buffer)
+[[nodiscard]] static bool setArgumentBuffer(id<MTLArgumentEncoder> encoder, id<MTLBuffer> buffer)
 {
     if (!encoder || !buffer)
         return false;

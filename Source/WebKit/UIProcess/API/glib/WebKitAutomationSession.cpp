@@ -353,10 +353,10 @@ static WebKitNetworkProxyMode parseProxyCapabilities(const Inspector::RemoteInsp
         return WEBKIT_NETWORK_PROXY_MODE_NO_PROXY;
 
     if (!proxy.ignoreAddressList.isEmpty()) {
-        Vector<const char*> ignoreAddressList(proxy.ignoreAddressList.size() + 1);
-        unsigned i = 0;
+        Vector<const char*> ignoreAddressList;
+        ignoreAddressList.reserveInitialCapacity(proxy.ignoreAddressList.size() + 1);
         for (const auto& ignoreAddress : proxy.ignoreAddressList)
-            ignoreAddressList[i++] = ignoreAddress.utf8().data();
+            ignoreAddressList.append(ignoreAddress.utf8().data());
         *settings = webkit_network_proxy_settings_new(nullptr, ignoreAddressList.span().data());
     } else
         *settings = webkit_network_proxy_settings_new(nullptr, nullptr);

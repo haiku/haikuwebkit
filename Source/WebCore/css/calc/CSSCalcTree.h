@@ -1264,42 +1264,42 @@ inline Children& Children::operator=(Vector<Child>&& other)
     return *this;
 }
 
-inline Children::iterator Children::begin()
+inline Children::iterator Children::begin() LIFETIME_BOUND
 {
     return value.begin();
 }
 
-inline Children::iterator Children::end()
+inline Children::iterator Children::end() LIFETIME_BOUND
 {
     return value.end();
 }
 
-inline Children::reverse_iterator Children::rbegin()
+inline Children::reverse_iterator Children::rbegin() LIFETIME_BOUND
 {
     return value.rbegin();
 }
 
-inline Children::reverse_iterator Children::rend()
+inline Children::reverse_iterator Children::rend() LIFETIME_BOUND
 {
     return value.rend();
 }
 
-inline Children::const_iterator Children::begin() const
+inline Children::const_iterator Children::begin() const LIFETIME_BOUND
 {
     return value.begin();
 }
 
-inline Children::const_iterator Children::end() const
+inline Children::const_iterator Children::end() const LIFETIME_BOUND
 {
     return value.end();
 }
 
-inline Children::const_reverse_iterator Children::rbegin() const
+inline Children::const_reverse_iterator Children::rbegin() const LIFETIME_BOUND
 {
     return value.rbegin();
 }
 
-inline Children::const_reverse_iterator Children::rend() const
+inline Children::const_reverse_iterator Children::rend() const LIFETIME_BOUND
 {
     return value.rend();
 }
@@ -1314,12 +1314,12 @@ inline size_t Children::size() const
     return value.size();
 }
 
-inline Child& Children::operator[](size_t i)
+inline Child& Children::operator[](size_t i) LIFETIME_BOUND
 {
     return value[i];
 }
 
-inline const Child& Children::operator[](size_t i) const
+inline const Child& Children::operator[](size_t i) const LIFETIME_BOUND
 {
     return value[i];
 }

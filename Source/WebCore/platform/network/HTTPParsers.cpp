@@ -337,7 +337,7 @@ std::optional<WallTime> parseHTTPDate(const String& value)
 // that arises from quoted-string, nor does this function properly unquote
 // attribute values. Further this function appears to process parameter names
 // in a case-sensitive manner. (There are likely other bugs as well.)
-StringView filenameFromHTTPContentDisposition(StringView value)
+StringView filenameFromHTTPContentDisposition(StringView value LIFETIME_BOUND)
 {
     for (auto keyValuePair : value.split(';')) {
         size_t valueStartPos = keyValuePair.find('=');
@@ -399,7 +399,7 @@ String extractMIMETypeFromMediaType(const String& mediaType)
     return mediaType.substring(typeStart, typeEnd - typeStart);
 }
 
-StringView extractCharsetFromMediaType(StringView mediaType)
+StringView extractCharsetFromMediaType(StringView mediaType LIFETIME_BOUND)
 {
     unsigned charsetPos = 0, charsetLen = 0;
     size_t pos = 0;

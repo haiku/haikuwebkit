@@ -139,11 +139,11 @@ private:
 
 inline CSSValueContainingVector::~CSSValueContainingVector()
 {
-    for (auto& value : *this)
+    for (SUPPRESS_UNCOUNTED_LOCAL auto& value : *this)
         value.deref();
 }
 
-inline const CSSValue& CSSValueContainingVector::operator[](unsigned index) const
+inline const CSSValue& CSSValueContainingVector::operator[](unsigned index) const LIFETIME_BOUND
 {
     unsigned maxInlineSize = m_inlineStorage.size();
     if (index < maxInlineSize) {

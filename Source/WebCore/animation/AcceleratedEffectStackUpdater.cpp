@@ -61,11 +61,11 @@ void AcceleratedEffectStackUpdater::update()
         if (!page)
             page = element->protectedDocument()->page();
 
-        auto* renderer = dynamicDowncast<RenderLayerModelObject>(target.renderer());
+        CheckedPtr renderer = dynamicDowncast<RenderLayerModelObject>(target.renderer());
         if (!renderer || !renderer->isComposited())
             continue;
 
-        auto* renderLayer = renderer->layer();
+        CheckedPtr renderLayer = renderer->layer();
         ASSERT(renderLayer && renderLayer->backing());
         renderLayer->backing()->updateAcceleratedEffectsAndBaseValues(timelinesInUpdate);
     }

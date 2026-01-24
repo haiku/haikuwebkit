@@ -103,6 +103,7 @@ public:
 
     virtual RefPtr<CommandBuffer> finish(const CommandBufferDescriptor&) = 0;
     virtual bool isRemoteCommandEncoderProxy() const { return false; }
+    virtual bool isCommandEncoderImpl() const { return false; }
 
 protected:
     CommandEncoder() = default;

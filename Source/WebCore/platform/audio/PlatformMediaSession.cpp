@@ -87,18 +87,20 @@ String convertEnumerationToString(PlatformMediaSession::InterruptionType type)
 
 String convertEnumerationToString(PlatformMediaSession::MediaType mediaType)
 {
-    static const std::array<NeverDestroyed<String>, 5> values {
+    static const std::array<NeverDestroyed<String>, 6> values {
         MAKE_STATIC_STRING_IMPL("None"),
         MAKE_STATIC_STRING_IMPL("Video"),
         MAKE_STATIC_STRING_IMPL("VideoAudio"),
         MAKE_STATIC_STRING_IMPL("Audio"),
         MAKE_STATIC_STRING_IMPL("WebAudio"),
+        MAKE_STATIC_STRING_IMPL("DOMMediaSession"),
     };
     static_assert(!static_cast<size_t>(PlatformMediaSession::MediaType::None), "PlatformMediaSession::MediaType::None is not 0 as expected");
     static_assert(static_cast<size_t>(PlatformMediaSession::MediaType::Video) == 1, "PlatformMediaSession::MediaType::Video is not 1 as expected");
     static_assert(static_cast<size_t>(PlatformMediaSession::MediaType::VideoAudio) == 2, "PlatformMediaSession::MediaType::VideoAudio is not 2 as expected");
     static_assert(static_cast<size_t>(PlatformMediaSession::MediaType::Audio) == 3, "PlatformMediaSession::MediaType::Audio is not 3 as expected");
     static_assert(static_cast<size_t>(PlatformMediaSession::MediaType::WebAudio) == 4, "PlatformMediaSession::MediaType::WebAudio is not 4 as expected");
+    static_assert(static_cast<size_t>(PlatformMediaSession::MediaType::DOMMediaSession) == 5, "PlatformMediaSession::MediaType::DOMMediaSession is not 4 as expected");
 
     ASSERT(static_cast<size_t>(mediaType) < std::size(values));
     return values[static_cast<size_t>(mediaType)];

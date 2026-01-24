@@ -143,6 +143,10 @@ elseif (USE_LIBDRM)
     list(APPEND WebCore_LIBRARIES LibDRM::LibDRM)
 endif ()
 
+if (USE_LIBHYPHEN)
+    list(APPEND WebCore_PRIVATE_LIBRARIES Hyphen::Hyphen)
+endif ()
+
 if (ENABLE_GAMEPAD)
     list(APPEND WebCore_PRIVATE_INCLUDE_DIRECTORIES
         "${WEBCORE_DIR}/platform/gamepad/libwpe"

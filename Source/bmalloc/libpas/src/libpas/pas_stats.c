@@ -430,6 +430,7 @@ static const char* pas_stats_heap_type_to_string(pas_stats_heap_type heap_type)
         return "bitfit";
     case pas_stats_heap_type_large:
         return "large";
+    case pas_stats_heap_type_unknown:
     default:
         return "unknown";
     }
@@ -446,6 +447,7 @@ char* pas_stats_malloc_info_dump_to_json(void* stat_v)
      *     "segregated": <NUM>,
      *     "bitfit": <NUM>,
      *     "large": <NUM>,
+     *     "unknown": <NUM>,
      *   },
      *   "count_by_size": {
      *     "0": <NUM>,

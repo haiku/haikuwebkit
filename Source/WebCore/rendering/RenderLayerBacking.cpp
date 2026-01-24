@@ -39,7 +39,6 @@
 #include "DebugOverlayRegions.h"
 #include "DebugPageOverlays.h"
 #include "DocumentPage.h"
-#include "DropShadowFilterOperationWithStyleColor.h"
 #include "EventRegion.h"
 #include "GraphicsContext.h"
 #include "GraphicsLayer.h"
@@ -838,24 +837,14 @@ void RenderLayerBacking::updateChildrenTransformAndAnchorPoint(const LayoutRect&
     removeChildrenTransformFromLayers(layerForPerspective);
 }
 
-static FilterOperations resolveFilters(const Style::Filter& filter, const RenderStyle& style)
-{
-    return FilterOperations { WTF::map(filter, [&](const auto& value) -> Ref<FilterOperation> {
-        Ref operation = value.value;
-        if (auto dropShadow = dynamicDowncast<Style::DropShadowFilterOperationWithStyleColor>(operation))
-            return dropShadow->createEquivalentWithResolvedColor(style);
-        return operation;
-    }) };
-}
-
 void RenderLayerBacking::updateFilters(const RenderStyle& style)
 {
-    m_canCompositeFilters = m_graphicsLayer->setFilters(resolveFilters(style.filter(), style));
+    m_canCompositeFilters = !style.filter().hasReferenceFilter() && m_graphicsLayer->setFilters(Style::toPlatform(style.filter(), style));
 }
 
 void RenderLayerBacking::updateBackdropFilters(const RenderStyle& style)
 {
-    m_canCompositeBackdropFilters = m_graphicsLayer->setBackdropFilters(resolveFilters(style.backdropFilter(), style));
+    m_canCompositeBackdropFilters = !style.backdropFilter().hasReferenceFilter() && m_graphicsLayer->setBackdropFilters(Style::toPlatform(style.backdropFilter(), style));
 }
 
 void RenderLayerBacking::updateBackdropFiltersGeometry()
@@ -2105,6 +2094,8 @@ bool RenderLayerBacking::maintainsEventRegion() const
 #endif
 #if ENABLE(TOUCH_EVENT_REGIONS)
     if (renderer().document().hasTouchEventHandlers())
+        return true;
+    if (renderer().document().needsPointerEventHandlingForPopover())
         return true;
 #endif
 
@@ -4459,10 +4450,10 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const GraphicsLayerAn
             opacityVector.insert(makeUnique<GraphicsLayerFloatAnimationValue>(offset, keyframeStyle->opacity().value.value, tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyFilter))
-            filterVector.insert(makeUnique<GraphicsLayerFilterAnimationValue>(offset, Style::toPlatform(keyframeStyle->filter()), tf));
+            filterVector.insert(makeUnique<GraphicsLayerFilterAnimationValue>(offset, Style::toPlatform(keyframeStyle->filter(), renderer().style()), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyWebkitBackdropFilter) || currentKeyframe.animatesProperty(CSSPropertyBackdropFilter))
-            backdropFilterVector.insert(makeUnique<GraphicsLayerFilterAnimationValue>(offset, Style::toPlatform(keyframeStyle->backdropFilter()), tf));
+            backdropFilterVector.insert(makeUnique<GraphicsLayerFilterAnimationValue>(offset, Style::toPlatform(keyframeStyle->backdropFilter(), renderer().style()), tf));
     }
 
     bool didAnimate = false;
@@ -4510,6 +4501,8 @@ void RenderLayerBacking::updateAcceleratedEffectsAndBaseValues(HashSet<Ref<Accel
     ASSERT(target);
 
     bool hasInterpolatingEffect = false;
+    bool hasEffectAffectingFilter = false;
+    bool hasEffectAffectingBackdropFilter = false;
     auto borderBoxRect = snappedIntRect(m_owningLayer.rendererBorderBoxRect());
 
     auto baseValues = [&]() -> AcceleratedEffectValues {
@@ -4540,6 +4533,10 @@ void RenderLayerBacking::updateAcceleratedEffectsAndBaseValues(HashSet<Ref<Accel
                     continue;
                 if (!hasInterpolatingEffect && effect->isRunningAccelerated())
                     hasInterpolatingEffect = true;
+                if (!hasEffectAffectingFilter && acceleratedEffect->animatedProperties().contains(AcceleratedEffectProperty::Filter))
+                    hasEffectAffectingFilter = true;
+                if (!hasEffectAffectingBackdropFilter && acceleratedEffect->animatedProperties().contains(AcceleratedEffectProperty::BackdropFilter))
+                    hasEffectAffectingBackdropFilter = true;
                 effectTimelines.add(Ref { *acceleratedEffect->timeline() });
                 weakAcceleratedEffects.add(acceleratedEffect.ptr());
                 acceleratedEffects.append(WTF::move(acceleratedEffect));
@@ -4554,8 +4551,24 @@ void RenderLayerBacking::updateAcceleratedEffectsAndBaseValues(HashSet<Ref<Accel
     // effects to the general timelines list.
     if (hasInterpolatingEffect)
         timelines.addAll(effectTimelines);
-    else
+    else {
         acceleratedEffects.clear();
+        baseValues = { };
+    }
+
+    // If a filter property was disallowed, it's because it cannot be represented remotely,
+    // so we must ensure we reset it in the base values so that we don't attempt to encode
+    // an unsupported filter operation.
+    if (!hasEffectAffectingFilter || disallowedAcceleratedProperties.contains(AcceleratedEffectProperty::Filter)) {
+        for (auto& effect : acceleratedEffects)
+            effect->clearProperty(AcceleratedEffectProperty::Filter);
+        baseValues.filter = { };
+    }
+    if (!hasEffectAffectingBackdropFilter || disallowedAcceleratedProperties.contains(AcceleratedEffectProperty::BackdropFilter)) {
+        for (auto& effect : acceleratedEffects)
+            effect->clearProperty(AcceleratedEffectProperty::BackdropFilter);
+        baseValues.backdropFilter = { };
+    }
 
     m_graphicsLayer->setAcceleratedEffectsAndBaseValues(WTF::move(acceleratedEffects), WTF::move(baseValues));
 

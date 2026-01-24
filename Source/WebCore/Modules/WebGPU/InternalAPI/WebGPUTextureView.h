@@ -45,6 +45,7 @@ public:
     }
 
     virtual bool isRemoteTextureViewProxy() const { return false; }
+    virtual bool isTextureViewImpl() const { return false; }
 
 protected:
     TextureView() = default;

@@ -75,7 +75,7 @@ void WasmDebuggerDispatcher::dispatchMessage(const String& message)
         return;
     }
 
-    debugServer.handleRawPacket(message);
+    debugServer.handlePacket(message);
 }
 
 } // namespace WebKit

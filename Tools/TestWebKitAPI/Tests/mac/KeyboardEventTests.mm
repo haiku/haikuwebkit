@@ -147,7 +147,12 @@ TEST(KeyboardEventTests, TerminateWebContentProcessDuringKeyEventHandling)
     Util::runFor(25_ms);
 }
 
+// FIXME when rdar://168322007 is resolved.
+#if PLATFORM(MAC)
+TEST(KeyboardEventTests, DISABLED_UserTextInputEvent)
+#else
 TEST(KeyboardEventTests, UserTextInputEvent)
+#endif
 {
     RetainPtr webView = adoptNS([TestWKWebView new]);
     [webView addToTestWindow];

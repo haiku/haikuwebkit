@@ -180,6 +180,7 @@ public:
         auto request = makeUnique<PreloadRequest>(initiatorFor(m_tagId), m_urlToLoad, predictedBaseURL, type.value(), m_mediaAttribute, scriptType.value_or(ScriptType::Classic), m_referrerPolicy, m_fetchPriority);
         request->setCrossOriginMode(m_crossOriginMode);
         request->setNonce(m_nonceAttribute);
+        request->setIntegrity(m_integrityAttribute);
         request->setScriptIsAsync(m_scriptIsAsync);
 
         // According to the spec, the module tag ignores the "charset" attribute as the same to the worker's
@@ -281,6 +282,9 @@ private:
                 break;
             } else if (match(attributeName, nonceAttr)) {
                 m_nonceAttribute = attributeValue.toString();
+                break;
+            } else if (match(attributeName, integrityAttr)) {
+                m_integrityAttribute = attributeValue.toString();
                 break;
             } else if (match(attributeName, referrerpolicyAttr)) {
                 m_referrerPolicy = parseReferrerPolicy(attributeValue, ReferrerPolicySource::ReferrerPolicyAttribute).value_or(ReferrerPolicy::EmptyString);
@@ -439,6 +443,7 @@ private:
     String m_asAttribute;
     String m_typeAttribute;
     String m_languageAttribute;
+    String m_integrityAttribute;
     String m_lazyloadAttribute;
     bool m_metaIsViewport;
     bool m_metaIsDisabledAdaptations;

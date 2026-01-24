@@ -37,7 +37,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(DowncastConvertToBackingContext);
 
 WGPUDDMesh DowncastConvertToBackingContext::convertToBacking(const DDMesh& mesh)
 {
-    return static_cast<const DDMeshImpl&>(mesh).backing();
+    return downcast<DDMeshImpl>(mesh).backing();
 }
 
 }

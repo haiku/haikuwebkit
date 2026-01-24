@@ -6875,6 +6875,9 @@
     "imported/w3c/web-platform-tests/webrtc/simulcast/vp9.https.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/webrtc/transfer-datachannel.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/websockets/binary/002.html": [
         "slow"
     ],

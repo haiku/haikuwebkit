@@ -1557,7 +1557,8 @@ void RenderTableCell::paintBackgroundsBehindCell(PaintInfo& paintInfo, LayoutPoi
         fillRect = LayoutRect { adjustedPaintOffset, size() };
     auto compositeOp = document().compositeOperatorForBackgroundColor(color, *this);
     BackgroundPainter painter { *this, paintInfo };
-    if (backgroundObject != this) {
+    auto hasBackgroundClipText = style.backgroundLayers().usedFirst().clip() == FillBox::Text;
+    if (backgroundObject != this && !hasBackgroundClipText) {
         painter.setOverrideClip(FillBox::BorderBox);
         painter.setOverrideOrigin(FillBox::BorderBox);
     }

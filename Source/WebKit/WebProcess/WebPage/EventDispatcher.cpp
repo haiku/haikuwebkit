@@ -101,8 +101,7 @@ void EventDispatcher::addScrollingTreeForPage(WebPage& webPage)
     ASSERT(!m_scrollingTrees.contains(webPage.identifier()));
 
     Ref scrollingCoordinator = downcast<AsyncScrollingCoordinator>(*webPage.scrollingCoordinator());
-    RefPtr scrollingTree = dynamicDowncast<ThreadedScrollingTree>(scrollingCoordinator->scrollingTree());
-    ASSERT(scrollingTree);
+    Ref scrollingTree = downcast<ThreadedScrollingTree>(*scrollingCoordinator->scrollingTree());
     m_scrollingTrees.set(webPage.identifier(), WTF::move(scrollingTree));
 }
 
@@ -345,8 +344,8 @@ void EventDispatcher::notifyScrollingTreesDisplayDidRefresh(PlatformDisplayID di
 {
 #if ENABLE(ASYNC_SCROLLING) && ENABLE(SCROLLING_THREAD)
     Locker locker { m_scrollingTreesLock };
-    for (auto keyValuePair : m_scrollingTrees)
-        Ref { *keyValuePair.value }->displayDidRefresh(displayID);
+    for (Ref scrollingTree : m_scrollingTrees.values())
+        scrollingTree->displayDidRefresh(displayID);
 #endif
 }
 

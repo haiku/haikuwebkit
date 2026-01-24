@@ -177,7 +177,7 @@ ScrollingNodeID ScrollingStateTree::createUnparentedNode(ScrollingNodeType nodeT
 #endif
     }
 
-    auto stateNode = createNode(nodeType, newNodeID);
+    Ref stateNode = createNode(nodeType, newNodeID);
     addNode(stateNode);
     m_unparentedNodes.add(newNodeID, WTF::move(stateNode));
     return newNodeID;
@@ -271,15 +271,15 @@ void ScrollingStateTree::unparentNode(std::optional<ScrollingNodeID> nodeID)
     LOG_WITH_STREAM(ScrollingTree, stream << "ScrollingStateTree " << this << " unparentNode " << *nodeID);
 
     // The node may not be found if clear() was recently called.
-    RefPtr protectedNode = m_stateNodeMap.get(*nodeID);
-    if (!protectedNode)
+    RefPtr node = m_stateNodeMap.get(*nodeID);
+    if (!node)
         return;
 
-    if (protectedNode == m_rootStateNode)
+    if (node == m_rootStateNode)
         m_rootStateNode = nullptr;
 
-    protectedNode->removeFromParent();
-    m_unparentedNodes.add(*nodeID, WTF::move(protectedNode));
+    node->removeFromParent();
+    m_unparentedNodes.add(*nodeID, node.releaseNonNull());
 }
 
 void ScrollingStateTree::unparentChildrenAndDestroyNode(std::optional<ScrollingNodeID> nodeID)
@@ -290,22 +290,22 @@ void ScrollingStateTree::unparentChildrenAndDestroyNode(std::optional<ScrollingN
     LOG_WITH_STREAM(ScrollingTree, stream << "ScrollingStateTree " << this << " unparentChildrenAndDestroyNode " << *nodeID);
 
     // The node may not be found if clear() was recently called.
-    RefPtr protectedNode = m_stateNodeMap.take(*nodeID);
-    if (!protectedNode)
+    RefPtr node = m_stateNodeMap.take(*nodeID);
+    if (!node)
         return;
 
-    if (protectedNode == m_rootStateNode)
+    if (node == m_rootStateNode)
         m_rootStateNode = nullptr;
 
-    for (auto child : protectedNode->takeChildren()) {
+    for (Ref child : node->takeChildren()) {
         child->removeFromParent();
         LOG_WITH_STREAM(ScrollingTree, stream << " moving " << child->scrollingNodeID() << " to unparented nodes");
         m_unparentedNodes.add(child->scrollingNodeID(), WTF::move(child));
     }
-    
-    protectedNode->removeFromParent();
+
+    node->removeFromParent();
     m_unparentedNodes.remove(*nodeID);
-    willRemoveNode(*protectedNode);
+    willRemoveNode(*node);
 }
 
 void ScrollingStateTree::detachAndDestroySubtree(std::optional<ScrollingNodeID> nodeID)

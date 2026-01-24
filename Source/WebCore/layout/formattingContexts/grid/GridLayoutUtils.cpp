@@ -43,16 +43,8 @@ LayoutUnit computeGapValue(const Style::GapGutter& gap)
     return { };
 }
 
-LayoutUnit usedInlineSizeForGridItem(const PlacedGridItem& placedGridItem, LayoutUnit borderAndPadding, const TrackSizes& usedColumnSizes,
-    LayoutUnit columnsGap)
+LayoutUnit usedInlineSizeForGridItem(const PlacedGridItem& placedGridItem, LayoutUnit borderAndPadding, LayoutUnit columnsSize)
 {
-    auto columnsSize = [&] {
-        auto columnsStartPosition = computeGridLinePosition(placedGridItem.columnStartLine(), usedColumnSizes, columnsGap);
-        auto columnsEndPosition = computeGridLinePosition(placedGridItem.columnEndLine(), usedColumnSizes, columnsGap);
-        ASSERT(columnsEndPosition >= columnsStartPosition);
-        return columnsEndPosition - columnsStartPosition;
-    };
-
     auto& inlineAxisSizes = placedGridItem.inlineAxisSizes();
     ASSERT(inlineAxisSizes.minimumSize.isFixed() && (inlineAxisSizes.maximumSize.isFixed() || inlineAxisSizes.maximumSize.isNone()));
 
@@ -89,7 +81,7 @@ LayoutUnit usedInlineSizeForGridItem(const PlacedGridItem& placedGridItem, Layou
                 return LayoutUnit { computedMaximumSize.tryFixed()->resolveZoom(usedZoom) };
             };
 
-            auto stretchedWidth = columnsSize() - LayoutUnit { marginStart.tryFixed()->resolveZoom(usedZoom) } - LayoutUnit { marginEnd.tryFixed()->resolveZoom(usedZoom) } - borderAndPadding;
+            auto stretchedWidth = columnsSize - LayoutUnit { marginStart.tryFixed()->resolveZoom(usedZoom) } - LayoutUnit { marginEnd.tryFixed()->resolveZoom(usedZoom) } - borderAndPadding;
             return std::max(minimumSize, std::min(maximumSize(), stretchedWidth));
         }
 
@@ -101,11 +93,45 @@ LayoutUnit usedInlineSizeForGridItem(const PlacedGridItem& placedGridItem, Layou
     return { };
 }
 
-LayoutUnit usedBlockSizeForGridItem(const PlacedGridItem& placedGridItem)
+LayoutUnit usedBlockSizeForGridItem(const PlacedGridItem& placedGridItem, LayoutUnit borderAndPadding, LayoutUnit rowsSize)
 {
     auto& blockAxisSizes = placedGridItem.blockAxisSizes();
-    if (auto fixedBlockSize = blockAxisSizes.preferredSize.tryFixed())
-        return LayoutUnit { fixedBlockSize->resolveZoom(placedGridItem.usedZoom()) };
+    auto& preferredSize = blockAxisSizes.preferredSize;
+    if (auto fixedBlockSize = preferredSize.tryFixed())
+        return LayoutUnit { fixedBlockSize->resolveZoom(placedGridItem.usedZoom()) } + borderAndPadding;
+
+    if (preferredSize.isAuto()) {
+        // Grid item calculations for automatic sizes in a given dimensions vary by their
+        // self-alignment values:
+        auto alignmentPosition = placedGridItem.blockAxisAlignment().position();
+
+        // normal:
+        // If the grid item has no preferred aspect ratio, and no natural size in the relevant
+        // axis (if it is a replaced element), the grid item is sized as for align-self: stretch.
+        //
+        // https://www.w3.org/TR/css-align-3/#propdef-align-self
+        //
+        // When the box’s computed width/height (as appropriate to the axis) is auto and neither of
+        // its margins (in the appropriate axis) are auto, sets the box’s used size to the length
+        // necessary to make its outer size as close to filling the alignment container as possible
+        // while still respecting the constraints imposed by min-height/min-width/max-height/max-width.
+        auto& marginStart = blockAxisSizes.marginStart;
+        auto& marginEnd = blockAxisSizes.marginEnd;
+        if ((alignmentPosition == ItemPosition::Normal) && !placedGridItem.hasPreferredAspectRatio() && !placedGridItem.isReplacedElement()
+            && !marginStart.isAuto() && !marginEnd.isAuto()) {
+            auto& usedZoom = placedGridItem.usedZoom();
+
+            auto minimumSize = LayoutUnit { blockAxisSizes.minimumSize.tryFixed()->resolveZoom(usedZoom) };
+            auto maximumSize = [&blockAxisSizes, &usedZoom] {
+                auto& computedMaximumSize = blockAxisSizes.maximumSize;
+                if (computedMaximumSize.isNone())
+                    return LayoutUnit::max();
+                return LayoutUnit { computedMaximumSize.tryFixed()->resolveZoom(usedZoom) };
+            };
+            auto stretchedBlockSize = rowsSize - LayoutUnit { marginStart.tryFixed()->resolveZoom(usedZoom) } - LayoutUnit { marginEnd.tryFixed()->resolveZoom(usedZoom) } - borderAndPadding;
+            return std::max(minimumSize, std::min(maximumSize(), stretchedBlockSize));
+        }
+    }
 
     ASSERT_NOT_IMPLEMENTED_YET();
     return { };
@@ -121,6 +147,17 @@ LayoutUnit computeGridLinePosition(size_t gridLineIndex, const TrackSizes& track
     auto numberOfGaps = gridLineIndex > 0 ? gridLineIndex - 1 : 0;
 
     return sumOfTrackSizes + (numberOfGaps * gap);
+}
+
+LayoutUnit gridAreaDimensionSize(size_t startLine, size_t endLine, const TrackSizes& trackSizes, LayoutUnit gap)
+{
+    ASSERT(endLine > startLine);
+
+    auto startPosition = computeGridLinePosition(startLine, trackSizes, gap);
+    auto endPosition = computeGridLinePosition(endLine, trackSizes, gap);
+    ASSERT(endPosition >= startPosition);
+
+    return endPosition - startPosition;
 }
 
 }

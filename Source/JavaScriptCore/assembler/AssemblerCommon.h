@@ -358,6 +358,198 @@ private:
     std::optional<uint8_t> m_value;
 };
 
+// ARM64ShiftedImmediate32 encodes 32-bit values that can be represented as a single byte
+// shifted left by 0, 8, 16, or 24 bits. This is used for ARM64 SIMD movi/mvni instructions.
+//
+// Examples of encodable patterns:
+//   0x00000012 → immediate=0x12, shift=0
+//   0x00001200 → immediate=0x12, shift=8
+//   0x00120000 → immediate=0x12, shift=16
+//   0x12000000 → immediate=0x12, shift=24
+//   0x80000000 → immediate=0x80, shift=24  (commonly used sign bit pattern)
+//   0x000000FF → immediate=0xFF, shift=0
+//
+// Non-encodable patterns:
+//   0x12345678 → multiple non-zero bytes
+//   0x00001234 → non-zero value wider than one byte
+//
+// This is used with:
+//   movi Vd.2S, #imm8, lsl #shift    (materialized value = imm8 << shift)
+//   mvni Vd.2S, #imm8, lsl #shift    (materialized value = ~(imm8 << shift))
+class ARM64ShiftedImmediate32 {
+public:
+    static ARM64ShiftedImmediate32 create(uint32_t value)
+    {
+        // Check if value can be represented as (imm8 << shift) where shift is 0, 8, 16, or 24
+        if (!value)
+            return { };
+
+        for (unsigned shift = 0; shift <= 24; shift += 8) {
+            uint32_t mask = 0xFFU << shift;
+            if ((value & ~mask) == 0) {
+                // All bits outside the shifted byte are zero
+                uint8_t imm = static_cast<uint8_t>(value >> shift);
+                if (imm != 0) // Must have non-zero immediate
+                    return ARM64ShiftedImmediate32(imm, shift);
+            }
+        }
+        return { };
+    }
+
+    bool isValid() const { return m_immediate.has_value(); }
+    uint8_t immediate() const
+    {
+        ASSERT(isValid());
+        return m_immediate.value();
+    }
+    uint8_t shift() const
+    {
+        ASSERT(isValid());
+        return m_shift;
+    }
+
+private:
+    ARM64ShiftedImmediate32() = default;
+
+    ARM64ShiftedImmediate32(uint8_t immediate, uint8_t shift)
+        : m_immediate(immediate)
+        , m_shift(shift)
+    {
+    }
+
+    std::optional<uint8_t> m_immediate;
+    uint8_t m_shift { 0 };
+};
+
+// ARM64ShiftedImmediateMSL32 encodes 32-bit values for ARM64 SIMD movi/mvni instructions
+// using MSL (Mask Shift Left) mode, which shifts an 8-bit immediate and fills with ones.
+//
+// MSL patterns:
+//   shift=8:  (imm8 << 8) | 0x000000FF
+//   shift=16: (imm8 << 16) | 0x0000FFFF
+//
+// Examples of encodable patterns:
+//   0x000042FF → immediate=0x42, shift=8   (movi with MSL #8)
+//   0x0042FFFF → immediate=0x42, shift=16  (movi with MSL #16)
+//   0xFFFFBD00 → ~0x000042FF → immediate=0x42, shift=8  (mvni with MSL #8)
+//   0xFFBD0000 → ~0x0042FFFF → immediate=0x42, shift=16 (mvni with MSL #16)
+//
+// Common use cases:
+//   Creating masks with specific byte set (e.g., 0x00FFFFFF for masking operations)
+//
+// This is used with:
+//   movi Vd.2S, #imm8, MSL #shift    (materialized value = (imm8 << shift) | mask)
+//   mvni Vd.2S, #imm8, MSL #shift    (materialized value = ~((imm8 << shift) | mask))
+class ARM64ShiftedImmediateMSL32 {
+public:
+    static ARM64ShiftedImmediateMSL32 create(uint32_t value)
+    {
+        // MSL #8: (imm8 << 8) | 0xFF
+        // Bits [7:0] must be 0xFF, bits [15:8] are imm8, bits [31:16] must be 0
+        if ((value >> 16) == 0 && (value & 0xFF) == 0xFF) {
+            uint8_t imm = static_cast<uint8_t>((value >> 8) & 0xFF);
+            if (imm != 0)
+                return ARM64ShiftedImmediateMSL32(imm, 8);
+        }
+
+        // MSL #16: (imm8 << 16) | 0xFFFF
+        // Bits [15:0] must be 0xFFFF, bits [23:16] are imm8, bits [31:24] must be 0
+        if ((value >> 24) == 0 && (value & 0xFFFF) == 0xFFFF) {
+            uint8_t imm = static_cast<uint8_t>((value >> 16) & 0xFF);
+            if (imm != 0)
+                return ARM64ShiftedImmediateMSL32(imm, 16);
+        }
+
+        return { };
+    }
+
+    bool isValid() const { return m_immediate.has_value(); }
+    uint8_t immediate() const
+    {
+        ASSERT(isValid());
+        return m_immediate.value();
+    }
+    uint8_t shift() const
+    {
+        ASSERT(isValid());
+        return m_shift;
+    }
+
+private:
+    ARM64ShiftedImmediateMSL32() = default;
+
+    ARM64ShiftedImmediateMSL32(uint8_t immediate, uint8_t shift)
+        : m_immediate(immediate)
+        , m_shift(shift)
+    {
+    }
+
+    std::optional<uint8_t> m_immediate;
+    uint8_t m_shift { 0 };
+};
+
+// ARM64ShiftedImmediate16 encodes 16-bit values that can be represented as a single byte
+// shifted left by 0 or 8 bits. This is used for ARM64 SIMD movi/mvni instructions.
+//
+// Examples of encodable patterns:
+//   0x0012 → immediate=0x12, shift=0
+//   0x1200 → immediate=0x12, shift=8
+//   0x00FF → immediate=0xFF, shift=0
+//   0xFF00 → immediate=0xFF, shift=8
+//
+// Non-encodable patterns:
+//   0x1234 → multiple non-zero bytes
+//
+// This is used with:
+//   movi Vd.4H, #imm8, lsl #shift    (materialized value = imm8 << shift)
+//   movi Vd.8H, #imm8, lsl #shift    (materialized value = imm8 << shift)
+//   mvni Vd.4H, #imm8, lsl #shift    (materialized value = ~(imm8 << shift))
+//   mvni Vd.8H, #imm8, lsl #shift    (materialized value = ~(imm8 << shift))
+class ARM64ShiftedImmediate16 {
+public:
+    static ARM64ShiftedImmediate16 create(uint16_t value)
+    {
+        // Check if value can be represented as (imm8 << shift) where shift is 0 or 8
+        if (!value)
+            return { };
+
+        for (unsigned shift = 0; shift <= 8; shift += 8) {
+            uint16_t mask = 0xFFU << shift;
+            if ((value & ~mask) == 0) {
+                // All bits outside the shifted byte are zero
+                uint8_t imm = static_cast<uint8_t>(value >> shift);
+                if (imm != 0) // Must have non-zero immediate
+                    return ARM64ShiftedImmediate16(imm, shift);
+            }
+        }
+        return { };
+    }
+
+    bool isValid() const { return m_immediate.has_value(); }
+    uint8_t immediate() const
+    {
+        ASSERT(isValid());
+        return m_immediate.value();
+    }
+    uint8_t shift() const
+    {
+        ASSERT(isValid());
+        return m_shift;
+    }
+
+private:
+    ARM64ShiftedImmediate16() = default;
+
+    ARM64ShiftedImmediate16(uint8_t immediate, uint8_t shift)
+        : m_immediate(immediate)
+        , m_shift(shift)
+    {
+    }
+
+    std::optional<uint8_t> m_immediate;
+    uint8_t m_shift { 0 };
+};
+
 ALWAYS_INLINE bool isValidARMThumb2Immediate(int64_t value)
 {
     if (value < 0)

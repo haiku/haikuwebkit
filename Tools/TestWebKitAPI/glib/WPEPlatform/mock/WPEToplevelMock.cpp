@@ -141,11 +141,6 @@ static void wpe_toplevel_mock_class_init(WPEToplevelMockClass* toplevelMockClass
     toplevelClass->get_preferred_buffer_formats = wpeToplevelMockGetPreferredBufferFormats;
 }
 
-WPEToplevel* wpeToplevelMockNew(WPEDisplayMock* display, guint maxViews)
-{
-    return WPE_TOPLEVEL(g_object_new(WPE_TYPE_TOPLEVEL_MOCK, "display", display, "max-views", maxViews, nullptr));
-}
-
 void wpeToplevelMockSwitchToScreen(WPEToplevelMock* toplevel, guint screen)
 {
     toplevel->priv->currentScreen = screen;

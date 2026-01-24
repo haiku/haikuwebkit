@@ -138,10 +138,10 @@ JSC_DEFINE_HOST_FUNCTION(temporalPlainDateTimeConstructorFuncCompare, (JSGlobalO
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    auto* one = TemporalPlainDateTime::from(globalObject, callFrame->argument(0), std::nullopt);
+    auto* one = TemporalPlainDateTime::from(globalObject, callFrame->argument(0), nullptr);
     RETURN_IF_EXCEPTION(scope, { });
 
-    auto* two = TemporalPlainDateTime::from(globalObject, callFrame->argument(1), std::nullopt);
+    auto* two = TemporalPlainDateTime::from(globalObject, callFrame->argument(1), nullptr);
     RETURN_IF_EXCEPTION(scope, { });
 
     return JSValue::encode(jsNumber(TemporalPlainDateTime::compare(one, two)));

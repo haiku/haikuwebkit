@@ -60,7 +60,7 @@ public:
 #if HAVE(MMAP)
     explicit MappedFileData(MmapSpan<uint8_t>&&);
 
-    WARN_UNUSED_RETURN std::span<uint8_t> leakHandle() { return m_fileData.leakSpan(); }
+    [[nodiscard]] std::span<uint8_t> leakHandle() { return m_fileData.leakSpan(); }
     explicit operator bool() const { return !!m_fileData; }
     size_t size() const { return m_fileData.span().size(); }
     std::span<const uint8_t> span() const LIFETIME_BOUND { return m_fileData.span(); }

@@ -123,8 +123,10 @@ void PendingDownload::willSendRedirectedRequest(WebCore::ResourceRequest&&, WebC
     if (linkedOnOrAfterBlockCrossOriginDownloads && isDownloadTriggeredWithDownloadAttribute() && isRedirectCrossOrigin(redirectRequest, redirectResponse)) {
         completionHandler(WebCore::ResourceRequest());
         m_networkLoad->cancel();
-        if (m_webProcessID && !redirectRequest.url().protocolIsJavaScript() && m_networkLoad->webFrameID() && m_networkLoad->webPageID())
-            m_networkLoad->networkProcess()->protectedWebProcessConnection(*m_webProcessID)->loadCancelledDownloadRedirectRequestInFrame(redirectRequest, *m_networkLoad->webFrameID(), *m_networkLoad->webPageID());
+        if (m_webProcessID && !redirectRequest.url().protocolIsJavaScript() && m_networkLoad->webFrameID() && m_networkLoad->webPageID()) {
+            if (RefPtr webProcessConnection = m_networkLoad->networkProcess()->protectedWebProcessConnection(*m_webProcessID))
+                webProcessConnection->loadCancelledDownloadRedirectRequestInFrame(redirectRequest, *m_networkLoad->webFrameID(), *m_networkLoad->webPageID());
+        }
         return;
     }
 

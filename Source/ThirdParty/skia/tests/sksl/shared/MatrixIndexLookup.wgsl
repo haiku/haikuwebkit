@@ -9,7 +9,7 @@ struct _GlobalUniforms {
   testMatrix3x3: mat3x3<f32>,
   testMatrix4x4: mat4x4<f32>,
 };
-@binding(0) @group(0) var<uniform> _globalUniforms: _GlobalUniforms;
+@group(0) @binding(0) var<uniform> _globalUniforms : _GlobalUniforms;
 fn test3x3_b() -> bool {
   {
     let matrix: mat3x3<f32> = _globalUniforms.testMatrix3x3;
@@ -62,10 +62,8 @@ fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
   {
     var _skTemp0: vec4<f32>;
     var _skTemp1: bool;
-    let _skTemp2 = test3x3_b();
-    if _skTemp2 {
-      let _skTemp3 = test4x4_b();
-      _skTemp1 = _skTemp3;
+    if test3x3_b() {
+      _skTemp1 = test4x4_b();
     } else {
       _skTemp1 = false;
     }

@@ -30,6 +30,7 @@
 #include "FocusController.h"
 #include "FrameDestructionObserverInlines.h"
 #include "FrameSelection.h"
+#include "HTMLDetailsElement.h"
 #include "HTMLDialogElement.h"
 #include "HTMLFrameElement.h"
 #include "HTMLIFrameElement.h"
@@ -587,6 +588,16 @@ ALWAYS_INLINE bool matchesModalPseudoClass(const Element& element)
 ALWAYS_INLINE bool matchesPopoverOpenPseudoClass(const Element& element)
 {
     return element.isPopoverShowing();
+}
+
+ALWAYS_INLINE bool matchesOpenPseudoClass(const Element& element)
+{
+    if (auto* dialog = dynamicDowncast<HTMLDialogElement>(element))
+        return dialog->isOpen();
+    if (auto* details = dynamicDowncast<HTMLDetailsElement>(element))
+        return details->isOpen();
+
+    return false;
 }
 
 ALWAYS_INLINE bool matchesUserInvalidPseudoClass(const Element& element)

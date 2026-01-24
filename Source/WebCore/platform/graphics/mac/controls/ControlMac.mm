@@ -226,16 +226,16 @@ static void performDrawingWithUnflippedContext(GraphicsContext& context, const F
 {
     auto adjustedRect = rect;
 
-    CGContextRef cgContext = context.platformContext();
-    CGContextStateSaver stateSaver(cgContext);
+    RetainPtr cgContext = context.platformContext();
+    CGContextStateSaver stateSaver(cgContext.get());
 
     // Move the coordinates origin to topleft of rect.
-    CGContextTranslateCTM(cgContext, adjustedRect.x(), adjustedRect.y());
+    CGContextTranslateCTM(cgContext.get(), adjustedRect.x(), adjustedRect.y());
     adjustedRect.setLocation(FloatPoint::zero());
 
     // Un-flip the coordinates.
-    CGContextTranslateCTM(cgContext, 0, adjustedRect.height());
-    CGContextScaleCTM(cgContext, 1, -1);
+    CGContextTranslateCTM(cgContext.get(), 0, adjustedRect.height());
+    CGContextScaleCTM(cgContext.get(), 1, -1);
 
     LocalCurrentGraphicsContext localContext(context, false);
     draw(adjustedRect);
@@ -280,8 +280,8 @@ void ControlMac::drawCellInternal(GraphicsContext& context, const FloatRect& rec
         return;
     }
 
-    auto *view = m_controlFactory->drawingView(rect, style);
-    drawCellInView(context, rect, cell, view);
+    RetainPtr view = m_controlFactory->drawingView(rect, style);
+    drawCellInView(context, rect, cell, view.get());
 }
 
 static void drawViewlessCellFocusRing(GraphicsContext& context, const FloatRect& rect, float deviceScaleFactor, const ControlStyle& style, NSCell *cell)
@@ -310,14 +310,14 @@ void ControlMac::drawCellFocusRingInternal(GraphicsContext& context, const Float
         return;
     }
 
-    auto *view = m_controlFactory->drawingView(rect, style);
-    drawCellFocusRingInView(context, rect, cell, view);
+    RetainPtr view = m_controlFactory->drawingView(rect, style);
+    drawCellFocusRingInView(context, rect, cell, view.get());
 }
 
 void ControlMac::drawCellFocusRing(GraphicsContext& context, const FloatRect& rect, float deviceScaleFactor, const ControlStyle& style, NSCell *cell)
 {
-    CGContextRef cgContext = context.platformContext();
-    CGContextStateSaver stateSaver(cgContext);
+    RetainPtr cgContext = context.platformContext();
+    CGContextStateSaver stateSaver(cgContext.get());
 
     CGFocusRingStyle focusRingStyle;
     NSInitializeCGFocusRingStyleForTime(NSFocusRingOnly, &focusRingStyle, std::numeric_limits<double>::max());
@@ -332,11 +332,11 @@ void ControlMac::drawCellFocusRing(GraphicsContext& context, const FloatRect& re
     // The color is expected to be opaque, since CoreGraphics will apply opacity when drawing (because opacity is normally animated).
     auto color = colorFromCocoaColor([NSColor keyboardFocusIndicatorColor]).opaqueColor();
     auto cgStyle = adoptCF(CGStyleCreateFocusRingWithColor(&focusRingStyle, cachedCGColor(color).get()));
-    CGContextSetStyle(cgContext, cgStyle.get());
+    CGContextSetStyle(cgContext.get(), cgStyle.get());
 
-    CGContextBeginTransparencyLayerWithRect(cgContext, rect, nullptr);
+    CGContextBeginTransparencyLayerWithRect(cgContext.get(), rect, nullptr);
     drawCellFocusRingInternal(context, rect, deviceScaleFactor, style, cell);
-    CGContextEndTransparencyLayer(cgContext);
+    CGContextEndTransparencyLayer(cgContext.get());
 }
 
 void ControlMac::drawCellOrFocusRing(GraphicsContext& context, const FloatRect& rect, float deviceScaleFactor, const ControlStyle& style, NSCell *cell, bool drawCell)
@@ -354,8 +354,8 @@ void ControlMac::drawCellOrFocusRing(GraphicsContext& context, const FloatRect& 
 
 void ControlMac::drawCell(GraphicsContext& context, const FloatRect& rect, float deviceScaleFactor, const ControlStyle& style, NSCell *cell, bool drawCell)
 {
-    auto platformContext = context.platformContext();
-    auto userCTM = AffineTransform(CGAffineTransformConcat(CGContextGetCTM(platformContext), CGAffineTransformInvert(CGContextGetBaseCTM(platformContext))));
+    RetainPtr platformContext = context.platformContext();
+    auto userCTM = AffineTransform(CGAffineTransformConcat(CGContextGetCTM(platformContext.get()), CGAffineTransformInvert(CGContextGetBaseCTM(platformContext.get()))));
     bool useImageBuffer = userCTM.xScale() != 1.0 || userCTM.yScale() != 1.0;
 
     if (!useImageBuffer) {
@@ -396,14 +396,14 @@ void ControlMac::drawListButton(GraphicsContext& context, const FloatRect& rect,
     if (!comboBoxImageBuffer)
         return;
 
-    CGContextRef cgContext = comboBoxImageBuffer->context().platformContext();
+    RetainPtr cgContext = comboBoxImageBuffer->context().platformContext();
 
     NSString *coreUIState;
     if (style.states.containsAny({ ControlStyle::State::Presenting, ControlStyle::State::ListButtonPressed }))
         coreUIState = (__bridge NSString *)kCUIStatePressed;
     else
         coreUIState = (__bridge NSString *)kCUIStateActive;
-    [[NSAppearance currentDrawingAppearance] _drawInRect:NSMakeRect(0, 0, comboBoxSize.width(), comboBoxSize.height()) context:cgContext options:@{
+    [[NSAppearance currentDrawingAppearance] _drawInRect:NSMakeRect(0, 0, comboBoxSize.width(), comboBoxSize.height()) context:cgContext.get() options:@{
         (__bridge NSString *)kCUIWidgetKey : (__bridge NSString *)kCUIWidgetButtonComboBox,
         (__bridge NSString *)kCUISizeKey : (__bridge NSString *)kCUISizeRegular,
         (__bridge NSString *)kCUIStateKey : coreUIState,
@@ -417,7 +417,7 @@ void ControlMac::drawListButton(GraphicsContext& context, const FloatRect& rect,
     auto& comboBoxButtonContext = comboBoxButtonImageBuffer->context();
 
     comboBoxButtonContext.scale(desiredComboBoxButtonSize.width() / comboBoxButtonSize.width());
-    comboBoxButtonContext.clipRoundedRect(FloatRoundedRect(FloatRect(FloatPoint::zero(), comboBoxButtonSize), FloatRoundedRect::Radii(comboBoxButtonCornerRadii)));
+    comboBoxButtonContext.clipRoundedRect(FloatRoundedRect(FloatRect(FloatPoint::zero(), comboBoxButtonSize), CornerRadii(comboBoxButtonCornerRadii)));
     comboBoxButtonContext.translate(comboBoxButtonInset.scaled(-1));
     comboBoxButtonContext.drawConsumingImageBuffer(WTF::move(comboBoxImageBuffer), FloatPoint::zero(), ImagePaintingOptions { ImageOrientation::Orientation::OriginBottomRight });
 

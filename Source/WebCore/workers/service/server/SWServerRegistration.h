@@ -133,7 +133,7 @@ private:
     void handleClientUnload();
     void softUpdate();
 
-    RefPtr<SWServer> protectedServer() const { return m_server.get(); }
+    RefPtr<SWServer> protectedServer() const { return m_server; }
 
     ServiceWorkerRegistrationKey m_registrationKey;
     ServiceWorkerUpdateViaCache m_updateViaCache;

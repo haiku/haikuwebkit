@@ -39,8 +39,8 @@ public:
     static Ref<InspectorShaderProgram> create(WebGLProgram&, InspectorCanvas&);
 
     const String& identifier() const { return m_identifier; }
-    InspectorCanvas& canvas() const { return m_canvas.get(); }
-    WebGLProgram& program() const { return m_program.get(); }
+    InspectorCanvas& canvas() const { return m_canvas; }
+    WebGLProgram& program() const { return m_program; }
 
     String requestShaderSource(Inspector::Protocol::Canvas::ShaderType);
     bool updateShader(Inspector::Protocol::Canvas::ShaderType, const String& source);

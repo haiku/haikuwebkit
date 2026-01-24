@@ -42,7 +42,7 @@ public:
 
     NavigationNavigationType navigationType() { return m_navigationType; };
     NavigationHistoryEntry& from() { return m_from; };
-    DOMPromise* finished();
+    DOMPromise& finished();
 
     void resolvePromise();
     void rejectPromise(Exception&, JSC::JSValue exceptionObject);

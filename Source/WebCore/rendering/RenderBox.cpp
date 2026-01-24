@@ -5077,7 +5077,7 @@ LayoutUnit RenderBox::offsetFromLogicalTopOfFirstPage() const
 
 LayoutBoxExtent RenderBox::scrollPaddingForViewportRect(const LayoutRect& viewportRect)
 {
-    return Style::extentForRect(style().scrollPaddingBox(), viewportRect, Style::ZoomNeeded { });
+    return Style::extentForRect(style().scrollPaddingBox(), viewportRect, style().usedZoomForLength());
 }
 
 LayoutUnit RenderBox::intrinsicLogicalWidth() const

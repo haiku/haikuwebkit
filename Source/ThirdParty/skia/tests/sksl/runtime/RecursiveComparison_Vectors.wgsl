@@ -4,7 +4,7 @@ struct _GlobalUniforms {
   colorGreen: vec4<f32>,
   colorRed: vec4<f32>,
 };
-@binding(0) @group(0) var<uniform> _globalUniforms: _GlobalUniforms;
+@group(0) @binding(0) var<uniform> _globalUniforms : _GlobalUniforms;
 fn test_same_vectors_bbffff(eq: bool, f1: f32, f2: f32, f3: f32, f4: f32) -> bool {
   {
     let one: f32 = f32(_globalUniforms.colorGreen.x + 1.0);
@@ -63,44 +63,37 @@ fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
       _skTemp10 = any(_1_a != _2_b);
     }
     if _skTemp10 {
-      let _skTemp11 = test_same_vectors_bbffff(NE, F42, ZM, ZP, F43);
-      _skTemp9 = !_skTemp11;
+      _skTemp9 = !test_same_vectors_bbffff(NE, F42, ZM, ZP, F43);
     } else {
       _skTemp9 = false;
     }
     if _skTemp9 {
-      let _skTemp12 = test_same_vectors_bbffff(NE, F42, NAN1, NAN2, F43);
-      _skTemp8 = _skTemp12;
+      _skTemp8 = test_same_vectors_bbffff(NE, F42, NAN1, NAN2, F43);
     } else {
       _skTemp8 = false;
     }
     if _skTemp8 {
-      let _skTemp13 = test_same_vectors_bbffff(EQ, F42, NAN1, NAN2, F43);
-      _skTemp7 = !_skTemp13;
+      _skTemp7 = !test_same_vectors_bbffff(EQ, F42, NAN1, NAN2, F43);
     } else {
       _skTemp7 = false;
     }
     if _skTemp7 {
-      let _skTemp14 = test_diff_vectors_bbffff(NE, F42, F43, F44, F45);
-      _skTemp6 = _skTemp14;
+      _skTemp6 = test_diff_vectors_bbffff(NE, F42, F43, F44, F45);
     } else {
       _skTemp6 = false;
     }
     if _skTemp6 {
-      let _skTemp15 = test_diff_vectors_bbffff(EQ, F42, F43, F44, F45);
-      _skTemp5 = !_skTemp15;
+      _skTemp5 = !test_diff_vectors_bbffff(EQ, F42, F43, F44, F45);
     } else {
       _skTemp5 = false;
     }
     if _skTemp5 {
-      let _skTemp16 = test_diff_vectors_bbffff(NE, NAN1, ZM, ZP, F42);
-      _skTemp4 = _skTemp16;
+      _skTemp4 = test_diff_vectors_bbffff(NE, NAN1, ZM, ZP, F42);
     } else {
       _skTemp4 = false;
     }
     if _skTemp4 {
-      let _skTemp17 = test_diff_vectors_bbffff(EQ, NAN1, ZM, ZP, F42);
-      _skTemp3 = !_skTemp17;
+      _skTemp3 = !test_diff_vectors_bbffff(EQ, NAN1, ZM, ZP, F42);
     } else {
       _skTemp3 = false;
     }

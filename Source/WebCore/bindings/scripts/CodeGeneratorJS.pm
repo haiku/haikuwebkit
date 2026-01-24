@@ -831,7 +831,7 @@ sub GenerateIndexedGetter
     
     my $itemGetterCondition;
     my $nativeToJSConversion;
-    if ( $indexedGetterOperation->extendedAttributes->{RaisesException}) {
+    if ($indexedGetterOperation->extendedAttributes->{RaisesException}) {
         $itemGetterCondition = "$indexExpression < thisObject->wrapped().length()";
         $nativeToJSConversion = NativeToJSValueUsingPointers($indexedGetterOperation, $interface, "thisObject->wrapped().${indexedGetterFunctionName}(${indexExpression})", "*thisObject->globalObject()");
     } else {
@@ -839,7 +839,9 @@ sub GenerateIndexedGetter
         # We can thus call item() right away and do a null check instead of first checking if `index < length` and then calling
         # item(). This avoids duplicates bounds check, which is especially useful when `length()` is virtual, like on NodeList.
         $itemGetterCondition = "auto item = thisObject->wrapped().${indexedGetterFunctionName}(${indexExpression}); !!item";
-        $nativeToJSConversion = NativeToJSValueUsingPointers($indexedGetterOperation, $interface, "WTF::move(item)", "*thisObject->globalObject()");
+        my $IDLType = GetIDLType($interface, $indexedGetterOperation->type);
+        my $extract = "${IDLType}::extractValueFromNullable(WTF::move(item))";
+        $nativeToJSConversion = NativeToJSValueUsingPointers($indexedGetterOperation, $interface, $extract, "*thisObject->globalObject()");
     }
     return ($itemGetterCondition, $nativeToJSConversion, StringifyJSCAttributes(\@attributes));
 }
@@ -873,7 +875,7 @@ sub GenerateNamedGetter
     my @attributes = ();
     push(@attributes, "JSC::PropertyAttribute::ReadOnly") if !GetNamedSetterOperation($interface) && !$interface->extendedAttributes->{Plugin};
     push(@attributes, "JSC::PropertyAttribute::DontEnum") if $interface->extendedAttributes->{LegacyUnenumerableNamedProperties};
-    
+
     my $nativeToJSConversion = NativeToJSValueUsingPointers($namedGetterOperation, $interface, $namedPropertyExpression, "*thisObject->globalObject()");
     
     return ($nativeToJSConversion, StringifyJSCAttributes(\@attributes));
@@ -966,7 +968,7 @@ sub GenerateGetOwnPropertySlot
         push(@$outputArray, "        if (auto namedProperty = accessVisibleNamedProperty<${overrideBuiltin}>(*lexicalGlobalObject, *thisObject, propertyName, getterFunctor)) {\n");
         
         # NOTE: GenerateNamedGetter implements steps 2.1 - 2.10.
-        
+
         my ($nativeToJSConversion, $attributeString) = GenerateNamedGetter($interface, $namedGetterOperation, "WTF::move(namedProperty.value())");
         
         push(@$outputArray, "            auto value = ${nativeToJSConversion};\n");
@@ -1176,7 +1178,7 @@ sub GenerateInvokeIndexedPropertySetter
     push(@$outputArray, $indent . "    return true;\n");
 
     my $indexedSetterFunctionName = $indexedSetterOperation->name || "setItem";
-    my $nativeValuePassExpression = PassArgumentExpression("nativeValue.releaseReturnValue()", $argument);
+    my $nativeValuePassExpression = "nativeValue.releaseReturnValue()";
     my $functionString = "thisObject->wrapped().${indexedSetterFunctionName}(${indexExpression}, ${nativeValuePassExpression})";
     push(@$outputArray, $indent . "invokeFunctorPropagatingExceptionIfNecessary(*lexicalGlobalObject, throwScope, [&] { return ${functionString}; });\n");
 }
@@ -1194,7 +1196,7 @@ sub GenerateInvokeNamedPropertySetter
     push(@$outputArray, $indent . "    return true;\n");
 
     my $namedSetterFunctionName = $namedSetterOperation->name || "setNamedItem";
-    my $nativeValuePassExpression = PassArgumentExpression("nativeValue.releaseReturnValue()", $argument);
+    my $nativeValuePassExpression = "nativeValue.releaseReturnValue()";
     my $functionString = "thisObject->wrapped().${namedSetterFunctionName}(propertyNameToString(propertyName), ${nativeValuePassExpression})";
     push(@$outputArray, $indent . "invokeFunctorPropagatingExceptionIfNecessary(*lexicalGlobalObject, throwScope, [&] { return ${functionString}; });\n");
 }
@@ -1933,24 +1935,6 @@ sub GetDictionaryMemberDefaultValueFunctor
     }
 
     return undef;
-}
-
-sub PassArgumentExpression
-{
-    my ($name, $context) = @_;
-
-    my $type = $context->type;
-
-    if ($codeGenerator->IsPromiseType($type) || $codeGenerator->IsCallbackInterface($type) || $codeGenerator->IsCallbackFunction($type)) {
-        return "${name}";
-    }
-
-    if ($codeGenerator->IsInterfaceType($type)) {
-        return "${name}" if $type->isNullable || (ref($context) eq "IDLArgument" && $context->isOptional);
-        return "*${name}";
-    }
-
-    return "${name}";
 }
 
 sub MangleAttributeOrFunctionName
@@ -2817,14 +2801,527 @@ sub GenerateDictionariesHeaderContent
     return $result;
 }
 
+sub GenerateDictionaryChecks
+{
+    my ($dictionary, $dictionaries, $className, $interface) = @_;
+
+    AddToImplIncludes("<wtf/IsIncreasing.h>");
+    AddToImplIncludes("<type_traits>");
+
+    my $result = "";
+
+    # GCC and Clang>=18 are less generous with their interpretation of "Use of the offsetof macro
+    # with a type other than a standard-layout class is conditionally-supported".
+    $result .= "IGNORE_WARNINGS_BEGIN(\"invalid-offsetof\")\n\n";
+
+    $result .= "static_assert(std::is_aggregate_v<${className}>);\n";
+    $result .= "static_assert(IsIncreasing<\n";
+    $result .= "      0\n";
+    foreach my $member (@{$dictionary->members}) {
+        my $conditional = $member->extendedAttributes->{Conditional};
+        my $name = $member->name;
+
+        if ($conditional) {
+            my $conditionalString = $codeGenerator->GenerateConditionalStringFromAttributeValue($conditional);
+            $result .= "#if ${conditionalString}\n";
+        }
+
+        $result .= "    , offsetof(${className}, ${name})\n";
+
+        if ($conditional) {
+            $result .= "#endif\n" ;
+        }
+    }
+    $result .= ">);\n\n";
+
+    $result .= "IGNORE_WARNINGS_END\n\n";
+
+    return $result;
+}
+
+sub GenerateDictionaryImplementationMemberConversion
+{
+    my ($typeScope, $name, $dictionary, $className, $member, $initializationIndent) = @_;
+
+    $member->default("undefined") if $member->type->name eq "any" and !defined($member->default); # Use undefined as default value for member of type 'any' unless specified otherwise.
+    my $conditional = $member->extendedAttributes->{Conditional};
+
+    my $type = $member->type;
+    AddToImplIncludesForIDLType($type, $conditional);
+
+    my $memberConversion = "";
+    my @initialization = ();
+
+    if ($conditional) {
+        my $conditionalString = $codeGenerator->GenerateConditionalStringFromAttributeValue($conditional);
+        $memberConversion .= "#if ${conditionalString}\n";
+        push(@initialization, "#if ${conditionalString}\n");
+    }
+
+    # 4.1. Let key be the identifier of member.
+    my $key = $member->name;
+    my $implementedAsKey = $member->extendedAttributes->{ImplementedAs} || $key;
+
+    my $IDLType = GetIDLType($typeScope, $type);
+    my $adjustedIDLType = (!$member->isRequired && !defined $member->default) ? "IDLOptional<${IDLType}>" : $IDLType;
+
+    my $needsRuntimeCheck = NeedsRuntimeCheck($dictionary, $member);
+    my $indent = "";
+
+    # If there is a runtime check required, we wrap the whole conversion in a lambda to allow
+    # for the fact that we can't default construct ConversionResults.
+    if ($needsRuntimeCheck) {
+        my $runtimeEnableConditionalString = GenerateRuntimeEnableConditionalString($dictionary, $member, "&lexicalGlobalObject");
+
+        $memberConversion .= "    auto ${implementedAsKey}ConversionResult = [&]() -> ConversionResult<${adjustedIDLType}> {\n";
+        $memberConversion .= "        if (${runtimeEnableConditionalString}) {\n";
+        $indent = "        ";
+    }
+
+    # 4.2. Let value be an ECMAScript value, depending on Type(V):
+    $memberConversion .= "${indent}    JSValue ${key}Value;\n";
+    $memberConversion .= "${indent}    if (isNullOrUndefined)\n";
+    $memberConversion .= "${indent}        ${key}Value = jsUndefined();\n";
+    $memberConversion .= "${indent}    else {\n";
+    $memberConversion .= "${indent}        ${key}Value = object->get(&lexicalGlobalObject, Identifier::fromString(vm, \"${key}\"_s));\n";
+    $memberConversion .= "${indent}        RETURN_IF_EXCEPTION(throwScope, ConversionResultException { });\n";
+    $memberConversion .= "${indent}    }\n";
+
+    # Steps are handled a bit out of order relative to the spec text here to avoid extra branches.
+    #
+    # Spec has it in this order:
+    #   4.3. If value is not undefined, then:
+    #   4.4. Otherwise, if value is undefined but the dictionary member has a default value, then:
+    #   4.5. Otherwise, if value is undefined and the dictionary member is a required dictionary member, then throw a TypeError.
+    #
+    # But we are going to handle step 4.5 first.
+
+    # 4.5. [...] if value is undefined and the dictionary member is a required dictionary member, then throw a TypeError.
+    if ($member->isRequired) {
+        $memberConversion .= "${indent}    if (${key}Value.isUndefined()) {\n";
+        $memberConversion .= "${indent}        throwRequiredMemberTypeError(lexicalGlobalObject, throwScope, \"". $member->name ."\"_s, \"$name\"_s, \"". GetTypeNameForDisplayInException($type) ."\"_s);\n";
+        $memberConversion .= "${indent}        return ConversionResultException { };\n";
+        $memberConversion .= "${indent}    }\n";
+    }
+
+    my $optional = !$member->isRequired;
+    my $defaultValueFunctor = GetDictionaryMemberDefaultValueFunctor($typeScope, $member);
+
+    my $conversion = JSValueToNative($typeScope, $member, "${key}Value", $conditional, "&lexicalGlobalObject", "lexicalGlobalObject", "", "*jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)", undef, undef, $optional, $defaultValueFunctor);
+
+    if ($needsRuntimeCheck) {
+        $memberConversion .= "            return $conversion;\n";
+        $memberConversion .= "        } else {\n";
+        $memberConversion .= "            return ConversionResult<${adjustedIDLType}> { Converter<${adjustedIDLType}>::ReturnType { } };\n";
+        $memberConversion .= "        }\n";
+        $memberConversion .= "    }();\n";
+    } else {
+        $memberConversion .= "    auto ${implementedAsKey}ConversionResult = $conversion;\n";
+    }
+    $memberConversion .= "    if (${implementedAsKey}ConversionResult.hasException(throwScope)) [[unlikely]]\n";
+    $memberConversion .= "        return ConversionResultException { };\n";
+
+    push(@initialization, "${initializationIndent}${implementedAsKey}ConversionResult.releaseReturnValue(),\n");
+
+    if ($conditional) {
+        push(@initialization, "#endif\n");
+        $memberConversion .= "#endif\n" ;
+    }
+
+    return ($memberConversion, @initialization);
+}
+
+sub GenerateConvertDictionary
+{
+    my ($dictionary, $dictionaries, $className, $interface) = @_;
+
+    my $name = $dictionary->type->name;
+    my $typeScope = $interface || $dictionary;
+
+    my $result = "";
+
+    # https://webidl.spec.whatwg.org/#es-dictionary
+    $result .= "template<> ConversionResult<IDLDictionary<${className}>> convertDictionary<$className>(JSGlobalObject& lexicalGlobalObject, JSValue value)\n";
+    $result .= "{\n";
+    $result .= "    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);\n";
+    $result .= "    auto throwScope = DECLARE_THROW_SCOPE(vm);\n";
+    $result .= "    bool isNullOrUndefined = value.isUndefinedOrNull();\n";
+    $result .= "    auto* object = isNullOrUndefined ? nullptr : value.getObject();\n";
+
+    # 1. If Type(V) is not Undefined, Null or Object, then throw a TypeError.
+    $result .= "    if (!isNullOrUndefined && !object) [[unlikely]] {\n";
+    $result .= "        throwTypeError(&lexicalGlobalObject, throwScope);\n";
+    $result .= "        return ConversionResultException { };\n";
+    $result .= "    }\n";
+
+    my @aggregateInitialization = ();
+    my $numberOfDictionaries = scalar(@$dictionaries);
+
+    # 4. For each dictionary dictionary in dictionaries, in order:
+    for (my $i = 0; $i < $numberOfDictionaries; $i++) {
+        my $dictionary = @$dictionaries[$i];
+        my $dictionaryClassName = GetDictionaryClassName($dictionary->type, $interface);
+
+        my $initializationIndentForName = "    " x ($numberOfDictionaries - $i);
+        my $initializationIndent = "    " . $initializationIndentForName;
+
+        my @initialization = ();
+        if ($i == ($numberOfDictionaries - 1)) {
+            push(@initialization, "${dictionaryClassName} {\n");
+        } else {
+            push(@initialization, "${initializationIndentForName}${dictionaryClassName} {\n");
+        }
+        push(@initialization, @aggregateInitialization);
+
+        my @conversions = ();
+
+        foreach my $member (@{$dictionary->members}) {
+            my ($memberConversion, @memberInitialization) = GenerateDictionaryImplementationMemberConversion($typeScope, $name, $dictionary, $className, $member, $initializationIndent);
+
+            push(@conversions, { name => $member->name, conversion => $memberConversion });
+            push(@initialization, @memberInitialization);
+        }
+
+        # Emit conversions for each dictionary member declared on dictionary in *lexicographical* order.
+        my @sortedConversions = sort { $a->{name} cmp $b->{name} } @conversions;
+        $result .= join("", map { $_->{conversion} } @sortedConversions);
+
+        if ($i == ($numberOfDictionaries - 1)) {
+            push(@initialization, "${initializationIndentForName}};\n");
+        } else {
+            push(@initialization, "${initializationIndentForName}},\n");
+        }
+
+        # Emit initialization for each dictionary member declared on dictionary in *declaration* order.
+        @aggregateInitialization = @initialization;
+    }
+
+    # 5. Return dict.
+    $result .= "    return " . join("", @aggregateInitialization);
+    $result .= "}\n\n";
+
+    return $result
+}
+
+sub GenerateConvertDictionaryForLegacyNativeDictionaryRequiredInterfaceNullability
+{
+    my ($dictionary, $dictionaries, $className, $interface) = @_;
+
+    my $name = $dictionary->type->name;
+    my $typeScope = $interface || $dictionary;
+
+    my $result = "";
+
+    # https://webidl.spec.whatwg.org/#es-dictionary
+    $result .= "template<> ConversionResult<IDLDictionary<${className}>> convertDictionary<$className>(JSGlobalObject& lexicalGlobalObject, JSValue value)\n";
+    $result .= "{\n";
+    $result .= "    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);\n";
+    $result .= "    auto throwScope = DECLARE_THROW_SCOPE(vm);\n";
+    $result .= "    bool isNullOrUndefined = value.isUndefinedOrNull();\n";
+    $result .= "    auto* object = isNullOrUndefined ? nullptr : value.getObject();\n";
+
+    # 1. If Type(V) is not Undefined, Null or Object, then throw a TypeError.
+    $result .= "    if (!isNullOrUndefined && !object) [[unlikely]] {\n";
+    $result .= "        throwTypeError(&lexicalGlobalObject, throwScope);\n";
+    $result .= "        return ConversionResultException { };\n";
+    $result .= "    }\n";
+
+    # 2. Let dict be an empty dictionary value of type D; every dictionary member is initially considered to be not present.
+    $result .= "    $className result;\n";
+
+    # 3. Let dictionaries be a list consisting of D and all of D’s inherited dictionaries, in order from least to most derived.
+    #
+    # Done above so it can be shared with the `convertDictionaryToJS` implementation.
+
+    # 4. For each dictionary dictionary in dictionaries, in order:
+    foreach my $dictionary (@$dictionaries) {
+        # For each dictionary member member declared on dictionary, in lexicographical order:
+        my @sortedMembers = sort { $a->name cmp $b->name } @{$dictionary->members};
+        foreach my $member (@sortedMembers) {
+            $member->default("undefined") if $member->type->name eq "any" and !defined($member->default); # Use undefined as default value for member of type 'any' unless specified otherwise.
+            my $conditional = $member->extendedAttributes->{Conditional};
+
+            my $type = $member->type;
+            AddToImplIncludesForIDLType($type, $conditional);
+
+            if ($conditional) {
+                my $conditionalString = $codeGenerator->GenerateConditionalStringFromAttributeValue($conditional);
+                $result .= "#if ${conditionalString}\n";
+            }
+
+            my $needsRuntimeCheck = NeedsRuntimeCheck($dictionary, $member);
+            my $indent = "";
+            if ($needsRuntimeCheck) {
+                my $runtimeEnableConditionalString = GenerateRuntimeEnableConditionalString($dictionary, $member, "&lexicalGlobalObject");
+                $result .= "    if (${runtimeEnableConditionalString}) {\n";
+                $indent = "    ";
+            }
+
+            # 4.1. Let key be the identifier of member.
+            my $key = $member->name;
+            my $implementedAsKey = $member->extendedAttributes->{ImplementedAs} || $key;
+
+            # 4.2. Let value be an ECMAScript value, depending on Type(V):
+            $result .= "${indent}    JSValue ${key}Value;\n";
+            $result .= "${indent}    if (isNullOrUndefined)\n";
+            $result .= "${indent}        ${key}Value = jsUndefined();\n";
+            $result .= "${indent}    else {\n";
+            $result .= "${indent}        ${key}Value = object->get(&lexicalGlobalObject, Identifier::fromString(vm, \"${key}\"_s));\n";
+            $result .= "${indent}        RETURN_IF_EXCEPTION(throwScope, ConversionResultException { });\n";
+            $result .= "${indent}    }\n";
+
+            my $IDLType = GetIDLType($typeScope, $type);
+
+            #   4.3. If value is not undefined, then:
+            #   4.4. Otherwise, if value is undefined but the dictionary member has a default value, then:
+            #   4.5. Otherwise, if value is undefined and the dictionary member is a required dictionary member, then throw a TypeError.
+
+            if ($member->isRequired) {
+                my $conversion = JSValueToNative($typeScope, $member, "${key}Value", $conditional, "&lexicalGlobalObject", "lexicalGlobalObject", "", "*jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)", undef, undef, undef, undef);
+
+                $result .= "${indent}    if (${key}Value.isUndefined()) {\n";
+                $result .= "${indent}        throwRequiredMemberTypeError(lexicalGlobalObject, throwScope, \"". $member->name ."\"_s, \"$name\"_s, \"". GetTypeNameForDisplayInException($type) ."\"_s);\n";
+                $result .= "${indent}        return ConversionResultException { };\n";
+                $result .= "${indent}    }\n";
+
+                $result .= "${indent}    auto ${implementedAsKey}ConversionResult = ${conversion};\n";
+                $result .= "${indent}    if (${implementedAsKey}ConversionResult.hasException(throwScope)) [[unlikely]]\n";
+                $result .= "${indent}        return ConversionResultException { };\n";
+                $result .= "${indent}    result.$implementedAsKey = ${implementedAsKey}ConversionResult.releaseReturnValue();\n";
+            } elsif (defined $member->default) {
+                my $defaultValueFunctor = GetDictionaryMemberDefaultValueFunctor($typeScope, $member);
+                my $conversion = JSValueToNative($typeScope, $member, "${key}Value", $conditional, "&lexicalGlobalObject", "lexicalGlobalObject", "", "*jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)", undef, undef, 1, $defaultValueFunctor);
+
+                $result .= "${indent}    auto ${implementedAsKey}ConversionResult = ${conversion};\n";
+                $result .= "${indent}    if (${implementedAsKey}ConversionResult.hasException(throwScope)) [[unlikely]]\n";
+                $result .= "${indent}        return ConversionResultException { };\n";
+                $result .= "${indent}    result.$implementedAsKey = ${implementedAsKey}ConversionResult.releaseReturnValue();\n";
+            } else {
+                if ($member->extendedAttributes->{PermissiveInvalidValue} && $codeGenerator->IsEnumType($type)) {
+                    # For enum members with PermissiveInvalidValue, use parseEnumeration directly
+                    # which returns std::optional and doesn't throw on invalid values.
+                    my $className = GetEnumerationClassName($type, $typeScope);
+                    $result .= "${indent}    if (!${key}Value.isUndefined()) {\n";
+                    $result .= "${indent}        auto ${implementedAsKey}ParseResult = parseEnumeration<${className}>(lexicalGlobalObject, ${key}Value);\n";
+                    $result .= "${indent}        RETURN_IF_EXCEPTION(throwScope, ConversionResultException { });\n";
+                    $result .= "${indent}        if (${implementedAsKey}ParseResult)\n";
+                    $result .= "${indent}            result.$implementedAsKey = *${implementedAsKey}ParseResult;\n";
+                    $result .= "${indent}    }\n";
+                } else {
+                    my $defaultValueFunctor = GetDictionaryMemberDefaultValueFunctor($typeScope, $member);
+                    my $conversion = JSValueToNative($typeScope, $member, "${key}Value", $conditional, "&lexicalGlobalObject", "lexicalGlobalObject", "", "*jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)", undef, undef, undef, undef);
+
+                    $result .= "${indent}    if (!${key}Value.isUndefined()) {\n";
+                    $result .= "${indent}        auto ${implementedAsKey}ConversionResult = ${conversion};\n";
+                    $result .= "${indent}        if (${implementedAsKey}ConversionResult.hasException(throwScope)) [[unlikely]]\n";
+                    $result .= "${indent}            return ConversionResultException { };\n";
+                    $result .= "${indent}        result.$implementedAsKey = ${implementedAsKey}ConversionResult.releaseReturnValue();\n";
+                    $result .= "${indent}    }\n";
+                }
+            }
+
+            if ($needsRuntimeCheck) {
+                $result .= "    }\n";
+            }
+
+            $result .= "#endif\n" if $conditional;
+        }
+    }
+
+    # 5. Return dict.
+    $result .= "    return result;\n";
+    $result .= "}\n\n";
+
+    return $result
+}
+
+sub GenerateConvertDictionaryToJS
+{
+    my ($dictionary, $dictionaries, $className, $interface) = @_;
+
+    AddToImplIncludes("JSDOMGlobalObject.h");
+    AddToImplIncludes("<JavaScriptCore/ObjectConstructor.h>");
+
+    my $hasUnconditionalMember = 0;
+    my $typeScope = $interface || $dictionary;
+
+    my $result = "";
+
+    $result .= "JSC::JSObject* convertDictionaryToJS(JSC::JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, const ${className}& dictionary)\n";
+    $result .= "{\n";
+    $result .= "    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);\n";
+    $result .= "    auto throwScope = DECLARE_THROW_SCOPE(vm);\n\n";
+
+    # 1. Let O be ! ObjectCreate(%ObjectPrototype%).
+    $result .= "    auto result = constructEmptyObject(&lexicalGlobalObject, globalObject.objectPrototype());\n\n";
+
+    # 2. Let dictionaries be a list consisting of D and all of D’s inherited dictionaries,
+    #    in order from least to most derived.
+    #
+    # Done above so it can be shared with the `convertDictionary` implementation.
+
+    # 3. For each dictionary dictionary in dictionaries, in order:
+    foreach my $dictionary (@$dictionaries) {
+        # 3.1. For each dictionary member member declared on dictionary, in lexicographical order:
+        my @sortedMembers = sort { $a->name cmp $b->name } @{$dictionary->members};
+        foreach my $member (@sortedMembers) {
+            my $key = $member->name;
+            my $implementedAsKey = $member->extendedAttributes->{ImplementedAs} || $key;
+            my $valueExpression = "dictionary.${implementedAsKey}";
+
+            my $conditional = $member->extendedAttributes->{Conditional};
+            if ($conditional) {
+                my $conditionalString = $codeGenerator->GenerateConditionalStringFromAttributeValue($conditional);
+                $result .= "#if ${conditionalString}\n";
+            } else {
+                $hasUnconditionalMember = 1;
+            }
+
+            # 1. Let key be the identifier of member.
+            # 2. If the dictionary member named key is present in V, then:
+                # 1. Let idlValue be the value of member on V.
+                # 2. Let value be the result of converting idlValue to an ECMAScript value.
+                # 3. Perform ! CreateDataProperty(O, key, value).
+
+            my $needsRuntimeCheck = NeedsRuntimeCheck($dictionary, $member);
+            my $indent = "";
+            if ($needsRuntimeCheck) {
+                my $runtimeEnableConditionalString = GenerateRuntimeEnableConditionalString($dictionary, $member, "&globalObject");
+                $result .= "    if (${runtimeEnableConditionalString}) {\n";
+                $indent = "    ";
+            }
+
+            if (!$member->isRequired && not defined $member->default) {
+                my $IDLType = GetIDLType($typeScope, $member->type);
+                my $conversionExpression = NativeToJSValueUsingReferences($member, $typeScope, "${IDLType}::extractValueFromNullable(${valueExpression})", "globalObject");
+
+                $result .= "${indent}    if (!${IDLType}::isNullValue(${valueExpression})) {\n";
+                $result .= "${indent}        auto ${key}Value = ${conversionExpression};\n";
+                $result .= "${indent}        RETURN_IF_EXCEPTION(throwScope, { });\n";
+                $result .= "${indent}        result->putDirect(vm, JSC::Identifier::fromString(vm, \"${key}\"_s), ${key}Value);\n";
+                $result .= "${indent}    }\n";
+            } else {
+                my $conversionExpression = NativeToJSValueUsingReferences($member, $typeScope, $valueExpression, "globalObject");
+
+                $result .= "${indent}    auto ${key}Value = ${conversionExpression};\n";
+                $result .= "${indent}    RETURN_IF_EXCEPTION(throwScope, { });\n";
+                $result .= "${indent}    result->putDirect(vm, JSC::Identifier::fromString(vm, \"${key}\"_s), ${key}Value);\n";
+            }
+            if ($needsRuntimeCheck) {
+                $result .= "    }\n";
+            }
+
+            $result .= "#endif\n" if $conditional;
+        }
+    }
+
+    if (!$hasUnconditionalMember) {
+        $result .= "    UNUSED_PARAM(dictionary);\n";
+        $result .= "    UNUSED_VARIABLE(throwScope);\n\n";
+    }
+
+    $result .= "    return result;\n";
+    $result .= "}\n\n";
+
+    return $result
+}
+
+sub GenerateConvertDictionaryToJSForLegacyNativeDictionaryRequiredInterfaceNullability
+{
+    my ($dictionary, $dictionaries, $className, $interface) = @_;
+
+    AddToImplIncludes("JSDOMGlobalObject.h");
+    AddToImplIncludes("<JavaScriptCore/ObjectConstructor.h>");
+
+    my $hasUnconditionalMember = 0;
+    my $typeScope = $interface || $dictionary;
+
+    my $result = "";
+
+    $result .= "JSC::JSObject* convertDictionaryToJS(JSC::JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, const ${className}& dictionary)\n";
+    $result .= "{\n";
+    $result .= "    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);\n";
+    $result .= "    auto throwScope = DECLARE_THROW_SCOPE(vm);\n\n";
+
+    # 1. Let O be ! ObjectCreate(%ObjectPrototype%).
+    $result .= "    auto result = constructEmptyObject(&lexicalGlobalObject, globalObject.objectPrototype());\n\n";
+
+    # 2. Let dictionaries be a list consisting of D and all of D’s inherited dictionaries,
+    #    in order from least to most derived.
+    #
+    # Done above so it can be shared with the `convertDictionary` implementation.
+
+    # 3. For each dictionary dictionary in dictionaries, in order:
+    foreach my $dictionary (@$dictionaries) {
+        # 3.1. For each dictionary member member declared on dictionary, in lexicographical order:
+        my @sortedMembers = sort { $a->name cmp $b->name } @{$dictionary->members};
+        foreach my $member (@sortedMembers) {
+            my $key = $member->name;
+            my $implementedAsKey = $member->extendedAttributes->{ImplementedAs} || $key;
+            my $valueExpression = "dictionary.${implementedAsKey}";
+
+            my $conditional = $member->extendedAttributes->{Conditional};
+            if ($conditional) {
+                my $conditionalString = $codeGenerator->GenerateConditionalStringFromAttributeValue($conditional);
+                $result .= "#if ${conditionalString}\n";
+            } else {
+                $hasUnconditionalMember = 1;
+            }
+
+            # 1. Let key be the identifier of member.
+            # 2. If the dictionary member named key is present in V, then:
+                # 1. Let idlValue be the value of member on V.
+                # 2. Let value be the result of converting idlValue to an ECMAScript value.
+                # 3. Perform ! CreateDataProperty(O, key, value).
+
+            my $needsRuntimeCheck = NeedsRuntimeCheck($dictionary, $member);
+            my $indent = "";
+            if ($needsRuntimeCheck) {
+                my $runtimeEnableConditionalString = GenerateRuntimeEnableConditionalString($dictionary, $member, "&globalObject");
+                $result .= "    if (${runtimeEnableConditionalString}) {\n";
+                $indent = "    ";
+            }
+
+            if (!$member->isRequired && not defined $member->default) {
+                my $IDLType = GetIDLType($typeScope, $member->type);
+                my $conversionExpression = NativeToJSValueUsingReferences($member, $typeScope, "${IDLType}::extractValueFromNullable(${valueExpression})", "globalObject");
+
+                $result .= "${indent}    if (!${IDLType}::isNullValue(${valueExpression})) {\n";
+                $result .= "${indent}        auto ${key}Value = ${conversionExpression};\n";
+                $result .= "${indent}        RETURN_IF_EXCEPTION(throwScope, { });\n";
+                $result .= "${indent}        result->putDirect(vm, JSC::Identifier::fromString(vm, \"${key}\"_s), ${key}Value);\n";
+                $result .= "${indent}    }\n";
+            } else {
+                my $conversionExpression = NativeToJSValueUsingReferencesWrappingInterfacesInNullable($member, $typeScope, $valueExpression, "globalObject");
+
+                $result .= "${indent}    auto ${key}Value = ${conversionExpression};\n";
+                $result .= "${indent}    RETURN_IF_EXCEPTION(throwScope, { });\n";
+                $result .= "${indent}    result->putDirect(vm, JSC::Identifier::fromString(vm, \"${key}\"_s), ${key}Value);\n";
+            }
+            if ($needsRuntimeCheck) {
+                $result .= "    }\n";
+            }
+
+            $result .= "#endif\n" if $conditional;
+        }
+    }
+
+    if (!$hasUnconditionalMember) {
+        $result .= "    UNUSED_PARAM(dictionary);\n";
+        $result .= "    UNUSED_VARIABLE(throwScope);\n\n";
+    }
+
+    $result .= "    return result;\n";
+    $result .= "}\n\n";
+
+    return $result
+}
+
 sub GenerateDictionaryImplementationContent
 {
     my ($dictionary, $className, $interface) = @_;
 
     my $result = "";
-
-    my $name = $dictionary->type->name;
-    my $typeScope = $interface || $dictionary;
 
     my $conditional = $dictionary->extendedAttributes->{Conditional};
     if ($conditional) {
@@ -2832,7 +3329,6 @@ sub GenerateDictionaryImplementationContent
         $result .= "#if ${conditionalString}\n\n";
     }
 
-    # FIXME: A little ugly to have this be a side effect instead of a return value.
     AddToImplIncludes("<JavaScriptCore/JSCInlines.h>");
     AddToImplIncludes("JSDOMConvertDictionary.h");
 
@@ -2846,209 +3342,24 @@ sub GenerateDictionaryImplementationContent
         $parentType = $parentDictionary->parentType;
     }
 
+    if (!$dictionary->extendedAttributes->{LegacyNativeDictionaryRequiredInterfaceNullability}) {
+        $result .= GenerateDictionaryChecks($dictionary, \@dictionaries, $className, $interface);
+    }
+
     if (ShouldGenerateConvertDictionary($dictionary)) {
-        # https://webidl.spec.whatwg.org/#es-dictionary
-        $result .= "template<> ConversionResult<IDLDictionary<${className}>> convertDictionary<$className>(JSGlobalObject& lexicalGlobalObject, JSValue value)\n";
-        $result .= "{\n";
-        $result .= "    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);\n";
-        $result .= "    auto throwScope = DECLARE_THROW_SCOPE(vm);\n";
-        $result .= "    bool isNullOrUndefined = value.isUndefinedOrNull();\n";
-        $result .= "    auto* object = isNullOrUndefined ? nullptr : value.getObject();\n";
-
-        # 1. If Type(V) is not Undefined, Null or Object, then throw a TypeError.
-        $result .= "    if (!isNullOrUndefined && !object) [[unlikely]] {\n";
-        $result .= "        throwTypeError(&lexicalGlobalObject, throwScope);\n";
-        $result .= "        return ConversionResultException { };\n";
-        $result .= "    }\n";
-
-        # 2. Let dict be an empty dictionary value of type D; every dictionary member is initially considered to be not present.
-        $result .= "    $className result;\n";
-
-        # 3. Let dictionaries be a list consisting of D and all of D’s inherited dictionaries, in order from least to most derived.
-        #
-        # Done above so it can be shared with the `convertDictionaryToJS` implementation.
-
-        # 4. For each dictionary dictionary in dictionaries, in order:
-        foreach my $dictionary (@dictionaries) {
-            # For each dictionary member member declared on dictionary, in lexicographical order:
-            my @sortedMembers = sort { $a->name cmp $b->name } @{$dictionary->members};
-            foreach my $member (@sortedMembers) {
-                $member->default("undefined") if $member->type->name eq "any" and !defined($member->default); # Use undefined as default value for member of type 'any' unless specified otherwise.
-                my $conditional = $member->extendedAttributes->{Conditional};
-
-                my $type = $member->type;
-                AddToImplIncludesForIDLType($type, $conditional);
-
-                if ($conditional) {
-                    my $conditionalString = $codeGenerator->GenerateConditionalStringFromAttributeValue($conditional);
-                    $result .= "#if ${conditionalString}\n";
-                }
-
-                my $needsRuntimeCheck = NeedsRuntimeCheck($dictionary, $member);
-                my $indent = "";
-                if ($needsRuntimeCheck) {
-                    my $runtimeEnableConditionalString = GenerateRuntimeEnableConditionalString($dictionary, $member, "&lexicalGlobalObject");
-                    $result .= "    if (${runtimeEnableConditionalString}) {\n";
-                    $indent = "    ";
-                }
-
-                # 4.1. Let key be the identifier of member.
-                my $key = $member->name;
-                my $implementedAsKey = $member->extendedAttributes->{ImplementedAs} || $key;
-
-                # 4.2. Let value be an ECMAScript value, depending on Type(V):
-                $result .= "${indent}    JSValue ${key}Value;\n";
-                $result .= "${indent}    if (isNullOrUndefined)\n";
-                $result .= "${indent}        ${key}Value = jsUndefined();\n";
-                $result .= "${indent}    else {\n";
-                $result .= "${indent}        ${key}Value = object->get(&lexicalGlobalObject, Identifier::fromString(vm, \"${key}\"_s));\n";
-                $result .= "${indent}        RETURN_IF_EXCEPTION(throwScope, ConversionResultException { });\n";
-                $result .= "${indent}    }\n";
-
-                my $IDLType = GetIDLType($typeScope, $type);
-
-                #   4.3. If value is not undefined, then:
-                #   4.4. Otherwise, if value is undefined but the dictionary member has a default value, then:
-                #   4.5. Otherwise, if value is undefined and the dictionary member is a required dictionary member, then throw a TypeError.
-
-                if ($member->isRequired) {
-                    my $conversion = JSValueToNative($typeScope, $member, "${key}Value", $conditional, "&lexicalGlobalObject", "lexicalGlobalObject", "", "*jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)", undef, undef, undef, undef);
-
-                    $result .= "${indent}    if (${key}Value.isUndefined()) {\n";
-                    $result .= "${indent}        throwRequiredMemberTypeError(lexicalGlobalObject, throwScope, \"". $member->name ."\"_s, \"$name\"_s, \"". GetTypeNameForDisplayInException($type) ."\"_s);\n";
-                    $result .= "${indent}        return ConversionResultException { };\n";
-                    $result .= "${indent}    }\n";
-
-                    $result .= "${indent}    auto ${implementedAsKey}ConversionResult = ${conversion};\n";
-                    $result .= "${indent}    if (${implementedAsKey}ConversionResult.hasException(throwScope)) [[unlikely]]\n";
-                    $result .= "${indent}        return ConversionResultException { };\n";
-                    $result .= "${indent}    result.$implementedAsKey = ${implementedAsKey}ConversionResult.releaseReturnValue();\n";
-                } elsif (defined $member->default) {
-                    my $defaultValueFunctor = GetDictionaryMemberDefaultValueFunctor($typeScope, $member);
-                    my $conversion = JSValueToNative($typeScope, $member, "${key}Value", $conditional, "&lexicalGlobalObject", "lexicalGlobalObject", "", "*jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)", undef, undef, 1, $defaultValueFunctor);
-
-                    $result .= "${indent}    auto ${implementedAsKey}ConversionResult = ${conversion};\n";
-                    $result .= "${indent}    if (${implementedAsKey}ConversionResult.hasException(throwScope)) [[unlikely]]\n";
-                    $result .= "${indent}        return ConversionResultException { };\n";
-                    $result .= "${indent}    result.$implementedAsKey = ${implementedAsKey}ConversionResult.releaseReturnValue();\n";
-                } else {
-                    if ($member->extendedAttributes->{PermissiveInvalidValue} && $codeGenerator->IsEnumType($type)) {
-                        # For enum members with PermissiveInvalidValue, use parseEnumeration directly
-                        # which returns std::optional and doesn't throw on invalid values.
-                        my $className = GetEnumerationClassName($type, $typeScope);
-                        $result .= "${indent}    if (!${key}Value.isUndefined()) {\n";
-                        $result .= "${indent}        auto ${implementedAsKey}ParseResult = parseEnumeration<${className}>(lexicalGlobalObject, ${key}Value);\n";
-                        $result .= "${indent}        RETURN_IF_EXCEPTION(throwScope, ConversionResultException { });\n";
-                        $result .= "${indent}        if (${implementedAsKey}ParseResult)\n";
-                        $result .= "${indent}            result.$implementedAsKey = *${implementedAsKey}ParseResult;\n";
-                        $result .= "${indent}    }\n";
-                    } else {
-                        my $defaultValueFunctor = GetDictionaryMemberDefaultValueFunctor($typeScope, $member);
-                        my $conversion = JSValueToNative($typeScope, $member, "${key}Value", $conditional, "&lexicalGlobalObject", "lexicalGlobalObject", "", "*jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)", undef, undef, undef, undef);
-
-                        $result .= "${indent}    if (!${key}Value.isUndefined()) {\n";
-                        $result .= "${indent}        auto ${implementedAsKey}ConversionResult = ${conversion};\n";
-                        $result .= "${indent}        if (${implementedAsKey}ConversionResult.hasException(throwScope)) [[unlikely]]\n";
-                        $result .= "${indent}            return ConversionResultException { };\n";
-                        $result .= "${indent}        result.$implementedAsKey = ${implementedAsKey}ConversionResult.releaseReturnValue();\n";
-                        $result .= "${indent}    }\n";
-                    }
-                }
-
-                if ($needsRuntimeCheck) {
-                    $result .= "    }\n";
-                }
-
-                $result .= "#endif\n" if $conditional;
-            }
+        if ($dictionary->extendedAttributes->{LegacyNativeDictionaryRequiredInterfaceNullability}) {
+            $result .= GenerateConvertDictionaryForLegacyNativeDictionaryRequiredInterfaceNullability($dictionary, \@dictionaries, $className, $interface);
+        } else {
+            $result .= GenerateConvertDictionary($dictionary, \@dictionaries, $className, $interface);
         }
-
-        # 5. Return dict.
-        $result .= "    return result;\n";
-        $result .= "}\n\n";
     }
 
     if (ShouldGenerateConvertDictionaryToJS($dictionary)) {
-        AddToImplIncludes("JSDOMGlobalObject.h");
-        AddToImplIncludes("<JavaScriptCore/ObjectConstructor.h>");
-
-        my $hasUnconditionalMember = 0;
-
-        $result .= "JSC::JSObject* convertDictionaryToJS(JSC::JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, const ${className}& dictionary)\n";
-        $result .= "{\n";
-        $result .= "    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);\n";
-        $result .= "    auto throwScope = DECLARE_THROW_SCOPE(vm);\n\n";
-
-        # 1. Let O be ! ObjectCreate(%ObjectPrototype%).
-        $result .= "    auto result = constructEmptyObject(&lexicalGlobalObject, globalObject.objectPrototype());\n\n";
-
-        # 2. Let dictionaries be a list consisting of D and all of D’s inherited dictionaries,
-        #    in order from least to most derived.
-        #
-        # Done above so it can be shared with the `convertDictionary` implementation.
-
-        # 3. For each dictionary dictionary in dictionaries, in order:
-        foreach my $dictionary (@dictionaries) {
-            # 3.1. For each dictionary member member declared on dictionary, in lexicographical order:
-            my @sortedMembers = sort { $a->name cmp $b->name } @{$dictionary->members};
-            foreach my $member (@sortedMembers) {
-                my $key = $member->name;
-                my $implementedAsKey = $member->extendedAttributes->{ImplementedAs} || $key;
-                my $valueExpression = "dictionary.${implementedAsKey}";
-
-                my $conditional = $member->extendedAttributes->{Conditional};
-                if ($conditional) {
-                    my $conditionalString = $codeGenerator->GenerateConditionalStringFromAttributeValue($conditional);
-                    $result .= "#if ${conditionalString}\n";
-                } else {
-                    $hasUnconditionalMember = 1;
-                }
-
-                # 1. Let key be the identifier of member.
-                # 2. If the dictionary member named key is present in V, then:
-                    # 1. Let idlValue be the value of member on V.
-                    # 2. Let value be the result of converting idlValue to an ECMAScript value.
-                    # 3. Perform ! CreateDataProperty(O, key, value).
-
-                my $needsRuntimeCheck = NeedsRuntimeCheck($dictionary, $member);
-                my $indent = "";
-                if ($needsRuntimeCheck) {
-                    my $runtimeEnableConditionalString = GenerateRuntimeEnableConditionalString($dictionary, $member, "&globalObject");
-                    $result .= "    if (${runtimeEnableConditionalString}) {\n";
-                    $indent = "    ";
-                }
-
-                if (!$member->isRequired && not defined $member->default) {
-                    my $IDLType = GetIDLType($typeScope, $member->type);
-                    my $conversionExpression = NativeToJSValueUsingReferences($member, $typeScope, "${IDLType}::extractValueFromNullable(${valueExpression})", "globalObject");
-
-                    $result .= "${indent}    if (!${IDLType}::isNullValue(${valueExpression})) {\n";
-                    $result .= "${indent}        auto ${key}Value = ${conversionExpression};\n";
-                    $result .= "${indent}        RETURN_IF_EXCEPTION(throwScope, { });\n";
-                    $result .= "${indent}        result->putDirect(vm, JSC::Identifier::fromString(vm, \"${key}\"_s), ${key}Value);\n";
-                    $result .= "${indent}    }\n";
-                } else {
-                    my $conversionExpression = NativeToJSValueUsingReferences($member, $typeScope, $valueExpression, "globalObject");
-
-                    $result .= "${indent}    auto ${key}Value = ${conversionExpression};\n";
-                    $result .= "${indent}    RETURN_IF_EXCEPTION(throwScope, { });\n";
-                    $result .= "${indent}    result->putDirect(vm, JSC::Identifier::fromString(vm, \"${key}\"_s), ${key}Value);\n";
-                }
-                if ($needsRuntimeCheck) {
-                    $result .= "    }\n";
-                }
-
-                $result .= "#endif\n" if $conditional;
-            }
+        if ($dictionary->extendedAttributes->{LegacyNativeDictionaryRequiredInterfaceNullability}) {
+            $result .= GenerateConvertDictionaryToJSForLegacyNativeDictionaryRequiredInterfaceNullability($dictionary, \@dictionaries, $className, $interface);
+        } else {
+            $result .= GenerateConvertDictionaryToJS($dictionary, \@dictionaries, $className, $interface);
         }
-
-        if (!$hasUnconditionalMember) {
-            $result .= "    UNUSED_PARAM(dictionary);\n";
-            $result .= "    UNUSED_VARIABLE(throwScope);\n\n";
-        }
-
-        $result .= "    return result;\n";
-        $result .= "}\n\n";
     }
 
     $result .= "#endif\n\n" if $conditional;
@@ -3571,11 +3882,9 @@ sub GenerateHeader
         } else {
             push(@headerContent, $exportMacro."JSC::JSValue toJS(JSC::JSGlobalObject*, JSDOMGlobalObject*, $implType&);\n");
         }
-        push(@headerContent, "inline JSC::JSValue toJS(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, $implType* impl) { return impl ? toJS(lexicalGlobalObject, globalObject, *impl) : JSC::jsNull(); }\n");
 
         push(@headerContent, "JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject*, Ref<$implType>&&);\n");
         push(@headerContent, "ALWAYS_INLINE JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, $implType& impl) { return toJSNewlyCreated(lexicalGlobalObject, globalObject, Ref { impl }); }\n");
-        push(@headerContent, "inline JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, RefPtr<$implType>&& impl) { return impl ? toJSNewlyCreated(lexicalGlobalObject, globalObject, impl.releaseNonNull()) : JSC::jsNull(); }\n");
    }
 
     push(@headerContent, "\n");
@@ -6002,7 +6311,7 @@ sub GenerateAttributeSetterBodyDefinition
         push(@$outputArray, "                return false;\n");
 
         my $readValue = "nativeValueConversionResult.returnValue()";
-        my $releaseValue = PassArgumentExpression("nativeValueConversionResult.releaseReturnValue()", $attribute);
+        my $releaseValue = "nativeValueConversionResult.releaseReturnValue()";
 
         my $nativeValue = $releaseValue;
         my ($baseFunctionName, @arguments) = $codeGenerator->SetterExpression(\%implIncludes, $interface->type->name, $attribute);
@@ -6083,7 +6392,7 @@ sub GenerateAttributeSetterBodyDefinition
             push(@$outputArray, "        return false;\n");
 
             $readValue = "nativeValueConversionResult.returnValue()";
-            $releaseValue = PassArgumentExpression("nativeValueConversionResult.releaseReturnValue()", $attribute);
+            $releaseValue = "nativeValueConversionResult.releaseReturnValue()";
         }
 
         my $functionString = $generateFunctionString->($releaseValue);
@@ -6691,7 +7000,7 @@ sub WillConvertUndefinedToDefaultParameterValue
     my ($parameterType, $defaultValue) = @_;
 
     my $automaticallyGeneratedDefaultValue = $automaticallyGeneratedDefaultValues{$parameterType->name};
-    return 1 if defined $automaticallyGeneratedDefaultValue && $automaticallyGeneratedDefaultValue eq $defaultValue;
+    return 1 if defined $automaticallyGeneratedDefaultValue && $automaticallyGeneratedDefaultValue eq $defaultValue && !$parameterType->extendedAttributes->{EnforceRange};
 
     return 1 if $defaultValue eq "null" && $codeGenerator->IsWrapperType($parameterType);
     return 1 if $defaultValue eq "[]" && $codeGenerator->IsDictionaryType($parameterType);
@@ -6787,7 +7096,7 @@ sub GenerateParametersCheck
             push(@$outputArray, $indent . "if (${name}ConversionResult.hasException(throwScope)) [[unlikely]]\n");
             push(@$outputArray, $indent . "   return encodedJSValue();\n");
 
-            $value = PassArgumentExpression("${name}ConversionResult.releaseReturnValue()", $argument);
+            $value = "${name}ConversionResult.releaseReturnValue()";
         }
 
         push(@arguments, $value);
@@ -7543,7 +7852,7 @@ END
        return encodedJSValue();
 END
                     push(@creationArgumentList, ", ");
-                    push(@creationArgumentList, PassArgumentExpression("${name}ConversionResult.releaseReturnValue()", $argument));
+                    push(@creationArgumentList, "${name}ConversionResult.releaseReturnValue()");
 
                     $argumentIndex++;
                 }
@@ -7924,11 +8233,20 @@ sub NativeToJSValueDOMConvertNeedsGlobalObject
     return 0;
 }
 
+# FIXME: This is needed to work around dictionaries storing non-nullable interfaces using RefPtr rather than Ref<>.
+# See "Support using Ref for IDLInterfaces in IDL dictionaries (https://bugs.webkit.org/show_bug.cgi?id=305410)".
+sub NativeToJSValueUsingReferencesWrappingInterfacesInNullable
+{
+    my ($context, $interface, $value, $globalObjectReference) = @_;
+
+    return NativeToJSValue($context, $interface, $value, "lexicalGlobalObject", $globalObjectReference, 1);
+}
+
 sub NativeToJSValueUsingReferences
 {
     my ($context, $interface, $value, $globalObjectReference) = @_;
 
-    return NativeToJSValue($context, $interface, $value, "lexicalGlobalObject", $globalObjectReference);
+    return NativeToJSValue($context, $interface, $value, "lexicalGlobalObject", $globalObjectReference, 0);
 }
 
 # FIXME: We should remove NativeToJSValueUsingPointers and combine NativeToJSValueUsingReferences and NativeToJSValue
@@ -7936,7 +8254,7 @@ sub NativeToJSValueUsingPointers
 {
     my ($context, $interface, $value, $globalObjectReference) = @_;
 
-    return NativeToJSValue($context, $interface, $value, "*lexicalGlobalObject", $globalObjectReference);
+    return NativeToJSValue($context, $interface, $value, "*lexicalGlobalObject", $globalObjectReference, 0);
 }
 
 sub IsValidContextForNativeToJSValue
@@ -7954,7 +8272,7 @@ sub NativeToJSValueMayThrow
 
 sub NativeToJSValue
 {
-    my ($context, $interface, $value, $lexicalGlobalObjectReference, $globalObjectReference) = @_;
+    my ($context, $interface, $value, $lexicalGlobalObjectReference, $globalObjectReference, $wrapInterfaceInNullable) = @_;
 
     assert("Invalid context type") if !IsValidContextForNativeToJSValue($context);
 
@@ -7978,6 +8296,11 @@ sub NativeToJSValue
     }
 
     my $IDLType = GetIDLType($interface, $type);
+
+    # FIXME: This is a hack used by the dictionary code while storing interfaces via Ref<> is not supported. Once that is supported, this should be removed.
+    if ($wrapInterfaceInNullable and $codeGenerator->IsInterfaceType($type) and !$type->isNullable) {
+        $IDLType = "IDLNullable<" . $IDLType . ">";
+    }
 
     # FIXME: Not all promise types require the functor wrapping (some attribute getters actually return a value)
     # but wrapping is a no-op, so fixing this would purely be a stylistic / compile time fix.

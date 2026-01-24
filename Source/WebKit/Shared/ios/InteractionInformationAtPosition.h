@@ -27,7 +27,6 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#include "ArgumentCoders.h"
 #include "CursorContext.h"
 #include "InteractionInformationRequest.h"
 #include <WebCore/ElementAnimationContext.h>
@@ -64,7 +63,7 @@ struct InteractionInformationAtPosition {
 #if ENABLE(MODEL_PROCESS)
         bool isInteractiveModel,
 #endif
-        bool isAttachment, bool isAnimatedImage, bool isAnimating, bool canShowAnimationControls, bool isPausedVideo, bool isElement, bool isContentEditable, Markable<WebCore::ScrollingNodeID>&& containerScrollingNodeID,
+        bool isAttachment, bool isAnimatedImage, bool isAnimating, bool isPausedVideo, bool isElement, bool isContentEditable, Markable<WebCore::ScrollingNodeID>&& containerScrollingNodeID,
 #if ENABLE(DATA_DETECTION)
         bool isDataDetectorLink,
 #endif
@@ -104,7 +103,6 @@ struct InteractionInformationAtPosition {
     bool isAttachment { false };
     bool isAnimatedImage { false };
     bool isAnimating { false };
-    bool canShowAnimationControls { false };
     bool isPausedVideo { false };
     bool isElement { false };
     bool isContentEditable { false };

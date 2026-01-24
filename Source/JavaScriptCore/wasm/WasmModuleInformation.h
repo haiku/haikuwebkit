@@ -125,9 +125,7 @@ struct ModuleInformation final : public ThreadSafeRefCounted<ModuleInformation> 
     {
         ASSERT(index < internalFunctionCount());
         ASSERT(functions[index].finishedValidating);
-        auto size = functions[index].end - functions[index].start + 1;
-        RELEASE_ASSERT(size > 1);
-        return size;
+        return functions[index].end - functions[index].start;
     }
 
     bool usesSIMDImportSpace(FunctionSpaceIndex index) const { return usesSIMD(toCodeIndex(index)); }

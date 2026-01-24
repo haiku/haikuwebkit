@@ -44,12 +44,12 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ServiceWorkerJob);
 
-Ref<ServiceWorkerJob> ServiceWorkerJob::create(ServiceWorkerJobClient& client, RefPtr<DeferredPromise>&& promise, ServiceWorkerJobData&& jobData)
+Ref<ServiceWorkerJob> ServiceWorkerJob::create(ServiceWorkerJobClient& client, Ref<DeferredPromise>&& promise, ServiceWorkerJobData&& jobData)
 {
     return adoptRef(*new ServiceWorkerJob(client, WTF::move(promise), WTF::move(jobData)));
 }
 
-ServiceWorkerJob::ServiceWorkerJob(ServiceWorkerJobClient& client, RefPtr<DeferredPromise>&& promise, ServiceWorkerJobData&& jobData)
+ServiceWorkerJob::ServiceWorkerJob(ServiceWorkerJobClient& client, Ref<DeferredPromise>&& promise, ServiceWorkerJobData&& jobData)
     : m_client(client)
     , m_jobData(WTF::move(jobData))
     , m_promise(WTF::move(promise))
@@ -62,7 +62,7 @@ ServiceWorkerJob::~ServiceWorkerJob()
     ASSERT(m_creationThread.ptr() == &Thread::currentSingleton());
 }
 
-RefPtr<DeferredPromise> ServiceWorkerJob::takePromise()
+Ref<DeferredPromise> ServiceWorkerJob::takePromise()
 {
     return WTF::move(m_promise);
 }

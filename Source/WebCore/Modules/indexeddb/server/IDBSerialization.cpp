@@ -289,7 +289,7 @@ RefPtr<SharedBuffer> serializeIDBKeyData(const IDBKeyData& key)
     return SharedBuffer::create(WTF::move(data));
 }
 
-WARN_UNUSED_RETURN static bool decodeKey(std::span<const uint8_t>& data, IDBKeyData& result)
+[[nodiscard]] static bool decodeKey(std::span<const uint8_t>& data, IDBKeyData& result)
 {
     if (data.empty())
         return false;

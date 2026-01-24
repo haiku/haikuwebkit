@@ -78,34 +78,6 @@ private:
     const Ref<WebXRRigidTransform> m_originOffset;
 };
 
-// https://immersive-web.github.io/webxr/#xrsession-viewer-reference-space
-// This is a helper class to implement the viewer space owned by a WebXRSession.
-// It avoids a circular reference between the session and the reference space.
-class WebXRViewerSpace : public RefCounted<WebXRViewerSpace>, public WebXRSpace {
-    WTF_MAKE_TZONE_ALLOCATED(WebXRViewerSpace);
-public:
-    static Ref< WebXRViewerSpace> create(Document& document, WebXRSession& session)
-    {
-        return adoptRef(*new WebXRViewerSpace(document, session));
-    }
-    virtual ~WebXRViewerSpace();
-
-    // ContextDestructionObserver.
-    void ref() const final { RefCounted::ref(); }
-    void deref() const final { RefCounted::deref(); }
-
-private:
-    WebXRViewerSpace(Document&, WebXRSession&);
-
-    WebXRSession* session() const final { return m_session.get(); }
-    std::optional<TransformationMatrix> nativeOrigin() const final;
-
-    void refEventTarget() final { ref(); }
-    void derefEventTarget() final { deref(); }
-
-    WeakPtr<WebXRSession> m_session;
-};
-
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_EVENTTARGET(WebXRSpace)

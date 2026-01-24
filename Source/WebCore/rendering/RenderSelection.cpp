@@ -63,7 +63,7 @@ struct SelectionContext {
 static CheckedPtr<RenderObject> rendererAfterOffset(const RenderObject& renderer, unsigned offset)
 {
     CheckedPtr child = renderer.childAt(offset);
-    return child ? child : renderer.nextInPreOrderAfterChildren();
+    return child ? child : CheckedPtr { renderer.nextInPreOrderAfterChildren() };
 }
 
 static bool isValidRendererForSelection(const RenderObject& renderer, const RenderRange& selection)

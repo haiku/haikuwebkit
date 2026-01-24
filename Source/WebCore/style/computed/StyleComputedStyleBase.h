@@ -444,11 +444,7 @@ constexpr auto TextDecorationLineBits = 5;
 constexpr auto TextTransformBits = 6;
 constexpr auto PseudoElementTypeBits = 5;
 
-DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(PseudoStyleCache);
-struct PseudoStyleCache {
-    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(PseudoStyleCache, PseudoStyleCache);
-    HashMap<PseudoElementIdentifier, std::unique_ptr<RenderStyle>> styles;
-};
+using PseudoStyleCache = HashMap<PseudoElementIdentifier, std::unique_ptr<RenderStyle>>;
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(ComputedStyleBase);
 class ComputedStyleBase : public CanMakeCheckedPtr<ComputedStyleBase, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
@@ -593,8 +589,8 @@ public:
     RenderStyle* getCachedPseudoStyle(const PseudoElementIdentifier&) const;
     RenderStyle* addCachedPseudoStyle(std::unique_ptr<RenderStyle>);
 
-    bool hasCachedPseudoStyles() const { return m_cachedPseudoStyles && m_cachedPseudoStyles->styles.size(); }
-    const PseudoStyleCache* cachedPseudoStyles() const { return m_cachedPseudoStyles.get(); }
+    bool hasCachedPseudoStyles() const { return !m_cachedPseudoStyles.isEmpty(); }
+    const PseudoStyleCache& cachedPseudoStyles() const { return m_cachedPseudoStyles; }
 
     // MARK: - Custom properties
 
@@ -862,7 +858,7 @@ protected:
     DataRef<SVGData> m_svgData;
 
     // Associated pseudo styles
-    std::unique_ptr<PseudoStyleCache> m_cachedPseudoStyles;
+    PseudoStyleCache m_cachedPseudoStyles;
 
 #if ASSERT_ENABLED || ENABLE(SECURITY_ASSERTIONS)
     bool m_deletionHasBegun { false };

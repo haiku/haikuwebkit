@@ -30,7 +30,6 @@
 #include "ContainerNodeInlines.h"
 #include "InspectorInstrumentation.h"
 #include "MotionPath.h"
-#include "ReferenceFilterOperation.h"
 #include "ReferencedSVGResources.h"
 #include "RenderDescendantIterator.h"
 #include "RenderElementInlines.h"
@@ -485,23 +484,25 @@ RenderSVGResourceFilter* RenderLayerModelObject::svgFilterResourceFromStyle() co
     if (!document().settings().layerBasedSVGEngineEnabled())
         return nullptr;
 
-    const auto& filter = style().filter();
-    if (filter.size() != 1)
+    if (style().filter().size() != 1)
         return nullptr;
 
-    RefPtr referenceFilterOperation = dynamicDowncast<Style::ReferenceFilterOperation>(filter[0].value);
-    if (!referenceFilterOperation)
-        return nullptr;
+    return WTF::switchOn(style().filter().first(),
+        [&](const Style::FilterReference& filterReference) -> RenderSVGResourceFilter* {
+            if (RefPtr referencedFilterElement = ReferencedSVGResources::referencedFilterElement(treeScopeForSVGReferences(), filterReference)) {
+                if (auto* referencedFilterRenderer = dynamicDowncast<RenderSVGResourceFilter>(referencedFilterElement->renderer()))
+                    return referencedFilterRenderer;
+            }
 
-    if (RefPtr referencedFilterElement = ReferencedSVGResources::referencedFilterElement(treeScopeForSVGReferences(), *referenceFilterOperation)) {
-        if (auto* referencedFilterRenderer = dynamicDowncast<RenderSVGResourceFilter>(referencedFilterElement->renderer()))
-            return referencedFilterRenderer;
-    }
+            if (RefPtr svgElement = dynamicDowncast<SVGElement>(this->element()))
+                document().addPendingSVGResource(filterReference.cachedFragment, *svgElement);
 
-    if (auto* svgElement = dynamicDowncast<SVGElement>(this->element()))
-        document().addPendingSVGResource(referenceFilterOperation->fragment(), *svgElement);
-
-    return nullptr;
+            return nullptr;
+        },
+        []<CSSValueID C, typename T>(const FunctionNotation<C, T>&) -> RenderSVGResourceFilter* {
+            return nullptr;
+        }
+    );
 }
 
 RenderSVGResourceMasker* RenderLayerModelObject::svgMaskerResourceFromStyle() const

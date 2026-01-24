@@ -113,6 +113,24 @@ public:
         ASSERT(m_ptr);
     }
 
+    template<typename X, typename WeakPtrImplType>
+    Ref(const WeakRef<X, WeakPtrImplType>& other) requires std::is_convertible_v<X*, T*>
+        : m_ptr(&RefDerefTraits::ref(other.get()))
+    {
+    }
+
+    template<typename X, typename Y>
+    Ref(const CheckedRef<X, Y>& other) requires std::is_convertible_v<X*, T*>
+        : m_ptr(&RefDerefTraits::ref(other.get()))
+    {
+    }
+
+    template<typename X, typename Y>
+    Ref(const ThreadSafeWeakRef<X, Y>& other) requires std::is_convertible_v<X*, T*>
+        : m_ptr(&RefDerefTraits::ref(other.get()))
+    {
+    }
+
     Ref& operator=(T&);
     Ref& operator=(Ref&&);
     template<typename X, typename Y, typename Z> Ref& operator=(Ref<X, Y, Z>&&);
@@ -141,13 +159,13 @@ public:
     operator T&() const LIFETIME_BOUND { ASSERT(m_ptr); return *PtrTraits::unwrap(m_ptr); }
     bool operator!() const { ASSERT(m_ptr); return !*m_ptr; }
 
-    template<typename X, typename Y, typename Z> WARN_UNUSED_RETURN Ref<T, PtrTraits, RefDerefTraits> replace(Ref<X, Y, Z>&&);
+    template<typename X, typename Y, typename Z> [[nodiscard]] Ref<T, PtrTraits, RefDerefTraits> replace(Ref<X, Y, Z>&&);
 
     // The following function is deprecated.
     Ref copyRef() && = delete;
-    WARN_UNUSED_RETURN Ref copyRef() const & { return Ref(*m_ptr); }
+    [[nodiscard]] Ref copyRef() const & { return Ref(*m_ptr); }
 
-    WARN_UNUSED_RETURN T& leakRef()
+    [[nodiscard]] T& leakRef()
     {
         ASSERT(m_ptr);
 
@@ -173,6 +191,14 @@ private:
 
     typename PtrTraits::StorageType m_ptr;
 } SWIFT_ESCAPABLE;
+
+// Template deduction guide.
+template<typename X, typename Y> Ref(const WeakRef<X, Y>&) -> Ref<X, RawPtrTraits<X>, DefaultRefDerefTraits<X>>;
+template<typename X, typename Y> Ref(WeakRef<X, Y>&) -> Ref<X, RawPtrTraits<X>, DefaultRefDerefTraits<X>>;
+template<typename X, typename Y> Ref(const CheckedRef<X, Y>&) -> Ref<X, RawPtrTraits<X>, DefaultRefDerefTraits<X>>;
+template<typename X, typename Y> Ref(CheckedRef<X, Y>&) -> Ref<X, RawPtrTraits<X>, DefaultRefDerefTraits<X>>;
+template<typename X, typename Y> Ref(const ThreadSafeWeakRef<X, Y>&) -> Ref<X, RawPtrTraits<X>, DefaultRefDerefTraits<X>>;
+template<typename X, typename Y> Ref(ThreadSafeWeakRef<X, Y>&) -> Ref<X, RawPtrTraits<X>, DefaultRefDerefTraits<X>>;
 
 template<typename T, typename _PtrTraits, typename RefDerefTraits> Ref<T, _PtrTraits, RefDerefTraits> adoptRef(T&);
 

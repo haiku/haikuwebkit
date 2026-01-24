@@ -3,7 +3,6 @@ bindings/js/JSLazyEventListener.cpp
 css/CSSToLengthConversionData.h
 css/SelectorChecker.h
 css/SelectorFilter.h
-css/query/MediaQueryEvaluator.h
 dom/CollectionIndexCache.h
 dom/Node.cpp
 dom/Node.h
@@ -13,7 +12,6 @@ layout/formattingContexts/inline/AbstractLineBuilder.h
 layout/formattingContexts/inline/InlineContentBreaker.h
 layout/formattingContexts/inline/InlineFormattingContext.h
 layout/formattingContexts/inline/InlineFormattingUtils.cpp
-layout/formattingContexts/inline/InlineItem.h
 layout/formattingContexts/inline/InlineItemsBuilder.h
 layout/formattingContexts/inline/InlineLine.h
 layout/formattingContexts/inline/invalidation/InlineInvalidation.cpp

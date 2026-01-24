@@ -4,11 +4,9 @@ Modules/entriesapi/FileSystemDirectoryEntry.cpp
 Modules/entriesapi/FileSystemEntry.cpp
 Modules/entriesapi/FileSystemFileEntry.cpp
 Modules/filesystem/FileSystemFileHandle.cpp
-Modules/identity/CredentialRequestCoordinator.cpp
 Modules/mediasession/MediaMetadata.cpp
 Modules/mediasession/MediaSession.cpp
 [ Mac ] Modules/mediasession/MediaSessionCoordinator.cpp
-[ Mac ] Modules/mediasession/MediaSessionCoordinator.h
 Modules/mediastream/MediaStreamTrack.cpp
 Modules/mediastream/MediaStreamTrackProcessor.cpp
 Modules/mediastream/RTCDTMFSender.cpp
@@ -50,7 +48,6 @@ Modules/webaudio/DefaultAudioDestinationNode.cpp
 Modules/webaudio/DynamicsCompressorNode.cpp
 Modules/webaudio/MediaElementAudioSourceNode.cpp
 Modules/webaudio/MediaStreamAudioDestinationNode.cpp
-Modules/webaudio/MediaStreamAudioSourceNode.cpp
 Modules/webaudio/OfflineAudioDestinationNode.cpp
 Modules/webaudio/OscillatorNode.cpp
 Modules/webaudio/PannerNode.cpp
@@ -109,7 +106,7 @@ bindings/js/JSDOMConvertBase.h
 bindings/js/JSDOMConvertBufferSource.h
 bindings/js/JSDOMConvertCallbacks.h
 bindings/js/JSDOMConvertEventListener.h
-bindings/js/JSDOMConvertInterface.h
+bindings/js/JSDOMConvertNullable.h
 bindings/js/JSDOMGlobalObject.cpp
 bindings/js/JSDOMIterator.h
 bindings/js/JSDOMMapLike.h
@@ -125,7 +122,6 @@ bindings/js/JSElementInternalsCustom.cpp
 bindings/js/JSEventTargetCustom.cpp
 bindings/js/JSHTMLCanvasElementCustom.cpp
 bindings/js/JSHTMLElementCustom.cpp
-bindings/js/JSHTMLTemplateElementCustom.cpp
 bindings/js/JSHistoryCustom.cpp
 bindings/js/JSIDBCursorCustom.cpp
 bindings/js/JSIDBCursorWithValueCustom.cpp
@@ -133,18 +129,15 @@ bindings/js/JSIDBObjectStoreCustom.cpp
 bindings/js/JSIDBRequestCustom.cpp
 bindings/js/JSIDBTransactionCustom.cpp
 bindings/js/JSIntersectionObserverCustom.cpp
-bindings/js/JSIntersectionObserverEntryCustom.cpp
 bindings/js/JSKeyframeEffectCustom.cpp
 bindings/js/JSLazyEventListener.cpp
 bindings/js/JSLocationCustom.cpp
-bindings/js/JSMediaSessionCustom.cpp
 bindings/js/JSMessageChannelCustom.cpp
 bindings/js/JSMessagePortCustom.cpp
 bindings/js/JSMutationObserverCustom.cpp
 bindings/js/JSMutationRecordCustom.cpp
 bindings/js/JSNavigatorCustom.cpp
 bindings/js/JSNodeCustom.cpp
-bindings/js/JSNodeListCustom.cpp
 bindings/js/JSObservableArray.cpp
 bindings/js/JSObservableArray.h
 bindings/js/JSOffscreenCanvasRenderingContext2DCustom.cpp
@@ -163,7 +156,6 @@ bindings/js/JSStyleSheetCustom.cpp
 bindings/js/JSSubscriberCustom.cpp
 bindings/js/JSTextTrackCueCustom.cpp
 bindings/js/JSTrustedTypePolicyFactoryCustom.cpp
-bindings/js/JSUndoItemCustom.cpp
 bindings/js/JSWebAnimationCustom.cpp
 bindings/js/JSWebGL2RenderingContextCustom.cpp
 bindings/js/JSWebGLRenderingContextCustom.cpp
@@ -177,6 +169,7 @@ bindings/js/ScheduledAction.cpp
 bindings/js/ScriptBufferSourceProvider.h
 bindings/js/ScriptCachedFrameData.cpp
 bindings/js/ScriptModuleLoader.cpp
+bindings/js/SerializedScriptValue.cpp
 bindings/js/WebAssemblyScriptBufferSourceProvider.h
 bindings/js/WebCoreJSClientData.cpp
 bindings/js/WebCoreTypedArrayController.cpp
@@ -245,7 +238,6 @@ css/StyleRule.cpp
 css/StyleRuleImport.cpp
 css/StyleRuleImport.h
 css/StyleSheetContents.cpp
-css/query/MediaQueryFeatures.cpp
 css/typedom/CSSOMVariableReferenceValue.cpp
 css/typedom/CSSStyleValue.cpp
 css/typedom/CSSStyleValueFactory.cpp
@@ -312,7 +304,6 @@ dom/ShadowRoot.h
 dom/SimpleRange.cpp
 dom/SimulatedClick.cpp
 dom/SpaceSplitString.h
-dom/StaticRange.cpp
 dom/StyledElement.cpp
 dom/TreeScope.cpp
 dom/TreeScopeOrderedMap.cpp
@@ -631,7 +622,6 @@ rendering/AccessibilityRegionContext.cpp
 rendering/AttachmentLayout.mm
 rendering/BackgroundPainter.cpp
 rendering/BorderPainter.cpp
-rendering/CSSFilterRenderer.cpp
 rendering/CaretRectComputation.cpp
 rendering/EllipsisBoxPainter.cpp
 rendering/HitTestResult.cpp
@@ -679,7 +669,6 @@ rendering/RenderQuote.cpp
 rendering/RenderReplaced.cpp
 rendering/RenderReplica.cpp
 rendering/RenderScrollbarPart.cpp
-rendering/RenderSearchField.cpp
 rendering/RenderTable.cpp
 rendering/RenderTableCell.cpp
 rendering/RenderTableSection.cpp
@@ -791,6 +780,7 @@ style/Styleable.h
 style/UserAgentStyle.cpp
 style/computed/StyleComputedStyle.cpp
 style/computed/StyleComputedStyleBase.cpp
+style/values/filter-effects/StyleFilterReference.cpp
 style/values/primitives/StyleLengthWrapperData.cpp
 style/values/transforms/StyleRotate.cpp
 style/values/transforms/StyleScale.cpp
@@ -871,8 +861,6 @@ svg/properties/SVGAnimatedValueProperty.h
 svg/properties/SVGAttributeAnimator.cpp
 svg/properties/SVGPointerMemberAccessor.h
 svg/properties/SVGPropertyAccessorImpl.h
-svg/properties/SVGValuePropertyListAnimator.h
-svg/properties/SVGValuePropertyListAnimatorImpl.h
 testing/InternalSettings.cpp
 testing/Internals.cpp
 testing/LegacyMockCDM.cpp
@@ -883,4 +871,3 @@ workers/shared/SharedWorker.cpp
 worklets/PaintWorkletGlobalScope.cpp
 worklets/WorkletGlobalScope.cpp
 worklets/WorkletPendingTasks.cpp
-xml/parser/XMLDocumentParserLibxml2.cpp

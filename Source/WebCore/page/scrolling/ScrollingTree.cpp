@@ -50,7 +50,7 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ScrollingTree);
 
-using OrphanScrollingNodeMap = HashMap<ScrollingNodeID, RefPtr<ScrollingTreeNode>>;
+using OrphanScrollingNodeMap = HashMap<ScrollingNodeID, Ref<ScrollingTreeNode>>;
 
 struct CommitTreeState {
     // unvisitedNodes starts with all nodes in the map; we remove nodes as we visit them. At the end, it's the unvisited nodes.
@@ -475,7 +475,7 @@ bool ScrollingTree::updateTreeFromStateNodeRecursive(const ScrollingStateNode* s
 
     RefPtr<ScrollingTreeNode> node;
     if (it != m_nodeMap.end()) {
-        node = it->value;
+        node = it->value.ptr();
         state.unvisitedNodes.remove(nodeID);
     } else {
         node = createScrollingTreeNode(stateNode->nodeType(), nodeID);
@@ -488,7 +488,7 @@ bool ScrollingTree::updateTreeFromStateNodeRecursive(const ScrollingStateNode* s
             removeAllNodes();
         }
 
-        m_nodeMap.set(nodeID, node.get());
+        m_nodeMap.set(nodeID, *node);
         {
             Locker locker { m_frameIDMapLock };
             m_nodeMapPerFrame.ensure(state.frameId, [] { return HashSet<ScrollingNodeID> { }; }).iterator->value.add(node->scrollingNodeID());
@@ -524,7 +524,7 @@ bool ScrollingTree::updateTreeFromStateNodeRecursive(const ScrollingStateNode* s
         // Move all children into the orphanNodes map. Live ones will get added back as we recurse over children.
         for (auto& childScrollingNode : node->children()) {
             childScrollingNode->setParent(nullptr);
-            state.orphanNodes.add(childScrollingNode->scrollingNodeID(), childScrollingNode.ptr());
+            state.orphanNodes.add(childScrollingNode->scrollingNodeID(), childScrollingNode.copyRef());
         }
         node->removeAllChildren();
 
@@ -563,7 +563,7 @@ void ScrollingTree::removeAllNodes()
 {
     auto nodes = std::exchange(m_nodeMap, { });
     for (auto iter : nodes)
-        Ref { *iter.value }->willBeDestroyed();
+        Ref { iter.value }->willBeDestroyed();
 
     m_nodeMap.clear();
     {

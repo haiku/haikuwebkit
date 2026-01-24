@@ -28,9 +28,11 @@
 #include <wtf/Compiler.h>
 #include <wtf/Platform.h>
 
+#if !PLATFORM(WATCHOS) && !PLATFORM(APPLETV)
+
 DECLARE_SYSTEM_HEADER
 
-#if USE(APPLE_INTERNAL_SDK)
+#if USE(APPLE_INTERNAL_SDK) && !__has_feature(modules)
 
 #import <ARKit/ARKit.h>
 #import <ARKit/ARKitPrivate.h>
@@ -42,3 +44,5 @@ DECLARE_SYSTEM_HEADER
 FOUNDATION_EXTERN simd_float4x4 ARMatrixMakeLookAt(simd_float3 origin, simd_float3 direction);
 
 #endif
+
+#endif // !PLATFORM(WATCHOS) && !PLATFORM(APPLETV)

@@ -110,11 +110,13 @@ void BlobRegistryImpl::appendStorageItems(BlobData* blobData, const BlobDataItem
         auto& item = items[itemsIndex];
         long long currentLength = item.length() - offset;
         long long newLength = currentLength > length ? length : currentLength;
-        if (item.type() == BlobDataItem::Type::Data)
-            blobData->appendData(*item.data(), item.offset() + offset, newLength);
-        else {
-            ASSERT(item.type() == BlobDataItem::Type::File);
-            blobData->appendFile(item.protectedFile().get(), item.offset() + offset, newLength);
+        switch (item.type()) {
+        case BlobDataItem::Type::Data:
+            blobData->appendData(item.data(), item.offset() + offset, newLength);
+            break;
+        case BlobDataItem::Type::File:
+            blobData->appendFile(item.protectedFile(), item.offset() + offset, newLength);
+            break;
         }
         length -= newLength;
         offset = 0;
@@ -222,7 +224,7 @@ void BlobRegistryImpl::registerBlobURLOptionallyFileBacked(const URL& url, const
 
     if (RefPtr src = blobDataFromURL(srcURL)) {
         if (src->policyContainer() == policyContainer)
-            addBlobData(url.string(), src.get(), topOrigin);
+            addBlobData(url.string(), src.releaseNonNull(), topOrigin);
         else {
             Ref clone = src->clone();
             clone->setPolicyContainer(policyContainer);
@@ -339,8 +341,7 @@ static WorkQueue& blobUtilityQueueSingleton()
 bool BlobRegistryImpl::populateBlobsForFileWriting(const Vector<String>& blobURLs, Vector<BlobForFileWriting>& blobsForWriting)
 {
     for (auto& url : blobURLs) {
-        blobsForWriting.append({ });
-        blobsForWriting.last().blobURL = url.isolatedCopy();
+        blobsForWriting.append({ .blobURL = url.isolatedCopy(), .filePathsOrDataBuffers = { } });
 
         RefPtr blobData = blobDataFromURL({ { }, url });
         if (!blobData)
@@ -349,20 +350,18 @@ bool BlobRegistryImpl::populateBlobsForFileWriting(const Vector<String>& blobURL
         for (auto& item : blobData->items()) {
             switch (item.type()) {
             case BlobDataItem::Type::Data:
-                blobsForWriting.last().filePathsOrDataBuffers.append({ { }, item.data() });
+                blobsForWriting.last().filePathsOrDataBuffers.append(item.protectedData());
                 break;
             case BlobDataItem::Type::File:
-                blobsForWriting.last().filePathsOrDataBuffers.append({ item.protectedFile()->path().isolatedCopy(), { } });
+                blobsForWriting.last().filePathsOrDataBuffers.append(item.protectedFile()->path().isolatedCopy());
                 break;
-            default:
-                ASSERT_NOT_REACHED();
             }
         }
     }
     return true;
 }
 
-static bool writeFilePathsOrDataBuffersToFile(const Vector<std::pair<String, RefPtr<DataSegment>>>& filePathsOrDataBuffers, FileSystem::FileHandle& file, const String& path)
+static bool writeFilePathsOrDataBuffersToFile(const Vector<Variant<String, Ref<DataSegment>>>& filePathsOrDataBuffers, FileSystem::FileHandle& file, const String& path)
 {
     if (path.isEmpty() || !file) {
         LOG_ERROR("Failed to open temporary file for writing a Blob");
@@ -370,19 +369,25 @@ static bool writeFilePathsOrDataBuffersToFile(const Vector<std::pair<String, Ref
     }
 
     for (auto& part : filePathsOrDataBuffers) {
-        if (RefPtr segment = part.second) {
-            int64_t length = segment->size();
-            if (file.write(segment->span()) != length) {
-                LOG_ERROR("Failed writing a Blob to temporary file");
-                return false;
+        bool success = WTF::switchOn(part,
+            [&](const String& filePath) {
+                if (!file.appendFileContents(filePath)) {
+                    LOG_ERROR("Failed copying File contents to a Blob temporary file (%s to %s)", filePath.utf8().data(), path.utf8().data());
+                    return false;
+                }
+                return true;
+            },
+            [&](const Ref<DataSegment>& segment) {
+                int64_t length = segment->size();
+                if (file.write(segment->span()) != length) {
+                    LOG_ERROR("Failed writing a Blob to temporary file");
+                    return false;
+                }
+                return true;
             }
-        } else {
-            ASSERT(!part.first.isEmpty());
-            if (!file.appendFileContents(part.first)) {
-                LOG_ERROR("Failed copying File contents to a Blob temporary file (%s to %s)", part.first.utf8().data(), path.utf8().data());
-                return false;
-            }
-        }
+        );
+        if (!success)
+            return false;
     }
     return true;
 }
@@ -412,22 +417,22 @@ void BlobRegistryImpl::writeBlobsToTemporaryFilesForIndexedDB(const Vector<Strin
     });
 }
 
-Vector<RefPtr<BlobDataFileReference>> BlobRegistryImpl::filesInBlob(const URL& url, const std::optional<SecurityOriginData>& topOrigin) const
+Vector<Ref<BlobDataFileReference>> BlobRegistryImpl::filesInBlob(const URL& url, const std::optional<SecurityOriginData>& topOrigin) const
 {
     RefPtr blobData = blobDataFromURL(url, topOrigin);
     if (!blobData)
         return { };
 
-    Vector<RefPtr<BlobDataFileReference>> result;
+    Vector<Ref<BlobDataFileReference>> result;
     for (const BlobDataItem& item : blobData->items()) {
         if (item.type() == BlobDataItem::Type::File)
-            result.append(item.file());
+            result.append(item.protectedFile());
     }
 
     return result;
 }
 
-void BlobRegistryImpl::addBlobData(const String& url, RefPtr<BlobData>&& blobData, const std::optional<WebCore::SecurityOriginData>& topOrigin)
+void BlobRegistryImpl::addBlobData(const String& url, Ref<BlobData>&& blobData, const std::optional<WebCore::SecurityOriginData>& topOrigin)
 {
     ASSERT(BlobURL::isInternalURL(URL { { }, url }) || topOrigin);
     auto addResult = m_blobs.set(url, WTF::move(blobData));

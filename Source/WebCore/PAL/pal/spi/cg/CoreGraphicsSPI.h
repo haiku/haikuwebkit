@@ -25,7 +25,7 @@
 
 #pragma once
 
-#import <wtf/Compiler.h>
+#include <wtf/Compiler.h>
 #include <wtf/Platform.h>
 
 DECLARE_SYSTEM_HEADER

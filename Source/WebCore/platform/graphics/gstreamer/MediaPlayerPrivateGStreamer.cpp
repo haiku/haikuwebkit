@@ -389,7 +389,7 @@ void MediaPlayerPrivateGStreamer::load(const String& urlString)
 
     // Reset network and ready states. Those will be set properly once
     // the pipeline pre-rolled.
-    m_networkState = MediaPlayer::NetworkState::Loading;
+    m_networkState = m_isDelayingLoad ? MediaPlayer::NetworkState::Idle : MediaPlayer::NetworkState::Loading;
     player->networkStateChanged();
     m_readyState = MediaPlayer::ReadyState::HaveNothing;
     player->readyStateChanged();
@@ -2242,7 +2242,7 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
             }
         }
 
-        if (quirksManager.isEnabled() && quirksManager.needsBufferingPercentageCorrection())
+        if (quirksManager.isEnabled() && quirksManager.needsBufferingPercentageCorrection() && !isMediaSource() && !isMediaStreamPlayer())
             quirksManager.setupBufferingPercentageCorrection(this, currentState, newState, GRefPtr<GstElement>(GST_ELEMENT(GST_MESSAGE_SRC(message))));
 
         if (!messageSourceIsPlaybin || m_isDelayingLoad)
@@ -3613,7 +3613,7 @@ void MediaPlayerPrivateGStreamer::configureVideoDecoder(GstElement* decoder)
     if (!isMediaStreamPlayer())
         return;
 
-    configureMediaStreamVideoDecoder(decoder);
+    m_videoDecoderName = configureMediaStreamVideoDecoder(decoder);
 
     auto sinkPad = adoptGRef(gst_element_get_static_pad(decoder, "sink"));
     gst_pad_add_probe(sinkPad.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER), [](GstPad*, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
@@ -3660,6 +3660,7 @@ void MediaPlayerPrivateGStreamer::configureVideoDecoder(GstElement* decoder)
 
                 if (player->m_totalVideoDecodeTime.isValid())
                     gst_structure_set(structure, "total-decode-time", G_TYPE_DOUBLE, player->m_totalVideoDecodeTime.toDouble(), nullptr);
+                gst_structure_set(structure, "decoder-implementation", G_TYPE_STRING, player->m_videoDecoderName.utf8().data(), nullptr);
                 GST_PAD_PROBE_INFO_DATA(info) = query;
                 return GST_PAD_PROBE_HANDLED;
             }

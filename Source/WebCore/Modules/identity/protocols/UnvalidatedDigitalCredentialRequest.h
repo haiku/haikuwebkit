@@ -25,8 +25,6 @@
 
 #pragma once
 
-#include <variant>
-
 namespace WebCore {
 
 struct MobileDocumentRequest;
@@ -34,4 +32,3 @@ struct MobileDocumentRequest;
 using UnvalidatedDigitalCredentialRequest = MobileDocumentRequest;
 
 } // namespace WebCore
-

@@ -69,12 +69,12 @@ static ImageWrapper crossfadeBlend(Ref<StyleCachedImage>&& fromStyleImage, Ref<S
     return ImageWrapper { StyleCrossfadeImage::create(WTF::move(fromStyleImage), WTF::move(toStyleImage), context.progress, false) };
 }
 
-static ImageWrapper filterBlend(RefPtr<StyleImage> inputImage, const Style::Filter& from, const Style::Filter& to, const BlendingContext& context)
+static ImageWrapper filterBlend(RefPtr<StyleImage> inputImage, const Style::Filter& from, const Style::Filter& to, const RenderStyle& fromStyle, const RenderStyle& toStyle, const BlendingContext& context)
 {
-    return ImageWrapper { StyleFilterImage::create(WTF::move(inputImage), Style::blend(from, to, context)) };
+    return ImageWrapper { StyleFilterImage::create(WTF::move(inputImage), Style::blend(from, to, fromStyle, toStyle, context)) };
 }
 
-auto Blending<ImageWrapper>::blend(const ImageWrapper& a, const ImageWrapper& b, const BlendingContext& context) -> ImageWrapper
+auto Blending<ImageWrapper>::blend(const ImageWrapper& a, const ImageWrapper& b, const RenderStyle& aStyle, const RenderStyle& bStyle, const BlendingContext& context) -> ImageWrapper
 {
     if (!context.progress)
         return a;
@@ -103,7 +103,7 @@ auto Blending<ImageWrapper>::blend(const ImageWrapper& a, const ImageWrapper& b,
         // Interpolation of generated images is only possible if the input images are equal.
         // Otherwise fall back to cross fade animation.
         if (aFilter->equalInputImages(*bFilter) && is<StyleCachedImage>(aFilter->inputImage()))
-            return filterBlend(aFilter->inputImage(), aFilter->filter(), bFilter->filter(), context);
+            return filterBlend(aFilter->inputImage(), aFilter->filter(), bFilter->filter(), aStyle, bStyle, context);
     } else if (auto [aCrossfade, bCrossfade] = std::tuple { dynamicDowncast<StyleCrossfadeImage>(aSelected), dynamicDowncast<StyleCrossfadeImage>(bSelected) }; aCrossfade && bCrossfade) {
         if (aCrossfade->equalInputImages(*bCrossfade)) {
             if (RefPtr crossfadeBlend = bCrossfade->blend(*aCrossfade, context))
@@ -113,12 +113,12 @@ auto Blending<ImageWrapper>::blend(const ImageWrapper& a, const ImageWrapper& b,
         RefPtr aFilterInputImage = dynamicDowncast<StyleCachedImage>(aFilter->inputImage());
 
         if (aFilterInputImage && bCachedImage->equals(*aFilterInputImage))
-            return filterBlend(WTF::move(aFilterInputImage), aFilter->filter(), Style::Filter { CSS::Keyword::None { } }, context);
+            return filterBlend(WTF::move(aFilterInputImage), aFilter->filter(), Style::Filter { CSS::Keyword::None { } }, aStyle, bStyle, context);
     } else if (auto [aCachedImage, bFilter] = std::tuple { dynamicDowncast<StyleCachedImage>(aSelected), dynamicDowncast<StyleFilterImage>(bSelected) }; aCachedImage && bFilter) {
         RefPtr bFilterInputImage = dynamicDowncast<StyleCachedImage>(bFilter->inputImage());
 
         if (bFilterInputImage && aCachedImage->equals(*bFilterInputImage))
-            return filterBlend(WTF::move(bFilterInputImage), Style::Filter { CSS::Keyword::None { } }, bFilter->filter(), context);
+            return filterBlend(WTF::move(bFilterInputImage), Style::Filter { CSS::Keyword::None { } }, bFilter->filter(), aStyle, bStyle, context);
     }
 
     RefPtr aCachedImage = dynamicDowncast<StyleCachedImage>(aSelected);

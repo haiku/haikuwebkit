@@ -334,7 +334,7 @@ void PolicyChecker::checkNavigationPolicy(ResourceRequest&& request, const Resou
 
 Ref<LocalFrame> PolicyChecker::protectedFrame() const
 {
-    return m_frame.get();
+    return m_frame;
 }
 
 std::optional<HitTestResult> PolicyChecker::hitTestResult(const NavigationAction& action)

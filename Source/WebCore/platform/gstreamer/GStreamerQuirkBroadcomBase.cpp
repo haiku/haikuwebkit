@@ -142,7 +142,7 @@ void GStreamerQuirkBroadcomBase::setupBufferingPercentageCorrection(MediaPlayerP
                 GRefPtr<GstPad> peerSrcPad = adoptGRef(gst_pad_get_peer(sinkPad));
                 if (!peerSrcPad)
                     continue; // And end the loop, because there's only one srcpad.
-                GRefPtr<GstElement> peerElement = adoptGRef(GST_ELEMENT(gst_pad_get_parent(peerSrcPad.get())));
+                GRefPtr<GstElement> peerElement = adoptGRef(gst_pad_get_parent_element(peerSrcPad.get()));
 
                 // If it's NOT a multiqueue, it's probably a parser like aacparse. We try to traverse before it.
                 if (peerElement && elementTypeName != "GstMultiQueue"_s) {
@@ -151,7 +151,7 @@ void GStreamerQuirkBroadcomBase::setupBufferingPercentageCorrection(MediaPlayerP
                         if (!peerSrcPad)
                             continue; // And end the loop.
                         // Now we hopefully have peerElement pointing to the multiqueue.
-                        peerElement = adoptGRef(GST_ELEMENT(gst_pad_get_parent(peerSrcPad.get())));
+                        peerElement = adoptGRef(gst_pad_get_parent_element(peerSrcPad.get()));
                         break;
                     }
                 }

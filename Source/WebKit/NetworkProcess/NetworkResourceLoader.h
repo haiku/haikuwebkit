@@ -33,6 +33,7 @@
 #include "NetworkResourceLoadIdentifier.h"
 #include "NetworkResourceLoadParameters.h"
 #include "PrivateRelayed.h"
+#include "ServiceWorkerTimingInfo.h"
 #include <WebCore/ContentFilterClient.h>
 #include <WebCore/ContentFilterUnblockHandler.h>
 #include <WebCore/ContentSecurityPolicyClient.h>
@@ -169,7 +170,11 @@ public:
     void serviceWorkerDidNotHandle(ServiceWorkerFetchTask*);
     void setServiceWorkerRegistration(WebCore::SWServerRegistration& serviceWorkerRegistration) { m_serviceWorkerRegistration = serviceWorkerRegistration; }
     void setWorkerStart(MonotonicTime);
-    MonotonicTime workerStart() const { return m_workerStart; }
+
+    void setWorkerRouterEvaluationStart(MonotonicTime);
+    void setWorkerCacheLookupStart(MonotonicTime);
+    void setWorkerMatchedRouterSource(WebCore::RouterSourceEnum);
+    void setWorkerFinalRouterSource(WebCore::RouterSourceEnum);
 
     std::optional<WebCore::ResourceError> doCrossOriginOpenerHandlingOfResponse(const WebCore::ResourceResponse&);
     void sendDidReceiveResponsePotentiallyInNewBrowsingContextGroup(const WebCore::ResourceResponse&, PrivateRelayed, bool needsContinueDidReceiveResponseMessage);
@@ -309,7 +314,7 @@ private:
     unsigned m_redirectCount { 0 };
 
     std::unique_ptr<SynchronousLoadData> m_synchronousLoadData;
-    Vector<RefPtr<WebCore::BlobDataFileReference>> m_fileReferences;
+    Vector<Ref<WebCore::BlobDataFileReference>> m_fileReferences;
 
     bool m_wasStarted { false };
     bool m_didConsumeSandboxExtensions { false };
@@ -338,7 +343,8 @@ private:
     std::optional<NetworkActivityTracker> m_networkActivityTracker;
     RefPtr<ServiceWorkerFetchTask> m_serviceWorkerFetchTask;
     WeakPtr<WebCore::SWServerRegistration> m_serviceWorkerRegistration;
-    MonotonicTime m_workerStart;
+    std::optional<ServiceWorkerTimingInfo> m_serviceWorkerTimingInfo;
+
     NetworkResourceLoadIdentifier m_resourceLoadID;
     WebCore::ResourceResponse m_redirectResponse;
     URL m_firstResponseURL; // First URL in response's URL list (https://fetch.spec.whatwg.org/#concept-response-url-list).

@@ -340,9 +340,6 @@ bool RenderBundleEncoder::executePreDrawCommands(bool needsValidationLayerWorkar
         [commandEncoder setDepthBias:m_depthBias slopeScale:m_depthBiasSlopeScale clamp:m_depthBiasClamp];
 
         for (auto& [groupIndex, bindGroup] : m_bindGroups) {
-            if (!bindGroup)
-                continue;
-
             for (const auto& resource : bindGroup->resources()) {
                 ASSERT(resource.mtlResources.size() == resource.resourceUsages.size());
                 for (size_t i = 0, resourceCount = resource.resourceUsages.size(); i < resourceCount; ++i) {
@@ -353,23 +350,20 @@ bool RenderBundleEncoder::executePreDrawCommands(bool needsValidationLayerWorkar
         }
     }
 
-    for (auto& [groupIndex, group] : m_bindGroups) {
-        RefPtr protectedGroup = group;
-        if (!group)
-            continue;
-
+    for (auto& [groupIndex, bindGroup] : m_bindGroups) {
+        Ref group = bindGroup;
         auto pipelineOptionalBindGroupLayout = pipelineLayout->protectedOptionalBindGroupLayout(groupIndex);
         const Vector<uint32_t>* dynamicOffsets = nullptr;
         if (m_bindGroupDynamicOffsets) {
             if (auto it = m_bindGroupDynamicOffsets->find(groupIndex); it != m_bindGroupDynamicOffsets->end())
                 dynamicOffsets = &it->value;
         }
-        if (NSString* error = errorValidatingBindGroup(*group.get(), pipeline->minimumBufferSizes(groupIndex), dynamicOffsets)) {
+        if (NSString* error = errorValidatingBindGroup(group, pipeline->minimumBufferSizes(groupIndex), dynamicOffsets)) {
             makeInvalid(error);
             return false;
         }
 
-        if (protectedGroup && (protectedGroup->makeSubmitInvalid(ShaderStage::Vertex, pipelineOptionalBindGroupLayout.get()) || protectedGroup->makeSubmitInvalid(ShaderStage::Fragment, pipelineOptionalBindGroupLayout.get())))
+        if (group->makeSubmitInvalid(ShaderStage::Vertex, pipelineOptionalBindGroupLayout.get()) || group->makeSubmitInvalid(ShaderStage::Fragment, pipelineOptionalBindGroupLayout.get()))
             m_makeSubmitInvalid = true;
     }
 
@@ -1180,7 +1174,7 @@ void RenderBundleEncoder::setBindGroup(uint32_t groupIndex, const BindGroup* gro
         }
     }
 
-    m_bindGroups.set(groupIndex, &group);
+    m_bindGroups.set(groupIndex, group);
     if (auto vertexBindGroupBufferIndex = m_device->vertexBufferIndexForBindGroup(groupIndex); group.vertexArgumentBuffer() && m_vertexBuffers.size() > vertexBindGroupBufferIndex) {
         if (!addResource(m_resources, group.vertexArgumentBuffer(), MTLRenderStageVertex))
             return;

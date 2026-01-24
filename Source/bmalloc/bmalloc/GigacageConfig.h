@@ -32,6 +32,8 @@
 #include <bit>
 #include <inttypes.h>
 
+BALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+
 namespace WebConfig {
 
 using Slot = uint64_t;
@@ -115,5 +117,7 @@ static_assert(bmalloc::roundUpToMultipleOf<alignmentOfGigacageConfig>(startOffse
 #define g_gigacageConfig (*std::bit_cast<Gigacage::Config*>(&WebConfig::g_config[Gigacage::startSlotOfGigacageConfig]))
 
 } // namespace Gigacage
+
+BALLOW_UNSAFE_BUFFER_USAGE_END
 
 #endif // __cplusplus

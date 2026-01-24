@@ -642,9 +642,8 @@ static bool fragmentNeedsColorTransformed(ReplacementFragment& fragment, const P
         if (!editableRootRenderer || editableRootRenderer->style().appleColorFilter().isNone())
             return false;
 
-        const auto& colorFilter = editableRootRenderer->style().appleColorFilter();
-        for (const auto& colorFilterOperation : colorFilter) {
-            if (colorFilterOperation->type() != FilterOperation::Type::AppleInvertLightness)
+        for (const auto& colorFilterFunction : editableRootRenderer->style().appleColorFilter()) {
+            if (!WTF::holdsAlternative<Style::AppleInvertLightnessFunction>(colorFilterFunction))
                 return false;
         }
     }
@@ -2000,7 +1999,7 @@ void ReplaceSelectionCommand::updateDirectionForStartOfInsertedContentIfNeeded(c
 }
 
 using ElementToStyleProperties = HashMap<Ref<StyledElement>, Vector<CSSPropertyID, 2>>;
-WARN_UNUSED_RETURN static IterationStatus collectStylesToRemove(Node& node, const Node& lastLeaf, double backgroundLuminance, ElementToStyleProperties& stylesToRemove)
+[[nodiscard]] static IterationStatus collectStylesToRemove(Node& node, const Node& lastLeaf, double backgroundLuminance, ElementToStyleProperties& stylesToRemove)
 {
     auto addStylesToRemove = [&](StyledElement& element) {
         RefPtr style = element.inlineStyle();

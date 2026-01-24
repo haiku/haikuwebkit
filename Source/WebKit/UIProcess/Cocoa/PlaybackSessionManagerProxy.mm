@@ -741,11 +741,6 @@ void PlaybackSessionManagerProxy::swapFullscreenModes(PlaybackSessionContextIden
 void PlaybackSessionManagerProxy::currentTimeChanged(PlaybackSessionContextIdentifier contextId, double currentTime, double hostTime)
 {
     ensureModel(contextId)->currentTimeChanged(currentTime);
-
-#if ENABLE(VIDEO_PRESENTATION_MODE)
-    if (RefPtr page = m_page.get())
-        page->didChangeCurrentTime(contextId);
-#endif
 }
 
 void PlaybackSessionManagerProxy::bufferedTimeChanged(PlaybackSessionContextIdentifier contextId, double bufferedTime)
@@ -816,11 +811,6 @@ void PlaybackSessionManagerProxy::playbackStartedTimeChanged(PlaybackSessionCont
 void PlaybackSessionManagerProxy::rateChanged(PlaybackSessionContextIdentifier contextId, OptionSet<WebCore::PlaybackSessionModel::PlaybackState> playbackState, double rate, double defaultPlaybackRate)
 {
     ensureModel(contextId)->rateChanged(playbackState, rate, defaultPlaybackRate);
-
-#if ENABLE(VIDEO_PRESENTATION_MODE)
-    if (RefPtr page = m_page.get())
-        page->didChangePlaybackRate(contextId);
-#endif
 }
 
 void PlaybackSessionManagerProxy::pictureInPictureSupportedChanged(PlaybackSessionContextIdentifier contextId, bool supported)

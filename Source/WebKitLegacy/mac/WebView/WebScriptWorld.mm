@@ -86,8 +86,8 @@ static WorldMap& allWorlds()
 
 + (WebScriptWorld *)standardWorld
 {
-    static WebScriptWorld *world = [[WebScriptWorld alloc] initWithWorld:WebCore::mainThreadNormalWorldSingleton()];
-    return world;
+    static NeverDestroyed<RetainPtr<WebScriptWorld>> world = adoptNS([[WebScriptWorld alloc] initWithWorld:WebCore::mainThreadNormalWorldSingleton()]);
+    return world->get();
 }
 
 + (WebScriptWorld *)world

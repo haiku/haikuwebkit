@@ -25,6 +25,8 @@
 
 #pragma once
 
+#if !__has_feature(modules)
+
 DECLARE_SYSTEM_HEADER
 
 #include <CoreMedia/CoreMedia.h>
@@ -60,3 +62,5 @@ NS_ASSUME_NONNULL_BEGIN
 NS_ASSUME_NONNULL_END
 
 #endif
+
+#endif // !__has_feature(modules)

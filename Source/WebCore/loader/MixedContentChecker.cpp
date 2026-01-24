@@ -30,6 +30,7 @@
 #include "config.h"
 #include "MixedContentChecker.h"
 
+#include "ContentFilter.h"
 #include "Document.h"
 #include "FrameLoader.h"
 #include "LegacySchemeRegistry.h"
@@ -133,6 +134,11 @@ bool MixedContentChecker::shouldBlockRequest(Frame& frame, const URL& url, IsUpg
     RefPtr<Document> document;
     if (RefPtr localFrame = dynamicDowncast<LocalFrame>(frame))
         document = localFrame->document();
+
+#if ENABLE(CONTENT_FILTERING) && HAVE(WEBCONTENTRESTRICTIONS)
+    if (url == ContentFilter::blockedPageURL())
+        return false;
+#endif
 
     if (!isMixedContent(frame, url))
         return false;

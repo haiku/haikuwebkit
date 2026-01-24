@@ -267,6 +267,25 @@ double WebExtensionAPIRuntime::getFrameId(JSValue *target)
     return toWebAPI(toWebExtensionFrameIdentifier(*frame));
 }
 
+String WebExtensionAPIRuntime::getDocumentId(JSValue *target, NSString **outExceptionString)
+{
+    // Documentation: https://github.com/w3c/webextensions/blob/main/proposals/runtime_get_document_id.md
+
+    RefPtr frame = target ? WebFrame::contentFrameForWindowOrFrameElement(target.context.JSGlobalContextRef, target.JSValueRef) : nullptr;
+    if (!frame) {
+        *outExceptionString = toErrorString(nullString(), @"target", @"is not a valid window or frame element").createNSString().autorelease();
+        return String();
+    }
+
+    auto documentIdentifier = toDocumentIdentifier(*frame);
+    if (!documentIdentifier) {
+        *outExceptionString = toErrorString(nullString(), nullString(), @"an unexpected error occurred").createNSString().autorelease();
+        return String();
+    }
+
+    return documentIdentifier.value().toString();
+}
+
 void WebExtensionAPIRuntime::setUninstallURL(URL, Ref<WebExtensionCallbackHandler>&& callback)
 {
     // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/runtime/setUninstallURL

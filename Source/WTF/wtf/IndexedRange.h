@@ -61,7 +61,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
         return *this;
     }
 
-    auto&& operator*() const
+    decltype(auto) operator*() const
     {
         RELEASE_ASSERT(m_iterator != m_end);
         return *m_iterator;

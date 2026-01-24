@@ -74,34 +74,34 @@ PAL::SessionID IDBConnectionProxy::sessionID() const
 
 Ref<IDBOpenDBRequest> IDBConnectionProxy::openDatabase(ScriptExecutionContext& context, const IDBDatabaseIdentifier& databaseIdentifier, uint64_t version)
 {
-    RefPtr<IDBOpenDBRequest> request;
-    {
+    Ref request = [&] {
         Locker locker { m_openDBRequestMapLock };
 
-        request = IDBOpenDBRequest::createOpenRequest(context, *this, databaseIdentifier, version);
+        Ref request = IDBOpenDBRequest::createOpenRequest(context, *this, databaseIdentifier, version);
         ASSERT(!m_openDBRequestMap.contains(request->resourceIdentifier()));
-        m_openDBRequestMap.set(request->resourceIdentifier(), request.get());
-    }
+        m_openDBRequestMap.set(request->resourceIdentifier(), request);
+        return request;
+    }();
 
-    callConnectionOnMainThread(&IDBConnectionToServer::openDatabase, IDBOpenRequestData(*this, *request));
+    callConnectionOnMainThread(&IDBConnectionToServer::openDatabase, IDBOpenRequestData(*this, request));
 
-    return request.releaseNonNull();
+    return request;
 }
 
 Ref<IDBOpenDBRequest> IDBConnectionProxy::deleteDatabase(ScriptExecutionContext& context, const IDBDatabaseIdentifier& databaseIdentifier)
 {
-    RefPtr<IDBOpenDBRequest> request;
-    {
+    Ref request = [&] {
         Locker locker { m_openDBRequestMapLock };
 
-        request = IDBOpenDBRequest::createDeleteRequest(context, *this, databaseIdentifier);
+        Ref request = IDBOpenDBRequest::createDeleteRequest(context, *this, databaseIdentifier);
         ASSERT(!m_openDBRequestMap.contains(request->resourceIdentifier()));
-        m_openDBRequestMap.set(request->resourceIdentifier(), request.get());
-    }
+        m_openDBRequestMap.set(request->resourceIdentifier(), request);
+        return request;
+    }();
 
-    callConnectionOnMainThread(&IDBConnectionToServer::deleteDatabase, IDBOpenRequestData(*this, *request));
+    callConnectionOnMainThread(&IDBConnectionToServer::deleteDatabase, IDBOpenRequestData(*this, request));
 
-    return request.releaseNonNull();
+    return request;
 }
 
 void IDBConnectionProxy::didOpenDatabase(const IDBResultData& resultData)
@@ -261,7 +261,7 @@ void IDBConnectionProxy::saveOperation(TransactionOperation& operation)
     Locker locker { m_transactionOperationLock };
 
     ASSERT(!m_activeOperations.contains(operation.identifier()));
-    m_activeOperations.set(operation.identifier(), &operation);
+    m_activeOperations.set(operation.identifier(), operation);
 }
 
 void IDBConnectionProxy::completeOperation(const IDBResultData& resultData)
@@ -365,7 +365,7 @@ void IDBConnectionProxy::establishTransaction(IDBTransaction& transaction)
     {
         Locker locker { m_transactionMapLock };
         ASSERT(!hasRecordOfTransaction(transaction));
-        m_pendingTransactions.set(transaction.info().identifier(), &transaction);
+        m_pendingTransactions.set(transaction.info().identifier(), transaction);
     }
 
     callConnectionOnMainThread(&IDBConnectionToServer::establishTransaction, transaction.database().databaseConnectionIdentifier(), transaction.info());
@@ -390,7 +390,7 @@ void IDBConnectionProxy::commitTransaction(IDBTransaction& transaction, uint64_t
     {
         Locker locker { m_transactionMapLock };
         ASSERT(!m_committingTransactions.contains(transaction.info().identifier()));
-        m_committingTransactions.set(transaction.info().identifier(), &transaction);
+        m_committingTransactions.set(transaction.info().identifier(), transaction);
     }
 
     callConnectionOnMainThread(&IDBConnectionToServer::commitTransaction, transaction.info().identifier(), handledRequestResultsCount);
@@ -415,7 +415,7 @@ void IDBConnectionProxy::abortTransaction(IDBTransaction& transaction)
     {
         Locker locker { m_transactionMapLock };
         ASSERT(!m_abortingTransactions.contains(transaction.info().identifier()));
-        m_abortingTransactions.set(transaction.info().identifier(), &transaction);
+        m_abortingTransactions.set(transaction.info().identifier(), transaction);
     }
 
     callConnectionOnMainThread(&IDBConnectionToServer::abortTransaction, transaction.info().identifier());
@@ -619,15 +619,16 @@ void setMatchingItemsContextSuspended(ScriptExecutionContext& currentContext, Ha
     // https://bugs.webkit.org/show_bug.cgi?id=204345
     auto& currentThread = Thread::currentSingleton();
     for (auto& iterator : map) {
-        if (&iterator.value->originThread() != &currentThread)
+        Ref item = iterator.value;
+        if (&item->originThread() != &currentThread)
             continue;
 
-        RefPtr context = Ref { *iterator.value }->scriptExecutionContext();
+        RefPtr context = item->scriptExecutionContext();
         if (!context)
             continue;
 
         if (context == &currentContext)
-            Ref { *iterator.value }->setIsContextSuspended(isContextSuspended);
+            item->setIsContextSuspended(isContextSuspended);
     }
 }
 
@@ -635,28 +636,24 @@ void IDBConnectionProxy::abortActivitiesForCurrentThread()
 {
     {
         Locker locker { m_openDBRequestMapLock };
-        removeItemsMatchingCurrentThread(m_openDBRequestMap, [](RefPtr<IDBOpenDBRequest>& request) {
-            if (request)
-                request->requestCompleted(IDBResultData::error(request->resourceIdentifier(), IDBError { ExceptionCode::InvalidStateError, "Request is removed"_s }));
+        removeItemsMatchingCurrentThread(m_openDBRequestMap, [](auto& request) {
+            request->requestCompleted(IDBResultData::error(request->resourceIdentifier(), IDBError { ExceptionCode::InvalidStateError, "Request is removed"_s }));
         });
     }
     {
         Locker locker { m_transactionMapLock };
         removeItemsMatchingCurrentThread(m_pendingTransactions, [](auto& transaction) {
-            if (transaction)
-                transaction->didStart(IDBError { ExceptionCode::InvalidStateError, "Transaction is removed"_s });
+            transaction->didStart(IDBError { ExceptionCode::InvalidStateError, "Transaction is removed"_s });
         });
         removeItemsMatchingCurrentThread(m_committingTransactions, [](auto& transaction) {
-            if (transaction)
-                transaction->didCommit(IDBError { ExceptionCode::InvalidStateError, "Transaction is removed"_s });
+            transaction->didCommit(IDBError { ExceptionCode::InvalidStateError, "Transaction is removed"_s });
         });
         removeItemsMatchingCurrentThread(m_abortingTransactions, [](auto& transaction) {
-            if (transaction)
-                transaction->didAbort(IDBError { ExceptionCode::InvalidStateError, "Transaction is removed"_s });
+            transaction->didAbort(IDBError { ExceptionCode::InvalidStateError, "Transaction is removed"_s });
         });
     }
 
-    HashSet<RefPtr<TransactionOperation>> activeOperationsForThread;
+    HashSet<Ref<TransactionOperation>> activeOperationsForThread;
     {
         Locker locker { m_transactionOperationLock };
         for (auto& operation : m_activeOperations.values()) {

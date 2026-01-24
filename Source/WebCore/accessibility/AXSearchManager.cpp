@@ -445,7 +445,7 @@ std::optional<AXTextMarkerRange> AXSearchManager::findMatchingRange(Accessibilit
     // Currently, this method only supports searching for the next/previous misspelling.
     // FIXME: support other types of ranges, like italicized.
     if (criteria.searchKeys.size() != 1 || criteria.searchKeys[0] != AccessibilitySearchKey::MisspelledWord || criteria.resultsLimit != 1) {
-        ASSERT_NOT_REACHED();
+        AX_ASSERT_NOT_REACHED();
         return std::nullopt;
     }
 
@@ -457,9 +457,9 @@ std::optional<AXTextMarkerRange> AXSearchManager::findMatchingRange(Accessibilit
 
     bool forward = criteria.searchDirection == AccessibilitySearchDirection::Next;
     if (match(*startObject, criteria)) {
-        ASSERT(m_misspellingRanges.contains(startObject->objectID()));
+        AX_ASSERT(m_misspellingRanges.contains(startObject->objectID()));
         const auto& ranges = m_misspellingRanges.get(startObject->objectID());
-        ASSERT(!ranges.isEmpty());
+        AX_ASSERT(!ranges.isEmpty());
 
         AXTextMarkerRange startRange { startObject->treeID(), startObject->objectID(), criteria.startRange };
         if (forward) {
@@ -479,9 +479,9 @@ std::optional<AXTextMarkerRange> AXSearchManager::findMatchingRange(Accessibilit
     auto objects = findMatchingObjectsInternal(criteria);
     if (!objects.isEmpty()) {
         Ref object = objects[0];
-        ASSERT(m_misspellingRanges.contains(object->objectID()));
+        AX_ASSERT(m_misspellingRanges.contains(object->objectID()));
         const auto& ranges = m_misspellingRanges.get(object->objectID());
-        ASSERT(!ranges.isEmpty());
+        AX_ASSERT(!ranges.isEmpty());
         return forward ? ranges[0] : ranges.last();
     }
     return std::nullopt;

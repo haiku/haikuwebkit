@@ -137,7 +137,7 @@ void PageCanvasAgent::frameNavigated(LocalFrame& frame)
     for (auto& inspectorCanvas : m_identifierToInspectorCanvas.values()) {
         if (auto* canvasElement = inspectorCanvas->canvasElement()) {
             if (canvasElement->document().frame() == &frame)
-                inspectorCanvases.append(inspectorCanvas.get());
+                inspectorCanvases.append(inspectorCanvas.ptr());
         }
     }
     for (auto* inspectorCanvas : inspectorCanvases)

@@ -71,7 +71,7 @@ static std::optional<IdentityCredentialProtocol> convertProtocolString(const Str
     return std::nullopt;
 }
 
-static ExceptionOr<std::optional<UnvalidatedDigitalCredentialRequest>> jsToCredentialRequest(const Document& document, const DigitalCredentialRequest& request)
+static ExceptionOr<std::optional<UnvalidatedDigitalCredentialRequest>> jsToCredentialRequest(const Document& document, const DigitalCredentialGetRequest& request)
 {
     auto scope = DECLARE_THROW_SCOPE(document.globalObject()->vm());
     auto* globalObject = document.globalObject();
@@ -98,7 +98,7 @@ static ExceptionOr<std::optional<UnvalidatedDigitalCredentialRequest>> jsToCrede
     }
 }
 
-ExceptionOr<Vector<UnvalidatedDigitalCredentialRequest>> DigitalCredential::convertObjectsToDigitalPresentationRequests(const Document& document, const Vector<DigitalCredentialRequest>& requests)
+ExceptionOr<Vector<UnvalidatedDigitalCredentialRequest>> DigitalCredential::convertObjectsToDigitalPresentationRequests(const Document& document, const Vector<DigitalCredentialGetRequest>& requests)
 {
     Vector<UnvalidatedDigitalCredentialRequest> results;
     for (auto& request : requests) {
@@ -112,13 +112,13 @@ ExceptionOr<Vector<UnvalidatedDigitalCredentialRequest>> DigitalCredential::conv
         }
 
         if (RefPtr context = document.scriptExecutionContext()) {
-            String warning = makeString("Ignoring DigitalCredentialRequest with unsupported protocol: \""_s, request.protocol, "\""_s);
+            String warning = makeString("Ignoring DigitalCredentialGetRequest with unsupported protocol: \""_s, request.protocol, "\""_s);
             context->addConsoleMessage(MessageSource::Other, MessageLevel::Warning, warning);
         }
     }
 
     if (results.isEmpty())
-        return Exception { ExceptionCode::TypeError, "At least one supported DigitalCredentialRequest must present"_s };
+        return Exception { ExceptionCode::TypeError, "At least one supported DigitalCredentialGetRequest must present"_s };
 
     return results;
 }
@@ -173,12 +173,8 @@ void DigitalCredential::discoverFromExternalSource(const Document& document, Cre
         return;
     }
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
     Ref coordinator = page->credentialRequestCoordinator();
-    coordinator->presentPicker(document, WTF::move(promise), presentationRequestsOrException.releaseReturnValue(), options.signal);
-#else
-    promise.reject(Exception { ExceptionCode::NotSupportedError, "Digital credentials are not supported."_s });
-#endif
+    coordinator->prepareCredentialRequest(document, WTF::move(promise), presentationRequestsOrException.releaseReturnValue(), options.signal);
 }
 
 } // namespace WebCore

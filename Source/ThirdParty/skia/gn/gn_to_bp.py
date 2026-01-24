@@ -572,8 +572,9 @@ def generate_args(target_os, enable_gpu, renderengine = False):
     d['skia_android_framework_use_perfetto'] = 'true'
 
   if enable_gpu:
-    d['skia_use_vulkan']    = 'true'
-    d['skia_enable_ganesh'] = 'true'
+    d['skia_use_vulkan']     = 'true'
+    d['skia_use_backup_vma'] = 'true'
+    d['skia_enable_ganesh']  = 'true'
     if renderengine:
       d['skia_enable_graphite'] = 'true'
   else:
@@ -772,9 +773,7 @@ defs = gn_to_bp_utils.GetArchSources(os.path.join(here, 'opts.gni'))
 
 def get_defines(json):
   defines = {str(d) for d in json['targets']['//:skia']['defines']}
-  # TODO(kjlubick, fmalita) Add this back in to enforce Android doesn't
-  # use these methods anymore.
-  defines.remove("SK_HIDE_PATH_EDIT_METHODS")
+  defines.remove('SK_DISABLE_LEGACY_NONCONST_SERIAL_PROCS')
   return defines
 
 android_defines      = get_defines(js)

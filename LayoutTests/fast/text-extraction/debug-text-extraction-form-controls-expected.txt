@@ -41,7 +41,6 @@ root
         'Footer content with'
         role='img',aria-label='copyright symbol','©'
         '2024'
-version=2
 
 -- html
 
@@ -104,7 +103,6 @@ version=2
         2024
     </footer>
 </body>
-<!-- version=2 -->
 
 -- json
 

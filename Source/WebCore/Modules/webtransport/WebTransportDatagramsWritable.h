@@ -37,7 +37,7 @@ struct WebTransportSendOptions;
 
 class WebTransportDatagramsWritable : public WritableStream {
 public:
-    static ExceptionOr<Ref<WritableStream>> create(ScriptExecutionContext&, RefPtr<WebTransport>&&, WebTransportSendOptions&&);
+    static ExceptionOr<Ref<WebTransportDatagramsWritable>> create(ScriptExecutionContext&, RefPtr<WebTransport>&&, WebTransportSendOptions&&);
     ~WebTransportDatagramsWritable();
 
     const RefPtr<WebTransportSendGroup>& sendGroup();

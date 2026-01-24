@@ -71,7 +71,7 @@ ALWAYS_INLINE std::optional<uint8_t> parseUInt7(const uint8_t* data, size_t& off
 }
 
 template <typename ...Args>
-WARN_UNUSED_RETURN NEVER_INLINE auto StreamingParser::fail(Args... args) -> State
+[[nodiscard]] NEVER_INLINE auto StreamingParser::fail(Args... args) -> State
 {
     using namespace FailureHelper; // See ADL comment in namespace above.
     m_errorMessage = makeString("WebAssembly.Module doesn't parse at byte "_s, m_offset, ": "_s, makeString(args)...);

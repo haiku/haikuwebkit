@@ -25,6 +25,9 @@
 
 #pragma once
 
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if !__has_feature(modules)
+
 #import <wtf/Compiler.h>
 #import <wtf/Platform.h>
 
@@ -32,7 +35,8 @@
 
 DECLARE_SYSTEM_HEADER
 
-#if USE(APPLE_INTERNAL_SDK)
+// FIXME: Remove the `__has_feature(modules)` condition when possible.
+#if USE(APPLE_INTERNAL_SDK) && !__has_feature(modules)
 
 #if HAVE(ARKIT_QUICK_LOOK_PREVIEW_ITEM)
 #import <AssetViewer/ARQuickLookWebKitItem.h>
@@ -157,3 +161,5 @@ NS_ASSUME_NONNULL_END
 #endif
 
 #endif // PLATFORM(IOS_FAMILY)
+
+#endif // !__has_feature(modules)

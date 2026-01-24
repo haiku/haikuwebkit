@@ -53,6 +53,7 @@
 #include "RenderView.h"
 #include "ScriptController.h"
 #include "Settings.h"
+#include "ShareableBitmap.h"
 #include "VideoFrameMetadata.h"
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/TextStream.h>
@@ -406,10 +407,30 @@ bool HTMLVideoElement::shouldGetNativeImageForCanvasDrawing() const
     return player()->shouldGetNativeImageForCanvasDrawing();
 }
 
-RefPtr<NativeImage> HTMLVideoElement::nativeImageForCurrentTime()
+RefPtr<NativeImage> HTMLVideoElement::nativeImageForCurrentTime() const
 {
     RefPtr player = this->player();
-    return player? player->nativeImageForCurrentTime() : nullptr;
+    return player ? player->nativeImageForCurrentTime() : nullptr;
+}
+
+RefPtr<ShareableBitmap> HTMLVideoElement::bitmapImageForCurrentTime() const
+{
+    RefPtr image = nativeImageForCurrentTime();
+    if (!image)
+        return { };
+
+    auto imageSize = image->size();
+    auto bitmap = ShareableBitmap::create({ imageSize, colorSpace() });
+    if (!bitmap)
+        return { };
+
+    auto context = bitmap->createGraphicsContext();
+    if (!context)
+        return { };
+
+    context->drawNativeImage(*image, FloatRect { { }, imageSize }, FloatRect { { }, imageSize });
+
+    return bitmap;
 }
 
 ExceptionOr<void> HTMLVideoElement::webkitEnterFullscreen()

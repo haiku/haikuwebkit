@@ -571,7 +571,7 @@ static inline uint64_t pas_make_mask64(uint64_t num_bits)
 static inline void pas_atomic_store_uint64(uint64_t* ptr, uint64_t value)
 {
 #if PAS_COMPILER(ARM64_ATOMICS_LL_SC)
-    asm volatile (
+    __asm__ volatile (
         "stlr %x[value], [%x[ptr]]\t\n"
         /* outputs */  :
         /* inputs  */  : [value]"r"(value), [ptr]"r"(ptr)

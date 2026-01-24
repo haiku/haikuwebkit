@@ -55,19 +55,19 @@ public:
         : m_handle(WTF::move(inHandle))
     { }
     explicit operator bool() const { return !!m_handle; }
-    WARN_UNUSED_RETURN int release() { return m_handle.release(); }
+    [[nodiscard]] int release() { return m_handle.release(); }
 #elif OS(WINDOWS)
     ConnectionHandle(Win32Handle&& inHandle)
         : m_handle(WTF::move(inHandle))
     { }
     explicit operator bool() const { return !!m_handle; }
-    WARN_UNUSED_RETURN HANDLE leak() { return m_handle.leak(); }
+    [[nodiscard]] HANDLE leak() { return m_handle.leak(); }
 #elif OS(DARWIN)
     ConnectionHandle(MachSendRight&& sendRight)
         : m_handle(WTF::move(sendRight))
     { }
     explicit operator bool() const { return MACH_PORT_VALID(m_handle.sendRight()); }
-    WARN_UNUSED_RETURN mach_port_t leakSendRight() { return m_handle.leakSendRight(); }
+    [[nodiscard]] mach_port_t leakSendRight() { return m_handle.leakSendRight(); }
 #endif
 
 private:

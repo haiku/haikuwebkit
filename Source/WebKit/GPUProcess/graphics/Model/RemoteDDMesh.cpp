@@ -118,6 +118,11 @@ void RemoteDDMesh::play(bool playing)
     m_backing->play(playing);
 }
 
+void RemoteDDMesh::setEnvironmentMap(const WebCore::DDModel::DDImageAsset& imageAsset)
+{
+    m_backing->setEnvironmentMap(imageAsset);
+}
+
 } // namespace WebKit
 
 #undef MESSAGE_CHECK

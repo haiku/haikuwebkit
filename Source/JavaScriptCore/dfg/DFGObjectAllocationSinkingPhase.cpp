@@ -2126,6 +2126,9 @@ escapeChildren:
                     return nullptr;
 
                 Node* phiNode = m_graph.addNode(SpecHeapTop, Phi, block->at(0)->origin.withInvalidExit());
+
+                // It shouldn't be possible to get a butterfly here since it should also be a sink candidate.
+                ASSERT(location.kind() != ArrayButterflyPLoc);
                 if (location.kind() == ArrayIndexedPropertyPLoc && hasDouble(allocation.indexingType())) {
                     ASSERT(allocation.kind() == Allocation::Kind::Array);
                     phiNode->mergeFlags(NodeResultDouble);
@@ -2147,7 +2150,7 @@ escapeChildren:
                     return nullptr;
 
                 Node* phiNode = m_graph.addNode(SpecHeapTop, Phi, block->at(0)->origin.withInvalidExit());
-                phiNode->mergeFlags(NodeResultJS);
+                phiNode->mergeFlags(identifier->result());
                 return phiNode;
             });
 
@@ -2559,7 +2562,7 @@ escapeChildren:
                 }
                 case ArrayButterflyPLoc: {
                     Node* butterfly = resolve(block, location);
-                    m_graph.m_varArgChildren[butterflyChild] = Edge(butterfly);
+                    m_graph.m_varArgChildren[butterflyChild] = Edge(butterfly, KnownStorageUse);
 
                     ASSERT(butterfly->op() == NewButterflyWithSize);
                     m_graph.m_varArgChildren[lengthChild] = butterfly->child1();
@@ -2817,7 +2820,7 @@ escapeChildren:
                     PutByOffset,
                     origin.takeValidExit(canExit),
                     OpInfo(data),
-                    Edge(storage, KnownCellUse),
+                    Edge(storage, KnownStorageUse),
                     Edge(base, KnownCellUse),
                     value->defaultEdge());
             }

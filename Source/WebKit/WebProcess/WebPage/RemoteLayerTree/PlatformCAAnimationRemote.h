@@ -115,7 +115,7 @@ public:
     void copyTimingFunctionsFrom(const WebCore::PlatformCAAnimation&) override;
 
     // Animation group properties.
-    void setAnimations(const Vector<RefPtr<PlatformCAAnimation>>&) final;
+    void setAnimations(const Vector<Ref<PlatformCAAnimation>>&) final;
     void copyAnimationsFrom(const PlatformCAAnimation&) final;
 
     AnimationType animationType() const { return m_properties.animationType; }

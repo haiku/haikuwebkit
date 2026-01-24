@@ -24,7 +24,7 @@
  */
 
 #import "config.h"
-#import "VP9UtilitiesCocoa.h"
+#import "VP9UtilitiesCocoaInternal.h"
 
 #if ENABLE(VP9) && PLATFORM(COCOA)
 

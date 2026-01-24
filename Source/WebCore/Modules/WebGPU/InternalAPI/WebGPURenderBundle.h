@@ -45,6 +45,7 @@ public:
     }
 
     virtual bool isRemoteRenderBundleProxy() const { return false; }
+    virtual bool isRenderBundleImpl() const { return false; }
 
 protected:
     RenderBundle() = default;

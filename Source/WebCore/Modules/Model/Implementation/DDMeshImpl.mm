@@ -35,10 +35,13 @@
 #include "DDUpdateTextureDescriptor.h"
 #include "ModelConvertToBackingContext.h"
 #include "ModelDDTypes.h"
+#include "WebGPUImpl.h"
 #include <WebGPU/DDModelTypes.h>
 #include <WebGPU/WebGPUExt.h>
 #include <wtf/TZoneMallocInlines.h>
+#include <Metal/Metal.h>
 #include <WebCore/IOSurface.h>
+#include <wtf/StdLibExtras.h>
 
 namespace WebCore::DDModel {
 
@@ -66,6 +69,9 @@ static DDBridgeMeshPart *convert(const DDModel::DDMeshPart& part)
 
 static NSArray<DDBridgeMeshPart *> *convert(const Vector<DDModel::DDMeshPart>& parts)
 {
+    if (!parts.size())
+        return nil;
+
     NSMutableArray<DDBridgeMeshPart *> *result = [NSMutableArray array];
     for (auto& p : parts)
         [result addObject:convert(p)];
@@ -73,7 +79,8 @@ static NSArray<DDBridgeMeshPart *> *convert(const Vector<DDModel::DDMeshPart>& p
     return result;
 }
 
-static NSData* convert(const Vector<uint8_t>& data)
+template<typename T>
+static NSData* convert(const Vector<T>& data)
 {
     if (!data.size())
         return nil;
@@ -81,28 +88,16 @@ static NSData* convert(const Vector<uint8_t>& data)
     return [[NSData alloc] initWithBytes:data.span().data() length:data.sizeInBytes()];
 }
 
-static NSArray<NSData*> *convert(const Vector<Vector<uint8_t>>& data)
+template<typename T>
+static NSArray<NSData*> *convert(const Vector<Vector<T>>& data)
 {
-    NSMutableArray<NSData*> *result = [NSMutableArray array];
-    for (auto& v : data)
-        [result addObject:convert(v)];
-
-    return result;
-}
-
-static DDBridgeChainedFloat4x4 *convert(const Vector<DDFloat4x4>& v)
-{
-    auto count = v.size();
-    if (!count)
+    if (!data.size())
         return nil;
 
-    DDBridgeChainedFloat4x4 *result = [[DDBridgeChainedFloat4x4 alloc] initWithTransform:v[0]];
-    DDBridgeChainedFloat4x4 *current = result;
-
-    for (uint32_t i = 1; i < count; ++i) {
-        DDBridgeChainedFloat4x4 *next = [[DDBridgeChainedFloat4x4 alloc] initWithTransform:v[i]];
-        current.next = next;
-        current = next;
+    NSMutableArray<NSData*> *result = [NSMutableArray array];
+    for (auto& v : data) {
+        if (NSData *d = convert(v))
+            [result addObject:d];
     }
 
     return result;
@@ -110,6 +105,9 @@ static DDBridgeChainedFloat4x4 *convert(const Vector<DDFloat4x4>& v)
 
 static NSArray<DDBridgeVertexAttributeFormat *> *convert(const Vector<DDVertexAttributeFormat>& formats)
 {
+    if (!formats.size())
+        return nil;
+
     NSMutableArray<DDBridgeVertexAttributeFormat *> *result = [NSMutableArray array];
     for (auto& format : formats)
         [result addObject:[[DDBridgeVertexAttributeFormat alloc] initWithSemantic:format.semantic format:format.format layoutIndex:format.layoutIndex offset:format.offset]];
@@ -119,6 +117,9 @@ static NSArray<DDBridgeVertexAttributeFormat *> *convert(const Vector<DDVertexAt
 
 static NSArray<DDBridgeVertexLayout *> *convert(const Vector<DDVertexLayout>& layouts)
 {
+    if (!layouts.size())
+        return nil;
+
     NSMutableArray<DDBridgeVertexLayout *> *result = [NSMutableArray array];
     for (auto& layout : layouts)
         [result addObject:[[DDBridgeVertexLayout alloc] initWithBufferIndex:layout.bufferIndex bufferOffset:layout.bufferOffset bufferStride:layout.bufferStride]];
@@ -128,6 +129,9 @@ static NSArray<DDBridgeVertexLayout *> *convert(const Vector<DDVertexLayout>& la
 
 static DDBridgeMeshDescriptor *convert(const DDMeshDescriptor& descriptor)
 {
+    if (!descriptor.vertexBufferCount)
+        return nil;
+
     return [[DDBridgeMeshDescriptor alloc] initWithVertexBufferCount:descriptor.vertexBufferCount
         vertexCapacity:descriptor.vertexCapacity
         vertexAttributes:convert(descriptor.vertexAttributes)
@@ -138,11 +142,46 @@ static DDBridgeMeshDescriptor *convert(const DDMeshDescriptor& descriptor)
 
 static NSArray<NSString *> *convert(const Vector<String>& v)
 {
+    if (!v.size())
+        return nil;
+
     NSMutableArray<NSString *> *result = [NSMutableArray array];
     for (auto& s : v)
         [result addObject:s.createNSString().get()];
 
     return result;
+}
+
+static DDBridgeSkinningData *convert(const std::optional<WebCore::DDModel::DDSkinningData>& data)
+{
+    if (!data)
+        return nil;
+
+    return [[DDBridgeSkinningData alloc] initWithInfluencePerVertexCount:data->influencePerVertexCount jointTransforms:convert(data->jointTransforms) inverseBindPoses:convert(data->inverseBindPoses) influenceJointIndices:convert(data->influenceJointIndices) influenceWeights:convert(data->influenceWeights) geometryBindTransform:data->geometryBindTransform];
+}
+
+static DDBridgeBlendShapeData *convert(const std::optional<WebCore::DDModel::DDBlendShapeData>& data)
+{
+    if (!data)
+        return nil;
+
+    return [[DDBridgeBlendShapeData alloc] initWithWeights:convert(data->weights) positionOffsets:convert(data->positionOffsets) normalOffsets:convert(data->normalOffsets)];
+}
+
+static DDBridgeRenormalizationData *convert(const std::optional<WebCore::DDModel::DDRenormalizationData>& data)
+{
+    if (!data)
+        return nil;
+
+    return [[DDBridgeRenormalizationData alloc] initWithVertexIndicesPerTriangle:convert(data->vertexIndicesPerTriangle) vertexAdjacencies:convert(data->vertexAdjacencies) vertexAdjacencyEndIndices:convert(data->vertexAdjacencyEndIndices)];
+}
+
+static DDBridgeDeformationData *convert(const std::optional<WebCore::DDModel::DDDeformationData>& data)
+{
+    if (!data)
+        return nil;
+
+    return [[DDBridgeDeformationData alloc] initWithSkinningData:convert(data->skinningData) blendShapeData:convert(data->blendShapeData) renormalizationData:convert(data->renormalizationData)];
 }
 #endif
 
@@ -157,7 +196,8 @@ void DDMeshImpl::update(const DDUpdateMeshDescriptor& descriptor)
         vertexData:convert(descriptor.vertexData)
         instanceTransforms:convert(descriptor.instanceTransforms)
         instanceTransformsCount:descriptor.instanceTransforms.size()
-        materialPrims:convert(descriptor.materialPrims)];
+        materialPrims:convert(descriptor.materialPrims)
+        deformationData:convert(descriptor.deformationData)];
 
     wgpuDDMeshUpdate(m_backing.get(), backingDescriptor);
 #else
@@ -229,6 +269,15 @@ void DDMeshImpl::play(bool play)
     wgpuDDMeshPlay(m_backing.get(), play);
 }
 
+void DDMeshImpl::setEnvironmentMap(const WebCore::DDModel::DDImageAsset& imageAsset)
+{
+#if ENABLE(GPU_PROCESS_MODEL)
+    wgpuDDMeshSetEnvironmentMap(m_backing.get(), convert(imageAsset));
+#else
+    UNUSED_PARAM(imageAsset);
+#endif
+}
+
 #if PLATFORM(COCOA)
 Vector<MachSendRight> DDMeshImpl::ioSurfaceHandles()
 {
@@ -240,4 +289,52 @@ Vector<MachSendRight> DDMeshImpl::ioSurfaceHandles()
 
 }
 
+namespace WebCore::WebGPU {
+
+static Vector<UniqueRef<WebCore::IOSurface>> createIOSurfaces(unsigned width, unsigned height)
+{
+    const auto colorFormat = IOSurface::Format::BGRA;
+    const auto colorSpace = DestinationColorSpace::LinearDisplayP3();
+
+    Vector<UniqueRef<WebCore::IOSurface>> ioSurfaces;
+
+    constexpr auto surfaceCount = 3;
+    for (auto i = 0; i < surfaceCount; ++i) {
+        if (auto buffer = WebCore::IOSurface::create(nullptr, WebCore::IntSize(width, height), colorSpace, IOSurface::Name::WebGPU, colorFormat))
+            ioSurfaces.append(makeUniqueRefFromNonNullUniquePtr(WTF::move(buffer)));
+    }
+
+    return ioSurfaces;
+}
+
+RefPtr<DDModel::DDMesh> GPUImpl::createModelBacking(unsigned width, unsigned height, const DDModel::DDImageAsset& diffuseTexture, const DDModel::DDImageAsset& specularTexture, CompletionHandler<void(Vector<MachSendRight>&&)>&& callback)
+{
+    UNUSED_PARAM(diffuseTexture);
+    UNUSED_PARAM(specularTexture);
+
+    auto ioSurfaceVector = createIOSurfaces(width, height);
+    Vector<RetainPtr<IOSurfaceRef>> ioSurfaces;
+    for (UniqueRef<WebCore::IOSurface>& ioSurface : ioSurfaceVector)
+        ioSurfaces.append(ioSurface->surface());
+
+    WGPUDDCreateMeshDescriptor backingDescriptor {
+        .width = width,
+        .height = height,
+        .ioSurfaces = WTF::move(ioSurfaces),
+#if ENABLE(GPU_PROCESS_MODEL)
+        .diffuseTexture = WebCore::DDModel::convert(diffuseTexture),
+        .specularTexture = WebCore::DDModel::convert(specularTexture),
+#else
+        .diffuseTexture = nil,
+        .specularTexture = nil,
+#endif
+    };
+
+    Ref convertToBackingContext = m_modelConvertToBackingContext;
+    auto mesh = DDModel::DDMeshImpl::create(adoptWebGPU(wgpuDDMeshCreate(m_backing.get(), &backingDescriptor)), WTF::move(ioSurfaceVector), convertToBackingContext);
+    callback(mesh->ioSurfaceHandles());
+    return mesh;
+}
+
+}
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

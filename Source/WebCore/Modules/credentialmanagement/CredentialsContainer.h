@@ -26,6 +26,8 @@
 
 #pragma once
 
+#if ENABLE(WEB_AUTHN)
+
 #include <WebCore/BasicCredential.h>
 #include <wtf/RefCounted.h>
 #include <wtf/WeakPtr.h>
@@ -68,3 +70,5 @@ protected:
 };
 
 } // namespace WebCore
+
+#endif // ENABLE(WEB_AUTHN)

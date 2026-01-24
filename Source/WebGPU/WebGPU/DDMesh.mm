@@ -39,9 +39,10 @@
 
 #if ENABLE(GPU_PROCESS_MODEL)
 
-#if __has_include(</System/Library/SubFrameworks/RealityCoreRenderer.framework/RealityCoreRenderer>)
-asm(".linker_option \"-framework\", \"/System/Library/SubFrameworks/RealityCoreRenderer.framework/RealityCoreRenderer\"");
+#if __has_include(</System/Library/Frameworks/RealityKit.framework/RealityKit>)
+asm(".linker_option \"-framework\", \"/System/Library/Frameworks/RealityKit.framework/RealityKit\"");
 #endif
+
 #endif
 
 namespace WebGPU {
@@ -69,13 +70,22 @@ DDMesh::DDMesh(const WGPUDDCreateMeshDescriptor& descriptor, Instance& instance)
         [m_textures addObject:[device newTextureWithDescriptor:textureDescriptor iosurface:ioSurface.get() plane:0]];
 
 #if ENABLE(GPU_PROCESS_MODEL)
-    DDBridgeReceiver* ddReceiver = [[DDBridgeReceiver alloc] initWithDevice:instance.device()];
-    Ref protectedThis = Ref { *this };
-    [ddReceiver initRenderer:m_textures[0] completionHandler:[protectedThis, ddReceiver] mutable {
-        protectedThis->m_ddReceiver = ddReceiver;
+    DDUSDConfiguration *configuration = [[DDUSDConfiguration alloc] initWithDevice:device];
+    DDBridgeImageAsset *diffuseAsset = descriptor.diffuseTexture;
+    DDBridgeImageAsset *specularAsset = descriptor.specularTexture;
+    BinarySemaphore completion;
+    [configuration createMaterialCompiler:[&completion] mutable {
+        completion.signal();
     }];
-#endif
+    completion.wait();
+
+    NSError *error;
+    m_ddReceiver = [[DDBridgeReceiver alloc] initWithConfiguration:configuration diffuseAsset:diffuseAsset specularAsset:specularAsset error:&error];
+    if (error)
+        WTFLogAlways("Could not initialize USD renderer"); // NOLINT
+
     m_ddMeshIdentifier = [[NSUUID alloc] init];
+#endif
 }
 
 DDMesh::DDMesh(Instance& instance)
@@ -90,11 +100,15 @@ bool DDMesh::isValid() const
 
 id<MTLTexture> DDMesh::texture() const
 {
+#if ENABLE(GPU_PROCESS_MODEL)
     ++m_currentTexture;
     if (m_currentTexture >= m_textures.count)
         m_currentTexture = 0;
 
     return m_textures.count ? m_textures[m_currentTexture] : nil;
+#else
+    return nil;
+#endif
 }
 
 DDMesh::~DDMesh() = default;
@@ -102,6 +116,10 @@ DDMesh::~DDMesh() = default;
 void DDMesh::render() const
 {
 #if ENABLE(GPU_PROCESS_MODEL)
+    processUpdates();
+    if (!m_meshDataExists)
+        return;
+
     if (id<MTLTexture> modelBacking = texture())
         [m_ddReceiver renderWithTexture:modelBacking];
 #endif
@@ -113,11 +131,26 @@ void DDMesh::update(DDBridgeUpdateMesh* descriptor)
         return;
 
 #if ENABLE(GPU_PROCESS_MODEL)
-    BinarySemaphore completion;
-    [m_ddReceiver updateMesh:descriptor completionHandler:[&] mutable {
-        completion.signal();
-    }];
-    completion.wait();
+    if (!m_batchedUpdates)
+        m_batchedUpdates = [NSMutableDictionary dictionary];
+
+    [m_batchedUpdates setObject:descriptor forKey:descriptor.identifier];
+#endif
+}
+
+void DDMesh::processUpdates() const
+{
+#if ENABLE(GPU_PROCESS_MODEL)
+    for (DDBridgeUpdateMesh *descriptor in m_batchedUpdates.allValues) {
+        BinarySemaphore completion;
+        RELEASE_ASSERT(m_ddReceiver);
+        [m_ddReceiver updateMesh:descriptor completionHandler:[&] mutable {
+            completion.signal();
+        }];
+        completion.wait();
+        m_meshDataExists = true;
+    }
+    [m_batchedUpdates removeAllObjects];
 #endif
 }
 
@@ -127,11 +160,8 @@ void DDMesh::updateTexture(DDBridgeUpdateTexture* descriptor)
         return;
 
 #if ENABLE(GPU_PROCESS_MODEL)
-    BinarySemaphore completion;
-    [m_ddReceiver updateTexture:descriptor completionHandler:[&] mutable {
-        completion.signal();
-    }];
-    completion.wait();
+    RELEASE_ASSERT(m_ddReceiver);
+    [m_ddReceiver updateTexture:descriptor];
 #endif
 }
 
@@ -141,6 +171,7 @@ void DDMesh::updateMaterial(DDBridgeUpdateMaterial* descriptor)
         return;
 
 #if ENABLE(GPU_PROCESS_MODEL)
+    RELEASE_ASSERT(m_ddReceiver);
     BinarySemaphore completion;
     [m_ddReceiver updateMaterial:descriptor completionHandler:[&] mutable {
         completion.signal();
@@ -166,6 +197,15 @@ void DDMesh::setCameraDistance(float distance)
     render();
 #else
     UNUSED_PARAM(distance);
+#endif
+}
+
+void DDMesh::setEnvironmentMap(DDBridgeImageAsset *imageAsset)
+{
+#if ENABLE(GPU_PROCESS_MODEL)
+    [m_ddReceiver setEnvironmentMap:imageAsset];
+#else
+    UNUSED_PARAM(imageAsset);
 #endif
 }
 
@@ -215,6 +255,11 @@ WGPU_EXPORT void wgpuDDMeshTextureUpdate(WGPUDDMesh mesh, id desc)
 WGPU_EXPORT void wgpuDDMeshMaterialUpdate(WGPUDDMesh mesh, id desc)
 {
     WebGPU::protectedFromAPI(mesh)->updateMaterial(desc);
+}
+
+WGPU_EXPORT void wgpuDDMeshSetEnvironmentMap(WGPUDDMesh mesh, id image)
+{
+    WebGPU::protectedFromAPI(mesh)->setEnvironmentMap(image);
 }
 
 WGPU_EXPORT void wgpuDDMeshSetCameraDistance(WGPUDDMesh mesh, float distance)

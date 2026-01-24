@@ -35,8 +35,7 @@
 #include <wtf/SetForScope.h>
 #include <wtf/TZoneMallocInlines.h>
 
-namespace WebCore {
-namespace XPath {
+namespace WebCore::XPath {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(Number);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(StringExpression);
@@ -272,7 +271,7 @@ Value Union::evaluate() const
     NodeSet& resultSet = lhsResult.modifiableNodeSet();
     const NodeSet& rhsNodes = rhsResult.toNodeSet();
 
-    HashSet<RefPtr<Node>> nodes;
+    HashSet<Ref<Node>> nodes;
     for (auto& result : resultSet)
         nodes.add(result.get());
 
@@ -309,5 +308,4 @@ bool predicateIsContextPositionSensitive(const Expression& expression)
     return expression.isContextPositionSensitive() || expression.resultType() == Value::Type::Number;
 }
 
-} // namespace XPath
-} // namespace WebCore
+} // namespace WebCore::XPath

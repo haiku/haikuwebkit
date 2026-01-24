@@ -165,7 +165,7 @@ bool PositionIterator::isCandidate() const
     if (!anchorNode)
         return false;
 
-    RenderObject* renderer = anchorNode->renderer();
+    CheckedPtr renderer = anchorNode->renderer();
     if (!renderer)
         return false;
 
@@ -175,7 +175,7 @@ bool PositionIterator::isCandidate() const
     if (renderer->isBR())
         return Position(*this).isCandidate();
 
-    if (auto* renderText = dynamicDowncast<RenderText>(*renderer))
+    if (CheckedPtr renderText = dynamicDowncast<RenderText>(*renderer))
         return !Position::nodeIsUserSelectNone(anchorNode.get()) && renderText->containsCaretOffset(m_offsetInAnchor);
 
     if (positionBeforeOrAfterNodeIsCandidate(*anchorNode))
@@ -184,7 +184,7 @@ bool PositionIterator::isCandidate() const
     if (is<HTMLHtmlElement>(*anchorNode))
         return false;
 
-    if (auto* block = dynamicDowncast<RenderBlock>(*renderer)) {
+    if (CheckedPtr block = dynamicDowncast<RenderBlock>(*renderer)) {
         if (is<RenderBlockFlow>(*block) || is<RenderGrid>(*block) || is<RenderFlexibleBox>(*block)) {
             if (block->logicalHeight() || is<HTMLBodyElement>(*anchorNode) || anchorNode->isRootEditableElement()) {
                 if (!Position::hasRenderedNonAnonymousDescendantsWithHeight(*block))

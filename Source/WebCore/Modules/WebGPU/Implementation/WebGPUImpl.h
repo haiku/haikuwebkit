@@ -105,9 +105,10 @@ private:
     GPUImpl& operator=(GPUImpl&&) = delete;
 
     WGPUInstance backing() const { return m_backing.get(); }
+    bool isGPUImpl() const final { return true; }
 
     void requestAdapter(const RequestAdapterOptions&, CompletionHandler<void(RefPtr<Adapter>&&)>&&) final;
-    RefPtr<DDModel::DDMesh> createModelBacking(unsigned width, unsigned height, CompletionHandler<void(Vector<MachSendRight>&&)>&&) final;
+    RefPtr<DDModel::DDMesh> createModelBacking(unsigned width, unsigned height, const DDModel::DDImageAsset& diffuseTexture, const DDModel::DDImageAsset& specularTexture, CompletionHandler<void(Vector<MachSendRight>&&)>&&) final;
 
     RefPtr<PresentationContext> createPresentationContext(const PresentationContextDescriptor&) final;
 
@@ -146,5 +147,9 @@ private:
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::GPUImpl)
+    static bool isType(const WebCore::WebGPU::GPU& gpu) { return gpu.isGPUImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

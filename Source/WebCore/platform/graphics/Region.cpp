@@ -310,7 +310,7 @@ void Region::Shape::appendSpans(const Shape& shape, std::span<const Span> spans)
         appendSpan(spans[0].y, shape.segments(spans));
 }
 
-std::span<const int> Region::Shape::segments(std::span<const Span> span) const
+std::span<const int> Region::Shape::segments(std::span<const Span> span) const LIFETIME_BOUND
 {
     ASSERT(span.data() >= std::to_address(m_spans.begin()));
     ASSERT(span.data() < std::to_address(m_spans.end()));

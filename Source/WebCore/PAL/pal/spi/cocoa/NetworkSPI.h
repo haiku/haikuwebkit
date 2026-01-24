@@ -28,6 +28,9 @@
 #include <wtf/Compiler.h>
 #include <wtf/Platform.h>
 
+// FIXME: Remove when support for macOS 14 is no longer required.
+#if !__has_feature(modules) || !PLATFORM(MAC) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 150000
+
 DECLARE_SYSTEM_HEADER
 
 #import <Network/Network.h>
@@ -101,6 +104,9 @@ void nw_parameters_set_traffic_class(nw_parameters_t, uint32_t traffic_class);
 OS_OBJECT_RETURNS_RETAINED nw_interface_t nw_path_copy_interface(nw_path_t);
 
 bool nw_settings_get_unified_http_enabled(void);
+#if HAVE(NWSETTINGS_UNIFIED_HTTP_WEBKIT)
+bool nw_settings_get_unified_http_enabled_webkit(void);
+#endif
 
 void nw_parameters_set_server_mode(nw_parameters_t, bool);
 OS_OBJECT_RETURNS_RETAINED nw_parameters_t nw_parameters_create_webtransport_http(nw_parameters_configure_protocol_block_t, nw_parameters_configure_protocol_block_t, nw_parameters_configure_protocol_block_t, nw_parameters_configure_protocol_block_t);
@@ -186,3 +192,5 @@ typedef NS_ENUM(NSInteger, NEPolicySessionPriority) {
 // ------------------------------------------------------------
 
 #endif // !USE(APPLE_INTERNAL_SDK)
+
+#endif // !__has_feature(modules) || !PLATFORM(MAC) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 150000

@@ -85,3 +85,9 @@ symbols = [
 symbols = [
     "MACaptionAppearanceCopyPreviewText",
 ]
+
+[[not-web-essential]]
+request = "rdar://168411469"
+symbols = [
+    "DDResultGetRange",
+]

@@ -25,73 +25,16 @@
 
 #pragma once
 
+#include <bmalloc/Gigacage.h>
 #include <wtf/FastMalloc.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/text/ASCIILiteral.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
-#if USE(SYSTEM_MALLOC)
-#define GIGACAGE_ENABLED 0
-
-namespace Gigacage {
-
-#if PLATFORM(IOS_FAMILY) || CPU(ADDRESS32)
-constexpr bool hasCapacityToUseLargeGigacage = false;
-#else
-constexpr bool hasCapacityToUseLargeGigacage = true;
-#endif
-
-const size_t primitiveGigacageMask = 0;
-
-enum Kind {
-    Primitive,
-    NumberOfKinds
-};
-
-inline void ensureGigacage() { }
-inline void disablePrimitiveGigacage() { }
-inline bool shouldBeEnabled() { return false; }
-
-inline void addPrimitiveDisableCallback(void (*)(void*), void*) { }
-inline void removePrimitiveDisableCallback(void (*)(void*), void*) { }
-
-inline void forbidDisablingPrimitiveGigacage() { }
-
-ALWAYS_INLINE bool contains(const void*) { return false; }
-ALWAYS_INLINE bool disablingPrimitiveGigacageIsForbidden() { return false; }
-ALWAYS_INLINE bool isEnabled() { return false; }
-ALWAYS_INLINE bool isEnabled(Kind) { return false; }
-ALWAYS_INLINE size_t mask(Kind) { return 0; }
-ALWAYS_INLINE size_t footprint(Kind) { return 0; }
-ALWAYS_INLINE size_t maxSize(Kind) { return 0; }
-ALWAYS_INLINE size_t size(Kind) { return 0; }
-
-template<typename T>
-inline T* caged(Kind, T* ptr) { return ptr; }
-template<typename T>
-inline T* cagedMayBeNull(Kind, T* ptr) { return ptr; }
-
-inline bool isCaged(Kind, const void*) { return false; }
-
-inline void* tryAlignedMalloc(Kind, size_t alignment, size_t size) { return tryFastAlignedMalloc(alignment, size); }
-inline void alignedFree(Kind, void* p) { fastAlignedFree(p); }
-WTF_EXPORT_PRIVATE void* tryMalloc(Kind, size_t size);
-WTF_EXPORT_PRIVATE void* tryZeroedMalloc(Kind, size_t);
-WTF_EXPORT_PRIVATE void* tryRealloc(Kind, void*, size_t);
-inline void free(Kind, void* p) { fastFree(p); }
-
-WTF_EXPORT_PRIVATE void* tryAllocateZeroedVirtualPages(Kind, size_t size);
-WTF_EXPORT_PRIVATE void freeVirtualPages(Kind, void* basePtr, size_t size);
-
-} // namespace Gigacage
-#else
-#include <bmalloc/Gigacage.h>
-
 namespace Gigacage {
 
 WTF_EXPORT_PRIVATE void* tryAlignedMalloc(Kind, size_t alignment, size_t size);
-WTF_EXPORT_PRIVATE void alignedFree(Kind, void*);
 WTF_EXPORT_PRIVATE void* tryMalloc(Kind, size_t);
 WTF_EXPORT_PRIVATE void* tryZeroedMalloc(Kind, size_t);
 WTF_EXPORT_PRIVATE void* tryRealloc(Kind, void*, size_t);
@@ -99,11 +42,6 @@ WTF_EXPORT_PRIVATE void free(Kind, void*);
 
 WTF_EXPORT_PRIVATE void* tryAllocateZeroedVirtualPages(Kind, size_t size);
 WTF_EXPORT_PRIVATE void freeVirtualPages(Kind, void* basePtr, size_t size);
-
-} // namespace Gigacage
-#endif
-
-namespace Gigacage {
 
 WTF_EXPORT_PRIVATE void* tryMallocArray(Kind, size_t numElements, size_t elementSize);
 

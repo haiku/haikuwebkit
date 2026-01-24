@@ -348,7 +348,7 @@ bool WorkerOrWorkletScriptController::loadModuleSynchronously(WorkerScriptFetche
             VM& vm = globalObject->vm();
             JSLockHolder lock { vm };
             JSValue errorValue = callFrame->argument(0);
-            auto scope = DECLARE_CATCH_SCOPE(vm);
+            auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
             if (errorValue.isObject()) {
                 auto* object = JSC::asObject(errorValue);
                 if (JSValue failureKindValue = object->getDirect(vm, vm.propertyNames->builtinNames().moduleFetchFailureKindPrivateName())) {
@@ -549,7 +549,7 @@ void WorkerOrWorkletScriptController::loadAndEvaluateModule(const URL& moduleURL
             if (errorValue.isObject()) {
                 auto* object = JSC::asObject(errorValue);
                 if (JSValue failureKindValue = object->getDirect(vm, vm.propertyNames->builtinNames().moduleFetchFailureKindPrivateName())) {
-                    auto catchScope = DECLARE_CATCH_SCOPE(vm);
+                    auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
                     String message = retrieveErrorMessageWithoutName(*globalObject, vm, object, catchScope);
                     switch (static_cast<ModuleFetchFailureKind>(failureKindValue.asInt32())) {
                     case ModuleFetchFailureKind::WasFetchError:
@@ -567,13 +567,13 @@ void WorkerOrWorkletScriptController::loadAndEvaluateModule(const URL& moduleURL
                     auto* error = jsCast<ErrorInstance*>(object);
                     switch (error->errorType()) {
                     case ErrorType::TypeError: {
-                        auto catchScope = DECLARE_CATCH_SCOPE(vm);
+                        auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
                         String message = retrieveErrorMessageWithoutName(*globalObject, vm, error, catchScope);
                         task->run(Exception { ExceptionCode::TypeError, message });
                         return JSValue::encode(jsUndefined());
                     }
                     case ErrorType::SyntaxError: {
-                        auto catchScope = DECLARE_CATCH_SCOPE(vm);
+                        auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
                         String message = retrieveErrorMessageWithoutName(*globalObject, vm, error, catchScope);
                         task->run(Exception { ExceptionCode::JSSyntaxError, message });
                         return JSValue::encode(jsUndefined());
@@ -584,7 +584,7 @@ void WorkerOrWorkletScriptController::loadAndEvaluateModule(const URL& moduleURL
                 }
             }
 
-            auto catchScope = DECLARE_CATCH_SCOPE(vm);
+            auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
             String message = retrieveErrorMessageWithoutName(*globalObject, vm, errorValue, catchScope);
             task->run(Exception { ExceptionCode::AbortError, message });
             return JSValue::encode(jsUndefined());

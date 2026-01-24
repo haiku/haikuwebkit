@@ -354,7 +354,7 @@ void BlendingKeyframes::updatePropertiesMetadata(const StyleProperties& properti
 
 void BlendingKeyframes::analyzeKeyframe(const BlendingKeyframe& keyframe)
 {
-    auto* style = keyframe.style();
+    CheckedPtr style = keyframe.style();
     if (!style)
         return;
 

@@ -206,6 +206,37 @@ header: <WebCore/DDMeshDescriptor.h>
 };
 
 header: <WebCore/DDUpdateMeshDescriptor.h>
+[AdditionalEncoder=StreamConnectionEncoder, CustomHeader] struct WebCore::DDModel::DDSkinningData {
+    uint8_t influencePerVertexCount;
+    Vector<WebCore::DDModel::DDFloat4x4> jointTransforms;
+    Vector<WebCore::DDModel::DDFloat4x4> inverseBindPoses;
+    Vector<uint32_t> influenceJointIndices;
+    Vector<float> influenceWeights;
+    WebCore::DDModel::DDFloat4x4 geometryBindTransform;
+};
+
+header: <WebCore/DDUpdateMeshDescriptor.h>
+[AdditionalEncoder=StreamConnectionEncoder, CustomHeader] struct WebCore::DDModel::DDBlendShapeData {
+    Vector<float> weights;
+    Vector<Vector<WebCore::DDModel::DDFloat3>> positionOffsets;
+    Vector<Vector<WebCore::DDModel::DDFloat3>> normalOffsets;
+};
+
+header: <WebCore/DDUpdateMeshDescriptor.h>
+[AdditionalEncoder=StreamConnectionEncoder, CustomHeader] struct WebCore::DDModel::DDRenormalizationData {
+    Vector<uint32_t> vertexIndicesPerTriangle;
+    Vector<uint32_t> vertexAdjacencies;
+    Vector<uint32_t> vertexAdjacencyEndIndices;
+};
+
+header: <WebCore/DDUpdateMeshDescriptor.h>
+[AdditionalEncoder=StreamConnectionEncoder, CustomHeader] struct WebCore::DDModel::DDDeformationData {
+    std::optional<WebCore::DDModel::DDSkinningData> skinningData;
+    std::optional<WebCore::DDModel::DDBlendShapeData> blendShapeData;
+    std::optional<WebCore::DDModel::DDRenormalizationData> renormalizationData;
+};
+
+header: <WebCore/DDUpdateMeshDescriptor.h>
 [AdditionalEncoder=StreamConnectionEncoder, CustomHeader] struct WebCore::DDModel::DDUpdateMeshDescriptor {
     String identifier;
     uint8_t updateType;
@@ -216,6 +247,7 @@ header: <WebCore/DDUpdateMeshDescriptor.h>
     WebCore::DDModel::DDFloat4x4 transform;
     Vector<WebCore::DDModel::DDFloat4x4> instanceTransforms;
     Vector<String> materialPrims;
+    std::optional<WebCore::DDModel::DDDeformationData> deformationData;
 };
 
 header: <WebCore/DDVertexAttributeFormat.h>

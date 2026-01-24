@@ -31,6 +31,13 @@
 #include <pal/PALSwift.h>
 #include <pal/spi/cocoa/CoreCryptoSPI.h>
 
+#if !defined(CLANG_WEBKIT_BRANCH)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#include "PALSwift-Generated.h"
+#pragma clang diagnostic pop
+#endif // !defined(CLANG_WEBKIT_BRANCH)
+
 namespace WebCore {
 
 static ExceptionOr<Vector<uint8_t>> signEd25519CryptoKit(const Vector<uint8_t>&sk, const Vector<uint8_t>& data)
@@ -38,7 +45,7 @@ static ExceptionOr<Vector<uint8_t>> signEd25519CryptoKit(const Vector<uint8_t>&s
 #if !defined(CLANG_WEBKIT_BRANCH)
     if (sk.size() != ed25519KeySize)
         return Exception { ExceptionCode::OperationError };
-    auto rv = PAL::EdKey::sign(PAL::EdSigningAlgorithm::ed25519(), sk.span(), data.span());
+    auto rv = pal::EdKey::sign(pal::EdSigningAlgorithm::ed25519(), sk.span(), data.span());
     if (rv.errorCode != Cpp::ErrorCodes::Success)
         return Exception { ExceptionCode::OperationError };
     return WTF::move(rv.result);
@@ -54,7 +61,7 @@ static ExceptionOr<bool>  verifyEd25519CryptoKit(const Vector<uint8_t>& pubKey, 
 #if !defined(CLANG_WEBKIT_BRANCH)
     if (pubKey.size() != ed25519KeySize || signature.size() != ed25519SignatureSize)
         return false;
-    auto rv = PAL::EdKey::verify(PAL::EdSigningAlgorithm::ed25519(), pubKey.span(), signature.span(), data.span());
+    auto rv = pal::EdKey::verify(pal::EdSigningAlgorithm::ed25519(), pubKey.span(), signature.span(), data.span());
     return rv.errorCode == Cpp::ErrorCodes::Success;
 #else
     UNUSED_PARAM(pubKey);

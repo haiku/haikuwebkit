@@ -71,6 +71,7 @@ public:
     virtual void popDebugGroup() = 0;
     virtual void insertDebugMarker(String&& markerLabel) = 0;
     virtual bool isRemoteComputePassEncoderProxy() const { return false; }
+    virtual bool isComputePassEncoderImpl() const { return false; }
 
 protected:
     ComputePassEncoder() = default;

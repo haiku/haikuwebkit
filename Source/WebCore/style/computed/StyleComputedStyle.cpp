@@ -58,7 +58,7 @@ struct SameSizeAsComputedStyle : CanMakeCheckedPtr<SameSizeAsComputedStyle> {
     struct InheritedFlags {
         unsigned m_bitfields[2];
     } m_inheritedFlags;
-    void* pseudos;
+    HashMap<PseudoElementIdentifier, std::unique_ptr<RenderStyle>> pseudos;
     void* dataRefSvgStyle;
 
 #if ASSERT_ENABLED || ENABLE(SECURITY_ASSERTIONS)

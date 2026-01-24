@@ -246,10 +246,8 @@ static void pageDidDrawToImage(std::optional<WebCore::ShareableBitmap::Handle>&&
         ASSERT([view _isPrintingPreview]);
 
         if (imageHandle) {
-            auto image = WebCore::ShareableBitmap::create(WTF::move(*imageHandle), WebCore::SharedMemory::Protection::ReadOnly);
-
-            if (image)
-                view->_pagePreviews.add(iter->value, image);
+            if (RefPtr image = WebCore::ShareableBitmap::create(WTF::move(*imageHandle), WebCore::SharedMemory::Protection::ReadOnly))
+                view->_pagePreviews.add(iter->value, image.releaseNonNull());
         }
 
         view->_expectedPreviewCallbacks.remove(*context->callbackID);
@@ -482,7 +480,7 @@ static RetainPtr<NSString> linkDestinationName(PDFDocument *document, PDFDestina
         return;
     }
 
-    RetainPtr<CGContextRef> context = [[NSGraphicsContext currentContext] CGContext];
+    RetainPtr context = [[NSGraphicsContext currentContext] CGContext];
 
     CGContextSaveGState(context.get());
     CGContextTranslateCTM(context.get(), point.x, point.y);
@@ -535,8 +533,8 @@ static RetainPtr<NSString> linkDestinationName(PDFDocument *document, PDFDestina
     scaledPrintingRect.scale(1 / _totalScaleFactorForPrinting);
     WebCore::IntSize imageSize(nsRect.size);
     imageSize.scale(page->deviceScaleFactor());
-    HashMap<WebCore::IntRect, RefPtr<WebCore::ShareableBitmap>>::iterator pagePreviewIterator = _pagePreviews.find(scaledPrintingRect);
-    if (pagePreviewIterator == _pagePreviews.end())  {
+    RefPtr bitmap = _pagePreviews.get(scaledPrintingRect);
+    if (!bitmap) {
         // It's too early to ask for page preview if we don't even know page size and scale.
         if ([self _hasPageRects]) {
             if (auto existingCallback = [self _expectedPreviewCallbackForRect:scaledPrintingRect]) {
@@ -568,8 +566,6 @@ static RetainPtr<NSString> linkDestinationName(PDFDocument *document, PDFDestina
         // FIXME: Draw a placeholder
         return;
     }
-
-    RefPtr<WebCore::ShareableBitmap> bitmap = pagePreviewIterator->value;
 
     WebCore::GraphicsContextCG context([[NSGraphicsContext currentContext] CGContext]);
     WebCore::GraphicsContextStateSaver stateSaver(context);

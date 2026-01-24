@@ -49,6 +49,9 @@ NonCompositedFrameRenderer::NonCompositedFrameRenderer(WebPage& webPage)
         }
     }))
 {
+#if ENABLE(DAMAGE_TRACKING)
+    resetFrameDamage();
+#endif
 }
 
 bool NonCompositedFrameRenderer::initialize()
@@ -71,6 +74,25 @@ NonCompositedFrameRenderer::~NonCompositedFrameRenderer()
     m_surface->willDestroyCompositingRunLoop();
 }
 
+void NonCompositedFrameRenderer::setNeedsDisplayInRect(const IntRect& rect)
+{
+#if ENABLE(DAMAGE_TRACKING)
+    if (m_frameDamage)
+        m_frameDamage->add(rect);
+#else
+    UNUSED_PARAM(rect);
+#endif
+}
+
+#if ENABLE(DAMAGE_TRACKING)
+void NonCompositedFrameRenderer::resetFrameDamage()
+{
+    Ref webPage = m_webPage.get();
+    if (webPage->corePage()->settings().propagateDamagingInformation())
+        m_frameDamage = std::make_optional<Damage>(webPage->bounds(), webPage->corePage()->settings().unifyDamagedRegions() ? Damage::Mode::BoundingBox : Damage::Mode::Rectangles);
+}
+#endif
+
 void NonCompositedFrameRenderer::display()
 {
     if (!m_canRenderNextFrame) {
@@ -87,15 +109,49 @@ void NonCompositedFrameRenderer::display()
     auto* graphicsContext = m_surface->graphicsContext();
     if (!graphicsContext || !m_context->makeContextCurrent())
         return;
+#if ENABLE(DAMAGE_TRACKING)
+    if (m_frameDamage) {
+        {
+            Locker locker { m_frameDamageHistoryForTestingLock };
+            if (m_frameDamageHistoryForTesting)
+                m_frameDamageHistoryForTesting->append(m_frameDamage->regionForTesting());
+        }
+        m_surface->setFrameDamage(WTF::move(*m_frameDamage));
+        resetFrameDamage();
+    }
+#endif
 
-    // FIXME: Use render target damage not to re-paint whole rect.
-    webPage->drawRect(*graphicsContext, webPage->bounds());
+    auto rectToRepaint = webPage->bounds();
+#if ENABLE(DAMAGE_TRACKING)
+    if (webPage->corePage()->settings().useDamagingInformationForCompositing()) {
+        if (auto& renderTargetDamage = m_surface->renderTargetDamage())
+            rectToRepaint = renderTargetDamage->bounds();
+    }
+#endif
+    webPage->drawRect(*graphicsContext, rectToRepaint);
 
     m_canRenderNextFrame = false;
     m_surface->didRenderFrame();
 
     webPage->didUpdateRendering();
 }
+
+#if ENABLE(DAMAGE_TRACKING)
+void NonCompositedFrameRenderer::resetDamageHistoryForTesting()
+{
+    Locker locker { m_frameDamageHistoryForTestingLock };
+    m_frameDamageHistoryForTesting = std::make_optional<Vector<WebCore::Region>>();
+}
+
+void NonCompositedFrameRenderer::foreachRegionInDamageHistoryForTesting(Function<void(const Region&)>&& callback)
+{
+    Locker locker { m_frameDamageHistoryForTestingLock };
+    if (m_frameDamageHistoryForTesting) {
+        for (const auto& region : *m_frameDamageHistoryForTesting)
+            callback(region);
+    }
+}
+#endif
 
 } // namespace WebKit
 

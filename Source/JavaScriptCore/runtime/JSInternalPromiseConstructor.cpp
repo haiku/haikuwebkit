@@ -90,7 +90,7 @@ JSC_DEFINE_HOST_FUNCTION(internalPromiseConstructorFuncInternalAll, (JSGlobalObj
     auto callReject = [&]() -> void {
         Exception* exception = scope.exception();
         ASSERT(exception);
-        scope.clearException();
+        TRY_CLEAR_EXCEPTION(scope, void());
         scope.release();
         promise->reject(vm, globalObject, exception);
     };

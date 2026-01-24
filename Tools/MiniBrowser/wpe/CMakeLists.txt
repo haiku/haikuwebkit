@@ -20,13 +20,7 @@ if (ENABLE_WPE_LEGACY_API)
 endif ()
 
 if (USE_ATK)
-    list(APPEND MiniBrowser_SYSTEM_INCLUDE_DIRECTORIES
-        ${ATK_INCLUDE_DIRS}
-    )
-
-    list(APPEND MiniBrowser_PRIVATE_LIBRARIES
-        ${ATK_LIBRARIES}
-    )
+    list(APPEND MiniBrowser_PRIVATE_LIBRARIES ATK::ATK)
 endif ()
 
 if (ENABLE_WPE_PLATFORM)
@@ -52,9 +46,5 @@ WEBKIT_EXECUTABLE(MiniBrowser)
 install(TARGETS MiniBrowser DESTINATION "${LIBEXEC_INSTALL_DIR}")
 
 if (ENABLE_WPE_QT_API)
-    if (USE_QT6)
-        add_subdirectory(qt6)
-    else ()
-        add_subdirectory(qt5)
-    endif ()
+    add_subdirectory(qt6)
 endif ()

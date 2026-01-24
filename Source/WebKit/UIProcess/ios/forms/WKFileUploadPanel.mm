@@ -38,6 +38,7 @@
 #import "UIKitUtilities.h"
 #import "WKContentViewInteraction.h"
 #import "WKData.h"
+#import "WKSharedAPICast.h"
 #import "WKStringCF.h"
 #import "WKURLCF.h"
 #import "WKWebViewInternal.h"

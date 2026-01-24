@@ -68,7 +68,7 @@ private:
     WebGPUIdentifier backing() const { return m_backing; }
     
     template<typename T>
-    WARN_UNUSED_RETURN IPC::Error send(T&& message)
+    [[nodiscard]] IPC::Error send(T&& message)
     {
         return root().protectedStreamClientConnection()->send(WTF::move(message), backing());
     }

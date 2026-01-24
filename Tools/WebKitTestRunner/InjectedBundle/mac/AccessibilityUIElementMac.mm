@@ -145,6 +145,7 @@ RetainPtr<NSArray> supportedAttributes(id element)
         attributes = [[element accessibilityAttributeNames] mutableCopy];
         // Exposing this in tests is not valuable, so remove it to decrease test maintenance burden.
         [attributes removeObject:@"AXPerformsOwnTextStitching"];
+        [attributes removeObject:@"AXPostsOwnLiveRegionAnnouncements"];
     });
     END_AX_OBJC_EXCEPTIONS
 
@@ -794,9 +795,9 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::allAttributes()
             continue;
 
         if ([attribute isEqualToString:@"AXVisibleCharacterRange"]) {
-            id value = attributeValue(NSAccessibilityRoleAttribute).unsafeGet();
-            NSString *role = [value isKindOfClass:[NSString class]] ? (NSString *)value : nil;
-            if (role == nil || [role isEqualToString:@"AXList"] || [role isEqualToString:@"AXLink"] || [role isEqualToString:@"AXGroup"] || [role isEqualToString:@"AXRow"] || [role isEqualToString:@"AXColumn"] || [role isEqualToString:@"AXTable"] || [role isEqualToString:@"AXWebArea"]) {
+            RetainPtr value = attributeValue(NSAccessibilityRoleAttribute);
+            RetainPtr<NSString> role = [value isKindOfClass:[NSString class]] ? (NSString *)value.get() : nil;
+            if (role.get() == nil || [role isEqualToString:@"AXList"] || [role isEqualToString:@"AXLink"] || [role isEqualToString:@"AXGroup"] || [role isEqualToString:@"AXRow"] || [role isEqualToString:@"AXColumn"] || [role isEqualToString:@"AXTable"] || [role isEqualToString:@"AXWebArea"]) {
                 // For some roles, behavior with ITM on and ITM off differ for this API in ways
                 // that are not clearly meaningful to any actual user-facing behavior. Skip dumping this
                 // attribute for all of the "dump every attribute for every element" tests.

@@ -100,6 +100,7 @@ public:
 
     virtual RefPtr<WebCore::NativeImage> getNativeImage(WebCore::VideoFrame&) = 0;
     virtual bool isRemoteQueueProxy() const { return false; }
+    virtual bool isQueueImpl() const { return false; }
 
 protected:
     Queue() = default;

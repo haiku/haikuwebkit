@@ -102,7 +102,7 @@ void WebInspectorUIExtensionControllerProxy::inspectorFrontendWillClose()
 
 // API
 
-void WebInspectorUIExtensionControllerProxy::registerExtension(const Inspector::ExtensionID& extensionID, const String& extensionBundleIdentifier, const String& displayName, WTF::CompletionHandler<void(Expected<RefPtr<API::InspectorExtension>, Inspector::ExtensionError>)>&& completionHandler)
+void WebInspectorUIExtensionControllerProxy::registerExtension(const Inspector::ExtensionID& extensionID, const String& extensionBundleIdentifier, const String& displayName, WTF::CompletionHandler<void(Expected<Ref<API::InspectorExtension>, Inspector::ExtensionError>)>&& completionHandler)
 {
     whenFrontendHasLoaded([weakThis = WeakPtr { *this }, extensionID, extensionBundleIdentifier, displayName, completionHandler = WTF::move(completionHandler)] () mutable {
         if (!weakThis || !weakThis->m_inspectorPage) {
@@ -121,8 +121,8 @@ void WebInspectorUIExtensionControllerProxy::registerExtension(const Inspector::
                 return;
             }
 
-            RefPtr<API::InspectorExtension> extensionAPIObject = API::InspectorExtension::create(extensionID, protectedThis.get());
-            protectedThis->m_extensionAPIObjectMap.set(extensionID, extensionAPIObject.copyRef());
+            Ref extensionAPIObject = API::InspectorExtension::create(extensionID, protectedThis.get());
+            protectedThis->m_extensionAPIObjectMap.set(extensionID, extensionAPIObject);
 
             completionHandler(WTF::move(extensionAPIObject));
         }, weakThis->m_inspectorPage->webPageIDInMainFrameProcess());
@@ -249,11 +249,10 @@ void WebInspectorUIExtensionControllerProxy::evaluateScriptInExtensionTab(const 
 
 void WebInspectorUIExtensionControllerProxy::didShowExtensionTab(const Inspector::ExtensionID& extensionID, const Inspector::ExtensionTabID& extensionTabID, WebCore::FrameIdentifier frameID)
 {
-    auto it = m_extensionAPIObjectMap.find(extensionID);
-    if (it == m_extensionAPIObjectMap.end())
+    RefPtr extension = m_extensionAPIObjectMap.get(extensionID);
+    if (!extension)
         return;
 
-    RefPtr<API::InspectorExtension> extension = it->value;
     auto extensionClient = extension->client();
     if (!extensionClient)
         return;
@@ -263,11 +262,10 @@ void WebInspectorUIExtensionControllerProxy::didShowExtensionTab(const Inspector
 
 void WebInspectorUIExtensionControllerProxy::didHideExtensionTab(const Inspector::ExtensionID& extensionID, const Inspector::ExtensionTabID& extensionTabID)
 {
-    auto it = m_extensionAPIObjectMap.find(extensionID);
-    if (it == m_extensionAPIObjectMap.end())
+    RefPtr extension = m_extensionAPIObjectMap.get(extensionID);
+    if (!extension)
         return;
 
-    RefPtr<API::InspectorExtension> extension = it->value;
     auto extensionClient = extension->client();
     if (!extensionClient)
         return;
@@ -277,11 +275,10 @@ void WebInspectorUIExtensionControllerProxy::didHideExtensionTab(const Inspector
 
 void WebInspectorUIExtensionControllerProxy::didNavigateExtensionTab(const Inspector::ExtensionID& extensionID, const Inspector::ExtensionTabID& extensionTabID, const WTF::URL& newURL)
 {
-    auto it = m_extensionAPIObjectMap.find(extensionID);
-    if (it == m_extensionAPIObjectMap.end())
+    RefPtr extension = m_extensionAPIObjectMap.get(extensionID);
+    if (!extension)
         return;
 
-    RefPtr<API::InspectorExtension> extension = it->value;
     auto extensionClient = extension->client();
     if (!extensionClient)
         return;

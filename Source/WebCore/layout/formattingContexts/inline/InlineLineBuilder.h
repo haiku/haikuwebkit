@@ -73,7 +73,7 @@ private:
     RectAndFloatConstraints floatAvoidingRect(const InlineRect& lineLogicalRect, InlineLayoutUnit lineMarginStart) const;
     RectAndFloatConstraints adjustedLineRectWithCandidateInlineContent(const LineCandidate&) const;
 
-    Result applyLineBreakingOnCandidateInlineContent(const InlineItemRange& needsLayoutRange, LineCandidate&);
+    Result tryPlacingCandidateInlineContentOnLine(const InlineItemRange& needsLayoutRange, LineCandidate&);
     void commitCandidateContent(LineCandidate&, std::optional<InlineContentBreaker::Result::PartialTrailingContent>);
     size_t rebuildLineWithInlineContent(const InlineItemRange& needsLayoutRange, const InlineItem& lastInlineItemToAdd);
     size_t rebuildLineForTrailingSoftHyphen(const InlineItemRange& layoutRange);

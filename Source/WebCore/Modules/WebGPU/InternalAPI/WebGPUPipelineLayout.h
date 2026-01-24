@@ -45,6 +45,7 @@ public:
     }
 
     virtual bool isRemotePipelineLayoutProxy() const { return false; }
+    virtual bool isPipelineLayoutImpl() const { return false; }
 
 protected:
     PipelineLayout() = default;

@@ -26,7 +26,11 @@
 import Foundation
 import CryptoKit
 
-import PALSwift
+#if swift(>=6.0)
+public import pal.Core.PALSwift
+#else
+import pal.Core.PALSwift
+#endif
 
 enum UnsafeErrors: Error {
     case invalidLength
@@ -78,13 +82,6 @@ extension Data {
 
         // CryptoKit does not support a null pointer with zero length. We instead need to pass an empty Data. This class provides that.
         return Data()
-    }
-}
-
-private class WorkAroundRadar116406681 {
-    // rdar://116406681
-    private func forceLinkageForVectorDestructor() {
-        let _ = VectorUInt8()
     }
 }
 

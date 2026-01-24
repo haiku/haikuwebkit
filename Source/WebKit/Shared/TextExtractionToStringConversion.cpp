@@ -41,6 +41,36 @@ namespace WebKit {
 
 using namespace WebCore;
 
+std::optional<FrameAndNodeIdentifiers> parseFrameAndNodeIdentifiers(StringView identifierString)
+{
+    Vector<uint64_t, 3> values;
+    for (auto component : identifierString.split('_')) {
+        auto rawValue = parseInteger<uint64_t>(component);
+        if (!rawValue)
+            return { };
+
+        values.append(*rawValue);
+    }
+
+    auto validate = []<typename T>(uint64_t rawValue) -> std::optional<T> {
+        if (!T::isValidIdentifier(rawValue))
+            return { };
+        return T { rawValue };
+    };
+
+    if (values.size() == 1) {
+        if (auto node = validate.operator()<NodeIdentifier>(values.first()))
+            return { { { }, WTF::move(*node) } };
+    } else if (values.size() == 3) {
+        auto frame = validate.operator()<FrameIdentifier>((values[0] << 32) | values[1]);
+        auto node = validate.operator()<NodeIdentifier>(values[2]);
+        if (frame && node)
+            return { { WTF::move(frame), WTF::move(*node) } };
+    }
+
+    return { };
+}
+
 enum class TextExtractionVersionBehavior : uint8_t {
     TagNameForTextFormControls,
 };
@@ -127,6 +157,22 @@ static bool shouldJoinWithPreviousLine(const TextExtractionLine& previous, const
     return isCurrencySymbol(previousText[previousText.length() - 1]) && textIsNumericValue;
 }
 
+static bool shouldEmitExtraSpace(char16_t previousCharacter, char16_t nextCharacter)
+{
+    if (isUnicodeWhitespace(previousCharacter) || isUnicodeWhitespace(nextCharacter))
+        return false;
+
+    auto previousCharacterMask = U_GET_GC_MASK(previousCharacter);
+    if (isOpeningPunctuation(previousCharacterMask) || (previousCharacterMask & U_GC_PI_MASK))
+        return false;
+
+    auto nextCharacterMask = U_GET_GC_MASK(nextCharacter);
+    if (isOpeningPunctuation(nextCharacterMask) || (nextCharacterMask & U_GC_PI_MASK))
+        return true;
+
+    return !(nextCharacterMask & U_GC_PO_MASK);
+}
+
 class TextExtractionAggregator : public RefCounted<TextExtractionAggregator> {
     WTF_MAKE_NONCOPYABLE(TextExtractionAggregator);
     WTF_MAKE_TZONE_ALLOCATED(TextExtractionAggregator);
@@ -182,6 +228,13 @@ public:
 
                 if (shouldEmitFullStopBetweenLines(*previousLine, previousText, line, text))
                     return '.';
+
+                if (previousLine->enclosingBlockNumber == line.enclosingBlockNumber) {
+                    if (shouldEmitExtraSpace(previousText[previousText.length() - 1], text[0]))
+                        return ' ';
+
+                    return std::nullopt;
+                }
 
                 return '\n';
             }();
@@ -289,7 +342,7 @@ public:
         return m_options.outputFormat == TextExtractionOutputFormat::MinifiedJSON;
     }
 
-    RefPtr<TextExtractionFilterPromise> filter(const String& text, const std::optional<WebCore::NodeIdentifier>& identifier)
+    RefPtr<TextExtractionFilterPromise> filter(const String& text, const std::optional<FrameIdentifier>& frameIdentifier, const std::optional<NodeIdentifier>& identifier)
     {
         if (m_options.filterCallbacks.isEmpty())
             return nullptr;
@@ -297,7 +350,7 @@ public:
         TextExtractionFilterPromise::Producer producer;
         Ref promise = producer.promise();
 
-        filterRecursive(text, identifier, 0, [producer = WTF::move(producer)](auto&& result) mutable {
+        filterRecursive(text, frameIdentifier, identifier, 0, [producer = WTF::move(producer)](auto&& result) mutable {
             producer.settle(WTF::move(result));
         });
 
@@ -382,21 +435,30 @@ public:
         return *m_rootJSONObject;
     }
 
+    String stringForIdentifiers(const std::optional<FrameIdentifier>& frameIdentifier, const NodeIdentifier& nodeIdentifier) const
+    {
+        if (!frameIdentifier || m_options.mainFrameIdentifier == frameIdentifier)
+            return makeString(nodeIdentifier.toUInt64());
+
+        auto frameIdentifierValue = frameIdentifier->toUInt64();
+        return makeString(frameIdentifierValue >> 32, '_', (frameIdentifierValue & 0xFFFFFFFF), '_', nodeIdentifier.toUInt64());
+    }
+
 private:
-    void filterRecursive(const String& originalText, const std::optional<WebCore::NodeIdentifier>& identifier, size_t index, CompletionHandler<void(String&&)>&& completion)
+    void filterRecursive(const String& originalText, const std::optional<FrameIdentifier>& frameIdentifier, const std::optional<NodeIdentifier>& identifier, size_t index, CompletionHandler<void(String&&)>&& completion)
     {
         if (index >= m_options.filterCallbacks.size())
             return completion(String { originalText });
 
-        Ref promise = m_options.filterCallbacks[index](originalText, std::optional { identifier });
-        promise->whenSettled(RunLoop::mainSingleton(), [originalText, completion = WTF::move(completion), protectedThis = Ref { *this }, identifier, index](auto&& result) mutable {
+        Ref promise = m_options.filterCallbacks[index](originalText, std::optional { frameIdentifier }, std::optional { identifier });
+        promise->whenSettled(RunLoop::mainSingleton(), [originalText, completion = WTF::move(completion), protectedThis = Ref { *this }, frameIdentifier, identifier, index](auto&& result) mutable {
             if (originalText != result)
                 protectedThis->m_filteredOutAnyText = true;
 
             if (!result)
                 return completion({ });
 
-            protectedThis->filterRecursive(WTF::move(*result), identifier, index + 1, WTF::move(completion));
+            protectedThis->filterRecursive(WTF::move(*result), frameIdentifier, identifier, index + 1, WTF::move(completion));
         });
     }
 
@@ -458,16 +520,10 @@ private:
 
     void addVersionNumberIfNeeded()
     {
-        if (onlyIncludeText())
+        if (!useJSONOutput())
             return;
 
-        if (useJSONOutput()) {
-            protectedRootJSONObject()->setInteger("version"_s, version());
-            return;
-        }
-
-        auto versionText = (useHTMLOutput() || useMarkdownOutput()) ? makeString("<!-- version="_s, version(), " -->"_s) : makeString("version="_s, version());
-        addResult({ advanceToNextLine(), 0 }, { WTF::move(versionText) });
+        protectedRootJSONObject()->setInteger("version"_s, version());
     }
 
     uint32_t version() const
@@ -595,7 +651,7 @@ static void setCommonJSONProperties(JSON::Object& jsonObject, const TextExtracti
         jsonObject.setString("nodeName"_s, item.nodeName.convertToASCIILowercase());
 
     if (item.nodeIdentifier)
-        jsonObject.setInteger("uid"_s, item.nodeIdentifier->toUInt64());
+        jsonObject.setString("uid"_s, aggregator.stringForIdentifiers(item.frameIdentifier, *item.nodeIdentifier));
 
     if (aggregator.includeRects()) {
         Ref rect = JSON::Object::create();
@@ -626,7 +682,7 @@ static void setCommonJSONProperties(JSON::Object& jsonObject, const TextExtracti
     }
 }
 
-static void addJSONTextContent(Ref<JSON::Object>&& jsonObject, const TextExtraction::TextItemData& textData, const std::optional<NodeIdentifier>& identifier, TextExtractionAggregator& aggregator)
+static void addJSONTextContent(Ref<JSON::Object>&& jsonObject, const TextExtraction::TextItemData& textData, const std::optional<FrameIdentifier>& frameIdentifier, const std::optional<NodeIdentifier>& identifier, TextExtractionAggregator& aggregator)
 {
     CompletionHandler<void(String&&)> completion = [jsonObject = WTF::move(jsonObject), aggregator = Ref { aggregator }, selectedRange = textData.selectedRange](String&& filteredText) mutable {
         if (filteredText.isEmpty())
@@ -649,7 +705,7 @@ static void addJSONTextContent(Ref<JSON::Object>&& jsonObject, const TextExtract
     };
 
     auto originalContent = textData.content;
-    RefPtr filterPromise = aggregator.filter(originalContent, identifier);
+    RefPtr filterPromise = aggregator.filter(originalContent, frameIdentifier, identifier);
     if (!filterPromise)
         return completion(WTF::move(originalContent));
 
@@ -680,7 +736,7 @@ static void populateJSONForItem(JSON::Object& jsonObject, const TextExtraction::
 
     WTF::switchOn(item.data,
         [&](const TextExtraction::TextItemData& textData) {
-            addJSONTextContent(Ref { jsonObject }, textData, identifier, aggregator);
+            addJSONTextContent(Ref { jsonObject }, textData, item.frameIdentifier, identifier, aggregator);
         },
         [&](const TextExtraction::ScrollableItemData& scrollableData) {
             Ref contentSize = JSON::Object::create();
@@ -774,7 +830,7 @@ static Vector<String> partsForItem(const TextExtraction::Item& item, const TextE
     Vector<String> parts;
 
     if (item.nodeIdentifier)
-        parts.append(makeString("uid="_s, item.nodeIdentifier->toUInt64()));
+        parts.append(makeString("uid="_s, aggregator.stringForIdentifiers(item.frameIdentifier, *item.nodeIdentifier)));
 
     if ((item.children.isEmpty() || includeRectForParentItem == IncludeRectForParentItem::Yes) && aggregator.includeRects() && !aggregator.useHTMLOutput()) {
         auto origin = item.rectInRootView.location();
@@ -803,7 +859,7 @@ static Vector<String> partsForItem(const TextExtraction::Item& item, const TextE
     return parts;
 }
 
-static void addPartsForText(const TextExtraction::TextItemData& textItem, Vector<String>&& itemParts, std::optional<NodeIdentifier>&& enclosingNode, const TextExtractionLine& line, Ref<TextExtractionAggregator>&& aggregator, const String& closingTag = { })
+static void addPartsForText(const TextExtraction::TextItemData& textItem, Vector<String>&& itemParts, std::optional<FrameIdentifier>&& frameIdentifier, std::optional<NodeIdentifier>&& enclosingNode, const TextExtractionLine& line, Ref<TextExtractionAggregator>&& aggregator, const String& closingTag = { })
 {
     auto completion = [
         itemParts = WTF::move(itemParts),
@@ -880,7 +936,7 @@ static void addPartsForText(const TextExtraction::TextItemData& textItem, Vector
         aggregator->addResult(currentLine, WTF::move(textParts));
     };
 
-    RefPtr filterPromise = aggregator->filter(textItem.content, WTF::move(enclosingNode));
+    RefPtr filterPromise = aggregator->filter(textItem.content, WTF::move(frameIdentifier), WTF::move(enclosingNode));
     if (!filterPromise) {
         completion(String { textItem.content });
         return;
@@ -931,7 +987,7 @@ static void addPartsForItem(const TextExtraction::Item& item, std::optional<Node
             aggregator.addResult(line, WTF::move(parts));
         },
         [&](const TextExtraction::TextItemData& textData) {
-            addPartsForText(textData, partsForItem(item, aggregator, includeRectForParentItem), WTF::move(enclosingNode), line, aggregator);
+            addPartsForText(textData, partsForItem(item, aggregator, includeRectForParentItem), std::optional { item.frameIdentifier }, WTF::move(enclosingNode), line, aggregator);
         },
         [&](const TextExtraction::ContentEditableData& editableData) {
             if (aggregator.useHTMLOutput()) {
@@ -1224,7 +1280,7 @@ static void addTextRepresentationRecursive(const TextExtraction::Item& item, std
 
     if (aggregator.onlyIncludeText()) {
         if (std::holds_alternative<TextExtraction::TextItemData>(item.data))
-            addPartsForText(std::get<TextExtraction::TextItemData>(item.data), { }, std::optional { identifier }, { aggregator.advanceToNextLine(), depth }, aggregator);
+            addPartsForText(std::get<TextExtraction::TextItemData>(item.data), { }, std::optional { item.frameIdentifier }, std::optional { identifier }, { aggregator.advanceToNextLine(), depth }, aggregator);
         for (auto& child : item.children)
             addTextRepresentationRecursive(child, std::optional { identifier }, depth + 1, aggregator);
         return;
@@ -1293,7 +1349,7 @@ static void addTextRepresentationRecursive(const TextExtraction::Item& item, std
                 return;
 
             if (aggregator.useHTMLOutput()) {
-                addPartsForText(*text, partsForItem(item.children[0], aggregator, includeRectForParentItem), std::optional { identifier }, line, aggregator, makeString("</"_s, closingTagName, '>'));
+                addPartsForText(*text, partsForItem(item.children[0], aggregator, includeRectForParentItem), std::optional { item.frameIdentifier }, std::optional { identifier }, line, aggregator, makeString("</"_s, closingTagName, '>'));
                 return;
             }
 

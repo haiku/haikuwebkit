@@ -55,6 +55,7 @@ public:
     void present(uint32_t frameIndex, bool = false);
 
     WGPUSurface backing() const { return m_backing.get(); }
+    bool isPresentationContextImpl() const final { return true; }
     RefPtr<WebCore::NativeImage> getMetalTextureAsNativeImage(uint32_t bufferIndex, bool& isIOSurfaceSupportedFormat) final;
 
 private:
@@ -83,5 +84,9 @@ private:
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::PresentationContextImpl)
+    static bool isType(const WebCore::WebGPU::PresentationContext& context) { return context.isPresentationContextImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

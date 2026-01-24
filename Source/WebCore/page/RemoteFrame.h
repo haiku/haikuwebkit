@@ -98,6 +98,7 @@ private:
     void documentURLForConsoleLog(CompletionHandler<void(const URL&)>&&) final;
     SecurityOrigin* frameDocumentSecurityOrigin() const final;
     String frameURLProtocol() const final;
+    float usedZoomForChild(const Frame&) const final;
 
     FrameView* virtualView() const final;
     void disconnectView() final;

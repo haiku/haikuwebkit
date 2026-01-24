@@ -54,7 +54,7 @@ public:
     ExceptionOr<void> setNamedItem(const String& name, const AtomString& value);
     bool deleteNamedProperty(const String& name);
 
-    Element& element() { return m_element.get(); }
+    Element& element() { return m_element; }
     Ref<Element> protectedElement() const;
 
 private:

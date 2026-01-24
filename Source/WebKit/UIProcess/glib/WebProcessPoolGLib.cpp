@@ -72,7 +72,7 @@
 #include <wpe/wpe-platform.h>
 #endif
 
-#if !USE(SYSTEM_MALLOC) && OS(LINUX)
+#if OS(LINUX)
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GTK/WPE port
 #include <bmalloc/valgrind.h>
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
@@ -309,7 +309,7 @@ void WebProcessPool::setSandboxEnabled(bool enabled)
         return;
     }
 
-#if !USE(SYSTEM_MALLOC) && defined(RUNNING_ON_VALGRIND)
+#if defined(RUNNING_ON_VALGRIND)
     WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GTK/WPE port
     if (RUNNING_ON_VALGRIND)
         return;

@@ -36,6 +36,7 @@
 #import "RestrictedOpenerType.h"
 #import "ShouldGrandfatherStatistics.h"
 #import "UserNotificationsSPI.h"
+#import "WKAPICast.h"
 #import "WKError.h"
 #import "WKHTTPCookieStoreInternal.h"
 #import "WKNSArray.h"
@@ -1607,6 +1608,28 @@ struct WKWebsiteData {
     protectedWebsiteDataStore(self)->isStorageSuspendedForTesting([completionHandlerCopy = WTF::move(completionHandlerCopy)](auto result) {
         completionHandlerCopy(result);
     });
+}
+
+- (NSString *)_thirdPartyCookieBlockingModeForTesting
+{
+    switch (protectedWebsiteDataStore(self)->thirdPartyCookieBlockingMode()) {
+    case WebCore::ThirdPartyCookieBlockingMode::All:
+        return @"All";
+    case WebCore::ThirdPartyCookieBlockingMode::AllExceptBetweenAppBoundDomains:
+        return @"AllExceptBetweenAppBoundDomains";
+    case WebCore::ThirdPartyCookieBlockingMode::AllExceptManagedDomains:
+        return @"AllExceptManagedDomains";
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
+    case WebCore::ThirdPartyCookieBlockingMode::AllExceptPartitioned:
+        return @"AllExceptPartitioned";
+#endif
+    case WebCore::ThirdPartyCookieBlockingMode::AllOnSitesWithoutUserInteraction:
+        return @"AllOnSitesWithoutUserInteraction";
+    case WebCore::ThirdPartyCookieBlockingMode::OnlyAccordingToPerDomainPolicy:
+        return @"OnlyAccordingToPerDomainPolicy";
+    }
+
+    return @"Invalid";
 }
 
 @end

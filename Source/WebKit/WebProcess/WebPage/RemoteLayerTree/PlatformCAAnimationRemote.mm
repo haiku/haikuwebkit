@@ -458,10 +458,10 @@ void PlatformCAAnimationRemote::copyTimingFunctionsFrom(const PlatformCAAnimatio
     m_properties.reverseTimingFunctions = other.m_properties.reverseTimingFunctions;
 }
 
-void PlatformCAAnimationRemote::setAnimations(const Vector<RefPtr<PlatformCAAnimation>>& values)
+void PlatformCAAnimationRemote::setAnimations(const Vector<Ref<PlatformCAAnimation>>& values)
 {
     m_properties.animations = values.map([](auto& value) {
-        return downcast<PlatformCAAnimationRemote>(value.get())->properties();
+        return downcast<PlatformCAAnimationRemote>(value)->properties();
     });
 }
 

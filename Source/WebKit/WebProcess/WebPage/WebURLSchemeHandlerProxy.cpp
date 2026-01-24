@@ -56,7 +56,7 @@ WebURLSchemeHandlerProxy::~WebURLSchemeHandlerProxy()
 void WebURLSchemeHandlerProxy::startNewTask(ResourceLoader& loader, WebFrame& webFrame)
 {
     Ref task = WebURLSchemeTaskProxy::create(*this, loader, webFrame);
-    auto result = m_tasks.add(*loader.identifier(), task.copyRef());
+    auto result = m_tasks.add(*loader.identifier(), task);
     ASSERT_UNUSED(result, result.isNewEntry);
 
     WebProcess::singleton().protectedWebLoaderStrategy()->addURLSchemeTaskProxy(task);
@@ -81,7 +81,7 @@ void WebURLSchemeHandlerProxy::loadSynchronously(WebCore::ResourceLoaderIdentifi
 void WebURLSchemeHandlerProxy::stopAllTasks()
 {
     while (!m_tasks.isEmpty())
-        Ref { *m_tasks.begin()->value }->stopLoading();
+        Ref { m_tasks.begin()->value }->stopLoading();
 }
 
 void WebURLSchemeHandlerProxy::taskDidPerformRedirection(WebCore::ResourceLoaderIdentifier taskIdentifier, WebCore::ResourceResponse&& redirectResponse, WebCore::ResourceRequest&& newRequest, CompletionHandler<void(WebCore::ResourceRequest&&)>&& completionHandler)

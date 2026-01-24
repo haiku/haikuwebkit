@@ -7,7 +7,7 @@ struct _GlobalUniforms {
   colorGreen: vec4<f32>,
   colorRed: vec4<f32>,
 };
-@binding(0) @group(0) var<uniform> _globalUniforms: _GlobalUniforms;
+@group(0) @binding(0) var<uniform> _globalUniforms : _GlobalUniforms;
 var<private> glob: i32;
 fn block_variable_hides_global_variable_b() -> bool {
   {
@@ -45,26 +45,22 @@ fn _skslMain(coords: vec2<f32>) -> vec4<f32> {
     var _skTemp3: bool;
     var _skTemp4: bool;
     if _0_var {
-      let _skTemp5 = block_variable_hides_global_variable_b();
-      _skTemp4 = _skTemp5;
+      _skTemp4 = block_variable_hides_global_variable_b();
     } else {
       _skTemp4 = false;
     }
     if _skTemp4 {
-      let _skTemp6 = local_variable_hides_struct_b();
-      _skTemp3 = _skTemp6;
+      _skTemp3 = local_variable_hides_struct_b();
     } else {
       _skTemp3 = false;
     }
     if _skTemp3 {
-      let _skTemp7 = local_struct_variable_hides_struct_type_b();
-      _skTemp2 = _skTemp7;
+      _skTemp2 = local_struct_variable_hides_struct_type_b();
     } else {
       _skTemp2 = false;
     }
     if _skTemp2 {
-      let _skTemp8 = local_variable_hides_global_variable_b();
-      _skTemp1 = _skTemp8;
+      _skTemp1 = local_variable_hides_global_variable_b();
     } else {
       _skTemp1 = false;
     }

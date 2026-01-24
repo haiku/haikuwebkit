@@ -93,7 +93,7 @@ struct ShareDataWithParsedURL;
 struct ViewportArguments;
 struct WindowFeatures;
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
 class SecurityOriginData;
 
 struct DigitalCredentialsRequestData;
@@ -212,7 +212,7 @@ public:
     void showShareSheet(ShareDataWithParsedURL&&, CompletionHandler<void(bool)>&&);
     void showContactPicker(ContactsRequestData&&, CompletionHandler<void(std::optional<Vector<ContactInfo>>&&)>&&);
 
-#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if ENABLE(WEB_AUTHN)
     void showDigitalCredentialsPicker(const DigitalCredentialsRequestData&, WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&);
     void dismissDigitalCredentialsPicker(CompletionHandler<void(bool)>&&);
 #endif

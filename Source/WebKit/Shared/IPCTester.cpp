@@ -33,9 +33,6 @@
 #include "IPCStreamTester.h"
 #include "IPCTesterMessages.h"
 #include "IPCTesterReceiverMessages.h"
-#if ENABLE(IPC_TESTING_SWIFT)
-#include "IPCTesterReceiverSwiftMessages.h"
-#endif
 #include "IPCUtilities.h"
 #include "Logging.h"
 #include "TestParameter.h"
@@ -191,12 +188,10 @@ void IPCTester::sendAsyncMessageToReceiverRequestingReply(IPC::Connection& conne
 {
 #if ENABLE(IPC_TESTING_SWIFT)
     constexpr bool usingSwift = true;
-    using Message = Messages::IPCTesterReceiverSwift::AsyncMessage;
 #else
     constexpr bool usingSwift = false;
-    using Message = Messages::IPCTesterReceiver::AsyncMessage;
 #endif
-    connection.sendWithAsyncReply(Message(arg0 + 1), [completionHandler = WTF::move(completionHandler)](uint32_t newArg0) mutable {
+    connection.sendWithAsyncReply(Messages::IPCTesterReceiver::AsyncMessage(arg0 + 1), [completionHandler = WTF::move(completionHandler)](uint32_t newArg0) mutable {
         completionHandler(newArg0, usingSwift);
     }, 0);
 }

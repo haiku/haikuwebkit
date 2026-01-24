@@ -358,10 +358,7 @@ Ref<WaiterList> WaiterListManager::findOrCreateList(void* ptr)
 RefPtr<WaiterList> WaiterListManager::findList(void* ptr)
 {
     Locker waiterListsLocker { m_waiterListsLock };
-    auto it = m_waiterLists.find(ptr);
-    if (it == m_waiterLists.end())
-        return nullptr;
-    return it->value.ptr();
+    return m_waiterLists.get(ptr);
 }
 
 void Waiter::dump(PrintStream& out) const

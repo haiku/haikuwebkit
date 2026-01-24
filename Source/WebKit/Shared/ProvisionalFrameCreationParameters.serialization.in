@@ -28,4 +28,5 @@ struct WebKit::ProvisionalFrameCreationParameters {
     WebCore::ReferrerPolicy effectiveReferrerPolicy;
     WebCore::ScrollbarMode scrollingMode;
     std::optional<WebCore::IntRect> initialRect;
+    WebKit::CommitTiming commitTiming;
 };

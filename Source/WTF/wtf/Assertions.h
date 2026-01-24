@@ -182,7 +182,7 @@ typedef struct {
     const char* name;
     WTFLogLevel level;
 #if !RELEASE_LOG_DISABLED && USE(OS_LOG)
-    __unsafe_unretained os_log_t osLogChannel;
+    SUPPRESS_UNRETAINED_MEMBER __unsafe_unretained os_log_t osLogChannel;
 #endif
 } WTFLogChannel;
 

@@ -55,7 +55,7 @@ public:
 
     ~RemoteDOMWindow() final;
 
-    RemoteFrame* frame() const final { return m_frame.get(); }
+    RemoteFrame* frame() const final { return m_frame; }
     ScriptExecutionContext* scriptExecutionContext() const final { return nullptr; }
 
     // DOM API exposed cross-origin.

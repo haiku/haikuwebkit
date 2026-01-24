@@ -128,6 +128,17 @@ struct VisiblePositionIndexRange {
 struct AXTreeData {
     String liveTree;
     String isolatedTree;
+    // Captures warnings about the tree state that could result in poor user-facing
+    // behavior. These are gathered while capturing the structural tree data stored
+    // in the other member variables.
+    Vector<String> warnings;
+
+    void dumpToStderr() const
+    {
+        for (const String& warning : warnings)
+            SAFE_FPRINTF(stderr, "%s\n", warning.utf8());
+        SAFE_FPRINTF(stderr, "==AX Trees==\n%s\n%s\n", liveTree.utf8(), isolatedTree.utf8());
+    }
 };
 
 // When this is updated, WebCoreArgumentCoders.serialization.in must be updated as well.
@@ -136,6 +147,7 @@ struct AXDebugInfo {
     bool isAccessibilityThreadInitialized;
     String liveTree;
     String isolatedTree;
+    Vector<String> warnings;
     uint64_t remoteTokenHash;
     uint64_t webProcessLocalTokenHash;
 };
@@ -432,7 +444,7 @@ public:
 #if PLATFORM(MAC)
     void onDocumentRenderTreeCreation(const Document&);
 #endif
-#if ENABLE(AX_THREAD_TEXT_APIS)
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     void onTextRunsChanged(const RenderObject&);
 #endif
 
@@ -506,11 +518,12 @@ public:
 
     static bool accessibilityEnabled();
     WEBCORE_EXPORT static bool accessibilityEnhancedUserInterfaceEnabled();
-#if ENABLE(AX_THREAD_TEXT_APIS)
-    static bool useAXThreadTextApis() { return gAccessibilityThreadTextApisEnabled && !isMainThread(); }
-    static bool shouldCreateAXThreadCompatibleMarkers() { return gAccessibilityThreadTextApisEnabled && isIsolatedTreeEnabled(); }
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+    static bool useAXThreadTextApis() { return !isMainThread(); }
+    static bool shouldCreateAXThreadCompatibleMarkers() { return isIsolatedTreeEnabled(); }
 #endif
     static bool isAXTextStitchingEnabled() { return gAccessibilityTextStitchingEnabled; }
+    WEBCORE_EXPORT static bool isAXThreadHitTestingEnabled();
 
 #if PLATFORM(COCOA)
     static bool shouldRepostNotificationsForTests() { return gShouldRepostNotificationsForTests; }
@@ -629,9 +642,12 @@ public:
 
     AXComputedObjectAttributeCache* computedObjectAttributeCache() { return m_computedObjectAttributeCache.get(); }
 
-    Document* document() const { return m_document.get(); }
+    Document* document() const { return m_document; }
     RefPtr<Document> protectedDocument() const;
-    constexpr const std::optional<FrameIdentifier>& frameID() const { return m_frameID; }
+    FrameIdentifier frameID() const { return m_frameID; }
+
+    RefPtr<Page> page() const;
+    IntPoint mapScreenPointToPagePoint(const IntPoint&) const;
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     inline void objectBecameIgnored(const AccessibilityObject&);
@@ -703,6 +719,7 @@ private:
     void updateIsolatedTree(AccessibilityObject&, AXProperty) const;
     void startUpdateTreeSnapshotTimer();
 #endif
+    void updateCachedTextOfAssociatedObjects(AccessibilityObject&);
 
 protected:
     void postPlatformNotification(AccessibilityObject&, AXNotification);
@@ -869,7 +886,7 @@ private:
     Ref<AccessibilityNodeObject> createFromNode(Node&);
 
     const WeakPtr<Document, WeakPtrImplWithEventTargetData> m_document;
-    const std::optional<FrameIdentifier> m_frameID; // constant for object's lifetime.
+    const FrameIdentifier m_frameID; // constant for object's lifetime.
     OptionSet<ActivityState> m_pageActivityState;
     HashMap<AXID, Ref<AccessibilityObject>> m_objects;
 
@@ -904,12 +921,10 @@ private:
     // FIXME: since the following only affects the behavior of isolated objects, we should move it into AXIsolatedTree in order to keep this class main thread only.
     static std::atomic<bool> gForceInitialFrameCaching;
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
-    // Accessed on and off the main thread.
-    static std::atomic<bool> gAccessibilityThreadTextApisEnabled;
-#endif
     // Accessed on and off the main thread.
     static std::atomic<bool> gAccessibilityTextStitchingEnabled;
+    // Accessed on and off the main thread.
+    static std::atomic<bool> gAccessibilityThreadHitTestingEnabled;
 
 #if PLATFORM(COCOA)
     static std::atomic<bool> gAccessibilityDOMIdentifiersEnabled;

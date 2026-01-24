@@ -69,21 +69,61 @@
 #import <wtf/cocoa/VectorCocoa.h>
 #import <wtf/text/Base64.h>
 
+#import "AuthenticationServicesCoreSoftLink.h"
+
+#define kWKLocalAuthenticatorCredentialGroupKey @"_WKLocalAuthenticatorCredentialGroupKey"
+#define kWKLocalAuthenticatorCredentialSynchronizableKey @"_WKLocalAuthenticatorCredentialSynchronizableKey"
+
 #if ENABLE(WEB_AUTHN)
 
-#if USE(APPLE_INTERNAL_SDK)
-#import <WebKitAdditions/LocalAuthenticatorAdditions.h>
-#else
-static void updateQueryIfNecessary(NSMutableDictionary *)
+static bool shouldUpdateQuery()
 {
+#if ENABLE(SYNCED_CREDENTIALS)
+    if (WebKit::getASCWebKitSPISupportClassSingleton())
+        return [WebKit::getASCWebKitSPISupportClassSingleton() shouldUseAlternateCredentialStore];
+#endif
+
+    return false;
 }
+
+static void updateQueryIfNecessary(NSMutableDictionary *dictionary)
+{
+    if (!shouldUpdateQuery())
+        return;
+
+    [dictionary setObject:@YES forKey:(__bridge id)kSecAttrSynchronizable];
+}
+
+#define kSecAttrSharingGroup @"ggrp"
+
 static inline void updateCredentialIfNecessary(NSMutableDictionary *credential, NSDictionary *attributes)
 {
+    if ([[attributes allKeys] containsObject:bridge_cast(kSecAttrSynchronizable)])
+        [credential setObject:attributes[bridge_cast(kSecAttrSynchronizable)] forKey:kWKLocalAuthenticatorCredentialSynchronizableKey];
+#if ENABLE(ONGOING_CREDENTIAL_SHARING_WEBKIT_SPI)
+    if ([[attributes allKeys] containsObject:kSecAttrSharingGroup])
+        [credential setObject:attributes[kSecAttrSharingGroup] forKey:kWKLocalAuthenticatorCredentialGroupKey];
+#endif // ENABLE(ONGOING_CREDENTIAL_SHARING_WEBKIT_SPI)
 }
+
+static inline String groupForAttributes(NSDictionary *attributes)
+{
+#if ENABLE(ONGOING_CREDENTIAL_SHARING_WEBKIT_SPI)
+    if ([[attributes allKeys] containsObject:kSecAttrSharingGroup]) {
+        if (auto *nsString = dynamic_objc_cast<NSString>(attributes[kSecAttrSharingGroup]))
+            return nsString;
+    }
+#endif // ENABLE(ONGOING_CREDENTIAL_SHARING_WEBKIT_SPI)
+    return nullString();
+}
+
 static inline void updateQueryForGroupIfNecessary(NSMutableDictionary *dictionary, NSString *group)
 {
+#if ENABLE(ONGOING_CREDENTIAL_SHARING_WEBKIT_SPI)
+    if (group != nil)
+        [dictionary setObject:group forKey:kSecAttrSharingGroup];
+#endif // ENABLE(ONGOING_CREDENTIAL_SHARING_WEBKIT_SPI)
 }
-#endif
 
 static RetainPtr<NSData> produceClientDataJson(_WKWebAuthenticationType type, NSData *challenge, NSString *origin, NSString *topOrigin = nil, WebAuthn::Scope scope = WebAuthn::Scope::SameOrigin)
 {

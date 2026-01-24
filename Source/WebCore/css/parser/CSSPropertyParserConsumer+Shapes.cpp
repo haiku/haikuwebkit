@@ -798,9 +798,6 @@ static std::optional<CSS::Shape> consumeBasicShapeShapeFunctionParameters(CSSPar
     // shape() = shape( <'fill-rule'>? from <coordinate-pair>, <shape-command># )
     // https://drafts.csswg.org/css-shapes-2/#shape-function
 
-    if (!state.context.cssShapeFunctionEnabled)
-        return { };
-
     auto fillRule = consumeFillRule(args);
 
     if (!consumeIdent<CSSValueFrom>(args))

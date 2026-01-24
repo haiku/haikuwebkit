@@ -83,7 +83,7 @@ inline const AtomString& Element::attributeWithDefaultARIA(const QualifiedName& 
     if (!value.isNull())
         return value;
 
-    auto* defaultARIA = customElementDefaultARIAIfExists();
+    CheckedPtr defaultARIA = customElementDefaultARIAIfExists();
     return defaultARIA ? defaultARIA->valueForAttribute(*this, name) : nullAtom();
 }
 

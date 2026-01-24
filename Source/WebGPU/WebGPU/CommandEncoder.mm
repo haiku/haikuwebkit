@@ -159,7 +159,7 @@ CommandEncoder::CommandEncoder(id<MTLCommandBuffer> commandBuffer, Device& devic
                 }
             }
         }
-        for (RefPtr group : commandEncoder.m_bindGroups)
+        for (Ref group : commandEncoder.m_bindGroups)
             group->rebindSamplersIfNeeded();
 
         return true;
@@ -2354,27 +2354,27 @@ void CommandEncoder::clearTracking()
 void CommandEncoder::trackEncoderForBuffer(const Buffer& buffer, TrackedResourceContainer& encoderContainer)
 {
     trackEncoder(encoderContainer);
-    m_trackedBuffers.append(&buffer);
+    m_trackedBuffers.append(buffer);
 }
 void CommandEncoder::trackEncoderForTexture(const Texture& texture, TrackedResourceContainer& encoderContainer)
 {
     trackEncoder(encoderContainer);
-    m_trackedTextures.append(&texture);
+    m_trackedTextures.append(texture);
 }
 void CommandEncoder::trackEncoderForTextureView(const TextureView& textureView, TrackedResourceContainer& encoderContainer)
 {
     trackEncoder(encoderContainer);
-    m_trackedTextureViews.append(&textureView);
+    m_trackedTextureViews.append(textureView);
 }
 void CommandEncoder::trackEncoderForExternalTexture(const ExternalTexture& externalTexture, TrackedResourceContainer& encoderContainer)
 {
     trackEncoder(encoderContainer);
-    m_trackedExternalTextures.append(&externalTexture);
+    m_trackedExternalTextures.append(externalTexture);
 }
 void CommandEncoder::trackEncoderForQuerySet(const QuerySet& querySet, TrackedResourceContainer& encoderContainer)
 {
     trackEncoder(encoderContainer);
-    m_trackedQuerySets.append(&querySet);
+    m_trackedQuerySets.append(querySet);
 }
 
 void CommandEncoder::trackEncoder(CommandEncoder& commandEncoder, HashSet<uint64_t, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>>& encoderContainer)
@@ -2409,7 +2409,7 @@ void CommandEncoder::skippedDrawIndexedValidation(uint64_t bufferIdentifier, Dra
     m_skippedDrawIndexedValidationKeys.add(bufferIdentifier, Vector<std::pair<DrawIndexCacheContainerValue, uint32_t>> { }).iterator->value.append(std::make_pair(DrawIndexCacheContainerValue(it->key.key()), it->value));
 }
 
-void CommandEncoder::rebindSamplersPreCommit(const BindGroup* group)
+void CommandEncoder::rebindSamplersPreCommit(const BindGroup& group)
 {
     m_bindGroups.append(group);
 }

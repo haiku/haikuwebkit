@@ -78,7 +78,7 @@ enum {
 - (BOOL)_containsItemMatchingEvent:(NSEvent *)event includingDisabledItems:(BOOL)includingDisabledItems;
 @end
 
-typedef NSUInteger NSPopUpMenuFlags;
+#define NSPopUpMenuFlags NSUInteger
 
 WTF_EXTERN_C_BEGIN
 

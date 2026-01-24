@@ -44,7 +44,7 @@
 #include "MediaSampleAVFObjC.h"
 #include "NotImplemented.h"
 #include "PlatformMediaSessionManager.h"
-#include "VP9UtilitiesCocoa.h"
+#include "VP9UtilitiesCocoaInternal.h"
 #include "VideoTrackPrivateWebM.h"
 #include "WebMAudioUtilitiesCocoa.h"
 #include <webm/webm_parser.h>

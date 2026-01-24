@@ -27,8 +27,12 @@
 
 #if HAVE(AVROUTING_FRAMEWORK)
 
+// FIXME: Properly support using WKA in modules.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnon-modular-include-in-module"
 #include <WebKitAdditions/MediaDeviceRouteAdditions.h>
 #include <WebKitAdditions/MediaDeviceRouteControllerAdditions.h>
+#pragma clang diagnostic pop
 #include <wtf/AbstractThreadSafeRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/ThreadSafeWeakPtr.h>
@@ -54,7 +58,7 @@ class MediaDeviceRouteController {
 public:
     WEBCORE_EXPORT static MediaDeviceRouteController& singleton();
 
-    RefPtr<MediaDeviceRouteControllerClient> client() const { return m_client.get(); }
+    RefPtr<MediaDeviceRouteControllerClient> client() const { return m_client; }
     void setClient(MediaDeviceRouteControllerClient* client) { m_client = client; }
 
     RefPtr<MediaDeviceRoute> mostRecentActiveRoute() const;

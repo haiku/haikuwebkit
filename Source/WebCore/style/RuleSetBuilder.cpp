@@ -206,16 +206,9 @@ void RuleSetBuilder::addChildRule(Ref<StyleRuleBase> rule)
     }
 
     case StyleRuleType::StartingStyle: {
-        SetForScope startingStyleScope { m_usedRuleTypes, m_usedRuleTypes | UsedRuleType::StartingStyle };
+        SetForScope startingStyleScope { m_isStartingStyle, IsStartingStyle::Yes };
         auto startingStyleRule = uncheckedDowncast<StyleRuleStartingStyle>(WTF::move(rule));
         addChildRules(startingStyleRule->childRules());
-        return;
-    }
-
-    case StyleRuleType::InternalBaseAppearance: {
-        SetForScope scope { m_usedRuleTypes, m_usedRuleTypes | UsedRuleType::BaseAppearance };
-        auto internalBaseAppearanceRule = uncheckedDowncast<StyleRuleInternalBaseAppearance>(WTF::move(rule));
-        addChildRules(internalBaseAppearanceRule->childRules());
         return;
     }
 
@@ -324,11 +317,10 @@ void RuleSetBuilder::addStyleRuleWithSelectorList(const CSSSelectorList& selecto
     // It should not happen here.
     ASSERT(!selectorList.isEmpty());
     unsigned selectorListIndex = 0;
-    for (size_t selectorIndex = 0; selectorIndex != notFound; selectorIndex = selectorList.indexOfNextSelectorAfter(selectorIndex)) {
-        RuleData ruleData(rule, selectorIndex, selectorListIndex, m_ruleSet->ruleCount(), m_usedRuleTypes);
+    for (auto& selector : selectorList) {
+        RuleData ruleData(rule, selectorList.indexOfSelector(selector), selectorListIndex++, m_ruleSet->ruleCount(), m_isStartingStyle);
         m_mediaQueryCollector.addRuleIfNeeded(ruleData);
         m_ruleSet->addRule(WTF::move(ruleData), m_currentCascadeLayerIdentifier, m_currentContainerQueryIdentifier, m_currentScopeIdentifier, &m_featureCollectionContext);
-        ++selectorListIndex;
     }
 }
 
@@ -564,7 +556,7 @@ void RuleSetBuilder::addMutatingRulesToResolver()
         if (auto* positionTryRule = dynamicDowncast<StyleRulePositionTry>(rule.get())) {
             // "If multiple @position-try rules are declared with the same name, the last one in document order wins."
             // https://drafts.csswg.org/css-anchor-position-1/#fallback-rule
-            m_ruleSet->m_positionTryRules.set(positionTryRule->name(), positionTryRule);
+            m_ruleSet->m_positionTryRules.set(positionTryRule->name(), *positionTryRule);
         }
 
         if (auto* functionRule = dynamicDowncast<StyleRuleFunction>(rule.get())) {

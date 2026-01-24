@@ -228,11 +228,11 @@ static inline WebHistoryDateKey dateKey(NSTimeInterval date)
         return NO;
 
     DateToEntriesMap::iterator it = _entriesByDate->find(dateKey);
-    NSMutableArray *entriesForDate = it->value.get();
-    [entriesForDate removeObjectIdenticalTo:entry];
-    
+    RetainPtr<NSMutableArray> entriesForDate = it->value.get();
+    [entriesForDate.get() removeObjectIdenticalTo:entry];
+
     // remove this date entirely if there are no other entries on it
-    if ([entriesForDate count] == 0) {
+    if ([entriesForDate.get() count] == 0) {
         _entriesByDate->remove(it);
         // Clear _orderedLastVisitedDays so it will be regenerated when next requested.
         _orderedLastVisitedDays = nil;

@@ -81,7 +81,7 @@ public:
 
     inline explicit operator bool() const;
 
-    WARN_UNUSED_RETURN inline WeakImpl* leakImpl();
+    [[nodiscard]] inline WeakImpl* leakImpl();
     WeakImpl* unsafeImpl() const { return impl(); }
     void clear();
 

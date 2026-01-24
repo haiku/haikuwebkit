@@ -44,25 +44,28 @@ bool JSNodeListOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown> handl
     if (!jsNodeList->hasCustomProperties())
         return false;
 
-    if (jsNodeList->wrapped().isLiveNodeList()) {
+    // Cannot ref the node list as this gets called from the GC thread.
+    SUPPRESS_UNCOUNTED_LOCAL if (auto* liveNodeList = dynamicDowncast<LiveNodeList>(jsNodeList->wrapped())) {
         if (reason) [[unlikely]]
             *reason = "LiveNodeList owner is opaque root"_s;
 
-        return containsWebCoreOpaqueRoot(visitor, static_cast<LiveNodeList&>(jsNodeList->wrapped()).ownerNode());
+        return containsWebCoreOpaqueRoot(visitor, liveNodeList->ownerNode());
     }
 
-    if (jsNodeList->wrapped().isChildNodeList()) {
+    // Cannot ref the node list as this gets called from the GC thread.
+    SUPPRESS_UNCOUNTED_LOCAL if (auto* childNodeList = dynamicDowncast<ChildNodeList>(jsNodeList->wrapped())) {
         if (reason) [[unlikely]]
             *reason = "ChildNodeList owner is opaque root"_s;
 
-        return containsWebCoreOpaqueRoot(visitor, static_cast<ChildNodeList&>(jsNodeList->wrapped()).ownerNode());
+        return containsWebCoreOpaqueRoot(visitor, childNodeList->ownerNode());
     }
 
-    if (jsNodeList->wrapped().isEmptyNodeList()) {
+    // Cannot ref the node list as this gets called from the GC thread.
+    SUPPRESS_UNCOUNTED_LOCAL if (auto* emptyNodeList = dynamicDowncast<EmptyNodeList>(jsNodeList->wrapped())) {
         if (reason) [[unlikely]]
             *reason = "EmptyNodeList owner is opaque root"_s;
 
-        return containsWebCoreOpaqueRoot(visitor, static_cast<EmptyNodeList&>(jsNodeList->wrapped()).ownerNode());
+        return containsWebCoreOpaqueRoot(visitor, emptyNodeList->ownerNode());
     }
     return false;
 }

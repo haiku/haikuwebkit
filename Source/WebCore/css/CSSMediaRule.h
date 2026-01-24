@@ -39,7 +39,7 @@ public:
     static Ref<CSSMediaRule> create(StyleRuleMedia& rule, CSSStyleSheet* sheet) { return adoptRef(*new CSSMediaRule(rule, sheet)); }
     virtual ~CSSMediaRule();
 
-    WEBCORE_EXPORT MediaList* media() const;
+    WEBCORE_EXPORT MediaList& media() const;
 
 private:
     friend class MediaList;

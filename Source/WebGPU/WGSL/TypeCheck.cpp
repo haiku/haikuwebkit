@@ -160,49 +160,49 @@ public:
 
     std::optional<FailedCheck> check();
 
-    WARN_UNUSED_RETURN Result<void> visit(ShaderModule&);
+    [[nodiscard]] Result<void> visit(ShaderModule&);
 
     // Declarations
-    WARN_UNUSED_RETURN Result<void> visit(AST::Declaration&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::Structure&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::Variable&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::Function&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::TypeAlias&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::ConstAssert&);
+    [[nodiscard]] Result<void> visit(AST::Declaration&);
+    [[nodiscard]] Result<void> visit(AST::Structure&);
+    [[nodiscard]] Result<void> visit(AST::Variable&);
+    [[nodiscard]] Result<void> visit(AST::Function&);
+    [[nodiscard]] Result<void> visit(AST::TypeAlias&);
+    [[nodiscard]] Result<void> visit(AST::ConstAssert&);
 
     // Attributes
-    WARN_UNUSED_RETURN Result<void> visit(AST::Attribute&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::AlignAttribute&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::BindingAttribute&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::GroupAttribute&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::IdAttribute&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::LocationAttribute&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::SizeAttribute&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::WorkgroupSizeAttribute&);
+    [[nodiscard]] Result<void> visit(AST::Attribute&);
+    [[nodiscard]] Result<void> visit(AST::AlignAttribute&);
+    [[nodiscard]] Result<void> visit(AST::BindingAttribute&);
+    [[nodiscard]] Result<void> visit(AST::GroupAttribute&);
+    [[nodiscard]] Result<void> visit(AST::IdAttribute&);
+    [[nodiscard]] Result<void> visit(AST::LocationAttribute&);
+    [[nodiscard]] Result<void> visit(AST::SizeAttribute&);
+    [[nodiscard]] Result<void> visit(AST::WorkgroupSizeAttribute&);
 
     // Statements
-    WARN_UNUSED_RETURN Result<void> visit(AST::Statement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::AssignmentStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::CallStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::CompoundAssignmentStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::CompoundStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::DecrementIncrementStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::IfStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::PhonyAssignmentStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::ReturnStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::ForStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::LoopStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::WhileStatement&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::SwitchStatement&);
+    [[nodiscard]] Result<void> visit(AST::Statement&);
+    [[nodiscard]] Result<void> visit(AST::AssignmentStatement&);
+    [[nodiscard]] Result<void> visit(AST::CallStatement&);
+    [[nodiscard]] Result<void> visit(AST::CompoundAssignmentStatement&);
+    [[nodiscard]] Result<void> visit(AST::CompoundStatement&);
+    [[nodiscard]] Result<void> visit(AST::DecrementIncrementStatement&);
+    [[nodiscard]] Result<void> visit(AST::IfStatement&);
+    [[nodiscard]] Result<void> visit(AST::PhonyAssignmentStatement&);
+    [[nodiscard]] Result<void> visit(AST::ReturnStatement&);
+    [[nodiscard]] Result<void> visit(AST::ForStatement&);
+    [[nodiscard]] Result<void> visit(AST::LoopStatement&);
+    [[nodiscard]] Result<void> visit(AST::WhileStatement&);
+    [[nodiscard]] Result<void> visit(AST::SwitchStatement&);
 
     // Expressions
-    WARN_UNUSED_RETURN Result<void> visit(AST::Expression&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::FieldAccessExpression&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::IndexAccessExpression&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::BinaryExpression&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::IdentifierExpression&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::CallExpression&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::UnaryExpression&);
+    [[nodiscard]] Result<void> visit(AST::Expression&);
+    [[nodiscard]] Result<void> visit(AST::FieldAccessExpression&);
+    [[nodiscard]] Result<void> visit(AST::IndexAccessExpression&);
+    [[nodiscard]] Result<void> visit(AST::BinaryExpression&);
+    [[nodiscard]] Result<void> visit(AST::IdentifierExpression&);
+    [[nodiscard]] Result<void> visit(AST::CallExpression&);
+    [[nodiscard]] Result<void> visit(AST::UnaryExpression&);
 
     // Literal Expressions
     void visit(AST::BoolLiteral&);
@@ -214,59 +214,59 @@ public:
     void visit(AST::AbstractFloatLiteral&);
 
     // Types
-    WARN_UNUSED_RETURN Result<void> visit(AST::ArrayTypeExpression&);
-    WARN_UNUSED_RETURN Result<void> visit(AST::ElaboratedTypeExpression&);
+    [[nodiscard]] Result<void> visit(AST::ArrayTypeExpression&);
+    [[nodiscard]] Result<void> visit(AST::ElaboratedTypeExpression&);
 
-    WARN_UNUSED_RETURN Result<void> visit(AST::Continuing&);
+    [[nodiscard]] Result<void> visit(AST::Continuing&);
 
 private:
-    WARN_UNUSED_RETURN Result<void> declareBuiltins();
+    [[nodiscard]] Result<void> declareBuiltins();
 
-    WARN_UNUSED_RETURN Result<const Type*> vectorFieldAccess(const Types::Vector&, AST::FieldAccessExpression&);
-    WARN_UNUSED_RETURN Result<void> visitAttributes(AST::Attribute::List&);
-    WARN_UNUSED_RETURN Result<void> visitStatements(AST::Statement::List&);
-    WARN_UNUSED_RETURN Result<void> bitcast(AST::CallExpression&, const Vector<const Type*>&);
+    [[nodiscard]] Result<const Type*> vectorFieldAccess(const Types::Vector&, AST::FieldAccessExpression&);
+    [[nodiscard]] Result<void> visitAttributes(AST::Attribute::List&);
+    [[nodiscard]] Result<void> visitStatements(AST::Statement::List&);
+    [[nodiscard]] Result<void> bitcast(AST::CallExpression&, const Vector<const Type*>&);
 
-    WARN_UNUSED_RETURN Result<const Type*> check(AST::Expression&, Constraint, Evaluation);
-    WARN_UNUSED_RETURN Result<const Type*> infer(AST::Expression&, Evaluation, DiscardResult = DiscardResult::No);
-    WARN_UNUSED_RETURN Result<const Type*> resolve(AST::Expression&);
-    WARN_UNUSED_RETURN Result<const Type*> lookupType(const AST::Identifier&);
-    WARN_UNUSED_RETURN Result<void> validateF16Usage(const SourceSpan&, const Type*);
-    WARN_UNUSED_RETURN Result<void> introduceType(const AST::Identifier&, const Type*);
-    WARN_UNUSED_RETURN Result<void> introduceValue(const AST::Identifier&, const Type*, Evaluation = Evaluation::Runtime, std::optional<ConstantValue> = std::nullopt);
-    WARN_UNUSED_RETURN Result<void> introduceFunction(const AST::Identifier&, const Type*);
-    WARN_UNUSED_RETURN Result<void> convertValue(const SourceSpan&, const Type*, std::optional<ConstantValue>&);
+    [[nodiscard]] Result<const Type*> check(AST::Expression&, Constraint, Evaluation);
+    [[nodiscard]] Result<const Type*> infer(AST::Expression&, Evaluation, DiscardResult = DiscardResult::No);
+    [[nodiscard]] Result<const Type*> resolve(AST::Expression&);
+    [[nodiscard]] Result<const Type*> lookupType(const AST::Identifier&);
+    [[nodiscard]] Result<void> validateF16Usage(const SourceSpan&, const Type*);
+    [[nodiscard]] Result<void> introduceType(const AST::Identifier&, const Type*);
+    [[nodiscard]] Result<void> introduceValue(const AST::Identifier&, const Type*, Evaluation = Evaluation::Runtime, std::optional<ConstantValue> = std::nullopt);
+    [[nodiscard]] Result<void> introduceFunction(const AST::Identifier&, const Type*);
+    [[nodiscard]] Result<void> convertValue(const SourceSpan&, const Type*, std::optional<ConstantValue>&);
 
     void inferred(const Type*);
-    WARN_UNUSED_RETURN bool unify(const Type*, const Type*);
-    WARN_UNUSED_RETURN bool convertValueImpl(const SourceSpan&, const Type*, ConstantValue&);
+    [[nodiscard]] bool unify(const Type*, const Type*);
+    [[nodiscard]] bool convertValueImpl(const SourceSpan&, const Type*, ConstantValue&);
 
-    WARN_UNUSED_RETURN Result<void> binaryExpression(const SourceSpan&, AST::Expression*, AST::BinaryOperation, AST::Expression&, AST::Expression&);
+    [[nodiscard]] Result<void> binaryExpression(const SourceSpan&, AST::Expression*, AST::BinaryOperation, AST::Expression&, AST::Expression&);
 
     template<typename TargetConstructor, typename Validator, typename... Arguments>
-    WARN_UNUSED_RETURN Result<void> allocateSimpleConstructor(ASCIILiteral, TargetConstructor, const Validator&, Arguments&&...);
-    WARN_UNUSED_RETURN Result<void> allocateTextureStorageConstructor(ASCIILiteral, Types::TextureStorage::Kind);
+    [[nodiscard]] Result<void> allocateSimpleConstructor(ASCIILiteral, TargetConstructor, const Validator&, Arguments&&...);
+    [[nodiscard]] Result<void> allocateTextureStorageConstructor(ASCIILiteral, Types::TextureStorage::Kind);
 
     bool isModuleScope() const;
 
-    WARN_UNUSED_RETURN Result<AccessMode> accessMode(AST::Expression&);
-    WARN_UNUSED_RETURN Result<TexelFormat> texelFormat(AST::Expression&);
-    WARN_UNUSED_RETURN Result<AddressSpace> addressSpace(AST::Expression&);
+    [[nodiscard]] Result<AccessMode> accessMode(AST::Expression&);
+    [[nodiscard]] Result<TexelFormat> texelFormat(AST::Expression&);
+    [[nodiscard]] Result<AddressSpace> addressSpace(AST::Expression&);
 
     template<typename CallArguments>
-    WARN_UNUSED_RETURN Result<const Type*> chooseOverload(ASCIILiteral, const SourceSpan&, AST::Expression*, const String&, CallArguments&& valueArguments, const Vector<const Type*>& typeArguments);
+    [[nodiscard]] Result<const Type*> chooseOverload(ASCIILiteral, const SourceSpan&, AST::Expression*, const String&, CallArguments&& valueArguments, const Vector<const Type*>& typeArguments);
 
     template<typename Node>
-    WARN_UNUSED_RETURN Result<void> setConstantValue(Node&, const Type*, const ConstantValue&);
+    [[nodiscard]] Result<void> setConstantValue(Node&, const Type*, const ConstantValue&);
 
-    WARN_UNUSED_RETURN Result<Behaviors> analyze(AST::Statement&);
-    WARN_UNUSED_RETURN Result<Behaviors> analyze(AST::CompoundStatement&);
-    WARN_UNUSED_RETURN Result<Behaviors> analyze(AST::ForStatement&);
-    WARN_UNUSED_RETURN Result<Behaviors> analyze(AST::IfStatement&);
-    WARN_UNUSED_RETURN Result<Behaviors> analyze(AST::LoopStatement&);
-    WARN_UNUSED_RETURN Result<Behaviors> analyze(AST::SwitchStatement&);
-    WARN_UNUSED_RETURN Result<Behaviors> analyze(AST::WhileStatement&);
-    WARN_UNUSED_RETURN Result<Behaviors> analyzeStatements(AST::Statement::List&);
+    [[nodiscard]] Result<Behaviors> analyze(AST::Statement&);
+    [[nodiscard]] Result<Behaviors> analyze(AST::CompoundStatement&);
+    [[nodiscard]] Result<Behaviors> analyze(AST::ForStatement&);
+    [[nodiscard]] Result<Behaviors> analyze(AST::IfStatement&);
+    [[nodiscard]] Result<Behaviors> analyze(AST::LoopStatement&);
+    [[nodiscard]] Result<Behaviors> analyze(AST::SwitchStatement&);
+    [[nodiscard]] Result<Behaviors> analyze(AST::WhileStatement&);
+    [[nodiscard]] Result<Behaviors> analyzeStatements(AST::Statement::List&);
 
     ShaderModule& m_shaderModule;
     const Type* m_inferredType { nullptr };
@@ -469,7 +469,7 @@ Result<void> TypeChecker::declareBuiltins()
 std::optional<FailedCheck> TypeChecker::check()
 {
 
-    auto result = [&] WARN_UNUSED_RETURN -> Result<void> {
+    auto result = [&] [[nodiscard]] -> Result<void> {
         CHECK(declareBuiltins());
 
         ContextScope moduleScope(this);
@@ -1889,7 +1889,7 @@ Result<void> TypeChecker::visit(AST::ArrayTypeExpression& array)
 
     Types::Array::Size size;
     if (array.maybeElementCount()) {
-        UNWRAP(elementCountType, infer(*array.maybeElementCount(), Evaluation::Override));
+        UNWRAP(elementCountType, infer(*array.maybeElementCount(), std::min(m_evaluation, Evaluation::Override)));
         if (!unify(m_types.i32Type(), elementCountType) && !unify(m_types.u32Type(), elementCountType)) [[unlikely]]
             TYPE_ERROR(array.span(), "array count must be an i32 or u32 value, found '"_s, *elementCountType, '\'');
 

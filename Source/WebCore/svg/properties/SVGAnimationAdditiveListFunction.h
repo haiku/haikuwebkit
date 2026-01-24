@@ -44,21 +44,21 @@ public:
 protected:
     const Ref<ListType>& toAtEndOfDuration() const { return !m_toAtEndOfDuration->isEmpty() ? m_toAtEndOfDuration : m_to; }
 
-    bool adjustAnimatedList(AnimationMode animationMode, float percentage, RefPtr<ListType>& animated, bool resizeAnimatedIfNeeded = true)
+    bool adjustAnimatedList(AnimationMode animationMode, float percentage, ListType& animated, bool resizeAnimatedIfNeeded = true)
     {
         if (!m_to->numberOfItems())
             return false;
 
         if (m_from->numberOfItems() && m_from->size() != m_to->size()) {
             if (percentage >= 0.5)
-                *animated = m_to;
+                animated = m_to;
             else if (animationMode != AnimationMode::To)
-                *animated = m_from;
+                animated = m_from;
             return false;
         }
 
-        if (resizeAnimatedIfNeeded && animated->size() < m_to->size())
-            animated->resize(m_to->size());
+        if (resizeAnimatedIfNeeded && animated.size() < m_to->size())
+            animated.resize(m_to->size());
         return true;
     }
 

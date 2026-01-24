@@ -86,7 +86,7 @@ static bool hasInlineRun(RenderObject& renderer)
     return false;
 }
 
-static Node* nextRenderedEditable(Node* node)
+static Node* nextRenderedEditable(SUPPRESS_UNCHECKED_LOCAL Node* node)
 {
     while ((node = nextLeafNode(node))) {
         CheckedPtr renderer = node->renderer();
@@ -98,7 +98,7 @@ static Node* nextRenderedEditable(Node* node)
     return nullptr;
 }
 
-static Node* previousRenderedEditable(Node* node)
+static Node* previousRenderedEditable(SUPPRESS_UNCHECKED_LOCAL Node* node)
 {
     while ((node = previousLeafNode(node))) {
         CheckedPtr renderer = node->renderer();
@@ -639,7 +639,7 @@ static bool endsOfNodeAreVisuallyDistinctPositions(Node* node)
     return !Position::hasRenderedNonAnonymousDescendantsWithHeight(downcast<RenderElement>(*node->renderer()));
 }
 
-static Node* enclosingVisualBoundary(Node* node)
+static Node* enclosingVisualBoundary(SUPPRESS_UNCHECKED_LOCAL Node* node)
 {
     while (node && !endsOfNodeAreVisuallyDistinctPositions(node))
         node = node->parentNode();
@@ -990,7 +990,7 @@ bool Position::isCandidate() const
         return !m_offset && m_anchorType != PositionIsAfterAnchor && !nodeIsUserSelectNone(node->parentNode());
     }
 
-    if (auto* renderText = dynamicDowncast<RenderText>(*renderer))
+    if (CheckedPtr renderText = dynamicDowncast<RenderText>(*renderer))
         return !nodeIsUserSelectNone(node.get()) && renderText->containsCaretOffset(m_offset);
 
     if (positionBeforeOrAfterNodeIsCandidate(*node)) {
@@ -1002,7 +1002,7 @@ bool Position::isCandidate() const
     if (is<HTMLHtmlElement>(*m_anchorNode))
         return false;
 
-    if (auto* block = dynamicDowncast<RenderBlock>(*renderer)) {
+    if (CheckedPtr block = dynamicDowncast<RenderBlock>(*renderer)) {
         if (is<RenderBlockFlow>(*block) || is<RenderGrid>(*block) || is<RenderFlexibleBox>(*block)) {
             if (block->logicalHeight() || is<HTMLBodyElement>(*m_anchorNode) || m_anchorNode->isRootEditableElement()) {
                 if (!Position::hasRenderedNonAnonymousDescendantsWithHeight(*block))
@@ -1018,7 +1018,7 @@ bool Position::isCandidate() const
 
 bool Position::isRenderedCharacter() const
 {
-    auto* text = dynamicDowncast<Text>(deprecatedNode());
+    CheckedPtr text = dynamicDowncast<Text>(deprecatedNode());
     CheckedPtr renderer = text ? text->renderer() : nullptr;
     return renderer && renderer->containsRenderedCharacterOffset(m_offset);
 }
@@ -1066,11 +1066,11 @@ bool Position::rendersInDifferentPosition(const Position& position) const
     if (!inSameEnclosingBlockFlowElement(node.get(), positionNode.get()))
         return true;
 
-    auto* textRenderer = dynamicDowncast<RenderText>(*renderer);
+    CheckedPtr textRenderer = dynamicDowncast<RenderText>(*renderer);
     if (textRenderer && !textRenderer->containsCaretOffset(m_offset))
         return false;
 
-    auto* textPositionRenderer = dynamicDowncast<RenderText>(*positionRenderer);
+    CheckedPtr textPositionRenderer = dynamicDowncast<RenderText>(*positionRenderer);
     if (textPositionRenderer && !textPositionRenderer->containsCaretOffset(position.m_offset))
         return false;
 
@@ -1207,13 +1207,13 @@ InlineBoxAndOffset Position::inlineBoxAndOffset(Affinity affinity, TextDirection
     RefPtr node = deprecatedNode();
     if (!node)
         return { { }, caretOffset };
-    auto renderer = node->renderer();
+    CheckedPtr renderer = node->renderer();
     if (!renderer)
         return { { }, caretOffset };
 
     InlineIterator::LeafBoxIterator box;
 
-    if (auto* lineBreakRenderer = dynamicDowncast<RenderLineBreak>(*renderer); lineBreakRenderer && lineBreakRenderer->isBR()) {
+    if (CheckedPtr lineBreakRenderer = dynamicDowncast<RenderLineBreak>(*renderer); lineBreakRenderer && lineBreakRenderer->isBR()) {
         if (!caretOffset)
             box = InlineIterator::boxFor(*lineBreakRenderer);
     } else if (CheckedPtr textRenderer = dynamicDowncast<RenderText>(*renderer)) {
@@ -1271,7 +1271,7 @@ InlineBoxAndOffset Position::inlineBoxAndOffset(Affinity affinity, TextDirection
                 return equivalent.inlineBoxAndOffset(Affinity::Upstream, primaryDirection);
             }
         }
-        if (auto* renderBox = dynamicDowncast<RenderBox>(*renderer)) {
+        if (CheckedPtr renderBox = dynamicDowncast<RenderBox>(*renderer)) {
             box = InlineIterator::boxFor(*renderBox);
             if (box && caretOffset > box->minimumCaretOffset() && caretOffset < box->maximumCaretOffset())
                 return { box, caretOffset };
@@ -1626,8 +1626,8 @@ template<TreeType treeType> std::partial_ordering treeOrder(const Position& a, c
     if (a.isNull() || b.isNull())
         return a.isNull() && b.isNull() ? std::partial_ordering::equivalent : std::partial_ordering::unordered;
 
-    auto aContainer = a.containerNode();
-    auto bContainer = b.containerNode();
+    CheckedPtr aContainer = a.containerNode();
+    CheckedPtr bContainer = b.containerNode();
 
     if (!aContainer || !bContainer) {
         if (!commonInclusiveAncestor<treeType>(*a.anchorNode(), *b.anchorNode()))

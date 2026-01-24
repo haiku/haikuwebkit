@@ -241,7 +241,6 @@ selectors = [
     { name = "_setAllowsPointerDragBeforeLiftDelay:", class = "?" },
     { name = "_setAnimator:", class = "?" },
     { name = "_setAttributedTitle:", class = "?" },
-    { name = "_setAvoidsJumpOnInterruptedBounce:", class = "?" },
     { name = "_setColorsToMatchTintColor:", class = "?" },
     { name = "_setCompletionHandler:", class = "?" },
     { name = "_setContainerView:", class = "?" },
@@ -615,7 +614,6 @@ selectors = [
     { name = "setSupportedAlgorithmIdentifiers:", class = "?" },
     { name = "setThumbnailItem:", class = "?" },
     { name = "setThumbnailURLs:", class = "?" },
-    { name = "setTracksImmediatelyWhileDecelerating:", class = "?" },
     { name = "setUpdateHandler:", class = "?" },
     { name = "setUrlFragment:", class = "?" },
     { name = "setUseLoadingTimeout:", class = "?" },
@@ -1033,6 +1031,14 @@ requires = [
     # The code checks for NW_SETTINGS_HAS_UNIFIED_HTTP, which comes from an
     # internal SDK header.
     "USE_APPLE_INTERNAL_SDK"
+]
+
+[[legacy]]
+symbols = [
+    "nw_settings_get_unified_http_enabled_webkit",
+]
+requires = [
+    "HAVE_NWSETTINGS_UNIFIED_HTTP_WEBKIT"
 ]
 
 # The public iOS build uses CGGeometry methods instead of internal only

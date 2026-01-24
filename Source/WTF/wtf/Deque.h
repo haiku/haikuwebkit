@@ -412,14 +412,14 @@ inline void Deque<T, inlineCapacity>::clear()
 
 template<typename T, size_t inlineCapacity>
 template<typename Predicate>
-inline auto Deque<T, inlineCapacity>::findIf(NOESCAPE const Predicate& predicate) -> iterator
+inline auto Deque<T, inlineCapacity>::findIf(NOESCAPE const Predicate& predicate) LIFETIME_BOUND -> iterator
 {
     return std::find_if(begin(), end(), predicate);
 }
 
 template<typename T, size_t inlineCapacity>
 template<typename Predicate>
-inline auto Deque<T, inlineCapacity>::findIf(NOESCAPE const Predicate& predicate) const -> const_iterator
+inline auto Deque<T, inlineCapacity>::findIf(NOESCAPE const Predicate& predicate) const LIFETIME_BOUND -> const_iterator
 {
     return std::find_if(begin(), end(), predicate);
 }

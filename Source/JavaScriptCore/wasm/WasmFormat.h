@@ -49,6 +49,7 @@
 #include <memory>
 #include <wtf/FixedBitVector.h>
 #include <wtf/TZoneMalloc.h>
+#include <wtf/Variant.h>
 #include <wtf/Vector.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
@@ -63,9 +64,94 @@ struct CompilationContext;
 struct ModuleInformation;
 struct UnlinkedHandlerInfo;
 
-struct BlockSignature {
-    const FunctionSignature* m_signature;
-    RefPtr<TypeDefinition> m_generatedUnderlyingType;
+class BlockSignature {
+    WTF_MAKE_TZONE_ALLOCATED(BlockSignature);
+public:
+    BlockSignature()
+        : m_storage(Types::Void)
+    {
+    }
+
+    // Constructor for simple case: no arguments, single return type (or void)
+    explicit BlockSignature(Type resultType)
+        : m_storage(resultType)
+    {
+    }
+
+    // Constructor from FunctionSignature held by Wasm::Module.
+    explicit BlockSignature(const FunctionSignature& signature)
+        : m_storage(&signature)
+    {
+    }
+
+    unsigned argumentCount() const
+    {
+        return WTF::switchOn(m_storage,
+            [](const FunctionSignature* signature) -> unsigned {
+                return signature->argumentCount();
+            },
+            [](Type) -> unsigned {
+                return 0;
+            }
+        );
+    }
+
+    unsigned returnCount() const
+    {
+        return WTF::switchOn(m_storage,
+            [](const FunctionSignature* signature) -> unsigned {
+                return signature->returnCount();
+            },
+            [](Type type) -> unsigned {
+                return type.isVoid() ? 0 : 1;
+            }
+        );
+    }
+
+    Type argumentType(unsigned index) const
+    {
+        return WTF::switchOn(m_storage,
+            [&](const FunctionSignature* signature) -> Type {
+                ASSERT(index < signature->argumentCount());
+                return signature->argumentType(index);
+            },
+            [](Type) -> Type {
+                RELEASE_ASSERT_NOT_REACHED();
+                return Types::Void;
+            }
+        );
+    }
+
+    Type returnType(unsigned index) const
+    {
+        return WTF::switchOn(m_storage,
+            [&](const FunctionSignature* signature) -> Type {
+                ASSERT(index < signature->returnCount());
+                return signature->returnType(index);
+            },
+            [](Type type) -> Type {
+                ASSERT(!type.isVoid());
+                return type;
+            }
+        );
+    }
+
+    bool hasReturnVector() const
+    {
+        return WTF::switchOn(m_storage,
+            [](const FunctionSignature* signature) -> bool {
+                return signature->hasReturnVector();
+            },
+            [](Type type) -> bool {
+                return type.isV128();
+            }
+        );
+    }
+
+    void dump(PrintStream& out) const;
+
+private:
+    WTF::Variant<const FunctionSignature*, Type> m_storage;
 };
 
 enum class TableElementType : uint8_t {

@@ -377,7 +377,7 @@ PlatformTimeRanges TrackBuffer::removeSamples(const DecodeOrderSampleMap::MapTyp
     return erasedRanges;
 }
 
-WARN_UNUSED_RETURN static bool decodeTimeComparator(const PresentationOrderSampleMap::MapType::value_type& a, const PresentationOrderSampleMap::MapType::value_type& b)
+[[nodiscard]] static bool decodeTimeComparator(const PresentationOrderSampleMap::MapType::value_type& a, const PresentationOrderSampleMap::MapType::value_type& b)
 {
     return Ref { a.second }->decodeTime() < Ref { b.second }->decodeTime();
 };

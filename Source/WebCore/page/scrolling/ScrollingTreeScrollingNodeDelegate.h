@@ -39,8 +39,8 @@ public:
     WEBCORE_EXPORT explicit ScrollingTreeScrollingNodeDelegate(ScrollingTreeScrollingNode&);
     WEBCORE_EXPORT virtual ~ScrollingTreeScrollingNodeDelegate();
 
-    Ref<ScrollingTreeScrollingNode> scrollingNode() { return m_scrollingNode.get(); }
-    Ref<const ScrollingTreeScrollingNode> scrollingNode() const { return m_scrollingNode.get(); }
+    Ref<ScrollingTreeScrollingNode> scrollingNode() { return m_scrollingNode; }
+    Ref<const ScrollingTreeScrollingNode> scrollingNode() const { return m_scrollingNode; }
 
     virtual bool startAnimatedScrollToPosition(FloatPoint) = 0;
     virtual void stopAnimatedScroll() = 0;

@@ -65,7 +65,6 @@ assembler/ProbeStack.cpp
 assembler/SecureARM64EHashPins.cpp
 
 b3/air/AirAllocateRegistersAndStackAndGenerateCode.cpp
-b3/air/AirAllocateRegistersAndStackByLinearScan.cpp
 b3/air/AirAllocateRegistersByGraphColoring.cpp
 b3/air/AirAllocateRegistersByGreedy.cpp
 b3/air/AirAllocateStackByGraphColoring.cpp
@@ -195,6 +194,11 @@ b3/B3VariableLiveness.cpp
 b3/B3VariableValue.cpp
 b3/B3WasmAddressValue.cpp
 b3/B3WasmBoundsCheckValue.cpp
+b3/B3WasmStructFieldValue.cpp
+b3/B3WasmStructGetValue.cpp
+b3/B3WasmStructNewValue.cpp
+b3/B3WasmStructSetValue.cpp
+b3/B3WasmRefTypeCheckValue.cpp
 b3/B3Width.cpp
 
 builtins/BuiltinExecutables.cpp
@@ -771,7 +775,7 @@ runtime/CacheableIdentifier.cpp
 runtime/CachedBytecode.cpp
 runtime/CachedSpecialPropertyAdaptiveStructureWatchpoint.cpp
 runtime/CachedTypes.cpp
-runtime/CatchScope.cpp
+runtime/TopExceptionScope.cpp
 runtime/ClassInfo.cpp
 runtime/ClonedArguments.cpp
 runtime/CodeCache.cpp
@@ -1254,6 +1258,7 @@ wasm/debugger/WasmBreakpointManager.cpp
 wasm/debugger/WasmDebugServer.cpp
 wasm/debugger/WasmDebugServerUtilities.cpp
 wasm/debugger/WasmExecutionHandler.cpp
+wasm/debugger/WasmGDBPacketParser.cpp
 wasm/debugger/WasmMemoryHandler.cpp
 wasm/debugger/WasmModuleManager.cpp
 wasm/debugger/WasmQueryHandler.cpp

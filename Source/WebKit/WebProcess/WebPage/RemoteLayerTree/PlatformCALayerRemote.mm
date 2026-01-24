@@ -486,7 +486,7 @@ void PlatformCALayerRemote::adoptSublayers(PlatformCALayer& source)
 
 void PlatformCALayerRemote::addAnimationForKey(const String& key, PlatformCAAnimation& animation)
 {
-    auto addResult = m_animations.set(key, &animation);
+    auto addResult = m_animations.set(key, animation);
     bool appendToAddedAnimations = true;
     if (!addResult.isNewEntry) {
         // There is already an animation for this key. If the animation has not been sent to the UI
@@ -536,8 +536,8 @@ void PlatformCALayerRemote::animationStarted(const String& key, MonotonicTime be
 {
     auto it = m_animations.find(key);
     if (it != m_animations.end())
-        downcast<PlatformCAAnimationRemote>(*it->value).didStart(currentTimeToMediaTime(beginTime));
-    
+        downcast<PlatformCAAnimationRemote>(it->value.get()).didStart(currentTimeToMediaTime(beginTime));
+
     if (m_owner)
         m_owner->platformCALayerAnimationStarted(key, beginTime);
 }
@@ -966,6 +966,20 @@ void PlatformCALayerRemote::setCornerRadius(float value)
 
     m_properties.cornerRadius = value;
     m_properties.notePropertiesChanged(LayerChange::CornerRadiusChanged);
+}
+
+WebCore::Path PlatformCALayerRemote::shadowPath() const
+{
+    return m_properties.shadowPath;
+}
+
+void PlatformCALayerRemote::setShadowPath(const WebCore::Path& path)
+{
+    if (m_properties.shadowPath.definitelyEqual(path))
+        return;
+
+    m_properties.shadowPath = path;
+    m_properties.notePropertiesChanged(LayerChange::ShadowPathChanged);
 }
 
 void PlatformCALayerRemote::setAntialiasesEdges(bool antialiases)

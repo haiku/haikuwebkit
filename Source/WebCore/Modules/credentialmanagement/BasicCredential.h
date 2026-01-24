@@ -25,6 +25,8 @@
 
 #pragma once
 
+#if ENABLE(WEB_AUTHN)
+
 #include <WebCore/Document.h>
 #include <WebCore/IDLTypes.h>
 #include <WebCore/JSDOMPromiseDeferredForward.h>
@@ -69,3 +71,5 @@ private:
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::ToClassName) \
     static bool isType(const WebCore::BasicCredential& credential) { return credential.credentialType() == WebCore::Type; } \
 SPECIALIZE_TYPE_TRAITS_END()
+
+#endif // ENABLE(WEB_AUTHN)

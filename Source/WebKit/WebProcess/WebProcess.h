@@ -919,7 +919,7 @@ private:
     std::optional<bool> m_isEnhancedSecurityEnabled;
 
 #if ENABLE(MEDIA_STREAM) && ENABLE(SANDBOX_EXTENSIONS)
-    HashMap<String, RefPtr<SandboxExtension>> m_mediaCaptureSandboxExtensions;
+    HashMap<String, Ref<SandboxExtension>> m_mediaCaptureSandboxExtensions;
     RefPtr<SandboxExtension> m_machBootstrapExtension;
 #endif
 

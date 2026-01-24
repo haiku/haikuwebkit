@@ -566,7 +566,7 @@ Ref<DataSegment> DataSegment::create(Provider&& provider)
     return adoptRef(*new DataSegment(WTF::move(provider)));
 }
 
-std::span<const uint8_t> DataSegment::span() const
+std::span<const uint8_t> DataSegment::span() const LIFETIME_BOUND
 {
     auto visitor = WTF::makeVisitor(
         [](const Vector<uint8_t>& data) { return data.span(); },

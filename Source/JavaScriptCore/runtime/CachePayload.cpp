@@ -54,7 +54,7 @@ CachePayload::CachePayload(DataType&& data)
 
 CachePayload::~CachePayload() = default;
 
-std::span<const uint8_t> CachePayload::span() const
+std::span<const uint8_t> CachePayload::span() const LIFETIME_BOUND
 {
     return WTF::switchOn(m_data, [](const auto& data) {
         return data.span();

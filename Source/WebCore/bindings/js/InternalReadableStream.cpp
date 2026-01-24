@@ -39,7 +39,7 @@ static ExceptionOr<JSC::JSValue> invokeReadableStreamFunction(JSC::JSGlobalObjec
     JSC::VM& vm = globalObject.vm();
     JSC::JSLockHolder lock(vm);
 
-    auto scope = DECLARE_CATCH_SCOPE(vm);
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     auto function = globalObject.get(&globalObject, identifier);
     ASSERT(!!scope.exception() || function.isCallable());
@@ -83,7 +83,7 @@ bool InternalReadableStream::isLocked() const
     if (!globalObject)
         return false;
 
-    auto scope = DECLARE_CATCH_SCOPE(globalObject->vm());
+    auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
 
     auto* clientData = downcast<JSVMClientData>(globalObject->vm().clientData);
     auto& privateName = clientData->builtinFunctions().readableStreamInternalsBuiltins().isReadableStreamLockedPrivateName();
@@ -93,8 +93,7 @@ bool InternalReadableStream::isLocked() const
     ASSERT(!arguments.hasOverflowed());
 
     auto result = invokeReadableStreamFunction(*globalObject, privateName, arguments);
-    if (scope.exception())
-        scope.clearException();
+    TRY_CLEAR_EXCEPTION(scope, false);
 
     return result.hasException() ? false : result.returnValue().isTrue();
 }
@@ -105,7 +104,7 @@ bool InternalReadableStream::isDisturbed() const
     if (!globalObject)
         return false;
 
-    auto scope = DECLARE_CATCH_SCOPE(globalObject->vm());
+    auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
 
     auto* clientData = downcast<JSVMClientData>(globalObject->vm().clientData);
     auto& privateName = clientData->builtinFunctions().readableStreamInternalsBuiltins().isReadableStreamDisturbedPrivateName();
@@ -115,8 +114,7 @@ bool InternalReadableStream::isDisturbed() const
     ASSERT(!arguments.hasOverflowed());
 
     auto result = invokeReadableStreamFunction(*globalObject, privateName, arguments);
-    if (scope.exception())
-        scope.clearException();
+    TRY_CLEAR_EXCEPTION(scope, false);
 
     return result.hasException() ? false : result.returnValue().isTrue();
 }
@@ -168,11 +166,10 @@ void InternalReadableStream::cancel(Exception&& exception)
     if (!globalObject)
         return;
 
-    auto scope = DECLARE_CATCH_SCOPE(globalObject->vm());
+    auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
     JSC::JSLockHolder lock(globalObject->vm());
     cancel(*globalObject, toJSNewlyCreated(globalObject, JSC::jsCast<JSDOMGlobalObject*>(globalObject), DOMException::create(WTF::move(exception))));
-    if (scope.exception()) [[unlikely]]
-        scope.clearException();
+    TRY_CLEAR_EXCEPTION(scope, void());
 }
 
 void InternalReadableStream::lock()
@@ -181,7 +178,7 @@ void InternalReadableStream::lock()
     if (!globalObject)
         return;
 
-    auto scope = DECLARE_CATCH_SCOPE(globalObject->vm());
+    auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
 
     auto* clientData = downcast<JSVMClientData>(globalObject->vm().clientData);
     auto& privateName = clientData->builtinFunctions().readableStreamInternalsBuiltins().acquireReadableStreamDefaultReaderPrivateName();
@@ -191,8 +188,7 @@ void InternalReadableStream::lock()
     ASSERT(!arguments.hasOverflowed());
 
     invokeReadableStreamFunction(*globalObject, privateName, arguments);
-    if (scope.exception()) [[unlikely]]
-        scope.clearException();
+    TRY_CLEAR_EXCEPTION(scope, void());
 }
 
 ExceptionOr<std::pair<Ref<InternalReadableStream>, Ref<InternalReadableStream>>> InternalReadableStream::tee(bool shouldClone)

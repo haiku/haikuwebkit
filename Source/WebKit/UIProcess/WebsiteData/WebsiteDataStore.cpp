@@ -1676,7 +1676,7 @@ void WebsiteDataStore::setThirdPartyCookieBlockingMode(WebCore::ThirdPartyCookie
     Ref callbackAggregator = CallbackAggregator::create(WTF::move(completionHandler));
 
 #if ENABLE(OPT_IN_PARTITIONED_COOKIES)
-    if (!isOptInCookiePartitioningEnabled() && blockingMode == WebCore::ThirdPartyCookieBlockingMode::AllExceptPartitioned)
+    if (!computeIsOptInCookiePartitioningEnabled() && blockingMode == WebCore::ThirdPartyCookieBlockingMode::AllExceptPartitioned)
         blockingMode = WebCore::ThirdPartyCookieBlockingMode::All;
 #endif
 
@@ -2072,14 +2072,20 @@ void WebsiteDataStore::setPrivateTokenIPCForTesting(bool enabled)
     protectedNetworkProcess()->send(Messages::NetworkProcess::SetShouldSendPrivateTokenIPCForTesting(sessionID(), enabled), 0);
 }
 
-#if ENABLE(OPT_IN_PARTITIONED_COOKIES) && !PLATFORM(COCOA)
-bool WebsiteDataStore::isOptInCookiePartitioningEnabled() const
+#if ENABLE(OPT_IN_PARTITIONED_COOKIES)
+bool WebsiteDataStore::computeIsOptInCookiePartitioningEnabled() const
 {
-    return std::ranges::any_of(m_processes, [](auto& process) {
-        return std::ranges::any_of(process.pages(), [](auto& page) {
-            return page->preferences().optInPartitionedCookiesEnabled();
-        });
-    });
+#if !PLATFORM(COCOA) || (defined(CFN_COOKIE_ACCEPTS_POLICY_PARTITION) && CFN_COOKIE_ACCEPTS_POLICY_PARTITION)
+    // Keep the flag unchanged when all pages are gone.
+    if (m_pages.isEmptyIgnoringNullReferences() && m_cachedIsOptInCookiePartitioningEnabled)
+        return *m_cachedIsOptInCookiePartitioningEnabled;
+
+    for (Ref page : m_pages) {
+        if (page->preferences().optInPartitionedCookiesEnabled())
+            return true;
+    }
+#endif
+    return false;
 }
 #endif
 
@@ -2090,18 +2096,18 @@ void WebsiteDataStore::propagateSettingUpdates()
     if (!networkProcess)
         return;
 
-    bool enabled = isOptInCookiePartitioningEnabled();
-    if (m_isOptInCookiePartitioningEnabled != enabled && trackingPreventionEnabled()) {
-        m_isOptInCookiePartitioningEnabled = enabled;
+    bool enabled = computeIsOptInCookiePartitioningEnabled();
+    if ((!m_cachedIsOptInCookiePartitioningEnabled || *m_cachedIsOptInCookiePartitioningEnabled != enabled) && trackingPreventionEnabled()) {
+        m_cachedIsOptInCookiePartitioningEnabled = enabled;
         networkProcess->send(Messages::NetworkProcess::SetOptInCookiePartitioningEnabled(sessionID(), enabled), 0);
 
         for (Ref webProcess : processes())
             webProcess->setOptInCookiePartitioningEnabled(enabled);
 
-        if (m_isOptInCookiePartitioningEnabled && m_thirdPartyCookieBlockingMode == WebCore::ThirdPartyCookieBlockingMode::All) {
+        if (*m_cachedIsOptInCookiePartitioningEnabled && m_thirdPartyCookieBlockingMode == WebCore::ThirdPartyCookieBlockingMode::All) {
             RELEASE_LOG(Storage, "WebsiteDataStore::propagateSettingUpdates (%p) sessionID=%" PRIu64 ", OptInCookiePartitioning enabled, setting ThirdPartyCookieBlockingMode::AllExceptPartitioned", this, m_sessionID.toUInt64());
             setThirdPartyCookieBlockingMode(WebCore::ThirdPartyCookieBlockingMode::AllExceptPartitioned, []() { });
-        } else if (!m_isOptInCookiePartitioningEnabled && m_thirdPartyCookieBlockingMode == WebCore::ThirdPartyCookieBlockingMode::AllExceptPartitioned) {
+        } else if (!*m_cachedIsOptInCookiePartitioningEnabled && m_thirdPartyCookieBlockingMode == WebCore::ThirdPartyCookieBlockingMode::AllExceptPartitioned) {
             RELEASE_LOG(Storage, "WebsiteDataStore::propagateSettingUpdates (%p) sessionID=%" PRIu64 ", OptInCookiePartitioning disabled, setting ThirdPartyCookieBlockingMode::All", this, m_sessionID.toUInt64());
             setThirdPartyCookieBlockingMode(WebCore::ThirdPartyCookieBlockingMode::All, []() { });
         }
@@ -2231,7 +2237,7 @@ WebsiteDataStoreParameters WebsiteDataStore::parameters()
     networkSessionParameters.webPushMachServiceName = m_configuration->webPushMachServiceName();
     networkSessionParameters.webPushPartitionString = m_configuration->webPushPartitionString();
 #if ENABLE(OPT_IN_PARTITIONED_COOKIES)
-    networkSessionParameters.isOptInCookiePartitioningEnabled = isOptInCookiePartitioningEnabled();
+    networkSessionParameters.isOptInCookiePartitioningEnabled = computeIsOptInCookiePartitioningEnabled();
 #endif
     networkSessionParameters.cookiesVersion = cookiesVersion();
     networkSessionParameters.unifiedOriginStorageLevel = m_configuration->unifiedOriginStorageLevel();

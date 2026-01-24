@@ -18,4 +18,3 @@ root
 			iframe,title='Cross origin iframe',origin='http://localhost:8000'
 		button,aria-label='Submit','After subframes'
 		link,url='webkit.org','Link in mainframe'
-version=2

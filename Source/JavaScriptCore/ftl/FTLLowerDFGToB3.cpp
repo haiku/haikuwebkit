@@ -461,6 +461,9 @@ private:
                 case NodeResultJS:
                     type = Int64;
                     break;
+                case NodeResultStorage:
+                    type = pointerType();
+                    break;
                 default:
                     DFG_CRASH(m_graph, node, "Bad Phi node result type");
                     break;
@@ -537,7 +540,7 @@ private:
                     jit.breakpoint();
                 });
             } else
-                m_out.store(m_out.int32Zero, m_out.absolute(&vm().didEnterVM));
+                m_out.store32As8(m_out.int32Zero, m_out.absolute(&vm().didEnterVM));
         }
 
         unsigned codeGeneratedNodes = 0;
@@ -1970,7 +1973,7 @@ private:
                     jit.breakpoint();
                 });
             } else
-                m_out.store(m_out.int32Zero, m_out.absolute(&vm().didEnterVM));
+                m_out.store32As8(m_out.int32Zero, m_out.absolute(&vm().didEnterVM));
         }
 
         if (m_node->isTerminal())
@@ -2019,6 +2022,10 @@ private:
             upsilonValue = lowJSValue(m_node->child1());
             ASSERT(phi->result() == NodeResultJS);
             break;
+        case KnownStorageUse:
+            upsilonValue = lowStorage(m_node->child1());
+            ASSERT(phi->result() == NodeResultStorage);
+            break;
         default:
             DFG_CRASH(m_graph, m_node, "Bad use kind");
             break;
@@ -2033,7 +2040,7 @@ private:
         LValue phi = m_phis.get(m_node);
         m_out.m_block->append(phi);
 
-        switch (m_node->flags() & NodeResultMask) {
+        switch (m_node->result()) {
         case NodeResultDouble:
             setDouble(phi);
             break;
@@ -2048,6 +2055,9 @@ private:
             break;
         case NodeResultJS:
             setJSValue(phi);
+            break;
+        case NodeResultStorage:
+            setStorage(phi);
             break;
         default:
             DFG_CRASH(m_graph, m_node, "Bad result type");
@@ -10168,6 +10178,8 @@ IGNORE_CLANG_WARNINGS_END
 
         if (m_node->child1().useKind() == ArrayUse)
             speculateArray(m_node->child1());
+        else if (m_node->child1().useKind() == SetObjectUse)
+            speculateSetObject(m_node->child1());
 
         if (m_graph.canDoFastSpread(m_node, m_state.forNode(m_node->child1()))) {
             LBasicBlock copyOnWriteContiguousCheck = m_out.newBlock();
@@ -10259,6 +10271,78 @@ IGNORE_CLANG_WARNINGS_END
 
             m_out.appendTo(continuation, lastNext);
             result = m_out.phi(pointerType(), sharedResult, fastResult, slowResult);
+            mutatorFence();
+        } else if (m_node->child1().useKind() == SetObjectUse) {
+            using Helper = JSSet::Helper;
+
+            LBasicBlock obsoleteCheck = m_out.newBlock();
+            LBasicBlock deletedCheck = m_out.newBlock();
+            LBasicBlock sizeCheck = m_out.newBlock();
+            LBasicBlock allocBlock = m_out.newBlock();
+            LBasicBlock loopStart = m_out.newBlock();
+            LBasicBlock slowPath = m_out.newBlock();
+            LBasicBlock continuation = m_out.newBlock();
+
+            // Load Set storage pointer.
+            LValue storage = m_out.loadPtr(argument, m_heaps.JSSet_storage);
+            m_out.branch(m_out.isNull(storage), rarely(slowPath), usually(obsoleteCheck));
+
+            // Check storage is not obsolete (slot 0 must be Int32).
+            LBasicBlock lastNext = m_out.appendTo(obsoleteCheck, deletedCheck);
+            LValue storageButterfly = toButterfly(storage);
+            LValue aliveEntryCountValue = m_out.load64(m_out.baseIndex(m_heaps.indexedContiguousProperties, storageButterfly, m_out.constIntPtr(Helper::aliveEntryCountIndex())));
+            m_out.branch(isNotInt32(aliveEntryCountValue), rarely(slowPath), usually(deletedCheck));
+
+            // Check deletedEntryCount == 0.
+            m_out.appendTo(deletedCheck, sizeCheck);
+            LValue length = unboxInt32(aliveEntryCountValue);
+            LValue deletedCount = m_out.load32(m_out.baseIndex(m_heaps.indexedContiguousProperties, storageButterfly, m_out.constIntPtr(Helper::deletedEntryCountIndex())));
+            m_out.branch(m_out.isZero32(deletedCount), usually(sizeCheck), rarely(slowPath));
+
+            // Check length <= MAX_STORAGE_VECTOR_LENGTH.
+            m_out.appendTo(sizeCheck, allocBlock);
+            m_out.branch(m_out.above(length, m_out.constInt32(MAX_STORAGE_VECTOR_LENGTH)), rarely(slowPath), usually(allocBlock));
+
+            // Allocate JSCellButterfly.
+            m_out.appendTo(allocBlock, loopStart);
+            static_assert(sizeof(JSValue) == 8 && 1 << 3 == 8, "Assumed in the code below.");
+            LValue size = m_out.add(
+                m_out.shl(m_out.zeroExtPtr(length), m_out.constInt32(3)),
+                m_out.constIntPtr(JSCellButterfly::offsetOfData()));
+            LValue fastAllocation = allocateVariableSizedCell<JSCellButterfly>(size, m_graph.m_vm.cellButterflyStructure(CopyOnWriteArrayWithContiguous), slowPath);
+            LValue fastStorage = toButterfly(fastAllocation);
+            m_out.store32(length, fastStorage, m_heaps.Butterfly_vectorLength);
+            m_out.store32(length, fastStorage, m_heaps.Butterfly_publicLength);
+            ValueFromBlock fastResult = m_out.anchor(fastAllocation);
+
+            // Compute dataTableStartIndex = hashTableStartIndex + capacity.
+            LValue capacity = m_out.load32(m_out.baseIndex(m_heaps.indexedContiguousProperties, storageButterfly, m_out.constIntPtr(Helper::capacityIndex())));
+            LValue dataTableStart = m_out.add(m_out.constInt32(Helper::hashTableStartIndex()), capacity);
+
+            ValueFromBlock startIndex = m_out.anchor(m_out.constIntPtr(0));
+            m_out.branch(m_out.isZero32(length), unsure(continuation), unsure(loopStart));
+
+            // Copy loop: for i = 0..<length, dest[i] = storage[dataTableStart + i * 2].
+            m_out.appendTo(loopStart, slowPath);
+            static_assert(Helper::EntrySize == 2, "Set entries have stride 2 (key + chain).");
+            LValue index = m_out.phi(pointerType(), startIndex);
+            LValue srcIndex = m_out.add(m_out.zeroExtPtr(dataTableStart), m_out.shl(index, m_out.constInt32(1)));
+            LValue key = m_out.load64(m_out.baseIndex(m_heaps.indexedContiguousProperties, storageButterfly, srcIndex));
+            m_out.store64(key, m_out.baseIndex(m_heaps.indexedContiguousProperties, fastStorage, index));
+
+            LValue nextIndex = m_out.add(index, m_out.constIntPtr(1));
+            m_out.addIncomingToPhi(index, m_out.anchor(nextIndex));
+            m_out.branch(m_out.below(nextIndex, m_out.zeroExtPtr(length)),
+                unsure(loopStart), unsure(continuation));
+
+            // Slow path.
+            m_out.appendTo(slowPath, continuation);
+            ValueFromBlock slowResult = m_out.anchor(vmCall(pointerType(), operationSpreadSet, weakPointer(globalObject), argument));
+            m_out.jump(continuation);
+
+            // Continuation.
+            m_out.appendTo(continuation, lastNext);
+            result = m_out.phi(pointerType(), fastResult, slowResult);
             mutatorFence();
         } else
             result = vmCall(pointerType(), operationSpreadGeneric, weakPointer(globalObject), argument);
@@ -23043,11 +23127,18 @@ IGNORE_CLANG_WARNINGS_END
 
     LValue lowStorage(Edge edge)
     {
+        // FIXME: We should use KnownStorageUse everywhere and not just for Upsilons.
+        OperandSpeculationMode speculation = AutomaticOperandSpeculation;
+        if (m_node->op() == DFG::Upsilon) {
+            DFG_ASSERT(m_graph, m_node, edge.useKind() == KnownStorageUse);
+            speculation = ManualOperandSpeculation;
+        }
+
         LoweredNodeValue value = m_storageValues.get(edge.node());
         if (isValid(value))
             return value.value();
 
-        LValue result = lowCell(edge);
+        LValue result = lowCell(edge, speculation);
         setStorage(edge.node(), result);
         return result;
     }
@@ -23428,6 +23519,7 @@ IGNORE_CLANG_WARNINGS_END
         case Int52RepUse:
         case KnownCellUse:
         case KnownBooleanUse:
+        case KnownStorageUse:
             ASSERT(!m_interpreter.needsTypeCheck(edge));
             break;
         case Int32Use:

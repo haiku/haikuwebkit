@@ -89,6 +89,8 @@ private:
     CompositorIntegrationImpl& operator=(const CompositorIntegrationImpl&) = delete;
     CompositorIntegrationImpl& operator=(CompositorIntegrationImpl&&) = delete;
 
+    bool isCompositorIntegrationImpl() const final { return true; }
+
     void prepareForDisplay(uint32_t frameIndex, CompletionHandler<void()>&&) override;
     void updateContentsHeadroom(float) override;
 
@@ -107,5 +109,9 @@ private:
 };
 
 } // namespace WebCore::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebGPU::CompositorIntegrationImpl)
+    static bool isType(const WebCore::WebGPU::CompositorIntegration& compositorIntegration) { return compositorIntegration.isCompositorIntegrationImpl(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // HAVE(WEBGPU_IMPLEMENTATION)

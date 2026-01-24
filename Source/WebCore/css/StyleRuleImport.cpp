@@ -80,7 +80,7 @@ void StyleRuleImport::setCSSStyleSheet(const String& href, const URL& baseURL, A
     if (!baseURL.isNull())
         context.baseURL = baseURL;
 
-    Document* document = m_parentStyleSheet ? m_parentStyleSheet->singleOwnerDocument() : nullptr;
+    CheckedPtr<Document> document = m_parentStyleSheet ? m_parentStyleSheet->singleOwnerDocument() : nullptr;
     m_styleSheet = StyleSheetContents::create(this, href, context);
     if ((m_parentStyleSheet && m_parentStyleSheet->loadedFromOpaqueSource() == LoadedFromOpaqueSource::Yes) || !cachedStyleSheet->isCORSSameOrigin())
         m_styleSheet->setAsLoadedFromOpaqueSource();
@@ -107,7 +107,7 @@ void StyleRuleImport::requestStyleSheet()
 {
     if (!m_parentStyleSheet)
         return;
-    auto* document = m_parentStyleSheet->singleOwnerDocument();
+    CheckedPtr document = m_parentStyleSheet->singleOwnerDocument();
     if (!document)
         return;
     auto* page = document->page();

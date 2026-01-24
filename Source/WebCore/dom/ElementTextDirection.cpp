@@ -73,7 +73,7 @@ static void updateHasDirAutoFlagForSubtree(Node& firstNode, TextDirectionState t
     firstNode.setSelfOrPrecedingNodesAffectDirAuto(dirIsAuto);
 
     for (RefPtr node = firstNode.firstChild(); node; ) {
-        auto* element = dynamicDowncast<Element>(*node);
+        CheckedPtr element = dynamicDowncast<Element>(*node);
 
         if (element && (is<HTMLBDIElement>(*element) || elementHasValidTextDirectionState(*element))) {
             node = NodeTraversal::nextSkippingChildren(*node, &firstNode);
@@ -162,7 +162,7 @@ static std::optional<TextDirection> computeContainedTextAutoDirection(const Elem
             continue;
         }
 
-        if (auto* childElement = dynamicDowncast<Element>(*child)) {
+        if (CheckedPtr childElement = dynamicDowncast<Element>(*child)) {
             // Specs: Skip text form controls
             // Specs: Skip the element whose dir attribute is not in the undefined state
             if (childElement->isTextField() || elementHasValidTextDirectionState(*childElement)) {
@@ -173,7 +173,7 @@ static std::optional<TextDirection> computeContainedTextAutoDirection(const Elem
 
         // Specs: If child is a slot element whose root is a shadow root,
         // then return the directionality of that shadow root's host.
-        if (auto* childSlotElement = dynamicDowncast<HTMLSlotElement>(*child)) {
+        if (CheckedPtr childSlotElement = dynamicDowncast<HTMLSlotElement>(*child)) {
             if (RefPtr childHost = childSlotElement->shadowHost())
                 return computeTextDirection(*childHost, elementTextDirectionState(*childHost));
         }
@@ -212,7 +212,7 @@ static std::optional<TextDirection> computeTextDirectionOfSlotElement(const HTML
                 return direction;
         }
 
-        if (auto* element = dynamicDowncast<Element>(child.get())) {
+        if (CheckedPtr element = dynamicDowncast<Element>(child.get())) {
             // Specs: If child direction is not null, then return child direction.
             if (auto direction = computeAutoDirectionality(*element))
                 return direction;

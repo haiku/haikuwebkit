@@ -55,14 +55,14 @@ void NavigationTransition::rejectPromise(JSC::JSValue exceptionObject)
     m_finished->reject<IDLAny>(exceptionObject, RejectAsHandled::Yes);
 }
 
-DOMPromise* NavigationTransition::finished()
+DOMPromise& NavigationTransition::finished()
 {
     if (!m_finishedDOMPromise) {
         auto& promise = *jsCast<JSC::JSPromise*>(m_finished->promise());
         m_finishedDOMPromise = DOMPromise::create(*m_finished->globalObject(), promise);
     }
 
-    return m_finishedDOMPromise.get();
+    return *m_finishedDOMPromise;
 }
 
 } // namespace WebCore

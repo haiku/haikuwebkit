@@ -72,24 +72,6 @@ ScriptExecutionContext* WebXRSpace::scriptExecutionContext() const
     return ContextDestructionObserver::scriptExecutionContext();
 }
 
-WTF_MAKE_TZONE_ALLOCATED_IMPL(WebXRViewerSpace);
-
-WebXRViewerSpace::WebXRViewerSpace(Document& document, WebXRSession& session)
-    : WebXRSpace(document, WebXRRigidTransform::create())
-    , m_session(session)
-{
-}
-
-WebXRViewerSpace::~WebXRViewerSpace() = default;
-
-std::optional<TransformationMatrix> WebXRViewerSpace::nativeOrigin() const
-{
-    if (!m_session)
-        return std::nullopt;
-    return WebXRFrame::matrixFromPose(m_session->frameData().origin);
-}
-
-
 } // namespace WebCore
 
 #endif // ENABLE(WEBXR)

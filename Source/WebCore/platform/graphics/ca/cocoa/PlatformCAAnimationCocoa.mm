@@ -336,11 +336,11 @@ void PlatformCAAnimationCocoa::setTimingFunction(const TimingFunction* timingFun
     case AnimationType::Spring:
         if (auto* function = dynamicDowncast<SpringTimingFunction>(timingFunction)) {
             // FIXME: Handle reverse.
-            CASpringAnimation *springAnimation = (CASpringAnimation *)m_animation.get();
-            springAnimation.mass = function->mass();
-            springAnimation.stiffness = function->stiffness();
-            springAnimation.damping = function->damping();
-            springAnimation.initialVelocity = function->initialVelocity();
+            RetainPtr springAnimation = (CASpringAnimation *)m_animation.get();
+            springAnimation.get().mass = function->mass();
+            springAnimation.get().stiffness = function->stiffness();
+            springAnimation.get().damping = function->damping();
+            springAnimation.get().initialVelocity = function->initialVelocity();
         }
         break;
     case AnimationType::Group:
@@ -438,8 +438,8 @@ void PlatformCAAnimationCocoa::copyFromValueFrom(const PlatformCAAnimation& valu
 {
     if (!isBasicAnimation() || !value.isBasicAnimation())
         return;
-    auto otherAnimation = static_cast<CABasicAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
-    [static_cast<CABasicAnimation *>(m_animation.get()) setFromValue:[otherAnimation fromValue]];
+    RetainPtr otherAnimation = static_cast<CABasicAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
+    [static_cast<CABasicAnimation *>(m_animation.get()) setFromValue:[otherAnimation.get() fromValue]];
 }
 
 void PlatformCAAnimationCocoa::setToValue(float value)
@@ -482,8 +482,8 @@ void PlatformCAAnimationCocoa::copyToValueFrom(const PlatformCAAnimation& value)
     if (!isBasicAnimation() || !value.isBasicAnimation())
         return;
 
-    auto otherAnimation = static_cast<CABasicAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
-    [static_cast<CABasicAnimation *>(m_animation.get()) setToValue:[otherAnimation toValue]];
+    RetainPtr otherAnimation = static_cast<CABasicAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
+    [static_cast<CABasicAnimation *>(m_animation.get()) setToValue:[otherAnimation.get() toValue]];
 }
 
 
@@ -544,8 +544,8 @@ void PlatformCAAnimationCocoa::copyValuesFrom(const PlatformCAAnimation& value)
     if (animationType() != AnimationType::Keyframe || value.animationType() != AnimationType::Keyframe)
         return;
 
-    auto otherAnimation = static_cast<CAKeyframeAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
-    [static_cast<CAKeyframeAnimation *>(m_animation.get()) setValues:[otherAnimation values]];
+    RetainPtr otherAnimation = static_cast<CAKeyframeAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
+    [static_cast<CAKeyframeAnimation *>(m_animation.get()) setValues:[otherAnimation.get() values]];
 }
 
 void PlatformCAAnimationCocoa::setKeyTimes(const Vector<float>& value)
@@ -557,8 +557,8 @@ void PlatformCAAnimationCocoa::setKeyTimes(const Vector<float>& value)
 
 void PlatformCAAnimationCocoa::copyKeyTimesFrom(const PlatformCAAnimation& value)
 {
-    auto other = static_cast<CAKeyframeAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
-    [static_cast<CAKeyframeAnimation *>(m_animation.get()) setKeyTimes:[other keyTimes]];
+    RetainPtr other = static_cast<CAKeyframeAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
+    [static_cast<CAKeyframeAnimation *>(m_animation.get()) setKeyTimes:[other.get() keyTimes]];
 }
 
 void PlatformCAAnimationCocoa::setTimingFunctions(const Vector<Ref<const TimingFunction>>& timingFunctions, bool reverse)
@@ -570,11 +570,11 @@ void PlatformCAAnimationCocoa::setTimingFunctions(const Vector<Ref<const TimingF
 
 void PlatformCAAnimationCocoa::copyTimingFunctionsFrom(const PlatformCAAnimation& value)
 {
-    auto other = static_cast<CAKeyframeAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
-    [static_cast<CAKeyframeAnimation *>(m_animation.get()) setTimingFunctions:[other timingFunctions]];
+    RetainPtr other = static_cast<CAKeyframeAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
+    [static_cast<CAKeyframeAnimation *>(m_animation.get()) setTimingFunctions:[other.get() timingFunctions]];
 }
 
-void PlatformCAAnimationCocoa::setAnimations(const Vector<RefPtr<PlatformCAAnimation>>& value)
+void PlatformCAAnimationCocoa::setAnimations(const Vector<Ref<PlatformCAAnimation>>& value)
 {
     ASSERT(animationType() == AnimationType::Group);
     ASSERT([static_cast<CAAnimation *>(m_animation.get()) isKindOfClass:[CAAnimationGroup class]]);
@@ -593,8 +593,8 @@ void PlatformCAAnimationCocoa::copyAnimationsFrom(const PlatformCAAnimation& val
     ASSERT([static_cast<CAAnimation *>(m_animation.get()) isKindOfClass:[CAAnimationGroup class]]);
     ASSERT([static_cast<CAAnimation *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get()) isKindOfClass:[CAAnimationGroup class]]);
 
-    auto other = static_cast<CAAnimationGroup *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
-    [static_cast<CAAnimationGroup *>(m_animation.get()) setAnimations:[other animations]];
+    RetainPtr other = static_cast<CAAnimationGroup *>(downcast<PlatformCAAnimationCocoa>(value).m_animation.get());
+    [static_cast<CAAnimationGroup *>(m_animation.get()) setAnimations:[other.get() animations]];
 }
 
 } // namespace WebCore

@@ -794,6 +794,10 @@ void HTMLInputElement::attributeChanged(const QualifiedName& name, const AtomStr
         if (selfOrPrecedingNodesAffectDirAuto())
             updateEffectiveTextDirection();
         m_valueAttributeWasUpdatedAfterParsing = !m_parsingInProgress;
+
+        if (CheckedPtr cache = document().existingAXObjectCache())
+            cache->valueChanged(*this);
+
         break;
     case AttributeNames::nameAttr:
         removeFromRadioButtonGroup();

@@ -324,7 +324,7 @@ inline std::strong_ordering codePointCompare(const AtomString& a, const AtomStri
     return codePointCompare(a.string(), b.string());
 }
 
-WARN_UNUSED_RETURN ALWAYS_INLINE String makeStringByReplacingAll(const AtomString& string, char16_t target, char16_t replacement)
+[[nodiscard]] ALWAYS_INLINE String makeStringByReplacingAll(const AtomString& string, char16_t target, char16_t replacement)
 {
     return makeStringByReplacingAll(string.string(), target, replacement);
 }

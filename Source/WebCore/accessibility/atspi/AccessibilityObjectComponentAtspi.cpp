@@ -115,7 +115,7 @@ AccessibilityObjectAtspi* AccessibilityObjectAtspi::hitTest(const IntPoint& poin
 
     if (auto* axObject = dynamicDowncast<AccessibilityObject>(m_coreObject.get()))
         axObject->updateChildrenIfNecessary();
-    if (auto* coreObject = m_coreObject->accessibilityHitTest(convertedPoint))
+    if (RefPtr coreObject = m_coreObject->accessibilityHitTest(convertedPoint))
         return coreObject->wrapper();
 
     return nullptr;
