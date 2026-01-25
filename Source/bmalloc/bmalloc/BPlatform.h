@@ -63,7 +63,6 @@
 #define BOS_UNIX 1
 #endif
 
-#ifdef __unix
 #if defined(__unix) || defined(__unix__)
 #define BOS_UNIX 1
 #endif
@@ -78,10 +77,6 @@
 
 #if defined(WIN32) || defined(_WIN32)
 #define BOS_WINDOWS 1
-#endif
-
-#if defined(__HAIKU__)
-#define BOS_HAIKU 1
 #endif
 
 #if BOS(DARWIN) && !defined(BUILDING_WITH_CMAKE)

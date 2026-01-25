@@ -613,7 +613,7 @@ FastMallocStatistics fastMallocStatistics()
     GetProcessMemoryInfo(GetCurrentProcess(), &resourceUsage, sizeof(resourceUsage));
     statistics.committedVMBytes = resourceUsage.PeakWorkingSetSize;
 #elif OS(HAIKU)
-    ssize_t cookie = nullptr;
+    ssize_t cookie = 0;
     statistics.committedVMBytes = 0;
     area_info info;
     while (get_next_area_info(B_CURRENT_TEAM, &cookie, &info) == B_OK)

@@ -185,7 +185,7 @@ void PopupMenuHaiku::hide()
 
 void PopupMenuHaiku::updateFromElement()
 {
-    client()->setTextFromItem(m_popupClient->selectedIndex());
+    client()->setTextFromItem(m_popupClient->popupSelectedIndex());
 }
 
 } // namespace WebCore

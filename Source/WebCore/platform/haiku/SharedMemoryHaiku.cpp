@@ -51,7 +51,7 @@ RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
         return memory;
 }
 
-RefPtr<SharedMemory> SharedMemory::map(Handle&& handle, Protection protection)
+RefPtr<SharedMemory> SharedMemory::map(Handle&& handle, Protection protection, CopyOnWrite)
 {
         RefPtr<SharedMemory> memory = adoptRef(new SharedMemory());
         if(!memory)
