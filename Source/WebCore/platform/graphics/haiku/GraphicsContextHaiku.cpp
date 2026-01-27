@@ -104,6 +104,7 @@ GraphicsContextHaiku::GraphicsContextHaiku(BView* view)
 GraphicsContextHaiku::~GraphicsContextHaiku()
 {
     HGTRACE(("============= GraphicsContextHaiku destroy %p =============\n", m_view));
+    delete m_fillBitmap;
 }
 
 // Draws a filled rectangle with a stroked border.
