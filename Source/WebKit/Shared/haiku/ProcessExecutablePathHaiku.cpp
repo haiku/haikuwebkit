@@ -27,25 +27,46 @@
 #include "config.h"
 #include "ProcessExecutablePath.h"
 
-#include <Entry.h>
+#include <Path.h>
+#include <PathFinder.h>
 #include <String.h>
 #include <wtf/NeverDestroyed.h>
+#include <wtf/text/MakeString.h>
 
 namespace WebKit {
 
+// Get the app directory from the currently running binary
+static String executableDirectory()
+{
+    BPath imagePath;
+
+    // B_FIND_PATH_IMAGE_PATH returns the full path of the currently running binary
+    // The 'this' pointer serves as a code pointer to identify the current image
+    BPathFinder pathFinder(reinterpret_cast<const void*>(&executableDirectory));
+    status_t status = pathFinder.FindPath(B_FIND_PATH_IMAGE_PATH, imagePath);
+    if (status != B_OK)
+        return "./"_s; // fallback to original behavior
+
+    // Go up from the lib dir -> app root dir 
+    imagePath.GetParent(&imagePath);
+    imagePath.GetParent(&imagePath);
+    
+    return String::fromUTF8(imagePath.Path());
+}
+
 String executablePathOfWebProcess()
 {
-    return "./bin/WebProcess"_s;
+    return makeString(executableDirectory(), "/bin/WebProcess"_s);
 }
 
 String executablePathOfPluginProcess()
 {
-    return "./bin/PluginProcess"_s;
+    return makeString(executableDirectory(), "/bin/PluginProcess"_s);
 }
 
 String executablePathOfNetworkProcess()
 {
-    return "./bin/NetworkProcess"_s;
+    return makeString(executableDirectory(), "/bin/NetworkProcess"_s);
 }
 
 } // namespace WebKit
